@@ -1,0 +1,21 @@
+{
+  "name": "unaltered",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Prove a file existed, unchanged, at a point in time. Client-only, no accounts.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "build": "node scripts/build.mjs",
+    "check:opsec": "bash scripts/opsec-check.sh",
+    "check": "npm run check:opsec && npm run typecheck && npm run lint && npm run test"
+  },
+  "devDependencies": {},
+  "dependencies": {}
+}

@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Least privilege by default (OPSEC §5). Elevate per job only if ever needed.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  opsec:
+    name: Identity and metadata leak check
+    runs-on: ubuntu-latest
+    steps:
+      # TODO(CI-2): pin actions by full commit SHA before the first release.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Run opsec-check
+        run: bash scripts/opsec-check.sh
+
+  build-test:
+    name: Typecheck, lint, test, reproducible build
+    runs-on: ubuntu-latest
+    # Skip until the toolchain exists (task M0-4 commits package-lock.json).
+    if: ${{ hashFiles('package-lock.json') != '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install (no install scripts)
+        run: npm ci --ignore-scripts
+      - name: Verify package signatures and provenance
+        run: npm audit signatures
+      - name: Typecheck, lint, test
+        run: |
+          npm run typecheck
+          npm run lint
+          npm run test
+      - name: Build twice and compare (reproducibility gate)
+        run: |
+          npm run build
+          find dist -type f -print0 | sort -z | xargs -0 sha256sum > /tmp/build1.sums
+          rm -rf dist
+          npm run build
+          find dist -type f -print0 | sort -z | xargs -0 sha256sum > /tmp/build2.sums
+          diff /tmp/build1.sums /tmp/build2.sums

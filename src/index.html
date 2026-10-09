@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Unaltered</title>
+  <!--
+    CSP (SR-1). Delivered as <meta> because static/IPFS hosts may not set headers.
+    A meta CSP cannot set frame-ancestors, report-uri or sandbox; add a header where the host allows it.
+    connect-src lists the allowlist from docs/SPEC.md section 9 and MUST stay in sync with src/core/net/allowlist.ts.
+    Explorer hosts below are UNVERIFIED until task M0-3 confirms CORS and API shape.
+    The build step (scripts/build.mjs, task M1) adds integrity="sha384-..." to script/link tags (SR-3).
+  -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' blob:; connect-src https://alice.btc.calendar.opentimestamps.org https://bob.btc.calendar.opentimestamps.org https://finney.calendar.eternitywall.com https://mempool.space https://blockstream.info; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'; require-trusted-types-for 'script'">
+  <meta name="referrer" content="no-referrer">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <noscript>Unaltered needs JavaScript to fingerprint files on your device. Nothing is uploaded.</noscript>
+
+  <header>
+    <h1>Unaltered</h1>
+    <nav aria-label="Main">
+      <a href="#stamp">Stamp</a>
+      <a href="#verify">Verify</a>
+      <a href="#about">About</a>
+    </nav>
+  </header>
+
+  <main id="app">
+    <!-- Views are rendered by src/main.ts using textContent / DOM APIs only (no innerHTML). -->
+    <section id="stamp" aria-labelledby="stamp-h">
+      <h2 id="stamp-h">Prove this file existed, unchanged.</h2>
+      <p>Your file stays on your device. Only its fingerprint is used.</p>
+      <!-- TODO UI-1 -->
+    </section>
+
+    <section id="verify" aria-labelledby="verify-h" hidden>
+      <h2 id="verify-h">Check a file against a receipt.</h2>
+      <!-- TODO UI-2 -->
+    </section>
+
+    <section id="about" aria-labelledby="about-h" hidden>
+      <h2 id="about-h">What this proves, and what it does not.</h2>
+      <!-- TODO UI-3, UI-4 -->
+    </section>
+  </main>
+
+  <footer>
+    <!-- Build version and build hash are injected at build time so users can compare to the published SHA256SUMS. -->
+    <small>Version <span id="version">dev</span> · build <span id="build-hash">unbuilt</span></small>
+  </footer>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
