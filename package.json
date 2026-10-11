@@ -9,13 +9,30 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
     "lint": "eslint .",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "build": "node scripts/build.mjs",
+    "build:windows": "node scripts/build-windows.mjs",
     "check:opsec": "bash scripts/opsec-check.sh",
     "check": "npm run check:opsec && npm run typecheck && npm run lint && npm run test"
   },
-  "devDependencies": {},
-  "dependencies": {}
+  "dependencies": {
+    "@noble/hashes": "2.4.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.56.1",
+    "@types/node": "22.20.4",
+    "axe-core": "4.13.0",
+    "esbuild": "0.28.2",
+    "eslint": "10.11.0",
+    "eslint-plugin-no-unsanitized": "4.1.5",
+    "fast-check": "4.10.2",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.70.1",
+    "vite": "7.3.6",
+    "vitest": "4.1.11"
+  }
 }
