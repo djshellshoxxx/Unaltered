@@ -14,7 +14,7 @@ const bannedSinks = [
 ];
 
 export default tseslint.config(
-  { ignores: ['dist/**', 'release/**', 'node_modules/**', 'coverage/**', 'test-results/**', 'playwright-report/**'] },
+  { ignores: ['.claude/**', '.cache/**', 'dist/**', 'release/**', 'node_modules/**', 'coverage/**', 'test-results/**', 'playwright-report/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   { rules: { '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }] } },
@@ -49,7 +49,7 @@ export default tseslint.config(
   },
   {
     files: ['scripts/**/*.mjs', 'desktop/**/*.cjs', 'desktop/**/*.js'],
-    languageOptions: { globals: { process: 'readonly', console: 'readonly', URL: 'readonly', Buffer: 'readonly', __dirname: 'readonly', require: 'readonly', module: 'writable' } },
+    languageOptions: { globals: { process: 'readonly', console: 'readonly', URL: 'readonly', Buffer: 'readonly', Response: 'readonly', Headers: 'readonly', __dirname: 'readonly', require: 'readonly', module: 'writable' } },
     rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
 );
