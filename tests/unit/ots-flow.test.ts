@@ -236,3 +236,39 @@ describe('mergeTree', () => {
     expect(() => mergeTree(a, b)).toThrow();
   });
 });
+
+describe('review hardening: hostile proofs cannot cause unbounded work', () => {
+  it('rejects proofs with too many attestations at parse time', () => {
+    const atts = Array.from({ length: 300 }, (_, i) => ({ kind: 'bitcoin' as const, height: i + 1 }));
+    const root: TsNode = { msg: digest, attestations: atts, children: [] };
+    expect(() => parseProof(serializeProof({ digest, root }))).toThrow(/too many attestations/);
+  });
+
+  it('verify refuses many distinct Bitcoin attestations without any network request', async () => {
+    const atts = Array.from({ length: 40 }, (_, i) => ({ kind: 'bitcoin' as const, height: i + 1 }));
+    const ots = serializeProof({ digest, root: { msg: digest, attestations: atts, children: [] } });
+    let calls = 0;
+    const src = { id: 'x', fetchHeader: async () => ((calls++), new Uint8Array(80)) };
+    const r = await verify(digest, ots, { sources: [src], minSources: 2 });
+    expect(r.state).toBe('INVALID_PROOF');
+    expect(calls).toBe(0);
+  });
+
+  it('upgrade sends one request per distinct pending attestation', async () => {
+    const dup = Array.from({ length: 50 }, () => ({ kind: 'pending' as const, uri: CAL[0]! }));
+    const ots = serializeProof({ digest, root: { msg: digest, attestations: dup, children: [] } });
+    let gets = 0;
+    const f = routerFetch((u) => (u.pathname.startsWith('/timestamp/') ? (gets++, text('p', 404)) : null));
+    await upgrade(ots, cfgWith(f));
+    expect(gets).toBe(1);
+  });
+
+  it('merges large trees in linear time', () => {
+    const mk = (off: number): TsNode => ({ msg: digest, attestations: [], children: Array.from({ length: 6000 }, (_, i) => ({ op: { kind: 'append' as const, arg: Uint8Array.of((i + off) >> 8, (i + off) & 255, 1) }, node: { msg: Uint8Array.of(i), attestations: [], children: [] } })) });
+    const t0 = Date.now();
+    const a = mk(0);
+    mergeTree(a, mk(3000));
+    expect(a.children.length).toBe(9000);
+    expect(Date.now() - t0).toBeLessThan(1500);
+  });
+});

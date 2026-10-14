@@ -1,12 +1,12 @@
 // Verification (FR-7). No code path returns VERIFIED without (a) a matching file digest,
 // (b) a replayed commitment that equals the Merkle root of a header agreed by >= minSources independent sources.
-import { equalBytes } from '../bytes';
+import { equalBytes, toHex } from '../bytes';
 import { UnalteredError } from '../errors';
 import { DEFAULT_EXPLORERS, DEFAULT_MIN_EXPLORERS } from '../net/allowlist';
 import type { NetPolicy } from '../net/fetch';
 import { esploraSource, headerQuorum, type HeaderSource } from './bitcoin';
 import { collectAttestations, parseProof } from './codec';
-import type { DetachedProof } from './types';
+import { LIMITS, type DetachedProof } from './types';
 
 export type VerifyState = 'VERIFIED' | 'PENDING' | 'NO_MATCH_FILE' | 'INVALID_PROOF' | 'SOURCES_DISAGREE' | 'UNREACHABLE';
 
@@ -37,8 +37,8 @@ function classify(e: unknown): VerifyReport {
   return { state: 'INVALID_PROOF', detail: msg };
 }
 
-export async function verifyProof(fileDigest: Uint8Array | null, proof: DetachedProof, cfg: VerifyConfig): Promise<VerifyReport> {
-  if (fileDigest && !equalBytes(fileDigest, proof.digest)) {
+export async function verifyProof(fileDigest: Uint8Array, proof: DetachedProof, cfg: VerifyConfig): Promise<VerifyReport> {
+  if (!equalBytes(fileDigest, proof.digest)) {
     return { state: 'NO_MATCH_FILE', detail: 'The receipt is valid but was made for a different file. This file differs from the one that was stamped.' };
   }
   const atts = collectAttestations(proof.root);
@@ -49,13 +49,15 @@ export async function verifyProof(fileDigest: Uint8Array | null, proof: Detached
     return { state: 'PENDING', detail: 'The file matches the receipt, but it is not anchored in Bitcoin yet. Pending is not proof yet.', pendingCalendars: pending };
   }
 
+  const distinct = new Set(bitcoin.map((b) => `${(b.attestation as { height: number }).height}:${toHex(b.node.msg)}`));
+  if (distinct.size > LIMITS.maxDistinctBitcoin) return { state: 'INVALID_PROOF', detail: 'The receipt contains an implausible number of Bitcoin attestations.' };
   let best: VerifyReport | null = null;
   const rank = (s: VerifyState): number => (s === 'VERIFIED' ? 4 : s === 'SOURCES_DISAGREE' ? 3 : s === 'UNREACHABLE' ? 2 : 1);
   // Check each distinct (height, commitment) once.
   const seen = new Set<string>();
   for (const { node, attestation } of bitcoin) {
     if (attestation.kind !== 'bitcoin') continue;
-    const key = `${attestation.height}:${Array.from(node.msg).join(',')}`;
+    const key = `${attestation.height}:${toHex(node.msg)}`;
     if (seen.has(key)) continue;
     seen.add(key);
     const q = await headerQuorum(cfg.sources, attestation.height, cfg.minSources, cfg.signal);

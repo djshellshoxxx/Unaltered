@@ -41,6 +41,30 @@ function inspectExif(p: Uint8Array): { orientation?: number; gps: boolean } {
   return orientation === undefined ? { gps } : { orientation, gps };
 }
 
+/** Exact-structure validators: kept segments are copied byte for byte, so they must carry no free-form bytes. */
+function validDqt(p: Uint8Array): boolean {
+  let i = 0;
+  while (i < p.length) {
+    const pq = p[i]! >> 4;
+    if (pq > 1 || (p[i]! & 15) > 3) return false;
+    i += 1 + 64 * (pq === 1 ? 2 : 1);
+  }
+  return i === p.length && p.length > 0;
+}
+function validDht(p: Uint8Array): boolean {
+  let i = 0;
+  while (i < p.length) {
+    if (i + 17 > p.length || (p[i]! >> 4) > 1 || (p[i]! & 15) > 3) return false;
+    let n = 0;
+    for (let k = 1; k <= 16; k++) n += p[i + k]!;
+    if (n > 256) return false;
+    i += 17 + n;
+  }
+  return i === p.length && p.length > 0;
+}
+const validSof = (p: Uint8Array): boolean => p.length >= 6 && p[5]! >= 1 && p.length === 6 + 3 * p[5]!;
+const validSos = (p: Uint8Array): boolean => p.length >= 1 && p[0]! >= 1 && p.length === 4 + 2 * p[0]!;
+
 interface Seg {
   marker: number;
   start: number; // index of 0xFF
@@ -58,6 +82,8 @@ export function cleanJpeg(input: Uint8Array): JpegResult {
   let sawSos = false;
   let sawEoi = false;
   let sawDqt = false;
+  let sawJfif = false;
+  let sawAdobe = false;
   let pos = 2;
   const note = (s: string): void => {
     if (!removed.includes(s)) removed.push(s);
@@ -98,8 +124,12 @@ export function cleanJpeg(input: Uint8Array): JpegResult {
         // Canonical JFIF header: version, units, density; embedded thumbnail removed.
         const hdr = Uint8Array.of(0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, payload[5]!, payload[6]!, payload[7]!, payload[8]!, payload[9]!, payload[10]!, payload[11]!, 0x00, 0x00);
         if (payload[12] !== 0 || payload[13] !== 0) note('Embedded JFIF thumbnail');
-        if (!sawSos && !sawSof) out.push(hdr.subarray(0, 18));
-      } else if (marker === 0xee && payload.length === 12 && ascii(payload, 0, 'Adobe')) {
+        // Only one JFIF header, before any frame data, so repeated APP0 segments cannot carry extra bytes.
+        if (!sawSos && !sawSof && !sawJfif) out.push(hdr.subarray(0, 18));
+        else note('Extra JFIF header');
+        sawJfif = true;
+      } else if (marker === 0xee && payload.length === 12 && ascii(payload, 0, 'Adobe') && !sawAdobe && !sawSos) {
+        sawAdobe = true;
         out.push(input.subarray(seg.start, seg.end));
       } else if (marker === 0xe1 && ascii(payload, 0, 'Exif\0\0')) {
         const info = inspectExif(payload);
@@ -123,19 +153,21 @@ export function cleanJpeg(input: Uint8Array): JpegResult {
       continue;
     }
     if (marker === 0xdb) {
+      if (!validDqt(payload)) return rej('A JPEG quantisation table is malformed.');
       sawDqt = true;
       out.push(input.subarray(seg.start, seg.end));
       pos = seg.end;
       continue;
     }
     if (marker === 0xc4 || marker === 0xdd) {
+      if (marker === 0xc4 ? !validDht(payload) : payload.length !== 2) return rej('A JPEG table segment is malformed.');
       out.push(input.subarray(seg.start, seg.end));
       pos = seg.end;
       continue;
     }
     if (isSof(marker)) {
       if (sawSof) return rej('Multiple frame headers in a JPEG.');
-      if (payload.length < 6) return rej('A JPEG frame header is too short.');
+      if (!validSof(payload)) return rej('A JPEG frame header is malformed.');
       const height = (payload[1]! << 8) | payload[2]!;
       if (height === 0) return uns('This JPEG defines its height later (DNL) and cannot be cleaned safely.');
       sawSof = true;
@@ -145,6 +177,7 @@ export function cleanJpeg(input: Uint8Array): JpegResult {
     }
     if (marker === 0xda) {
       if (!sawSof || !sawDqt) return rej('A JPEG scan appeared before its frame header.');
+      if (!validSos(payload)) return rej('A JPEG scan header is malformed.');
       sawSos = true;
       out.push(input.subarray(seg.start, seg.end));
       // Entropy-coded data until the next real marker.

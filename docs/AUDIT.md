@@ -80,3 +80,20 @@ An independent read-only review of `core/ots`, `core/net`, `core/strip`, `core/h
 ## 6. Windows build
 
 `dist/unaltered-<v>.zip` is built by `npm run build` and checked on `windows-latest` in CI: install without scripts, typecheck, lint, unit tests, build, Chromium end-to-end tests, the shipped checksum logic run against the real zip, and a byte comparison of the Linux and Windows `SHA256SUMS`. See `docs/RELEASE.md` and ADR-009. Results of the latest run are in the PR checks.
+
+## 7. Independent review: findings and disposition
+
+No input was found that makes `verify()` return `VERIFIED` wrongly (digest equality is checked first; every node derives from the file digest; quorum needs identical headers from distinct hosts).
+
+| # | Finding | Disposition |
+|---|---|---|
+| 1 | Hostile proof with thousands of Bitcoin attestations caused unbounded sequential explorer requests | **Fixed.** Parser caps attestations at 256; verify refuses more than 16 distinct Bitcoin attestations before any request. Tests added |
+| 2 | Upgrade sent one GET per duplicate pending attestation | **Fixed.** Deduplicated by (calendar, commitment). Test added |
+| 3 | `mergeTree` quadratic CPU | **Fixed.** Indexed by op/attestation key, plus a step cap. Test added |
+| 4 | JPEG kept segments could carry free-form bytes (DRI tail, repeated JFIF/Adobe, padded DQT/DHT/SOF/SOS) | **Fixed.** Exact structure validation; one JFIF and one Adobe only. Tests added. The entropy-coded scan data is copied verbatim; it cannot be inspected without re-encoding, so hidden data inside a valid scan is a stated limit |
+| 5 | PNG kept chunks not validated or deduplicated | **Fixed for tRNS/sRGB/PLTE** (once, length bounds, colour-type check). IDAT payload (including bytes after the zlib stream) is copied verbatim: same stated limit |
+| 6 | Unknown attestation or op tags make the whole proof invalid, where the reference preserves unknown attestations | **Accepted.** Fails closed as SPEC section 6 requires. Compatibility cost: such proofs cannot be verified or upgraded here; use the reference tool |
+| 7 | Header quorum has no proof-of-work check | **Accepted, documented.** A target check would not add security: a forger can cheaply mine a header at the minimum difficulty. Trust rests on the explorer quorum (L1) or the user's own node (L2) |
+| 8 | `varuint` could return an unsafe integer | **Fixed.** Rejected as malformed |
+| - | `verifyProof` accepted a null digest | **Fixed.** Parameter is now required |
+| - | Unconfirmed: raw `DOMException` if a file becomes unreadable mid-hash; ~80 MB worst-case memory from 20k nodes of 4 KiB messages | Open, low. The UI shows a generic message for any non-typed error |

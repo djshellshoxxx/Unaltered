@@ -56,7 +56,7 @@ export function makeJpeg(o: JpegOpts = {}): Uint8Array {
   if (o.comment) parts.push(seg(0xfe, ascii(o.comment)));
   parts.push(seg(0xdb, concat(Uint8Array.of(0), new Uint8Array(64).fill(8))));
   parts.push(seg(o.arithmetic ? 0xc9 : 0xc0, Uint8Array.of(8, 0, 8, 0, 8, 1, 1, 0x11, 0)));
-  parts.push(seg(0xc4, concat(Uint8Array.of(0), new Uint8Array(16).fill(0), Uint8Array.of(0))));
+  parts.push(seg(0xc4, concat(Uint8Array.of(0, 1), new Uint8Array(15), Uint8Array.of(0))));
   if (!o.noSos) {
     parts.push(seg(0xda, Uint8Array.of(1, 1, 0, 0, 63, 0)));
     parts.push(Uint8Array.of(0x12, 0xff, 0x00, 0x34, 0xff, 0xd0, 0x56, 0xff, 0x00, 0xff, 0xd1, 0x78));

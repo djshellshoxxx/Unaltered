@@ -159,3 +159,58 @@ describe('detect + stripMetadata', () => {
     expect((await stripMetadata(new Blob([makePng({ badCrc: true }) as BlobPart]))).kind).toBe('rejected');
   });
 });
+
+describe('review hardening: kept segments carry no free-form bytes', () => {
+  const seg = (m: number, payload: number[]): number[] => [0xff, m, (payload.length + 2) >> 8, (payload.length + 2) & 255, ...payload];
+  const secret = Array.from(new TextEncoder().encode('SECRETSECRET'));
+  const mutate = (needle: number[], insert: number[]): Uint8Array => {
+    const base = Array.from(makeJpeg({}));
+    // locate the DRI-less file's SOS and insert a crafted segment before the DQT
+    const i = base.findIndex((v, k) => v === 0xff && base[k + 1] === 0xdb);
+    void needle;
+    return Uint8Array.from([...base.slice(0, i), ...insert, ...base.slice(i)]);
+  };
+
+  it('rejects DRI with a hidden tail, repeated JFIF/Adobe are not kept', () => {
+    expect(cleanJpeg(mutate([], seg(0xdd, [0, 1, ...secret]))).kind).toBe('rejected');
+    const jfif = seg(0xe0, [0x4a, 0x46, 0x49, 0x46, 0, ...secret.slice(0, 7), 0, 0]);
+    const r = cleanJpeg(mutate([], [...jfif, ...jfif, ...jfif]));
+    if (r.kind !== 'cleaned') throw new Error();
+    expect(contains(r.output, 'SECRET')).toBe(false);
+    const adobe = seg(0xee, [0x41, 0x64, 0x6f, 0x62, 0x65, ...secret.slice(0, 7)]);
+    const a = cleanJpeg(mutate([], [...adobe, ...adobe]));
+    if (a.kind !== 'cleaned') throw new Error();
+    expect((new TextDecoder('latin1').decode(a.output).match(/Adobe/g) ?? []).length).toBe(1);
+  });
+
+  it('rejects padded DQT / SOF / SOS segments', () => {
+    const good = Array.from(makeJpeg({}));
+    const pad = (marker: number): Uint8Array => {
+      const i = good.findIndex((v, k) => v === 0xff && good[k + 1] === marker);
+      const len = (good[i + 2]! << 8) | good[i + 3]!;
+      const grown = len + secret.length;
+      return Uint8Array.from([...good.slice(0, i + 2), grown >> 8, grown & 255, ...good.slice(i + 4, i + 2 + len), ...secret, ...good.slice(i + 2 + len)]);
+    };
+    for (const m of [0xdb, 0xc0, 0xc4, 0xda]) expect(cleanJpeg(pad(m)).kind, `marker ${m.toString(16)}`).toBe('rejected');
+  });
+
+  it('PNG: duplicate tRNS/sRGB/PLTE and oversized palettes are rejected', async () => {
+    const { makePng: mk, chunk } = await import('../helpers/images');
+    const { concat } = await import('../../src/core/bytes');
+    const png = mk({});
+    const iend = png.length - 12;
+    const idat = png.indexOf(0x49, 40);
+    void idat;
+    const insertBeforeIdat = (extra: Uint8Array): Uint8Array => {
+      const i = Array.from(png).findIndex((v, k) => k > 8 && v === 0x49 && png[k + 1] === 0x44 && png[k + 2] === 0x41 && png[k + 3] === 0x54) - 4;
+      return concat(png.slice(0, i), extra, png.slice(i));
+    };
+    void iend;
+    const s = new TextEncoder().encode('SECRETSECRETSECRET');
+    expect(cleanPng(insertBeforeIdat(concat(chunk('sRGB', Uint8Array.of(0)), chunk('sRGB', Uint8Array.of(0))))).kind).toBe('rejected');
+    expect(cleanPng(insertBeforeIdat(concat(chunk('tRNS', s.slice(0, 6)), chunk('tRNS', s.slice(0, 6))))).kind).toBe('rejected');
+    expect(cleanPng(insertBeforeIdat(chunk('PLTE', new Uint8Array(771)))).kind).toBe('rejected');
+    expect(cleanPng(insertBeforeIdat(chunk('tRNS', s))).kind).toBe('rejected'); // too long for colour type 2
+    expect(cleanPng(insertBeforeIdat(chunk('tRNS', s.slice(0, 6)))).kind).toBe('cleaned');
+  });
+});

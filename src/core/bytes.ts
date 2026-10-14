@@ -89,14 +89,17 @@ export class Reader {
     return out;
   }
 
-  /** LEB128-style unsigned integer as used by the OpenTimestamps format. Limited to 2^49. */
+  /** LEB128-style unsigned integer as used by the OpenTimestamps format. Must be a safe integer (< 2^53). */
   varuint(): number {
     let value = 0;
     let scale = 1;
     for (let i = 0; i < 8; i++) {
       const b = this.u8();
       value += (b & 0x7f) * scale;
-      if ((b & 0x80) === 0) return value;
+      if ((b & 0x80) === 0) {
+        if (!Number.isSafeInteger(value)) this.fail('A number in the receipt is too large.');
+        return value;
+      }
       scale *= 128;
     }
     return this.fail('A number in the receipt is too large.');

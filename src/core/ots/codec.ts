@@ -1,8 +1,8 @@
 // Parse / serialise OpenTimestamps `.ots` files. Treats all input as hostile (SPEC section 6, SR-9):
 // size cap, node cap, depth cap, iterative traversal, bounds-checked lengths, unknown tags rejected.
-import { compareBytes, concat, equalBytes, Reader, writeVaruint } from '../bytes';
+import { compareBytes, concat, equalBytes, Reader, toHex, writeVaruint } from '../bytes';
 import { UnalteredError } from '../errors';
-import { applyOp, compareOps, opTag, opsEqual } from './ops';
+import { applyOp, compareOps, opTag } from './ops';
 import {
   ATT_BITCOIN,
   ATT_PENDING,
@@ -72,6 +72,7 @@ export function readTimestampTree(r: Reader, rootMsg: Uint8Array): TsNode {
   }
   const stack: Frame[] = [{ node: root, lastItem: false }];
   let nodes = 1;
+  let attestations = 0;
   while (stack.length > 0) {
     const frame = stack[stack.length - 1]!;
     let tag = r.u8();
@@ -81,6 +82,7 @@ export function readTimestampTree(r: Reader, rootMsg: Uint8Array): TsNode {
       tag = r.u8();
     }
     if (tag === TAG_ATTESTATION) {
+      if (++attestations > LIMITS.maxAttestations) throw new UnalteredError('PROOF_TOO_LARGE', 'The receipt contains too many attestations.');
       frame.node.attestations.push(readAttestation(r));
       let complete = last;
       while (complete) {
@@ -190,23 +192,38 @@ export function serializeProof(p: DetachedProof): Uint8Array {
   return concat(HEADER_MAGIC, Uint8Array.from(writeVaruint(MAJOR_VERSION)), Uint8Array.from([TAG_SHA256]), p.digest, serializeTree(p.root));
 }
 
-function attEqual(a: Attestation, b: Attestation): boolean {
-  return a.kind === b.kind && (a.kind === 'bitcoin' ? a.height === (b as { height: number }).height : a.uri === (b as { uri: string }).uri);
+function attKey(a: Attestation): string {
+  return a.kind === 'bitcoin' ? `b${a.height}` : `p${a.uri}`;
 }
 
-/** Merge `from` into `into` (same message). Mirrors Timestamp.merge. Iterative. */
+function opKey(op: Op): string {
+  return op.kind === 'sha256' ? 's' : `${op.kind[0]}${toHex(op.arg)}`;
+}
+
+/** Merge `from` into `into` (same message). Mirrors Timestamp.merge. Iterative; indexed so cost is linear. */
 export function mergeTree(into: TsNode, from: TsNode): void {
   if (!equalBytes(into.msg, from.msg)) throw new UnalteredError('PROOF_MALFORMED', 'Cannot combine receipts for different data.');
   const work: [TsNode, TsNode][] = [[into, from]];
+  let steps = 0;
   while (work.length > 0) {
     const [a, b] = work.pop()!;
-    for (const att of b.attestations) if (!a.attestations.some((x) => attEqual(x, att))) a.attestations.push(att);
+    if (++steps > LIMITS.maxNodes * 2) throw new UnalteredError('PROOF_TOO_LARGE', 'The receipt is too complex.');
+    const have = new Set(a.attestations.map(attKey));
+    for (const att of b.attestations) {
+      const k = attKey(att);
+      if (!have.has(k)) {
+        have.add(k);
+        a.attestations.push(att);
+      }
+    }
+    const kids = new Map(a.children.map((c) => [opKey(c.op), c]));
     for (const kid of b.children) {
-      const existing = a.children.find((c) => opsEqual(c.op, kid.op));
+      const existing = kids.get(opKey(kid.op));
       if (existing) {
         if (existing.node !== kid.node) work.push([existing.node, kid.node]);
       } else {
         a.children.push(kid);
+        kids.set(opKey(kid.op), kid);
       }
     }
   }

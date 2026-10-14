@@ -144,7 +144,14 @@ export interface UpgradeResult {
 export async function upgrade(ots: Uint8Array, cfg: StampConfig): Promise<UpgradeResult> {
   const proof = parseProof(ots);
   const allowed = new Set(cfg.calendars.map(normBase));
-  const pendings = collectAttestations(proof.root).filter((l) => l.attestation.kind === 'pending');
+  const seenPending = new Set<string>();
+  const pendings = collectAttestations(proof.root).filter((l) => {
+    if (l.attestation.kind !== 'pending') return false;
+    const key = `${normBase(l.attestation.uri)} ${toHex(l.node.msg)}`;
+    if (seenPending.has(key)) return false;
+    seenPending.add(key);
+    return true;
+  });
   const unknown = new Set<string>();
   const calendars: CalendarResult[] = [];
 

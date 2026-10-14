@@ -48,7 +48,7 @@ describe('core/net (SPEC 9)', () => {
 
 describe('architecture guards', () => {
   const walk = (d: string): string[] => readdirSync(d).flatMap((n) => (statSync(join(d, n)).isDirectory() ? walk(join(d, n)) : [join(d, n)]));
-  const src = walk('src').filter((f) => /\.(ts|html|css)$/.test(f));
+  const src = walk('src').map((f) => f.replace(/\\/g, '/')).filter((f) => /\.(ts|html|css)$/.test(f));
 
   it('only core/net calls fetch (NET-2)', () => {
     const offenders = src.filter((f) => !f.includes('core/net/') && /\bfetch\s*\(|XMLHttpRequest|WebSocket|sendBeacon|EventSource/.test(readFileSync(f, 'utf8')));

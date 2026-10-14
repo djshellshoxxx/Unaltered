@@ -55,4 +55,7 @@ export const LIMITS = {
   maxMsg: 4096,
   maxAttPayload: 8192,
   maxUri: 1000,
+  /** Real proofs hold a handful; this bounds network fan-out and merge work from hostile input. */
+  maxAttestations: 256,
+  maxDistinctBitcoin: 16,
 } as const;
