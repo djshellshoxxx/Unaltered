@@ -1,0 +1,63 @@
+name: Release build
+
+# Builds the release artefacts from a tag. Signing is a deliberate OFFLINE step (docs/RELEASE.md): this workflow never
+# holds the release key. It publishes a DRAFT release with unsigned artefacts and SHA256SUMS for the maintainer to sign.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      npm_config_ignore_scripts: "true"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.os }}
+          path: |
+            dist/unaltered-*.html
+            dist/unaltered-*.zip
+            dist/SHA256SUMS
+
+  draft-release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-ubuntu-latest
+          path: linux
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-windows-latest
+          path: windows
+      - name: Builds must be byte-identical across platforms
+        run: diff linux/SHA256SUMS windows/SHA256SUMS
+      - name: Create draft release (unsigned)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft --title "$GITHUB_REF_NAME" \
+            --notes "Unsigned build artefacts. Maintainer: verify reproducibility, then sign SHA256SUMS offline (docs/RELEASE.md) and attach SHA256SUMS.sig before publishing." \
+            linux/unaltered-*.html linux/unaltered-*.zip linux/SHA256SUMS

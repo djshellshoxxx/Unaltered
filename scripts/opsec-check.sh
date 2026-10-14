@@ -28,6 +28,9 @@ is_allowed_email() {
 }
 
 SELF="scripts/opsec-check.sh"
+# Vendored third-party agent tooling (not part of the app, never shipped): font licences and docs legitimately contain
+# third-party contact addresses. Everything that is built from src/ is still checked.
+VENDORED_RE='^(skills|shared)/'
 
 echo "== 1. git identity (effective for this repo)"
 name="$(git config user.name || true)"
@@ -57,6 +60,7 @@ echo "== 3. emails in tracked text files"
 bad=0
 while IFS= read -r -d '' f; do
   [ "$f" = "$SELF" ] && continue
+  [[ "$f" =~ $VENDORED_RE ]] && continue
   file --mime "$f" 2>/dev/null | grep -q 'charset=binary' && continue
   while IFS= read -r e; do
     [ -z "$e" ] && continue
@@ -69,6 +73,7 @@ echo "== 4. personal paths in tracked text files"
 bad=0
 while IFS= read -r -d '' f; do
   [ "$f" = "$SELF" ] && continue
+  [[ "$f" =~ $VENDORED_RE ]] && continue
   file --mime "$f" 2>/dev/null | grep -q 'charset=binary' && continue
   if grep -Eqn '(/home/[A-Za-z0-9._-]+/|/Users/[A-Za-z0-9._-]+/|[A-Za-z]:\\Users\\[A-Za-z0-9._-]+)' "$f" 2>/dev/null; then
     fail "$f contains a home-directory path"; bad=1
@@ -85,7 +90,7 @@ fi
 
 echo "== 6. embedded metadata in tracked images/PDFs"
 media=()
-while IFS= read -r -d '' f; do media+=("$f"); done < <(git ls-files -z -- '*.jpg' '*.jpeg' '*.png' '*.tif' '*.tiff' '*.heic' '*.webp' '*.gif' '*.pdf' '*.mp4' '*.mov')
+while IFS= read -r -d '' f; do [[ "$f" =~ $VENDORED_RE ]] && continue; media+=("$f"); done < <(git ls-files -z -- '*.jpg' '*.jpeg' '*.png' '*.tif' '*.tiff' '*.heic' '*.webp' '*.gif' '*.pdf' '*.mp4' '*.mov')
 if [ "${#media[@]}" -eq 0 ]; then
   ok "no media files tracked"
 elif command -v exiftool >/dev/null 2>&1; then

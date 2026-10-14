@@ -4,8 +4,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
-# Least privilege by default (OPSEC §5). Elevate per job only if ever needed.
+# Least privilege by default (OPSEC 5). Elevate per job only if ever needed.
 permissions:
   contents: read
 
@@ -13,12 +14,16 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # Never let dependency install scripts run in CI (OPSEC 3.2); .npmrc enforces the same locally.
+  npm_config_ignore_scripts: "true"
+
 jobs:
   opsec:
     name: Identity and metadata leak check
     runs-on: ubuntu-latest
     steps:
-      # TODO(CI-2): pin actions by full commit SHA before the first release.
+      # TODO(CI-2): pin actions by full commit SHA before the first public release.
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -27,42 +32,26 @@ jobs:
         run: bash scripts/opsec-check.sh
 
   build-test:
-    name: Typecheck, lint, test, reproducible build
+    name: Typecheck, lint, unit tests, reproducible build (Linux)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      # The job is a no-op until the toolchain exists (task M0-4 commits package-lock.json).
-      # hashFiles() is not allowed in a job-level `if`, so detect the lockfile in a step.
-      - name: Detect toolchain
-        id: toolchain
-        run: |
-          if [ -f package-lock.json ]; then
-            echo "present=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "present=false" >> "$GITHUB_OUTPUT"
-            echo "No package-lock.json yet; skipping build and test steps."
-          fi
       - uses: actions/setup-node@v4
-        if: steps.toolchain.outputs.present == 'true'
         with:
           node-version: 22
           cache: npm
       - name: Install (no install scripts)
-        if: steps.toolchain.outputs.present == 'true'
         run: npm ci --ignore-scripts
       - name: Verify package signatures and provenance
-        if: steps.toolchain.outputs.present == 'true'
         run: npm audit signatures
       - name: Typecheck, lint, test
-        if: steps.toolchain.outputs.present == 'true'
         run: |
           npm run typecheck
           npm run lint
           npm run test
-      - name: Build twice and compare (reproducibility gate)
-        if: steps.toolchain.outputs.present == 'true'
+      - name: Build twice and compare (reproducibility gate, SR-6)
         run: |
           npm run build
           find dist -type f -print0 | sort -z | xargs -0 sha256sum > /tmp/build1.sums
@@ -70,3 +59,148 @@ jobs:
           npm run build
           find dist -type f -print0 | sort -z | xargs -0 sha256sum > /tmp/build2.sums
           diff /tmp/build1.sums /tmp/build2.sums
+      - name: Keep Linux checksums for the cross-platform comparison
+        run: cp dist/SHA256SUMS linux-SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: unaltered-linux-build
+          path: |
+            dist/unaltered-*.html
+            dist/unaltered-*.zip
+            dist/SHA256SUMS
+            linux-SHA256SUMS
+          if-no-files-found: error
+
+  e2e:
+    name: End-to-end (Chromium, CSP violations fail the test, axe scan)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      # The browser version is fixed by the pinned @playwright/test version in package-lock.json.
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+        env:
+          CI: "true"
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-failures
+          path: test-results
+          if-no-files-found: ignore
+
+  windows:
+    name: Windows build and tests
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test
+      - run: npm run build
+      - run: npx playwright install chromium
+      - run: npx playwright test
+        env:
+          CI: "true"
+      - name: Windows checksum list for the cross-platform comparison
+        shell: bash
+        run: cp dist/SHA256SUMS windows-SHA256SUMS
+      - name: Verify the shipped Verify-Checksums.ps1 logic on the real zip
+        shell: pwsh
+        run: |
+          $zip = Get-ChildItem dist/unaltered-*.zip | Select-Object -First 1
+          Expand-Archive -Path $zip.FullName -DestinationPath $env:RUNNER_TEMP/unz
+          $dir = Get-ChildItem $env:RUNNER_TEMP/unz | Select-Object -First 1
+          $bad = 0
+          foreach ($line in Get-Content (Join-Path $dir.FullName 'SHA256SUMS')) {
+            if ($line -match '^([0-9a-f]{64})\s+(.+)$') {
+              $actual = (Get-FileHash -Algorithm SHA256 -Path (Join-Path $dir.FullName $Matches[2])).Hash.ToLower()
+              if ($actual -ne $Matches[1]) { Write-Host "MISMATCH $($Matches[2])"; $bad++ }
+            }
+          }
+          if ($bad -ne 0) { exit 1 }
+          Write-Host 'All files in the Windows zip match its SHA256SUMS.'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: unaltered-windows-build
+          path: |
+            dist/unaltered-*.html
+            dist/unaltered-*.zip
+            dist/SHA256SUMS
+            windows-SHA256SUMS
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-failures-windows
+          path: test-results
+          if-no-files-found: ignore
+
+  reproducible-across-platforms:
+    name: Linux and Windows builds are byte-identical
+    needs: [build-test, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: unaltered-linux-build
+          path: linux
+      - uses: actions/download-artifact@v4
+        with:
+          name: unaltered-windows-build
+          path: windows
+      - name: Compare
+        run: diff linux/linux-SHA256SUMS windows/windows-SHA256SUMS && echo "identical:" && cat linux/linux-SHA256SUMS
+
+  differential:
+    name: Differential tests against the reference OpenTimestamps client
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm ci --ignore-scripts
+      # Dev-only (never shipped). Version pinned; hashes of the sdist are reviewed in docs/DEPENDENCIES.md.
+      - run: python -m venv /tmp/venv && /tmp/venv/bin/pip install opentimestamps==0.4.5
+      - name: Fixtures regenerate byte-identically from the reference implementation
+        run: |
+          /tmp/venv/bin/python tests/differential/gen_fixtures.py /tmp/fixtures
+          for f in pending confirmed batch0 batch1 batch2 litecoin; do cmp /tmp/fixtures/$f.ots tests/fixtures/ots/$f.ots; done
+      - name: Our parser and serializer against the reference
+        run: npx vitest run tests/unit/codec.test.ts
+        env:
+          UNALTERED_PYTHON: /tmp/venv/bin/python
+
+  network-check:
+    name: Live check of calendars and explorers (CORS and API shape, informational)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check
+        run: node scripts/network-check.mjs | tee -a "$GITHUB_STEP_SUMMARY"

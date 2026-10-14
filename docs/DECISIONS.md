@@ -29,7 +29,7 @@ Format: Context → Decision → Consequences. Status: Proposed / Accepted / Sup
 ---
 
 ## ADR-003: OTS codec, official JS package vs in-house minimal
-**Status:** Proposed (decide at M0-1)
+**Status:** Accepted (in-house codec), 2026-10-14
 
 **Context.** The official JS package was developed for Node and is documented as tested on very old Node versions (6/7), uses dated build tooling, and has no audit that we could find. A hand-written codec makes us responsible for a binary parser handling untrusted input.
 
@@ -87,3 +87,39 @@ Format: Context → Decision → Consequences. Status: Proposed / Accepted / Sup
 **Decision.** None in v0.1. Offline use is provided by the single-file build, which users save deliberately. Revisit with a full threat review.
 
 **Consequences.** (+) Smaller attack surface; no persistence of a compromised version. (−) No installable PWA convenience.
+
+**Outcome (ADR-003).** In-house codec (`src/core/ots`, about 600 lines). The official JS package was not adopted: criterion 2 (dated, Node-era dependency tree) and 3 (gulp build, not reproducible) fail, so per the default rule the codec is ours. Constants and layout were read from python-opentimestamps 0.4.5 / client 0.7.2 (`core/op.py`, `core/notary.py`, `core/timestamp.py`, `calendar.py`, `otsclient/cmds.py`), not from secondary sources. Exit criteria met: every reference fixture round-trips **byte-identically** (`tests/unit/codec.test.ts`), the reference implementation reads our output (differential test), and the parser is fuzzed with 3000+ mutations per run. Known-but-unsupported tags (SHA-1, RIPEMD-160, Keccak, reverse, hexlify, Litecoin, Ethereum) are recognised and refused with a specific message (fail closed, SR-12). Not yet done: comparison on proofs produced by real calendars (no network access when this was written; the `network-check` job and the first real stamp close this).
+
+---
+
+## ADR-008: Settings choose among built-in endpoints; no arbitrary custom hosts
+**Status:** Accepted
+
+**Context.** FR-13 says "choose calendars, explorers, and M". The CSP is a `<meta>` fixed at build time and `connect-src` is generated from `core/net/allowlist.ts`. A user-typed host would be blocked by the CSP, and loosening the CSP for arbitrary hosts would defeat the exfiltration protection that SR-1 exists to give.
+
+**Decision.** Settings let the user select any subset of the built-in endpoints and set M (minimum 1). Adding a host is a source change (allowlist + CSP + SPEC + review).
+
+**Consequences.** (+) The CSP stays the single guarantee that nothing else is contacted. (-) A user who wants a private calendar must rebuild; documented in `docs/RELEASE.md`.
+
+---
+
+## ADR-009: Windows is served by the offline HTML and a zip, not a native executable
+**Status:** Accepted
+
+**Context.** The product is a client-only web app (ADR-001). A native wrapper needs Electron/Tauri or a Node SEA binary: a large dependency tree, an auto-update and code-signing surface, and a second place for bugs, none of which serves the threat model.
+
+**Decision.** Ship the single-file offline build and a reproducible zip with a double-click launcher and a PowerShell checksum helper. CI builds and tests on `windows-latest` and requires the Windows build to be byte-identical to the Linux build.
+
+**Consequences.** (+) Nothing to install, nothing to sign except `SHA256SUMS`. (-) No Start-menu entry or file-association; revisit via ADR if users ask.
+
+---
+
+## ADR-010: Hash in a Worker, with a Trusted-Types-gated blob worker for the single-file build
+**Status:** Accepted (Q7 partly resolved)
+
+**Context.** FR-1 requires the main thread never block more than 50 ms and `require-trusted-types-for 'script'` (SR-1) makes `new Worker(url)` a policy-checked sink. Chrome blocks module scripts and Workers from `file://`.
+
+**Decision.** One lazily created Trusted Types policy (`unaltered-worker`, allowed in the CSP via `trusted-types unaltered-worker`) approves exactly the one URL the app is about to use. Multi-file: `./hasher.worker.js` (`worker-src 'self'`). Single-file: a `blob:` URL of the inlined worker source (`worker-src blob:`). If a Worker cannot start (e.g. multi-file over `file://` in Chrome) the identical chunked code runs on the main thread, yielding between 4 MiB chunks. The WebCrypto cross-check runs inside the worker so the main thread never copies the file.
+
+**Consequences.** (+) Measured max main-thread gap about 12 ms while hashing 48 MiB in Chromium; no CSP violations. (-) Q7 is only answered for Chromium. Firefox and Tor Browser are untested; both fall back safely (no `trustedTypes` means the policy step is skipped, and a failed Worker falls back to the main thread).
+

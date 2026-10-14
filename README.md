@@ -2,8 +2,9 @@
 
 **Prove a file existed, unchanged, at a point in time, without trusting us.**
 
-> **Status: pre-alpha, specification phase.** There is no working application yet.
-> Do not rely on this project for anything until a tagged, signed release exists.
+> **Status: v0.1 feature-complete, unaudited, unsigned.** The application is implemented and tested (see [docs/AUDIT.md](docs/AUDIT.md)),
+> but live network behaviour is not yet confirmed and no independent security audit or signed release exists.
+> Do not rely on it for anything important until a tagged, signed release exists. For important cases verify with your own Bitcoin node.
 
 ## What it does
 
@@ -20,6 +21,17 @@
 | | The exact time (block times are only accurate to roughly a couple of hours) |
 | | That you are anonymous when you stamp (your IP address is visible to the servers you contact) |
 
+## Run it
+
+```
+npm ci --ignore-scripts
+npm run check        # opsec check, typecheck, lint, unit/property/fuzz tests
+npm run test:e2e     # builds, then Chromium end-to-end + accessibility tests
+npm run build        # dist/: single-file offline HTML, multi-file site, zip, SHA256SUMS
+```
+
+**Windows:** unzip `unaltered-<version>.zip` and double-click `Open-Unaltered.cmd` (no install). See [docs/RELEASE.md](docs/RELEASE.md).
+
 ## Documents
 
 | Document | Purpose |
@@ -32,6 +44,10 @@
 | [docs/RESEARCH.md](docs/RESEARCH.md) | Research on prior art, audits, and historical failures, with sources |
 | [docs/BUILD_PLAN.md](docs/BUILD_PLAN.md) | Milestones, estimates, risks |
 | [docs/TODO.md](docs/TODO.md) | Actionable task checklist |
+| [docs/AUDIT.md](docs/AUDIT.md) | Feature and code audit against the spec |
+| [docs/NETWORK.md](docs/NETWORK.md) | Calendar and explorer API facts, live-check status |
+| [docs/UX.md](docs/UX.md) | Screens and mandatory copy |
+| [docs/RELEASE.md](docs/RELEASE.md) | Build artefacts, Windows distribution, release procedure |
 | [SECURITY.md](SECURITY.md) | How to report vulnerabilities |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution rules (dependencies and security are strict) |
 

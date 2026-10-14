@@ -53,7 +53,7 @@ Pin exact versions at M0-1 via `npm install --save-exact --save-dev <pkg>`; revi
 | GitHub Pages / any static host | Primary delivery | Replaceable; documented in OPSEC |
 | IPFS pinning | Censorship-resistant mirror | Pin per release; list CID |
 | OpenTimestamps calendars | Stamp + upgrade | Third-party infrastructure; ≥2 required |
-| Block explorers (`mempool.space`, `blockstream.info`) | L1 verification | **Unverified**: CORS and API shape (M0-3) |
+| Block explorers (`mempool.space`, `blockstream.info`) | L1 verification | API shape from Esplora docs; **live CORS unverified** (M0-3, see `docs/NETWORK.md`) |
 
 ## 6. Explicitly rejected
 
@@ -66,4 +66,6 @@ Pin exact versions at M0-1 via `npm install --save-exact --save-dev <pkg>`; revi
 
 | Date | Package | Version | Reviewer | Diff reviewed against | Notes |
 |---|---|---|---|---|---|
-| | | | | | |
+| 2026-10-14 | @noble/hashes | 2.4.0 | build session | package README / npm metadata (`npm audit signatures` runs in CI) | Only `sha2.js` is imported. Zero runtime dependencies. Not yet compared against a previously reviewed version: first adoption |
+| 2026-10-14 | typescript, esbuild, vitest, fast-check, eslint, @eslint/js, typescript-eslint, @types/node, @playwright/test, @axe-core/playwright | exact versions in package.json | build session | lockfile diff on first install | Dev only, not shipped. `npm ci --ignore-scripts` verified: esbuild works via its platform package without a postinstall |
+| 2026-10-14 | opentimestamps (PyPI, python) | 0.4.5 | build session | sdist read for protocol constants | Dev/CI only: fixture generation and differential tests |
