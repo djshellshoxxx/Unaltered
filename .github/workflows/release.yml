@@ -6,7 +6,7 @@ on:
   push:
     tags: ["v*"]
     # Branch pushes publish a numbered pre-release (v<version>-build.<run>) so builds are available before a tag is cut.
-    branches: [main, "claude/project-completion-builds-vhvag8"]
+    branches: [main, "claude/project-completion-builds-vhvag8", "claude/peaceful-curie-u239yn"]
   workflow_dispatch:
     inputs:
       tag:

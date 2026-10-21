@@ -134,3 +134,15 @@ Format: Context → Decision → Consequences. Status: Proposed / Accepted / Sup
 **Decision.** `npm run build` also emits a Linux `.tar.gz` and a macOS `.zip` (launcher + checksum script each), and a single-file Node CLI bundle built from the same `src/core`. Archive writers live in `scripts/lib/archive.mjs` and are deterministic. The release workflow builds on all three OS runners and requires identical `SHA256SUMS`.
 
 **Consequences.** (+) Three OS deliverables with no new dependency, no signing surface beyond `SHA256SUMS`. (+) CLI gives an independent, non-browser verification path. (-) macOS launcher is subject to Gatekeeper's first-run prompt; no dock/Applications integration. Native wrappers remain rejected unless a later ADR supersedes this.
+
+
+---
+
+## ADR-012: Audio metadata stripping (WAV, MP3) for creators
+**Status:** Accepted (extends SPEC section 8)
+
+**Context.** Musicians and producers are a natural user group: a stamped demo, stem or session bounce proves prior existence. Audio files routinely carry identity (artist/comment tags, cover art, broadcast `bext` originator and timestamps, DAW project paths in `iXML`).
+
+**Decision.** Add allowlist rewriters for WAV and MP3 in `core/strip/audio.ts` (SPEC 8.2a), reusing the existing cleaned-copy-required flow. Loop/cue chunks (`smpl`, `inst`, `cue `) are kept because they are musical content, not identity. No new dependency.
+
+**Consequences.** (+) Same security properties as image stripping, tiny code. (-) FLAC/AAC/OGG/AIFF remain unsupported and are warned about, not cleaned.

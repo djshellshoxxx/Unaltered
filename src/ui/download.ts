@@ -26,8 +26,8 @@ export function receiptName(fileName: string): string {
   return `${safeFileName(fileName)}.ots`;
 }
 
-export function cleanedName(fileName: string, format: 'jpeg' | 'png'): string {
-  const ext = format === 'jpeg' ? 'jpg' : 'png';
+export function cleanedName(fileName: string, format: 'jpeg' | 'png' | 'wav' | 'mp3'): string {
+  const ext = format === 'jpeg' ? 'jpg' : format;
   const stem = safeFileName(fileName).replace(/\.[A-Za-z0-9]{1,5}$/, '');
   return `${stem}-cleaned.${ext}`;
 }
