@@ -5,6 +5,8 @@ name: Release build
 on:
   push:
     tags: ["v*"]
+    # Branch pushes publish a numbered pre-release (v<version>-build.<run>) so builds are available before a tag is cut.
+    branches: [main, "claude/project-completion-builds-vhvag8"]
   workflow_dispatch:
     inputs:
       tag:
@@ -51,6 +53,9 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
           name: release-ubuntu-latest
@@ -72,8 +77,11 @@ jobs:
       - name: Create pre-release (unsigned)
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.tag || github.ref_name }}
+          TAG_INPUT: ${{ inputs.tag }}
         run: |
+          if [ -n "$TAG_INPUT" ]; then TAG="$TAG_INPUT"
+          elif [ "$GITHUB_REF_TYPE" = tag ]; then TAG="$GITHUB_REF_NAME"
+          else TAG="v$(node -p "require('./package.json').version")-build.$GITHUB_RUN_NUMBER"; fi
           gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "$TAG" \
             --notes "Unsigned pre-release. Per-OS packages: Windows (.zip), Linux (.tar.gz), macOS (-macos.zip), plus the single-file offline .html and the Node CLI (.mjs). All are byte-identical across Linux, Windows and macOS builds; check them against SHA256SUMS. Release signing (SHA256SUMS.sig) is an offline maintainer step: docs/RELEASE.md." \
             linux/unaltered-*.html linux/unaltered-*.mjs linux/unaltered-*.zip linux/unaltered-*.tar.gz linux/SHA256SUMS
