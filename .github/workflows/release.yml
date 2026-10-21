@@ -5,6 +5,11 @@ name: Release build
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to create (e.g. v0.1.0)"
+        required: true
 
 permissions:
   contents: read
@@ -13,7 +18,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     env:
       npm_config_ignore_scripts: "true"
@@ -35,7 +40,9 @@ jobs:
           name: release-${{ matrix.os }}
           path: |
             dist/unaltered-*.html
+            dist/unaltered-*.mjs
             dist/unaltered-*.zip
+            dist/unaltered-*.tar.gz
             dist/SHA256SUMS
 
   draft-release:
@@ -52,12 +59,21 @@ jobs:
         with:
           name: release-windows-latest
           path: windows
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-macos-latest
+          path: macos
       - name: Builds must be byte-identical across platforms
-        run: diff linux/SHA256SUMS windows/SHA256SUMS
-      - name: Create draft release (unsigned)
+        run: |
+          diff linux/SHA256SUMS windows/SHA256SUMS
+          diff linux/SHA256SUMS macos/SHA256SUMS
+      - name: Verify artefacts against SHA256SUMS
+        run: cd linux && sha256sum -c SHA256SUMS
+      - name: Create pre-release (unsigned)
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft --title "$GITHUB_REF_NAME" \
-            --notes "Unsigned build artefacts. Maintainer: verify reproducibility, then sign SHA256SUMS offline (docs/RELEASE.md) and attach SHA256SUMS.sig before publishing." \
-            linux/unaltered-*.html linux/unaltered-*.zip linux/SHA256SUMS
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "$TAG" \
+            --notes "Unsigned pre-release. Per-OS packages: Windows (.zip), Linux (.tar.gz), macOS (-macos.zip), plus the single-file offline .html and the Node CLI (.mjs). All are byte-identical across Linux, Windows and macOS builds; check them against SHA256SUMS. Release signing (SHA256SUMS.sig) is an offline maintainer step: docs/RELEASE.md." \
+            linux/unaltered-*.html linux/unaltered-*.mjs linux/unaltered-*.zip linux/unaltered-*.tar.gz linux/SHA256SUMS

@@ -5,7 +5,10 @@
 | Artefact | Purpose |
 |---|---|
 | `dist/unaltered-<v>.html` | **Single-file offline build** (FR-9). Inline script/style allowed by CSP hash, no `'unsafe-inline'`. Runs from `file://`. |
-| `dist/unaltered-<v>.zip` | Multi-file site (SRI on script and stylesheet) **plus the single file plus Windows helpers**. Stored without compression so it is byte-reproducible. |
+| `dist/unaltered-<v>.zip` | **Windows package**: multi-file site (SRI), the single file, `Open-Unaltered.cmd`, `Verify-Checksums.ps1`. Stored, byte-reproducible. |
+| `dist/unaltered-<v>-linux.tar.gz` | **Linux package**: same site/single file, `open-unaltered.sh` (xdg-open), `verify-checksums.sh` (`sha256sum -c`). Fixed mtime/owner, gzip OS byte pinned. |
+| `dist/unaltered-<v>-macos.zip` | **macOS package**: same site/single file, `Open-Unaltered.command` (double-click), `verify-checksums.sh` (`shasum -a 256 -c`). Unix modes recorded in the zip. |
+| `dist/unaltered-cli-<v>.mjs` | **CLI verifier** (Node >= 22): `hash <file>`, `verify <file> [receipt.ots]`; also inside every package. Exit code encodes the result state. |
 | `dist/web/` | The multi-file site unpacked, for hosting. |
 | `dist/SHA256SUMS` | Checksums of the `.html` and `.zip`. |
 
@@ -13,6 +16,12 @@ The zip also contains its own `SHA256SUMS`, `README.txt`, `LICENSE`, `Open-Unalt
 and `Verify-Checksums.ps1` (prints OK/MISMATCH per file using `Get-FileHash`). Nothing in any artefact depends on the time, the
 path or the machine: two builds, and Linux and Windows builds, are byte-identical (CI gates `build-test`, `windows`,
 `reproducible-across-platforms`).
+
+## Linux and macOS
+
+Same model as Windows (ADR-009, extended by ADR-011): no installer, no executable shipped. Linux: `tar xzf unaltered-<v>-linux.tar.gz && sh unaltered-<v>/open-unaltered.sh`.
+macOS: unzip, then right-click `Open-Unaltered.command` > Open the first time (Gatekeeper quarantines downloaded scripts; the page itself is a plain HTML file and needs no approval).
+Run `verify-checksums.sh` first to compare every file with the folder's `SHA256SUMS`.
 
 ## Windows
 
@@ -24,7 +33,7 @@ deliberately **not** built: it would add a large dependency tree and an update/s
 ## Cutting a release (maintainers)
 
 1. `main` is green; `docs/TODO.md` M5 items done; version bumped in `package.json`; `git tag -s v<version>`.
-2. Pushing the tag runs `.github/workflows/release.yml`: builds on Linux and Windows, fails if they differ, creates a **draft** release with unsigned artefacts.
+2. Pushing the tag (or running the workflow manually with a tag name) runs `.github/workflows/release.yml`: builds on Linux, Windows and macOS, fails if any differ, creates an unsigned **pre-release** with all artefacts.
 3. A second person rebuilds locally (`npm ci --ignore-scripts && npm run build`) and compares `dist/SHA256SUMS`.
 4. **Offline:** `gpg --detach-sign --armor SHA256SUMS` (or `minisign`) with the release key. Attach `SHA256SUMS.sig`. The workflow never holds the key (OPSEC 2.2).
 5. Publish. Pin the same files to IPFS and record the CID in the notes. Publish the public key in the repo and two other places (OPS-4).

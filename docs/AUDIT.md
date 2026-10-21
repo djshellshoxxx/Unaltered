@@ -37,7 +37,9 @@ Verification status vocabulary: **verified complete** (implemented and tested), 
 | FR-14 Accessibility, language | verified (automated) / partial (manual) | `ui/strings.ts`, `styles.css` | axe WCAG 2.2 AA clean, keyboard test, 44 px targets at 360 px, no horizontal scroll; English and Spanish with key/placeholder parity test. Manual screen-reader pass **not done**; Spanish is not reviewed by a native speaker |
 | 3.1 Time semantics | verified complete | `strings.ts` | "no later than about"; a test forbids "created at" |
 | PDF warning, in-app L2 instructions (v0.2) | verified complete | `stamp.ts`, `about.ts` | PDF stripping is *not* implemented and not claimed |
-| CLI verifier, extra anchors (later) | missing (planned only) | - | out of v0.1/v0.2 scope |
+| CLI verifier (later) | verified complete (offline paths); live path same as FR-7 | `src/cli/*`, `tests/unit/cli.test.ts` | hash vector, usage, generic errors, invalid receipt exit code; ADR-011 |
+| Extra anchors (later) | missing (planned only) | - | out of scope |
+| Linux / macOS packages | verified (local build, determinism, checksum script, modes); macOS runner checked in release workflow | `scripts/build.mjs`, `scripts/lib/archive.mjs` | ADR-011 |
 
 ## 3. Non-functional and security requirements
 

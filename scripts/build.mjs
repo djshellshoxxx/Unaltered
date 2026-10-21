@@ -1,7 +1,9 @@
 // Deterministic build (NFR-7, SR-1, SR-3, FR-9). Produces in dist/:
 //   web/                       multi-file site (external script/style with SRI)
 //   unaltered-<v>.html         single self-contained offline file (inline script/style allowed by CSP hash)
-//   unaltered-<v>.zip          multi-file site + single file + Windows helpers, stored (uncompressed) for reproducibility
+//   unaltered-<v>.zip          Windows package: site + single file + .cmd launcher + PowerShell checksum helper (stored zip)
+//   unaltered-<v>-linux.tar.gz Linux package: site + single file + xdg-open launcher + checksum script
+//   unaltered-<v>-macos.zip    macOS package: site + single file + .command launcher + checksum script
 //   SHA256SUMS                 checksums of the release artefacts
 // No timestamps, absolute paths or environment data are embedded in any output.
 import { build } from 'esbuild';
@@ -10,6 +12,7 @@ import { gzipSync } from 'node:zlib';
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { makeTarGz, makeZip } from './lib/archive.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
@@ -66,10 +69,14 @@ async function bundle(entry, define) {
 const workerJs = await bundle('src/core/hash/hasher.worker.ts', {});
 const mainMulti = await bundle('src/main.ts', { __WORKER_URL__: JSON.stringify('./hasher.worker.js'), __WORKER_INLINE__: 'null' });
 const mainSingle = await bundle('src/main.ts', { __WORKER_URL__: 'null', __WORKER_INLINE__: JSON.stringify(workerJs) });
+const cliJs = (
+  await build({ absWorkingDir: root, entryPoints: ['src/cli/main.ts'], bundle: true, write: false, format: 'esm', target: 'node22', platform: 'node', minify: true, legalComments: 'none', charset: 'ascii', logLevel: 'error', banner: { js: '#!/usr/bin/env node' } })
+).outputFiles[0].text;
+const cliName = `unaltered-cli-${version}.mjs`;
 const css = read('src/styles.css');
 const template = read('src/index.html');
 
-const buildHash = hex256(Buffer.from(mainMulti + '\0' + workerJs + '\0' + css + '\0' + template)).slice(0, 16);
+const buildHash = hex256(Buffer.from(cliJs + '\0' + mainMulti + '\0' + workerJs + '\0' + css + '\0' + template)).slice(0, 16);
 
 function fill(html, { cspValue, styles, script }) {
   return html
@@ -113,64 +120,6 @@ if (/\beval\s*\(|new Function\s*\(/.test(mainMulti.replace(/"(?:[^"\\]|\\.)*"/g,
 const gz = gzipSync(Buffer.from(mainMulti + workerJs + css), { level: 9 }).length;
 if (gz > 150 * 1024) throw new Error(`bundle is ${gz} bytes gzip, above the 150 KiB budget`);
 
-// ---- zip (stored, fixed timestamps) ----------------------------------------------------------------------------
-const crcTable = new Uint32Array(256).map((_, i) => {
-  let c = i;
-  for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-  return c >>> 0;
-});
-const crc32 = (buf) => {
-  let c = 0xffffffff;
-  for (const b of buf) c = crcTable[(c ^ b) & 0xff] ^ (c >>> 8);
-  return (c ^ 0xffffffff) >>> 0;
-};
-function makeZip(entries) {
-  const sorted = [...entries].sort((a, b) => (a.name < b.name ? -1 : 1));
-  const chunks = [];
-  const central = [];
-  let offset = 0;
-  for (const { name, data } of sorted) {
-    const nameB = Buffer.from(name, 'ascii');
-    const crc = crc32(data);
-    const local = Buffer.alloc(30);
-    local.writeUInt32LE(0x04034b50, 0);
-    local.writeUInt16LE(20, 4); // version needed
-    local.writeUInt16LE(0, 6); // flags
-    local.writeUInt16LE(0, 8); // stored
-    local.writeUInt16LE(0, 10); // time 00:00:00
-    local.writeUInt16LE(0x0021, 12); // date 1980-01-01
-    local.writeUInt32LE(crc, 14);
-    local.writeUInt32LE(data.length, 18);
-    local.writeUInt32LE(data.length, 22);
-    local.writeUInt16LE(nameB.length, 26);
-    local.writeUInt16LE(0, 28);
-    chunks.push(local, nameB, data);
-    const c = Buffer.alloc(46);
-    c.writeUInt32LE(0x02014b50, 0);
-    c.writeUInt16LE(20, 4);
-    c.writeUInt16LE(20, 6);
-    c.writeUInt16LE(0, 8);
-    c.writeUInt16LE(0, 10);
-    c.writeUInt16LE(0, 12);
-    c.writeUInt16LE(0x0021, 14);
-    c.writeUInt32LE(crc, 16);
-    c.writeUInt32LE(data.length, 20);
-    c.writeUInt32LE(data.length, 24);
-    c.writeUInt16LE(nameB.length, 28);
-    c.writeUInt32LE(offset, 42);
-    central.push(c, nameB);
-    offset += local.length + nameB.length + data.length;
-  }
-  const cdSize = central.reduce((n, b) => n + b.length, 0);
-  const end = Buffer.alloc(22);
-  end.writeUInt32LE(0x06054b50, 0);
-  end.writeUInt16LE(sorted.length, 8);
-  end.writeUInt16LE(sorted.length, 10);
-  end.writeUInt32LE(cdSize, 12);
-  end.writeUInt32LE(offset, 16);
-  return Buffer.concat([...chunks, ...central, end]);
-}
-
 const crlf = (s) => Buffer.from(s.replace(/\r?\n/g, '\r\n'), 'utf8');
 const prefix = `unaltered-${version}`;
 const singleName = `${prefix}.html`;
@@ -186,6 +135,10 @@ WINDOWS
      values with the SHA256SUMS published with the release (signature: SHA256SUMS.sig).
   3. Stamping and verifying need internet access to the OpenTimestamps calendar servers and two Bitcoin block explorers.
      Fingerprinting and cleaning pictures work completely offline.
+
+LINUX / MACOS
+  Linux: run "sh open-unaltered.sh". macOS: right-click "Open-Unaltered.command" > Open (first time). Then run verify-checksums.sh to check this copy.
+  Command line (Node 22+): node unaltered-cli-${version}.mjs verify <file> [receipt.ots]
 
 OTHER SYSTEMS
   Open ${singleName} (single file) or index.html (multi-file site) in any current browser.
@@ -216,30 +169,68 @@ if ($bad -eq 0) { Write-Host 'All files match.' } else { Write-Host "$bad proble
 Read-Host 'Press Enter to close'
 `;
 
-const files = [
+const lf = (s) => Buffer.from(s, 'utf8');
+const shLauncher = (open) => `#!/bin/sh
+# Opens the offline single-file build in the default browser.
+dir=$(cd "$(dirname "$0")" && pwd)
+${open}
+`;
+const linuxLauncher = shLauncher(`if command -v xdg-open >/dev/null 2>&1; then xdg-open "$dir/${singleName}"; else echo "Open $dir/${singleName} in a browser."; fi`);
+const macLauncher = shLauncher(`open "$dir/${singleName}"`);
+const shVerify = (sumCmd) => `#!/bin/sh
+# Checks every file in this folder against SHA256SUMS. Prints OK/FAILED per file.
+cd "$(dirname "$0")" || exit 1
+if ${sumCmd}; then echo "All files match."; else echo "Problem(s) found. Do not use this copy." >&2; exit 1; fi
+`;
+
+const common = [
   { name: 'index.html', data: Buffer.from(multiHtml) },
   { name: 'main.js', data: Buffer.from(mainMulti) },
   { name: 'hasher.worker.js', data: Buffer.from(workerJs) },
   { name: 'styles.css', data: Buffer.from(css) },
   { name: singleName, data: Buffer.from(singleHtml) },
   { name: 'LICENSE', data: Buffer.from(read('LICENSE')) },
+  { name: cliName, data: Buffer.from(cliJs), mode: 0o755 },
+];
+const withSums = (extra) => {
+  const files = [...common, ...extra];
+  const sums = files
+    .map((f) => `${hex256(f.data)}  ${f.name}`)
+    .sort((a, b) => (a.slice(66) < b.slice(66) ? -1 : 1))
+    .join('\n') + '\n';
+  return [...files, { name: 'SHA256SUMS', data: Buffer.from(sums) }];
+};
+const prefixed = (files) => files.map((f) => ({ name: `${prefix}/${f.name}`, data: f.data, mode: f.mode }));
+
+const windowsFiles = withSums([
   { name: 'README.txt', data: crlf(readme) },
   { name: 'Open-Unaltered.cmd', data: crlf(launcher) },
   { name: 'Verify-Checksums.ps1', data: crlf(psVerify) },
-];
-const innerSums = files
-  .map((f) => `${hex256(f.data)}  ${f.name}`)
-  .sort((a, b) => (a.slice(66) < b.slice(66) ? -1 : 1))
-  .join('\n') + '\n';
-files.push({ name: 'SHA256SUMS', data: Buffer.from(innerSums) });
+]);
+const linuxFiles = withSums([
+  { name: 'README.txt', data: lf(readme) },
+  { name: 'open-unaltered.sh', data: lf(linuxLauncher), mode: 0o755 },
+  { name: 'verify-checksums.sh', data: lf(shVerify('sha256sum -c SHA256SUMS')), mode: 0o755 },
+]);
+const macFiles = withSums([
+  { name: 'README.txt', data: lf(readme) },
+  { name: 'Open-Unaltered.command', data: lf(macLauncher), mode: 0o755 },
+  { name: 'verify-checksums.sh', data: lf(shVerify('shasum -a 256 -c SHA256SUMS')), mode: 0o755 },
+]);
 
 rmSync(dist, { recursive: true, force: true });
 mkdirSync(join(dist, 'web'), { recursive: true });
-for (const f of files) if (['index.html', 'main.js', 'hasher.worker.js', 'styles.css'].includes(f.name)) writeFileSync(join(dist, 'web', f.name), f.data);
+for (const f of common) if (f.name !== singleName && f.name !== 'LICENSE' && f.name !== cliName) writeFileSync(join(dist, 'web', f.name), f.data);
 writeFileSync(join(dist, singleName), singleHtml);
-const zip = makeZip(files.map((f) => ({ name: `${prefix}/${f.name}`, data: f.data })));
-writeFileSync(join(dist, `${prefix}.zip`), zip);
-const outer = [`${hex256(Buffer.from(singleHtml))}  ${singleName}`, `${hex256(zip)}  ${prefix}.zip`].sort().join('\n') + '\n';
+writeFileSync(join(dist, cliName), cliJs);
+// `<prefix>.zip` is the Windows package (name kept for compatibility); the others carry their OS in the name.
+const artefacts = [
+  [`${prefix}.zip`, makeZip(prefixed(windowsFiles))],
+  [`${prefix}-linux.tar.gz`, makeTarGz(prefixed(linuxFiles))],
+  [`${prefix}-macos.zip`, makeZip(prefixed(macFiles))],
+];
+for (const [name, data] of artefacts) writeFileSync(join(dist, name), data);
+const outer = [[singleName, Buffer.from(singleHtml)], [cliName, Buffer.from(cliJs)], ...artefacts].map(([n, d]) => `${hex256(d)}  ${n}`).sort().join('\n') + '\n';
 writeFileSync(join(dist, 'SHA256SUMS'), outer);
 
 process.stdout.write(`built ${prefix} (build ${buildHash}); gzip ${(gz / 1024).toFixed(1)} KiB; single-file ${(singleHtml.length / 1024).toFixed(0)} KiB\n`);

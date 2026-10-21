@@ -123,3 +123,14 @@ Format: Context → Decision → Consequences. Status: Proposed / Accepted / Sup
 
 **Consequences.** (+) Measured max main-thread gap about 12 ms while hashing 48 MiB in Chromium; no CSP violations. (-) Q7 is only answered for Chromium. Firefox and Tor Browser are untested; both fall back safely (no `trustedTypes` means the policy step is skipped, and a failed Worker falls back to the main thread).
 
+
+---
+
+## ADR-011: Per-OS packages and a CLI verifier, still without native executables
+**Status:** Accepted (extends ADR-009)
+
+**Context.** Users on Linux and macOS need the same no-install experience as Windows, and the release needs distinct, checkable artefacts per OS. A scriptable verifier was a listed later item (SPEC section 2).
+
+**Decision.** `npm run build` also emits a Linux `.tar.gz` and a macOS `.zip` (launcher + checksum script each), and a single-file Node CLI bundle built from the same `src/core`. Archive writers live in `scripts/lib/archive.mjs` and are deterministic. The release workflow builds on all three OS runners and requires identical `SHA256SUMS`.
+
+**Consequences.** (+) Three OS deliverables with no new dependency, no signing surface beyond `SHA256SUMS`. (+) CLI gives an independent, non-browser verification path. (-) macOS launcher is subject to Gatekeeper's first-run prompt; no dock/Applications integration. Native wrappers remain rejected unless a later ADR supersedes this.
