@@ -1,0 +1,25 @@
+{
+  "description": "SHA-256 known-answer vectors. Verified with GNU sha256sum on 2026-10-09. Used by FR-1 acceptance tests.",
+  "vectors": [
+    {
+      "name": "empty",
+      "input": { "type": "utf8", "value": "" },
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "abc",
+      "input": { "type": "utf8", "value": "abc" },
+      "sha256": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+    },
+    {
+      "name": "pangram",
+      "input": { "type": "utf8", "value": "The quick brown fox jumps over the lazy dog" },
+      "sha256": "d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592"
+    },
+    {
+      "name": "one-million-a",
+      "input": { "type": "repeat", "value": "a", "count": 1000000 },
+      "sha256": "cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0"
+    }
+  ]
+}
