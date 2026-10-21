@@ -276,6 +276,13 @@ Keep: signature, IHDR, PLTE, tRNS, IDAT, IEND, and sRGB (rendering intent).
 Drop: all other chunks (including eXIf, tEXt, zTXt, iTXt, tIME, iCCP, pHYs, bKGD, gAMA, cHRM and any private chunk) and any bytes after IEND.
 Verify every chunk CRC. Animated PNG (acTL/fcTL/fdAT) → `unsupported`.
 
+### 8.2a Audio (WAV, MP3) — v0.3, ADR-012
+Normative rules, same fail-closed contract as 8.1/8.2; the digest is computed over the cleaned copy only.
+- **WAV (RIFF/WAVE).** Chunk allowlist: `fmt `, `data`, `fact`, plus musical loop/cue data `smpl`, `inst`, `cue `. Everything else is removed (`LIST/INFO`, `bext`, `iXML`, `id3 `, `_PMX`, unknown). `fmt ` must precede one `data`; chunk lengths must fit inside the RIFF size; odd-chunk pad bytes are rewritten as zero; the RIFF size is recomputed; bytes after the RIFF end are dropped. RF64 is *unsupported* (never called clean).
+- **MP3.** Remove leading ID3v2 tags (up to 8, honouring the footer flag and zero padding), a trailing APEv2 tag, and a trailing ID3v1 tag. A valid MPEG Layer III frame sync must follow; otherwise *rejected*. Audio frames are copied byte-for-byte.
+- **Stated limits.** Audio watermarks, encoder strings inside the Xing/Info frame, and anything inside audio frames or `data` samples are not inspected. Other audio formats (FLAC, AAC/M4A, OGG, AIFF) are *unsupported* and require the hidden-data acknowledgement.
+- **Tests.** `tests/unit/audio.test.ts`: secrets absent after cleaning, idempotence, byte-stability, malformed/truncated/oversized-length rejection.
+
 ### 8.3 Limits we state to users
 - Stripping removes **metadata**, not **content**. Faces, landmarks, shadows, visible text, and sensor-noise patterns (which can link a photo to a specific camera) are unaffected.
 - Copies uploaded elsewhere may keep their own metadata.

@@ -38,6 +38,7 @@ Verification status vocabulary: **verified complete** (implemented and tested), 
 | 3.1 Time semantics | verified complete | `strings.ts` | "no later than about"; a test forbids "created at" |
 | PDF warning, in-app L2 instructions (v0.2) | verified complete | `stamp.ts`, `about.ts` | PDF stripping is *not* implemented and not claimed |
 | CLI verifier (later) | verified complete (offline paths); live path same as FR-7 | `src/cli/*`, `tests/unit/cli.test.ts` | hash vector, usage, generic errors, invalid receipt exit code; ADR-011 |
+| Audio metadata stripping, WAV/MP3 (v0.3, ADR-012) | verified complete (synthetic fixtures) | `core/strip/audio.ts`, `tests/unit/audio.test.ts` | secrets removed, idempotent, rejects malformed. Real DAW/encoder files and FLAC/AAC/OGG/AIFF are not covered |
 | Extra anchors (later) | missing (planned only) | - | out of scope |
 | Linux / macOS packages | verified (local build, determinism, checksum script, modes); macOS runner checked in release workflow | `scripts/build.mjs`, `scripts/lib/archive.mjs` | ADR-011 |
 

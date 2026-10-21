@@ -1,6 +1,6 @@
 {
   "name": "unaltered",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Prove a file existed, unchanged, at a point in time. Client-only, no accounts.",
   "license": "MIT",

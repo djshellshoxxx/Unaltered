@@ -3,7 +3,7 @@ import { groupHex } from '../../core/bytes';
 import { isAbort, safeMessage } from '../../core/errors';
 import { hashBlob, type HashResult } from '../../core/hash/hasher';
 import { calendarsOf, stampBatch, type CalendarResult } from '../../core/ots/calendar';
-import { detectBlob, stripMetadata, type FileKind, type StripOutcome } from '../../core/strip';
+import { MIME, detectBlob, stripMetadata, type FileKind, type StripOutcome } from '../../core/strip';
 import { announce, copyText, dropZone, el, formatBytes, setChildren } from '../dom';
 import { cleanedName, downloadLink, receiptName, revokeAll } from '../download';
 import { stampConfigFromSettings } from '../state';
@@ -28,7 +28,8 @@ interface Item {
   card: HTMLElement;
 }
 
-const isImage = (k: FileKind): boolean => k === 'jpeg' || k === 'png';
+// Kinds the cleaner can rewrite (images and audio).
+const isImage = (k: FileKind): boolean => k === 'jpeg' || k === 'png' || k === 'wav' || k === 'mp3';
 
 export function mountStamp(root: HTMLElement): void {
   revokeAll();
@@ -144,8 +145,8 @@ export function mountStamp(root: HTMLElement): void {
           { class: 'notice ok' },
           el('p', {}, t('stamp.cleanedNotice')),
           c.removed.length > 0 ? el('p', {}, t('stamp.removed'), ' ', c.removed.join('; ')) : el('p', {}, t('stamp.nothingRemoved')),
-          el('p', { class: 'muted' }, t('stamp.limits')),
-          downloadLink(t('stamp.downloadCleaned', { name: cleanedName(it.file.name, c.format) }), cleanedName(it.file.name, c.format), c.output, c.format === 'jpeg' ? 'image/jpeg' : 'image/png', () => {
+          el('p', { class: 'muted' }, t(c.format === 'wav' || c.format === 'mp3' ? 'stamp.limitsAudio' : 'stamp.limits')),
+          downloadLink(t('stamp.downloadCleaned', { name: cleanedName(it.file.name, c.format) }), cleanedName(it.file.name, c.format), c.output, MIME[c.format], () => {
             it.downloadedCleaned = true;
             refreshItem(it);
             refreshActions();
