@@ -3,7 +3,7 @@ import { DEFAULT_CALENDARS, DEFAULT_EXPLORERS } from '../../core/net/allowlist';
 import { clear, el, setChildren } from '../dom';
 import { isDefault, restoreDefaults, settings } from '../state';
 import { isEnabled, loadReceipts, removeReceipt, setEnabled, storageAvailable } from '../store';
-import { LANGS, getLang, setLang, t, type Lang } from '../strings';
+import { LANGS, getLang, setLang, t } from '../strings';
 import { groupHex } from '../../core/bytes';
 
 export function mountSettings(root: HTMLElement, onLangChange: () => void): void {
@@ -115,16 +115,30 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
     setChildren(receipts, ...kids);
   }
 
-  const langSelect = el(
-    'select',
-    { id: 'lang', onchange: (e: Event) => (setLang((e.target as HTMLSelectElement).value as Lang), onLangChange()) },
-    ...LANGS.map((l) => el('option', { value: l.code, selected: l.code === getLang() }, l.name)),
+  // WebKit 27.2 emits a style-src-attr CSP violation merely constructing a native select.
+  // Two language choices fit native radios; keep the strict policy and keyboard semantics.
+  const languageChoices = el(
+    'fieldset',
+    { id: 'lang' },
+    el('legend', {}, t('settings.language')),
+    ...LANGS.map((l) => el('label', { class: 'check' }, el('input', {
+      type: 'radio',
+      name: 'language',
+      value: l.code,
+      checked: l.code === getLang(),
+      onchange: (e: Event) => {
+        if ((e.target as HTMLInputElement).checked) {
+          setLang(l.code);
+          onLangChange();
+        }
+      },
+    }), el('span', {}, l.name))),
   );
   clear(root);
   setChildren(
     root,
     el('h2', { id: 'settings-h', tabindex: -1 }, t('settings.title')),
-    el('div', { class: 'field' }, el('label', { for: 'lang' }, t('settings.language')), langSelect),
+    languageChoices,
     receipts,
     advanced,
   );

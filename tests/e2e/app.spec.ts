@@ -276,9 +276,22 @@ test.describe('platform behaviour', () => {
     await page.getByLabel('Remember my receipts on this device').uncheck();
     expect(await page.evaluate(() => localStorage.length)).toBe(0);
 
-    await page.getByLabel('Language').selectOption('es');
+    await page.getByRole('radio', { name: 'English', exact: true }).focus();
+    await page.keyboard.press('ArrowRight');
     await expect(page.getByRole('heading', { name: 'Ajustes' })).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('lang', 'es');
+    await expect(page.getByRole('radio', { name: 'Español', exact: true })).toBeFocused();
+    await page.keyboard.press('ArrowLeft');
+    await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page.getByRole('radio', { name: 'English', exact: true })).toBeFocused();
+    await page.getByRole('radio', { name: 'Español', exact: true }).check();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'es');
+    expect(await page.evaluate(() => localStorage.length)).toBe(0);
+    await page.reload();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page.getByRole('radio', { name: 'English', exact: true })).toBeChecked();
+    expect(await page.evaluate(() => localStorage.length)).toBe(0);
   });
 
   test('settings: custom calendar selection and minimum are honoured', async ({ page, context }) => {
@@ -332,12 +345,20 @@ test.describe('accessibility (WCAG 2.2 AA)', () => {
     const small = await page.evaluate(() => {
       const bad: string[] = [];
       for (const n of document.querySelectorAll('a, button, select, input:not(.file-input)')) {
-        const r = (n as HTMLElement).getBoundingClientRect();
-        if (r.width > 0 && (r.height < 43.5 || r.width < 43.5) && (n as HTMLInputElement).type !== 'checkbox') bad.push(`${n.tagName} ${n.textContent?.slice(0, 20)} ${Math.round(r.width)}x${Math.round(r.height)}`);
+        const input = n as HTMLInputElement;
+        // Associated native labels are part of the clickable target, for checkboxes and radios alike.
+        const target = n.tagName === 'INPUT' && (input.type === 'checkbox' || input.type === 'radio') ? input.labels?.[0] ?? n : n;
+        const r = (target as HTMLElement).getBoundingClientRect();
+        if (r.width > 0 && (r.height < 43.5 || r.width < 43.5)) bad.push(`${n.tagName} ${n.textContent?.slice(0, 20)} ${Math.round(r.width)}x${Math.round(r.height)}`);
       }
       return bad;
     });
     expect(small).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    const spanishLabel = page.locator('#lang label').filter({ has: page.getByRole('radio', { name: 'Español', exact: true }) });
+    const box = await spanishLabel.boundingBox();
+    expect(box).not.toBeNull();
+    await spanishLabel.click({ position: { x: box!.width - 2, y: box!.height / 2 } });
+    await expect(page.locator('html')).toHaveAttribute('lang', 'es');
   });
 });

@@ -2,8 +2,8 @@
 
 **Prove a file existed, unchanged, at a point in time, without trusting us.**
 
-> **Status: v0.1 feature-complete, unaudited, unsigned.** The application is implemented and tested (see [docs/AUDIT.md](docs/AUDIT.md)),
-> but live network behaviour is not yet confirmed and no independent security audit or signed release exists.
+> **Status: v0.3.1 development build, unaudited; release artifacts remain unsigned.** See [docs/AUDIT.md](docs/AUDIT.md) and the current [validation record](docs/COMPLETION_STATUS.md).
+> Live submissions and explorer APIs have been checked; pending-upgrade browser CORS, independent audit and offline release signing remain open.
 > Do not rely on it for anything important until a tagged, signed release exists. For important cases verify with your own Bitcoin node.
 
 ## What it does
@@ -22,6 +22,8 @@
 | | That you are anonymous when you stamp (your IP address is visible to the servers you contact) |
 
 ## Run it
+
+Requires Node.js 22 or newer. No application server or account is required.
 
 ```
 npm ci --ignore-scripts

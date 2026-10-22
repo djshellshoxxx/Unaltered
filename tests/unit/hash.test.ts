@@ -44,6 +44,39 @@ describe('FR-1 hashing', () => {
     const r = await hashSource(new Blob([new Uint8Array(100)]), { chunkSize: 10, isCancelled: () => ++calls > 2 });
     expect(r).toBeNull();
   });
+  it('hashes a byte stream without allocating Blob slices', async () => {
+    const blob = new Blob(['abc']);
+    const src = { size: blob.size, stream: () => blob.stream(), slice: (): never => { throw new Error('unexpected slice allocation'); } };
+    const result = await hashSource(src, { chunkSize: 2 });
+    expect(result!.hex).toBe('ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
+  });
+  it('rejects invalid chunk sizes instead of hanging or allocating invalid buffers', async () => {
+    for (const chunkSize of [0, -1, 0.5, NaN, Infinity]) {
+      await expect(hashSource(new Blob(['x']), { chunkSize })).rejects.toMatchObject({ code: 'INPUT_INVALID' });
+    }
+  });
+  it('rejects an invalid declared source size before reading', async () => {
+    for (const size of [-1, 0.5, NaN, Infinity]) {
+      const source = { size, slice: (): never => { throw new Error('invalid source was read'); } };
+      await expect(hashSource(source)).rejects.toMatchObject({ code: 'INPUT_INVALID' });
+    }
+  });
+  it('refuses slice reads whose lengths disagree with the requested file region', async () => {
+    for (const length of [0, 2, 4]) {
+      let reads = 0;
+      const source = { size: 3, slice: () => {
+        // A guard makes the broken implementation fail promptly instead of starving the test runner forever.
+        if (++reads > 1) throw new Error('hashing continued after a premature end of input');
+        return { arrayBuffer: async () => new ArrayBuffer(length) };
+      } };
+      await expect(hashSource(source)).rejects.toMatchObject({ code: 'INPUT_INVALID' });
+    }
+  });
+  it('rejects a byte stream that ends before its declared file size', async () => {
+    const blob = new Blob(['abc']);
+    const source = { size: 4, stream: () => blob.stream(), slice: (): never => { throw new Error('unexpected slice'); } };
+    await expect(hashSource(source)).rejects.toMatchObject({ code: 'INPUT_INVALID' });
+  });
 
   it('groups hex in blocks of 8 (FR-2)', () => {
     expect(groupHex('0123456789abcdef0123')).toBe('01234567 89abcdef 0123');

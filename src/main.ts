@@ -64,7 +64,7 @@ function start(): void {
   function onLang(): void {
     mountAll();
     route(false);
-    sections.settings.querySelector<HTMLElement>('#lang')?.focus();
+    sections.settings.querySelector<HTMLElement>('#lang input:checked')?.focus();
   }
 
   function route(focus = true): void {
