@@ -23,8 +23,8 @@ jobs:
     name: Identity and metadata leak check
     runs-on: ubuntu-latest
     steps:
-      # TODO(CI-2): pin actions by full commit SHA before the first public release.
-      - uses: actions/checkout@v4
+      # Official action tag targets verified through the GitHub API on 2026-10-22.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -35,10 +35,10 @@ jobs:
     name: Typecheck, lint, unit tests, reproducible build (Linux)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
@@ -61,7 +61,7 @@ jobs:
           diff /tmp/build1.sums /tmp/build2.sums
       - name: Keep Linux checksums for the cross-platform comparison
         run: cp dist/SHA256SUMS linux-SHA256SUMS
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: unaltered-linux-build
           path: |
@@ -75,10 +75,10 @@ jobs:
     name: End-to-end (Chromium, CSP violations fail the test, axe scan)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
@@ -88,7 +88,7 @@ jobs:
       - run: npm run test:e2e
         env:
           CI: "true"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: failure()
         with:
           name: e2e-failures
@@ -99,10 +99,10 @@ jobs:
     name: Windows build and tests
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
@@ -133,7 +133,7 @@ jobs:
           }
           if ($bad -ne 0) { exit 1 }
           Write-Host 'All files in the Windows zip match its SHA256SUMS.'
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: unaltered-windows-build
           path: |
@@ -142,7 +142,7 @@ jobs:
             dist/SHA256SUMS
             windows-SHA256SUMS
           if-no-files-found: error
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: failure()
         with:
           name: e2e-failures-windows
@@ -154,11 +154,11 @@ jobs:
     needs: [build-test, windows]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: unaltered-linux-build
           path: linux
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: unaltered-windows-build
           path: windows
@@ -169,14 +169,14 @@ jobs:
     name: Differential tests against the reference OpenTimestamps client
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - run: npm ci --ignore-scripts
@@ -196,11 +196,12 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
       - name: Check
+        shell: bash
         run: node scripts/network-check.mjs | tee -a "$GITHUB_STEP_SUMMARY"

@@ -20,7 +20,8 @@ export function makeWav(opts: { extra?: boolean; trailing?: string; oddPad?: num
   return Uint8Array.from([...enc('RIFF'), ...u32le(body.length), ...body, ...enc(opts.trailing ?? '')]);
 }
 
-export const FRAME = [0xff, 0xfb, 0x90, 0x00, 0x11, 0x22, 0x33, 0x44];
+// MPEG-1 Layer III, 128 kbit/s, 44100 Hz, no padding: floor(144 * 128000 / 44100) = 417 bytes.
+export const FRAME = [0xff, 0xfb, 0x90, 0x00, ...new Array<number>(413).fill(0)];
 
 export function makeMp3(opts: { id3v2?: boolean; id3v1?: boolean; ape?: boolean } = {}): Uint8Array {
   const out: number[] = [];

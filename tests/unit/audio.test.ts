@@ -40,6 +40,21 @@ describe('WAV stripping', () => {
     rf.set([...'RF64'].map((c) => c.charCodeAt(0)), 0);
     expect(cleanWav(rf).kind).toBe('unsupported');
   });
+  it('rejects a RIFF container that claims bytes missing from the file', () => {
+    const w = makeWav();
+    new DataView(w.buffer).setUint32(4, w.length + 100, true);
+    expect(cleanWav(w).kind).toBe('rejected');
+  });
+  it('rejects a partial chunk header inside the declared RIFF container', () => {
+    const w = makeWav({ trailing: 'abc' });
+    new DataView(w.buffer).setUint32(4, w.length - 8, true);
+    expect(cleanWav(w).kind).toBe('rejected');
+  });
+  it('rejects a missing required chunk pad byte', () => {
+    const w = makeWav({ oddPad: 5 }).slice(0, -1);
+    new DataView(w.buffer).setUint32(4, w.length - 8, true);
+    expect(cleanWav(w).kind).toBe('rejected');
+  });
 });
 
 describe('MP3 stripping', () => {
@@ -56,6 +71,47 @@ describe('MP3 stripping', () => {
     if (r.kind !== 'cleaned') throw new Error();
     expect(r.removed).toEqual([]);
     expect(r.output.length).toBe(FRAME.length * 2);
+  });
+  it('rejects truncated audio frames rather than declaring them cleaned', () => {
+    expect(cleanMp3(makeMp3().slice(0, -1)).kind).toBe('rejected');
+  });
+  it('rejects unrecognised bytes after the audio frames', () => {
+    const input = Uint8Array.from([...makeMp3(), ...new TextEncoder().encode('SECRET-TRAILER')]);
+    expect(cleanMp3(input).kind).toBe('rejected');
+  });
+  it('rejects reserved MPEG bitrates and sample rates', () => {
+    for (const header of [0xf0, 0x9c]) {
+      const input = makeMp3();
+      input[2] = header;
+      expect(cleanMp3(input).kind).toBe('rejected');
+    }
+  });
+  it('refuses free-format MP3 instead of guessing frame boundaries', () => {
+    const input = makeMp3();
+    input[2] = 0;
+    expect(cleanMp3(input).kind).toBe('unsupported');
+  });
+  it('rejects unknown ID3 versions instead of guessing their tag layout', () => {
+    const input = makeMp3({ id3v2: true });
+    input[3] = 5;
+    expect(cleanMp3(input).kind).toBe('rejected');
+  });
+  it('rejects the footer flag on ID3v2.3 where that flag is reserved', () => {
+    const tagged = makeMp3({ id3v2: true });
+    const tagEnd = tagged.length - FRAME.length * 2;
+    const input = Uint8Array.from([...tagged.slice(0, tagEnd), ...new Array<number>(10).fill(0), ...tagged.slice(tagEnd)]);
+    input[5] = 0x10;
+    expect(cleanMp3(input).kind).toBe('rejected');
+  });
+  it('checks ID3v2.4 footers instead of silently dropping ten arbitrary bytes', () => {
+    const header = [73, 68, 51, 4, 0, 0x10, 0, 0, 0, 0];
+    const footer = [51, 68, 73, 4, 0, 0x10, 0, 0, 0, 0];
+    expect(cleanMp3(Uint8Array.from([...header, ...footer, ...FRAME])).kind).toBe('cleaned');
+    expect(cleanMp3(Uint8Array.from([...header, ...new Array<number>(10).fill(0), ...FRAME])).kind).toBe('rejected');
+  });
+  it('self-check rejects incomplete frames and bytes outside the audio frames', () => {
+    expect(selfCheckAudio('mp3', makeMp3().slice(0, -1))).not.toBeNull();
+    expect(selfCheckAudio('mp3', makeMp3({ id3v1: true }))).not.toBeNull();
   });
   it('rejects a truncated tag, non-MP3 data, and an oversized APE length', () => {
     expect(cleanMp3(makeMp3({ id3v2: true }).slice(0, 12)).kind).toBe('rejected');

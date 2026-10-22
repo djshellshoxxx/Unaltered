@@ -1,9 +1,8 @@
 # Network facts (M0-3)
 
-Status: **API shapes confirmed from primary sources; live browser CORS NOT yet confirmed.** The build environment used to
-write this code cannot reach the calendars or explorers (egress is blocked), so nothing below was observed live.
-`scripts/network-check.mjs` and the `network-check` CI job do that check from a networked machine. Paste the table it
-prints into section 3 and update SPEC section 9. **Do not call risk R1 closed until that table says PASS.**
+Status: **Live server responses checked on 2026-10-22; browser pending-response CORS remains unresolved.** Calendar submission
+and both explorer endpoints return the required CORS headers. Calendar pending `404` replies do not. These are Node observations
+through the environment's supported HTTPS proxy, not a complete live browser round trip. **Risk R1 remains open.**
 
 ## 1. Calendar servers (OpenTimestamps)
 
@@ -29,11 +28,25 @@ whose double-SHA-256 does not equal the hash the explorer claimed. The parser is
 
 ## 3. Live results
 
-Not yet recorded. Run `npm run network-check` on a networked machine (or read the `network-check` job summary in CI) and paste here:
+Observed at 2026-10-22 14:42:39 UTC with Node 24, using `node --use-env-proxy scripts/network-check.mjs` (the flag activates
+the managed environment's existing proxy and preserves TLS verification). Without that flag this machine's direct DNS path
+returned `EAI_AGAIN`. Each calendar received one random, non-evidence 32-byte commitment. The check exited 1:
 
 | Host | Check | Status | Access-Control-Allow-Origin | Detail | Preflight | Result |
 |---|---|---|---|---|---|---|
-| (pending) | | | | | | |
+| alice.btc.calendar.opentimestamps.org | POST /digest | 200 | * | 207 bytes | OPTIONS 404 | PASS |
+| alice.btc.calendar.opentimestamps.org | GET /timestamp/commitment | 404 | missing | pending | | FAIL |
+| bob.btc.calendar.opentimestamps.org | POST /digest | 200 | * | 240 bytes | OPTIONS 404 | PASS |
+| bob.btc.calendar.opentimestamps.org | GET /timestamp/commitment | 404 | missing | pending | | FAIL |
+| finney.calendar.eternitywall.com | POST /digest | 200 | * | 191 bytes | OPTIONS 501 | PASS |
+| finney.calendar.eternitywall.com | GET /timestamp/commitment | 404 | missing | pending | | FAIL |
+| mempool.space | block-height/0 + genesis header | 200/200 | * | genesis header hash verified | | PASS |
+| blockstream.info | block-height/0 + genesis header | 200/200 | * | genesis header hash verified | | PASS |
+
+The application's POST uses only the safelisted `Accept` header, so it does not depend on OPTIONS support. A browser cannot
+read a cross-origin `404` lacking `Access-Control-Allow-Origin`; it reports a network failure. The app keeps the existing pending
+receipt and reports that calendar failure; it does not turn it into a confirmed proof. Confirmed `200` upgrade replies still need
+a live browser check. Do not work around this with `no-cors`, disabled TLS verification, or an unreviewed relay.
 
 ## 4. If a host blocks browser calls (R1)
 

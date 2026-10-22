@@ -11,7 +11,7 @@ Do tasks in order within a milestone unless marked parallel.
 - [ ] **OPS-5** Hardware-key 2FA on GitHub and any hosting/registrar accounts.
 - [ ] **OPS-6** Set repo-local git identity; run `./scripts/opsec-check.sh`.
 - [x] **CI-1** Review `.github/workflows/ci.yml`; add the build/test jobs once a lockfile exists.
-- [ ] **CI-2** Replace action version tags with full commit SHAs (verify each SHA against the action's official release).
+- [x] **CI-2** Replace action version tags with full commit SHAs (official action repository tag targets resolved through the GitHub API on 2026-10-22; recorded in `COMPLETION_STATUS.md`).
 - [x] **UX-1** Write `docs/UX.md` (wireframes from the design discussion + final copy for SPEC §11).
 
 ## M0: Spikes
@@ -74,7 +74,8 @@ Do tasks in order within a milestone unless marked parallel.
 ## Backlog (v0.2+)
 - [x] FR-10 Batch stamping, FR-11 share link, FR-12 local receipt list, FR-13 settings, FR-14 i18n (English, Spanish)
 - [x] PDF metadata *warning* (stripping PDFs is not implemented and not claimed)
-- [ ] CLI verifier, additional anchors (new ADRs)
+- [x] CLI verifier (ADR-011; packaged for Node >=22)
+- [ ] Additional anchors (new ADR required)
 
 ## Status notes (2026-10-14 build session)
 - **Done in code, with caveats:** M0-5 fixtures are *synthetic* (generated with the reference library, no live calendar involved). FR-1d: the 2 GiB / <200 MiB memory test runs in Node (`UNALTERED_BIG=1 npm test`, passed), not yet in a CI browser. A11Y-1: axe scans pass; the manual screen-reader pass is still open. Q3 = drop ICC (default); Q4 = warn only (v0.1).

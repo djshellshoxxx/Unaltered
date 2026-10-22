@@ -10,7 +10,7 @@
 | `dist/unaltered-<v>-macos.zip` | **macOS package**: same site/single file, `Open-Unaltered.command` (double-click), `verify-checksums.sh` (`shasum -a 256 -c`). Unix modes recorded in the zip. |
 | `dist/unaltered-cli-<v>.mjs` | **CLI verifier** (Node >= 22): `hash <file>`, `verify <file> [receipt.ots]`; also inside every package. Exit code encodes the result state. |
 | `dist/web/` | The multi-file site unpacked, for hosting. |
-| `dist/SHA256SUMS` | Checksums of the `.html` and `.zip`. |
+| `dist/SHA256SUMS` | Checksums of the offline HTML, CLI bundle, Windows and macOS ZIPs, and Linux tarball. |
 
 The zip also contains its own `SHA256SUMS`, `README.txt`, `LICENSE`, `Open-Unaltered.cmd` (double-click launcher for Windows)
 and `Verify-Checksums.ps1` (prints OK/MISMATCH per file using `Get-FileHash`). Nothing in any artefact depends on the time, the
