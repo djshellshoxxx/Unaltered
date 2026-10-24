@@ -237,25 +237,55 @@ test.describe('platform behaviour', () => {
     const res = await page.evaluate(async () => {
       const big = new File([new Uint8Array(48 * 1024 * 1024)], 'big.bin');
       await new Promise((r) => setTimeout(r, 100));
+      const start = performance.now();
+      const phases: { phase: string; ms: number }[] = [];
+      const mark = (phase: string): void => { if (phases.length < 100) phases.push({ phase, ms: performance.now() - start }); };
+      const NativeWorker = window.Worker;
+      window.Worker = class extends NativeWorker {
+        constructor(...args: ConstructorParameters<typeof Worker>) {
+          mark('worker-constructor-start');
+          super(...args);
+          mark('worker-constructor-end');
+          this.addEventListener('message', (event: MessageEvent<{ type?: string }>) => mark(`worker-${event.data.type ?? 'unknown'}`));
+        }
+        override terminate(): void {
+          mark('worker-terminate-start');
+          super.terminate();
+          mark('worker-terminate-end');
+        }
+      };
+      const arrayBuffer = Blob.prototype.arrayBuffer;
+      Blob.prototype.arrayBuffer = async function (): Promise<ArrayBuffer> {
+        mark(`main-blob-${this.size}-read-start`);
+        const result = await arrayBuffer.call(this);
+        mark(`main-blob-${this.size}-read-end`);
+        return result;
+      };
       let maxGap = 0;
+      const gaps: { gap: number; ms: number; phase: string | undefined }[] = [];
       let last = performance.now();
       const timer = setInterval(() => {
         const n = performance.now();
         maxGap = Math.max(maxGap, n - last);
+        if (n - last >= 50 && gaps.length < 20) gaps.push({ gap: n - last, ms: n - start, phase: phases.at(-1)?.phase });
         last = n;
       }, 5);
       const input = document.getElementById('stamp-file') as HTMLInputElement;
+      mark('fixture-transfer-start');
       const dt = new DataTransfer();
       dt.items.add(big);
+      mark('fixture-transfer-added');
       input.files = dt.files;
+      mark('fixture-assigned');
       input.dispatchEvent(new Event('change', { bubbles: true }));
+      mark('change-dispatched');
       for (let i = 0; i < 600 && !document.querySelector('.item .digest'); i++) await new Promise((r) => setTimeout(r, 20));
       clearInterval(timer);
-      return { maxGap, digest: document.querySelector('.item .digest')?.textContent ?? '' };
+      return { maxGap, phases, gaps, digest: document.querySelector('.item .digest')?.textContent ?? '' };
     });
     // sha256 of 48 MiB of zero bytes
     expect(res.digest.replace(/ /g, '')).toHaveLength(64);
-    expect(res.maxGap).toBeLessThan(50);
+    expect(res.maxGap, JSON.stringify({ phases: res.phases, gaps: res.gaps })).toBeLessThan(50);
   });
 
   test('opt-in receipt list and language switch', async ({ page, context }) => {
