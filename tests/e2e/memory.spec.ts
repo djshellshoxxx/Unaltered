@@ -3,6 +3,7 @@ import { mkdtemp, open, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
+import { installHashIoDiagnostics } from './hash-io-diagnostics';
 
 // FR-1 requires browser evidence, not only the virtual-source Node test. This Linux/Chromium-only
 // acceptance test measures all renderer RSS (including the worker and ArrayBuffer backing stores).
@@ -38,6 +39,9 @@ test('hashes a real 2 GiB file in the browser with less than 200 MiB extra rende
     const before = await rss();
     let peak = before;
     let sampling = true;
+    let hashWorker: import('@playwright/test').Worker | undefined;
+    let ioQueryPending = false;
+    let lastIo: unknown;
     let nextHeartbeat = Date.now() + 10_000;
     const monitor = (async () => {
       while (sampling) {
@@ -47,6 +51,13 @@ test('hashes a real 2 GiB file in the browser with less than 200 MiB extra rende
           void page.evaluate(() => document.querySelector('progress')?.getAttribute('value') ?? null)
             .then((progress) => phase(`progress=${progress} extraRendererRss=${peak - before}`))
             .catch(() => phase('progress-query-unavailable'));
+          if (hashWorker && !ioQueryPending) {
+            ioQueryPending = true;
+            void hashWorker.evaluate(() => ({
+              ...(globalThis as unknown as { __hashIoTrace?: object }).__hashIoTrace, now: performance.now(),
+            })).then((state) => { lastIo = state; phase(`worker-io=${JSON.stringify(state)}`); })
+              .catch(() => phase('worker-io-unavailable')).finally(() => { ioQueryPending = false; });
+          }
           nextHeartbeat = Date.now() + 10_000;
         }
         await new Promise((resolve) => setTimeout(resolve, 50));
@@ -57,7 +68,9 @@ test('hashes a real 2 GiB file in the browser with less than 200 MiB extra rende
       phase('input-start');
       await page.setInputFiles('#stamp-file', file);
       phase('input-selected');
-      await worker; // A silently substituted main-thread implementation does not satisfy FR-1.
+      hashWorker = await worker; // A silently substituted main-thread implementation does not satisfy FR-1.
+      hashWorker.on('close', () => phase('worker-closed'));
+      await hashWorker.evaluate(installHashIoDiagnostics);
       phase('worker-observed');
       // Surface a terminal UI/read failure or a failed RSS monitor immediately instead of hiding it
       // behind the digest wait. This preserves the success criteria and the existing time limit.
@@ -70,6 +83,7 @@ test('hashes a real 2 GiB file in the browser with less than 200 MiB extra rende
     } finally {
       sampling = false;
       await monitor;
+      await test.info().attach('hash-io-last-observation', { body: JSON.stringify(lastIo ?? null), contentType: 'application/json' });
     }
     // Independent Node crypto reference, streamed in fixed chunks rather than loading the source file.
     const expected = createHash('sha256');
