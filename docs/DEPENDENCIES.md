@@ -3,7 +3,19 @@
 Goal: **as few as possible**, and only audited or independently verifiable ones.
 "Audited" is not "certified": no JavaScript library we found has a formal certification (e.g., FIPS validation of the shipped JS). What exists is independent audit reports of varying age and scope. Verify scope before relying on it.
 
-Last reviewed: 2026-10-09 (research session). Update this table at every dependency change.
+Historical research tables below were reviewed on 2026-10-09, with adoption records dated separately. Current internal review: 2026-10-24 (REL-1); no dependencies changed. The dated snapshot supersedes planning statuses such as “candidate pin” and “decision pending” without rewriting the historical research or claiming that its external sources were rechecked.
+
+## Current internal snapshot — 2026-10-24
+
+Source: `1453865ca21a5c8a98b92805a36799de44d97919` (PR #6). `package.json` and `package-lock.json` are unchanged from the resume baseline `e4d80b67d145e940b0458bad93cc069412b39306`. Lockfile format: 3; SHA-256: `cd4546fa88716387db8fe8920777c9dc992f0c9efb343d311a3f0057028f287f`.
+
+- Runtime: `@noble/hashes` **2.4.0**, exact manifest/lockfile agreement, no package runtime dependencies; production code imports the `sha2.js` subpath. No claim is made that this version is covered by the historical v1.0.0 independent audit or that the outstanding audited-version comparison has been completed.
+- OpenTimestamps: the in-house codec is the implemented choice (ADR-003); the npm client/forks remain outside the dependency set. Python `opentimestamps==0.4.5` remains a dev/CI reference only.
+- Dev-only direct pins: `@axe-core/playwright@4.13.0`, `@eslint/js@10.0.1`, `@playwright/test@1.64.0`, `@types/node@26.6.5`, `esbuild@0.28.2`, `eslint@10.12.0`, `fast-check@4.10.2`, `typescript@6.0.3`, `typescript-eslint@8.71.2`, `vitest@5.0.4`. Installs retain `npm ci --ignore-scripts`; no package or lockfile update was made by this review.
+- Current CI evidence supplied by the integrating worker: [run 40105518156](https://github.com/djshellshoxxx/Unaltered/actions/runs/40105518156) passed package-signature verification (141 signatures, 59 attestations), Linux/Windows/macOS builds/tests and checksum identity, and 19 app tests in each of Chromium, Firefox and WebKit. Signature/provenance checks authenticate the package evidence checked; they do not prove benign behavior or an independent security audit. The native 2 GiB browser-memory job was still pending when this record was written.
+
+This refresh inspects local manifests, lockfile, imports and controls; it performs no new upstream research, vulnerability advisory scan, independent audit or complete source comparison of dependencies. Historical unverified research items remain unverified unless a later dated record explicitly resolves them. See [review scope and remaining controls](REVIEW_REFRESH_20261024.md).
+
 
 ## 1. Runtime dependencies
 
@@ -70,3 +82,4 @@ Pin exact versions at M0-1 via `npm install --save-exact --save-dev <pkg>`; revi
 | 2026-10-14 | typescript, esbuild, vitest, fast-check, eslint, @eslint/js, typescript-eslint, @types/node, @playwright/test, @axe-core/playwright | exact versions in package.json | build session | lockfile diff on first install | Dev only, not shipped. `npm ci --ignore-scripts` verified: esbuild works via its platform package without a postinstall |
 | 2026-10-14 | opentimestamps (PyPI, python) | 0.4.5 | build session | sdist read for protocol constants | Dev/CI only: fixture generation and differential tests |
 | 2026-10-22 | Gitleaks | 8.30.1 | development validation | official GitHub release asset digest checked before extraction | Dev/CI only. Linux artifact SHA-256 `551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb`; local full-history scan passed. No PR comments or third-party reporting configured |
+| 2026-10-24 | Current direct dependencies and lockfile | exact versions in current snapshot above | internal resume review | local manifest/lockfile agreement; no diff from resume baseline | REL-1 record refresh only. No dependencies changed; current CI signature/provenance results recorded above. No new upstream audit/advisory research or independently audited-version diff claimed |

@@ -1,6 +1,6 @@
 # Threat Model
 
-Status: draft v0.1. Review at every milestone and before any audit.
+Status: internal review refreshed 2026-10-24 for v0.3.1 (REL-1); independent audit remains open. Review at every milestone and before any audit.
 Method: assets → adversaries → threats → mitigations → **residual risk we state openly**.
 
 ## 1. Assets
@@ -62,3 +62,17 @@ Method: assets → adversaries → threats → mitigations → **residual risk w
 ## 5. Review triggers
 
 Re-run this document when: a dependency is added, a new file type is supported, an endpoint is added to the allowlist, the receipt format changes, before each audit, and after any security report.
+
+## 6. Current internal review — 2026-10-24
+
+Scope: source `1453865ca21a5c8a98b92805a36799de44d97919` (PR #6). The earlier table records the design threat model, including intended operational controls; it does not certify that branch protection, account hardware keys, signing, independent review or public distribution controls are configured. This is an internal refresh of the implemented scope and known gaps, not independent security acceptance.
+
+| Threats | Current implementation / evidence | Residual risk and boundary |
+|---|---|---|
+| 1–4, 13–14: delivery and dependency compromise | Client-only architecture, one exact-pinned runtime dependency, pinned CI actions, ignored install scripts, three-OS checksum agreement and package signatures/provenance checks. The unsafe branch-triggered unsigned publication path is replaced with manual dispatch of an existing exact-version tag at the selected commit and `--verify-tag --draft --prerelease`. | No release was created. Draft preparation does not sign artefacts or establish trustworthy delivery. Offline key management, signed-tag trust, independent rebuild, public-key publication, release approval and hosting/IPFS decisions remain human controls. Operational settings are not attested by this document. |
+| 5, 10–11: proof correctness and service availability | Nonced commitments and explorer-header integrity checks remain. Native browser probe [run 40104783971](https://github.com/djshellshoxxx/Unaltered/actions/runs/40104783971): Alice/Finney submission POST 200; pending GETs failed browser reads; Node diagnostic found missing ACAO on pending 404s; Bob timed out; both explorers passed genesis-header integrity checks. | **R1 remains open.** Submission and genesis checks do not demonstrate a confirmed calendar upgrade or confirmed receipt verification through the app/reference client. No relay, security bypass or new service is introduced. See `NETWORK.md`. |
+| 7–9: metadata privacy and parser resource use | JPEG/PNG/WAV/MP3 allowlist/container handling; structural checks and audio self-check; malformed/unsupported outcomes are distinct. Expanded bounded property/mutation and truncation/resource tests cover the in-house parsers. | Stripping reads supported inputs into memory with a 256 MiB input cap; this is not a streaming-memory guarantee. It cannot erase identifying pixels/samples, steganography, watermarks or MP3 frame/Xing payloads; unsupported types (including PDF stripping) remain warnings, not sanitized output. Synthetic audio fixtures do not establish decoded fidelity or real-encoder interoperability. See `PARSER_ACCEPTANCE_20261024.md`. |
+| 9: large-file hashing and I/O correctness | Actual Blob hashing uses bounded 4 MiB reads with BYOB reuse where supported; fallback slices remain. Safe integer sizes/chunk sizes and exact slice lengths are checked; premature stream EOF is rejected. WebCrypto cross-check applies only at ≤64 MiB, retaining its one-shot input buffer while backend reads are bounded. | Bounds apply to the hashing read path, not every cleaner, JS engine, arbitrary custom stream or application allocation. Integrating-worker evidence: all 126 unit tests passed with large-input/reference checks enabled; local real 2 GiB browser hashing passed the unchanged <200 MiB extra renderer-RSS gate in about 44 s. Native CI memory acceptance was pending at this snapshot. Neither result is a universal resource bound. |
+| 17: result usability and accessibility | Integrating-worker evidence: 19 app tests passed per Chromium/Firefox/WebKit, including existing automated accessibility/CSP checks, on current native CI [run 40105518156](https://github.com/djshellshoxxx/Unaltered/actions/runs/40105518156). | Automated checks do not close manual keyboard/screen-reader review or establish WCAG conformance on every browser/device. |
+
+All explicit non-protections in section 4 remain. The current audio support additionally does not remove identifying voices or recording content. Long coverage-guided fuzzing, provenance-recorded real-media corpus/decoded comparisons, confirmed live upgrade/reference coverage, manual accessibility and independent security audit remain open; the dated refresh closes only the internal documentation review scope. See [review record](REVIEW_REFRESH_20261024.md), `TODO.md` and `RELEASE.md` for release controls.

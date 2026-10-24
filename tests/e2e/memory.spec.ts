@@ -44,7 +44,13 @@ test('hashes a real 2 GiB file in the browser with less than 200 MiB extra rende
       const worker = page.waitForEvent('worker');
       await page.setInputFiles('#stamp-file', file);
       await worker; // A silently substituted main-thread implementation does not satisfy FR-1.
-      await expect(page.locator('.item .digest')).toBeVisible({ timeout: 540_000 });
+      // Surface a terminal UI/read failure or a failed RSS monitor immediately instead of hiding it
+      // behind the digest wait. This preserves the success criteria and the existing time limit.
+      const completed = page.waitForFunction(() => document.querySelector('.item .digest') !== null
+        || document.querySelector('.item .error') !== null, undefined, { timeout: 540_000 }).then((handle) => handle.dispose());
+      await Promise.race([completed, monitor]);
+      expect(await page.locator('.item .error').allTextContents()).toEqual([]);
+      await expect(page.locator('.item .digest')).toBeVisible();
     } finally {
       sampling = false;
       await monitor;

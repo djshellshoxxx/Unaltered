@@ -63,7 +63,7 @@ Do tasks in order within a milestone unless marked parallel.
 - [ ] **Q6** Choose independent auditor.
 
 ## M5: Release
-- [ ] **REL-1** Refresh `THREAT_MODEL.md` and `DEPENDENCIES.md` review record.
+- [x] **REL-1** Refresh `THREAT_MODEL.md` and `DEPENDENCIES.md` internal review record (2026-10-24; bounded scope and outstanding external review in `REVIEW_REFRESH_20261024.md`).
 - [ ] **REL-2** Long fuzz run; fix findings.
 - [ ] **REL-3** Independent audit; publish report.
 - [ ] **REL-4** Second person reproduces the build byte-for-byte.
