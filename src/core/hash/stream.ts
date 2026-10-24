@@ -65,8 +65,7 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
       const end = Math.min(done + chunk, reader ? streamEnd : src.size);
       let buf: Uint8Array;
       if (reader && buffer) {
-        // Consume available bytes; requiring a whole-slice minimum can leave native aggregation pending.
-        const read = await reader.read(new Uint8Array(buffer, 0, end - done));
+        const read = await reader.read(new Uint8Array(buffer, 0, end - done), { min: end - done });
         if (read.done || !read.value?.byteLength || read.value.byteLength > end - done) {
           throw new UnalteredError('INPUT_INVALID', 'The file ended before its declared size.');
         }
@@ -80,12 +79,19 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
       done += buf.length;
       opts.onProgress?.(done);
       if (opts.yieldFn) await opts.yieldFn();
-      if (blob && reader && done === streamEnd && done < src.size) {
-        await reader.cancel();
+      if (blob && reader && done === streamEnd) {
+        // Let the file backend finish the slice before reopening it. A separate tiny view
+        // observes EOF without transferring/detaching the reusable hashing buffer.
+        const eof = await reader.read(new Uint8Array(1));
+        if (!eof.done || eof.value?.byteLength) {
+          throw new UnalteredError('INPUT_INVALID', 'A file slice exceeded its declared size.');
+        }
         reader.releaseLock();
         reader = null;
-        streamEnd = Math.min(done + chunk, src.size);
-        reader = blob.slice(done, streamEnd).stream().getReader({ mode: 'byob' });
+        if (done < src.size) {
+          streamEnd = Math.min(done + chunk, src.size);
+          reader = blob.slice(done, streamEnd).stream().getReader({ mode: 'byob' });
+        }
       }
     }
   } finally {

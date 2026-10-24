@@ -78,47 +78,61 @@ describe('FR-1 hashing', () => {
     const result = await hashBlob(blob, { noWorker: true });
     expect(result.hex).toBe(createHash('sha256').update(bytes).digest('hex'));
   });
-  it('hashes normally closing partial slice streams without requiring read aggregation', async () => {
+  it('observes normal slice EOF before opening another reader over a shared backend', async () => {
+    // A lifecycle model: cancellation settles, but premature cancellation poisons a later read.
+    // This establishes the sequence's behavior, not the cause of a native browser stall.
     const bytes = Uint8Array.of(1, 2, 3, 4, 5, 6, 7);
     const blob = new Blob([bytes]);
     const slice = blob.slice.bind(blob);
     const ranges: number[][] = [];
     const streams: ReadableStream<Uint8Array>[] = [];
     const progress: number[] = [];
+    let poisoned = false;
+    let cancels = 0;
+    let normalEofs = 0;
     blob.slice = (start = 0, end = blob.size): Blob => {
       ranges.push([start, end]);
       const part = slice(start, end);
       let offset = start;
+      let sawEof = false;
       const stream = new ReadableStream({ type: 'bytes', pull(controller) {
+        if (poisoned) return new Promise<void>(() => {});
         const request = controller.byobRequest;
         if (!request?.view) throw new Error('expected a BYOB request');
-        new Uint8Array(request.view.buffer, request.view.byteOffset, request.view.byteLength)[0] = bytes[offset++]!;
-        request.respond(1);
-        if (offset === end) controller.close();
-      } });
-      const getReader = stream.getReader.bind(stream);
-      Object.defineProperty(stream, 'getReader', { value: () => {
-        const reader = getReader({ mode: 'byob' });
-        const read = reader.read.bind(reader);
-        Object.defineProperty(reader, 'read', { value: (view: Uint8Array<ArrayBuffer>, options?: { min?: number }) => {
-          // Models a read-aggregation wait; the browser-internal cause remains unknown.
-          if ((options?.min ?? 1) > 1) return new Promise(() => {});
-          return read(view);
-        } });
-        return reader;
+        if (offset === end) {
+          sawEof = true;
+          normalEofs++;
+          controller.close();
+          request.respond(0);
+          return;
+        }
+        const view = new Uint8Array(request.view.buffer, request.view.byteOffset, request.view.byteLength);
+        const length = Math.min(view.length, end - offset);
+        view.set(bytes.subarray(offset, offset + length));
+        offset += length;
+        request.respond(length);
+      }, cancel() {
+        cancels++;
+        if (!sawEof) poisoned = true;
+        // Resolves normally; the next reader, rather than this cancellation, is blocked.
       } });
       streams.push(stream);
       part.stream = () => stream;
-      part.arrayBuffer = async (): Promise<ArrayBuffer> => { throw new Error('unexpected slice allocation'); };
+      part.arrayBuffer = async (): Promise<ArrayBuffer> => { throw new Error('unexpected allocated slice read'); };
       return part;
     };
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
       const result = await Promise.race([hashSource(blob, { chunkSize: 3, onProgress: (done) => progress.push(done) }),
-        new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('Read aggregation did not settle')), 1000); })]);
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(() => reject(new Error(`Slice lifecycle did not settle: progress=${progress.join(',')}; cancels=${cancels}; normalEofs=${normalEofs}; poisoned=${poisoned}; slices=${JSON.stringify(ranges)}`)), 1000);
+        })]);
       expect(result?.hex).toBe(createHash('sha256').update(bytes).digest('hex'));
+      expect(result?.bytes).toBe(bytes.length);
       expect(ranges).toEqual([[0, 3], [3, 6], [6, 7]]);
-      expect(progress).toEqual([1, 2, 3, 4, 5, 6, 7]);
+      expect(progress).toEqual([3, 6, 7]);
+      expect(normalEofs).toBe(3);
+      expect(poisoned).toBe(false);
       expect(streams.every((stream) => !stream.locked)).toBe(true);
     } finally { clearTimeout(timer); }
   });

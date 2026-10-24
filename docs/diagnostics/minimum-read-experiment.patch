@@ -1,0 +1,69 @@
+diff --git a/src/core/hash/stream.ts b/src/core/hash/stream.ts
+index b0c02c5..8abae76 100644
+--- a/src/core/hash/stream.ts
++++ b/src/core/hash/stream.ts
+@@ -65,7 +65,8 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
+       const end = Math.min(done + chunk, reader ? streamEnd : src.size);
+       let buf: Uint8Array;
+       if (reader && buffer) {
+-        const read = await reader.read(new Uint8Array(buffer, 0, end - done), { min: end - done });
++        // Consume available bytes; requiring a whole-slice minimum can leave native aggregation pending.
++        const read = await reader.read(new Uint8Array(buffer, 0, end - done));
+         if (read.done || !read.value?.byteLength || read.value.byteLength > end - done) {
+           throw new UnalteredError('INPUT_INVALID', 'The file ended before its declared size.');
+         }
+diff --git a/tests/unit/hash.test.ts b/tests/unit/hash.test.ts
+index 6fab7bb..33a9e33 100644
+--- a/tests/unit/hash.test.ts
++++ b/tests/unit/hash.test.ts
+@@ -78,6 +78,50 @@ describe('FR-1 hashing', () => {
+     const result = await hashBlob(blob, { noWorker: true });
+     expect(result.hex).toBe(createHash('sha256').update(bytes).digest('hex'));
+   });
++  it('hashes normally closing partial slice streams without requiring read aggregation', async () => {
++    const bytes = Uint8Array.of(1, 2, 3, 4, 5, 6, 7);
++    const blob = new Blob([bytes]);
++    const slice = blob.slice.bind(blob);
++    const ranges: number[][] = [];
++    const streams: ReadableStream<Uint8Array>[] = [];
++    const progress: number[] = [];
++    blob.slice = (start = 0, end = blob.size): Blob => {
++      ranges.push([start, end]);
++      const part = slice(start, end);
++      let offset = start;
++      const stream = new ReadableStream({ type: 'bytes', pull(controller) {
++        const request = controller.byobRequest;
++        if (!request?.view) throw new Error('expected a BYOB request');
++        new Uint8Array(request.view.buffer, request.view.byteOffset, request.view.byteLength)[0] = bytes[offset++]!;
++        request.respond(1);
++        if (offset === end) controller.close();
++      } });
++      const getReader = stream.getReader.bind(stream);
++      Object.defineProperty(stream, 'getReader', { value: () => {
++        const reader = getReader({ mode: 'byob' });
++        const read = reader.read.bind(reader);
++        Object.defineProperty(reader, 'read', { value: (view: Uint8Array<ArrayBuffer>, options?: { min?: number }) => {
++          // Models a read-aggregation wait; the browser-internal cause remains unknown.
++          if ((options?.min ?? 1) > 1) return new Promise(() => {});
++          return read(view);
++        } });
++        return reader;
++      } });
++      streams.push(stream);
++      part.stream = () => stream;
++      part.arrayBuffer = async (): Promise<ArrayBuffer> => { throw new Error('unexpected slice allocation'); };
++      return part;
++    };
++    let timer: ReturnType<typeof setTimeout> | undefined;
++    try {
++      const result = await Promise.race([hashSource(blob, { chunkSize: 3, onProgress: (done) => progress.push(done) }),
++        new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('Read aggregation did not settle')), 1000); })]);
++      expect(result?.hex).toBe(createHash('sha256').update(bytes).digest('hex'));
++      expect(ranges).toEqual([[0, 3], [3, 6], [6, 7]]);
++      expect(progress).toEqual([1, 2, 3, 4, 5, 6, 7]);
++      expect(streams.every((stream) => !stream.locked)).toBe(true);
++    } finally { clearTimeout(timer); }
++  });
+   it('rejects invalid chunk sizes instead of hanging or allocating invalid buffers', async () => {
+     for (const chunkSize of [0, -1, 0.5, NaN, Infinity]) {
+       await expect(hashSource(new Blob(['x']), { chunkSize })).rejects.toMatchObject({ code: 'INPUT_INVALID' });
