@@ -1,5 +1,5 @@
 // PNG allowlist rewriter (SPEC 8.2).
-import { concat } from '../bytes';
+import { concatParts } from '../bytes';
 
 export type PngResult =
   | { kind: 'cleaned'; output: Uint8Array; removed: string[] }
@@ -106,7 +106,7 @@ export function cleanPng(input: Uint8Array): PngResult {
   if (!sawEnd) return rej('The PNG is truncated (no end chunk).');
   if (!sawIdat) return rej('The PNG contains no image data.');
   if (pos < n) note(`Hidden data after the end of the image (${n - pos} bytes)`);
-  const output = concat(...out);
+  const output = concatParts(out);
   const bad = selfCheckPng(output);
   if (bad) return rej(`Internal self-check failed: ${bad}`);
   return { kind: 'cleaned', output, removed };

@@ -1,6 +1,6 @@
 // Audio allowlist rewriters: WAV (RIFF chunk allowlist) and MP3 (ID3v2 / APEv2 / ID3v1 tag removal).
 // Same contract as jpeg.ts/png.ts: fail closed on malformed input; the caller hashes only the cleaned output.
-import { concat } from '../bytes';
+import { concat, concatParts } from '../bytes';
 
 export type AudioResult =
   | { kind: 'cleaned'; output: Uint8Array; removed: string[] }
@@ -58,7 +58,7 @@ export function cleanWav(input: Uint8Array): AudioResult {
   if (pos !== riffEnd) return rej('The WAV file ends with a partial chunk header.');
   if (!sawFmt || !sawData) return rej('The WAV file is missing its format or audio data.');
   if (pos < n) note('data after the end of the file');
-  const body = concat(...parts);
+  const body = concatParts(parts);
   const head = new Uint8Array(12);
   head.set(putTag('RIFF'), 0);
   new DataView(head.buffer).setUint32(4, 4 + body.length, true);
@@ -75,6 +75,7 @@ const MPEG1_BITRATES = [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 
 const MPEG2_BITRATES = [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160];
 
 function validateMp3Frames(input: Uint8Array, start: number, end: number): AudioResult | null {
+  if (start >= end) return rej('The MP3 contains no audio frames.');
   for (let pos = start; pos < end;) {
     if (pos + 4 > end || !isSync(input, pos) || (input[pos + 1]! & 0x06) !== 0x02) {
       return rej('The MP3 contains malformed audio or unrecognised trailing data.');

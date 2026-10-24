@@ -57,7 +57,7 @@ Do tasks in order within a milestone unless marked parallel.
 - [x] **UI-3** About / "check independently" view with `ots` + own-node instructions.
 - [x] **UI-4** Mandatory copy blocks (SPEC §11).
 - [x] **FR-9** Single-file offline build and its CSP hashes.
-- [x] **A11Y-1** axe scan + keyboard + screen-reader pass.
+- [ ] **A11Y-1** axe scan + keyboard + screen-reader pass. Automated axe/keyboard checks pass; the human screen-reader pass remains open.
 - [x] **E2E-1** Playwright: stamp → download → verify; offline mode; CSP violation = fail.
 - [ ] **UT-1** Usability test with 3-5 non-technical people.
 - [ ] **Q6** Choose independent auditor.
@@ -77,6 +77,16 @@ Do tasks in order within a milestone unless marked parallel.
 - [x] CLI verifier (ADR-011; packaged for Node >=22)
 - [ ] Additional anchors (new ADR required)
 
-## Status notes (2026-10-14 build session)
+## Current acceptance notes (2026-10-24)
+
+See [the resume handoff](HANDOFF_20261024.md), [parser evidence](PARSER_ACCEPTANCE_20261024.md), and
+[release controls](RELEASE_CONTROLS_20261024.md) for ownership, exact baseline refs, fresh evidence and reproducible next steps.
+The four small-input parser regressions are fixed and the targeted 69-test suite passes. Chromium passed the real-file
+2 GiB / less than 200 MiB renderer-RSS acceptance and the 50 ms responsiveness check. Managed browser policy blocks
+`file://`; pinned browser downloads and Sigstore trust metadata are blocked by network policy. Live browser calls fail
+at the managed tunnel, so M0-3/R1 remains open. No required gate is skipped or relaxed. Native CI and human accessibility,
+Spanish, usability, independent audit/rebuild and signing controls remain prerequisites for any release claim.
+
+## Historical status notes (2026-10-14 build session; superseded where newer evidence exists)
 - **Done in code, with caveats:** M0-5 fixtures are *synthetic* (generated with the reference library, no live calendar involved). FR-1d: the 2 GiB / <200 MiB memory test runs in Node (`UNALTERED_BIG=1 npm test`, passed), not yet in a CI browser. A11Y-1: axe scans pass; the manual screen-reader pass is still open. Q3 = drop ICC (default); Q4 = warn only (v0.1).
 - **Still open, needs a person, network or credentials:** M0-3 (live CORS, run `npm run network-check`), OPS-1..6, CI-2 (action SHAs cannot be verified offline), CI secret-scan job, UT-1, Q5/Q6/Q7 (Firefox and Tor Browser untested), REL-1..5, LEGAL-1, differential tests on real calendar proofs, coverage-guided fuzzing (REL-2), Firefox/WebKit e2e.

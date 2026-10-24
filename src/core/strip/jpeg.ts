@@ -1,5 +1,5 @@
 // JPEG allowlist rewriter (SPEC 8.1). Re-emits only known-safe structure; drops everything else.
-import { concat } from '../bytes';
+import { concatParts } from '../bytes';
 
 export type JpegResult =
   | { kind: 'cleaned'; output: Uint8Array; removed: string[]; orientation?: number }
@@ -208,7 +208,7 @@ export function cleanJpeg(input: Uint8Array): JpegResult {
 
   if (!sawEoi) return rej('The JPEG is truncated (no end marker).');
   if (!sawSos) return rej('The JPEG contains no image data.');
-  const output = concat(...out);
+  const output = concatParts(out);
   const check = selfCheckJpeg(output);
   if (check) return rej(`Internal self-check failed: ${check}`);
   return orientation === undefined ? { kind: 'cleaned', output, removed } : { kind: 'cleaned', output, removed, orientation };

@@ -1,23 +1,51 @@
 name: Release build
 
-# Builds the release artefacts from a tag. Signing is a deliberate OFFLINE step (docs/RELEASE.md): this workflow never
-# holds the release key. It publishes a DRAFT release with unsigned artefacts and SHA256SUMS for the maintainer to sign.
+# Manual draft preparation only. Signing and publication are separate OFFLINE/maintainer steps
+# (docs/RELEASE.md). Branch and tag pushes never create releases; this workflow never holds a signing key.
 on:
-  push:
-    tags: ["v*"]
-    # Branch pushes publish a numbered pre-release (v<version>-build.<run>) so builds are available before a tag is cut.
-    branches: [main, "claude/project-completion-builds-vhvag8", "claude/peaceful-curie-u239yn"]
   workflow_dispatch:
     inputs:
       tag:
-        description: "Release tag to create (e.g. v0.1.0)"
+        description: "Existing version tag at the selected ref (e.g. v0.3.1); creates a draft only"
+        type: string
         required: true
 
 permissions:
   contents: read
 
 jobs:
+  validate:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - name: Validate existing version tag at the selected commit
+        id: tag
+        shell: bash
+        env:
+          TAG_INPUT: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$TAG_INPUT" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Expected an exact v<major>.<minor>.<patch> tag." >&2
+            exit 1
+          fi
+          expected="v$(node -p "require('./package.json').version")"
+          test "$TAG_INPUT" = "$expected"
+          tag_commit="$(git rev-parse --verify "refs/tags/$TAG_INPUT^{commit}")"
+          test "$tag_commit" = "$GITHUB_SHA"
+          printf 'tag=%s\n' "$TAG_INPUT" >> "$GITHUB_OUTPUT"
+
   build:
+    needs: validate
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -46,9 +74,11 @@ jobs:
             dist/unaltered-*.zip
             dist/unaltered-*.tar.gz
             dist/SHA256SUMS
+          if-no-files-found: error
 
   draft-release:
-    needs: build
+    if: github.event_name == 'workflow_dispatch'
+    needs: [validate, build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -74,14 +104,12 @@ jobs:
           diff linux/SHA256SUMS macos/SHA256SUMS
       - name: Verify artefacts against SHA256SUMS
         run: cd linux && sha256sum -c SHA256SUMS
-      - name: Create pre-release (unsigned)
+      - name: Create draft pre-release (unsigned; existing releases are never overwritten)
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG_INPUT: ${{ inputs.tag }}
+          TAG_INPUT: ${{ needs.validate.outputs.tag }}
         run: |
-          if [ -n "$TAG_INPUT" ]; then TAG="$TAG_INPUT"
-          elif [ "$GITHUB_REF_TYPE" = tag ]; then TAG="$GITHUB_REF_NAME"
-          else TAG="v$(node -p "require('./package.json').version")-build.$GITHUB_RUN_NUMBER"; fi
-          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "$TAG" \
-            --notes "Unsigned pre-release. Per-OS packages: Windows (.zip), Linux (.tar.gz), macOS (-macos.zip), plus the single-file offline .html and the Node CLI (.mjs). All are byte-identical across Linux, Windows and macOS builds; check them against SHA256SUMS. Release signing (SHA256SUMS.sig) is an offline maintainer step: docs/RELEASE.md." \
+          set -euo pipefail
+          gh release create "$TAG_INPUT" --repo "$GITHUB_REPOSITORY" --verify-tag --draft --prerelease --title "$TAG_INPUT" \
+            --notes "Unsigned draft for maintainer review. Per-OS packages: Windows (.zip), Linux (.tar.gz), macOS (-macos.zip), plus the single-file offline .html and the Node CLI (.mjs). All are byte-identical across Linux, Windows and macOS builds; check them against SHA256SUMS. Do not publish until independent rebuild, offline signing (SHA256SUMS.sig), and release controls in docs/RELEASE.md are complete." \
             linux/unaltered-*.html linux/unaltered-*.mjs linux/unaltered-*.zip linux/unaltered-*.tar.gz linux/SHA256SUMS

@@ -83,6 +83,8 @@ jobs:
           name: unaltered-linux-build
           path: |
             dist/unaltered-*.html
+            dist/unaltered-*.mjs
+            dist/unaltered-*.tar.gz
             dist/unaltered-*.zip
             dist/SHA256SUMS
             linux-SHA256SUMS
@@ -179,6 +181,8 @@ jobs:
           name: unaltered-windows-build
           path: |
             dist/unaltered-*.html
+            dist/unaltered-*.mjs
+            dist/unaltered-*.tar.gz
             dist/unaltered-*.zip
             dist/SHA256SUMS
             windows-SHA256SUMS
@@ -190,9 +194,42 @@ jobs:
           path: test-results
           if-no-files-found: ignore
 
+  macos:
+    name: macOS build, tests, and package checksums
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test
+      - run: npm run build
+      - name: Verify artefacts and retain macOS checksums
+        run: |
+          cd dist
+          shasum -a 256 -c SHA256SUMS
+          cp SHA256SUMS ../macos-SHA256SUMS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: unaltered-macos-build
+          path: |
+            dist/unaltered-*.html
+            dist/unaltered-*.mjs
+            dist/unaltered-*.zip
+            dist/unaltered-*.tar.gz
+            dist/SHA256SUMS
+            macos-SHA256SUMS
+          if-no-files-found: error
+
   reproducible-across-platforms:
-    name: Linux and Windows builds are byte-identical
-    needs: [build-test, windows]
+    name: Linux, Windows, and macOS builds are byte-identical
+    needs: [build-test, windows, macos]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
@@ -203,8 +240,15 @@ jobs:
         with:
           name: unaltered-windows-build
           path: windows
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: unaltered-macos-build
+          path: macos
       - name: Compare
-        run: diff linux/linux-SHA256SUMS windows/windows-SHA256SUMS && echo "identical:" && cat linux/linux-SHA256SUMS
+        run: |
+          diff linux/linux-SHA256SUMS windows/windows-SHA256SUMS
+          diff linux/linux-SHA256SUMS macos/macos-SHA256SUMS
+          cat linux/linux-SHA256SUMS
 
   differential:
     name: Differential tests against the reference OpenTimestamps client

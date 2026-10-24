@@ -1,4 +1,12 @@
-# Completion and validation record — 2026-10-22
+# Completion and validation record
+
+## Current replacement executor — 2026-10-24
+
+Continue from [HANDOFF_20261024.md](HANDOFF_20261024.md). It records source reconciliation, non-overlapping worker ownership,
+reproduced parser bugs and fixes, current checks, exact remote checkpoints and blockers. The missing old local checkpoint
+was not recovered. The records below are historical evidence; they do not establish the new candidate's hosted CI or release readiness.
+
+## Previous validation — 2026-10-22
 
 ## Integrated product
 

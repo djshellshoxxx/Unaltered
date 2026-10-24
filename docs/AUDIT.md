@@ -1,5 +1,12 @@
 # Feature and code audit
 
+**2026-10-24 update:** the sections below describe the historical 2026-10-14 audit. Current source and acceptance evidence
+are in [HANDOFF_20261024.md](HANDOFF_20261024.md), [parser acceptance](PARSER_ACCEPTANCE_20261024.md),
+[release controls](RELEASE_CONTROLS_20261024.md) and [NETWORK.md](NETWORK.md). In particular, Actions are now SHA-pinned,
+secret scanning exists, real browser 2 GiB memory acceptance passes locally, and release creation is manual/draft-only.
+Live confirmed browser upgrades, native engine/OS CI for the new candidate and manual review remain open. This update is
+an internal engineering record, not an independent security audit.
+
 **Scope:** `djshellshoxxx/Unaltered` branch `claude/zealous-wozniak-ey71lr` against `docs/SPEC.md` v0.1 plus the v0.2 and later items listed in SPEC section 2.
 **Base commit:** see `git log` of this branch (the audit text was written with the code, not afterwards). **Date:** 2026-10-14.
 **Method:** every requirement traced from the UI entry point through processing, output and error handling; verified by tests that were run (commands below), by a Chromium end-to-end run, and by an independent read-only code review (section 4).

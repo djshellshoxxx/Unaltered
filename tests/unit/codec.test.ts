@@ -4,9 +4,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { concat, fromHex, toHex } from '../../src/core/bytes';
-import { collectAttestations, parseProof, serializeProof } from '../../src/core/ots/codec';
-import { HEADER_MAGIC, LIMITS } from '../../src/core/ots/types';
+import { concat, fromHex, toHex, writeVaruint } from '../../src/core/bytes';
+import { collectAttestations, parseProof, parseTimestampBody, serializeProof } from '../../src/core/ots/codec';
+import { ATT_BITCOIN, ATT_PENDING, HEADER_MAGIC, LIMITS } from '../../src/core/ots/types';
 
 const dir = 'tests/fixtures/ots';
 const load = (n: string): Uint8Array => new Uint8Array(readFileSync(join(dir, n)));
@@ -118,12 +118,18 @@ describe('codec rejects hostile input (SR-9, SR-10)', () => {
         m.set(patch.subarray(0, Math.min(patch.length, m.length - at)), at);
         try {
           const p = parseProof(m);
-          serializeProof(p); // anything that parses must serialise
+          const canonical = serializeProof(p);
+          const reparsed = parseProof(canonical);
+          expect(serializeProof(reparsed)).toEqual(canonical);
+          expect(reparsed.digest).toEqual(p.digest);
+          const commitments = (proof: typeof p): string[] => collectAttestations(proof.root)
+            .map(({ node, attestation }) => `${toHex(node.msg)}:${JSON.stringify(attestation)}`).sort();
+          expect(commitments(reparsed)).toEqual(commitments(p));
         } catch (e) {
           expect((e as { name: string }).name).toBe('UnalteredError');
         }
       }),
-      { numRuns: 3000 },
+      { seed: 20261024, numRuns: 3000 },
     );
   });
 
@@ -136,7 +142,59 @@ describe('codec rejects hostile input (SR-9, SR-10)', () => {
           expect((e as { name: string }).name).toBe('UnalteredError');
         }
       }),
-      { numRuns: 3000 },
+      { seed: 20261025, numRuns: 3000 },
     );
+  });
+});
+
+describe('codec exact parser boundaries (SPEC 6)', () => {
+  const digest = new Uint8Array(32);
+  const head = concat(HEADER_MAGIC, Uint8Array.of(1, 8), digest);
+  const varbytes = (bytes: Uint8Array): Uint8Array => concat(Uint8Array.from(writeVaruint(bytes.length)), bytes);
+  const bitcoin = concat(Uint8Array.of(0), ATT_BITCOIN, Uint8Array.of(1, 1));
+  const chain = (operations: number): Uint8Array => concat(new Uint8Array(operations).fill(8), bitcoin);
+
+  it('accepts the maximum depth and refuses one additional operation in file and calendar bodies', () => {
+    const valid = chain(LIMITS.maxDepth - 1);
+    expect(collectAttestations(parseProof(concat(head, valid)).root)).toHaveLength(1);
+    expect(collectAttestations(parseTimestampBody(valid, digest))).toHaveLength(1);
+    for (const parse of [(bytes: Uint8Array) => parseProof(concat(head, bytes)), (bytes: Uint8Array) => parseTimestampBody(bytes, digest)]) {
+      expect(() => parse(chain(LIMITS.maxDepth))).toThrowError(/nested too deeply/);
+    }
+  });
+
+  it('accepts the attestation cap and rejects the next attestation', () => {
+    const repeated = (count: number): Uint8Array => concat(...Array.from({ length: count }, (_, i) => concat(
+      i + 1 < count ? Uint8Array.of(0xff) : new Uint8Array(), bitcoin,
+    )));
+    expect(collectAttestations(parseProof(concat(head, repeated(LIMITS.maxAttestations))).root)).toHaveLength(LIMITS.maxAttestations);
+    expect(() => parseProof(concat(head, repeated(LIMITS.maxAttestations + 1)))).toThrowError(/too many attestations/);
+  });
+
+  it('enforces the total node cap across shallow branches before other caps', () => {
+    const tree = (nodes: number): Uint8Array => {
+      const branches = Math.ceil((nodes - 1) / (LIMITS.maxDepth - 1));
+      let left = nodes - 1;
+      return concat(...Array.from({ length: branches }, (_, i) => {
+        const operations = Math.min(left, LIMITS.maxDepth - 1);
+        left -= operations;
+        return concat(i + 1 < branches ? Uint8Array.of(0xff) : new Uint8Array(), chain(operations));
+      }));
+    };
+    expect(collectAttestations(parseProof(concat(head, tree(LIMITS.maxNodes))).root)).toHaveLength(79);
+    expect(() => parseProof(concat(head, tree(LIMITS.maxNodes + 1)))).toThrowError(/too complex/);
+  });
+
+  it('enforces operation argument, accumulated message, URI and payload length caps', () => {
+    const append = (length: number): Uint8Array => concat(Uint8Array.of(0xf0), varbytes(new Uint8Array(length)));
+    const full = append(LIMITS.maxMsg - digest.length);
+    expect(parseProof(concat(head, full, bitcoin)).root.children[0]!.node.msg).toHaveLength(LIMITS.maxMsg);
+    expect(() => parseProof(concat(head, full, append(1), bitcoin))).toThrowError(/oversized value/);
+    expect(() => parseProof(concat(head, append(LIMITS.maxOpArg + 1), bitcoin))).toThrowError(/invalid length/);
+    const pending = (length: number): Uint8Array => concat(Uint8Array.of(0), ATT_PENDING, varbytes(varbytes(new Uint8Array(length).fill(0x61))));
+    expect(collectAttestations(parseProof(concat(head, pending(LIMITS.maxUri))).root)).toHaveLength(1);
+    expect(() => parseProof(concat(head, pending(LIMITS.maxUri + 1)))).toThrowError(/invalid length/);
+    expect(() => parseProof(concat(head, Uint8Array.of(0), ATT_PENDING, varbytes(new Uint8Array(LIMITS.maxAttPayload + 1))))).toThrowError(/invalid length/);
+    expect(() => parseTimestampBody(new Uint8Array(LIMITS.maxInputBytes + 1), digest)).toThrowError(/too large/);
   });
 });

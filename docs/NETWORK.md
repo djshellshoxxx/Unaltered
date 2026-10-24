@@ -4,6 +4,27 @@ Status: **Live server responses checked on 2026-10-22; browser pending-response 
 and both explorer endpoints return the required CORS headers. Calendar pending `404` replies do not. These are Node observations
 through the environment's supported HTTPS proxy, not a complete live browser round trip. **Risk R1 remains open.**
 
+### Replacement executor check — 2026-10-24
+
+The fresh saved environment could not reach any of the five service hosts. `node --use-env-proxy scripts/network-check.mjs`
+exits 1 for all five; a direct Node request reports `EAI_AGAIN`, while a normal proxy CONNECT to the Alice calendar returns
+HTTP 403. This is an execution-environment limitation, not new evidence about those services' CORS headers.
+
+The new opt-in browser probe runs against the built site's real CSP, without request routing or browser-security bypass:
+
+```sh
+npm run build
+CHROMIUM_PATH=/usr/bin/chromium XDG_CACHE_HOME=/tmp/unaltered-cache XDG_CONFIG_HOME=/tmp/unaltered-config node scripts/browser-network-check.mjs
+```
+
+On Chromium `154.0.8037.57` at `2026-10-24T14:51:03.589Z`, all three calendar POSTs and pending GETs and both explorers'
+height/header GETs failed with `net::ERR_TUNNEL_CONNECTION_FAILED`. No CSP violation occurred. The script exits 1 and
+does not label these failures as CORS success. It submits only random non-evidence commitments, never user files or names.
+Its normal-host success would establish only pending-response reachability and genesis-header integrity; **a known anchored
+receipt must still exercise a confirmed upgrade through the app and an independent reference verifier before R1 can close**.
+No app backend, relay, new host, security exception or proxy was added. Repeat the commands on a host that permits these
+destinations; retain the Oct 22 observations below as historical evidence.
+
 ## 1. Calendar servers (OpenTimestamps)
 
 Source: `opentimestamps/calendar.py` (python-opentimestamps 0.4.5) and `otsclient/cmds.py` (client 0.7.2).

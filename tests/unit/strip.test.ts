@@ -4,9 +4,27 @@ import { detectKind } from '../../src/core/strip/detect';
 import { stripMetadata } from '../../src/core/strip';
 import { cleanJpeg, selfCheckJpeg } from '../../src/core/strip/jpeg';
 import { cleanPng, selfCheckPng } from '../../src/core/strip/png';
-import { contains, makeJpeg, makePng } from '../helpers/images';
+import { chunk, contains, makeJpeg, makePng } from '../helpers/images';
 
 const FULL = { exif: { orientation: 6, gps: true }, xmp: true, icc: true, iptc: true, comment: 'SECRET-COMMENT', jfifThumb: true, extraApp: true, adobe: true, trailing: new TextEncoder().encode('SECRET-TRAILING') } as const;
+
+describe('many small image segments stay within the parser result contract', () => {
+  for (const [format, base, part, insertAt, clean, check] of [
+    ['jpeg', makeJpeg(), Uint8Array.of(0xff, 0xdd, 0, 4, 0, 1), 2, cleanJpeg, selfCheckJpeg],
+    ['png', makePng(), chunk('IDAT', new Uint8Array()), makePng().length - 12, cleanPng, selfCheckPng],
+  ] as const) {
+    it(`${format}: many tiny kept segments do not exhaust the JavaScript argument stack`, () => {
+      const count = 130_000;
+      const input = new Uint8Array(base.length + count * part.length);
+      input.set(base.subarray(0, insertAt));
+      for (let i = 0; i < count; i++) input.set(part, insertAt + i * part.length);
+      input.set(base.subarray(insertAt), insertAt + count * part.length);
+      const result = clean(input);
+      expect(['cleaned', 'rejected']).toContain(result.kind);
+      if (result.kind === 'cleaned') expect(check(result.output)).toBeNull();
+    });
+  }
+});
 
 describe('JPEG stripping (SPEC 8.1)', () => {
   it('removes EXIF/GPS, XMP, ICC, IPTC, comments, thumbnails and trailing data; keeps image and Adobe marker', () => {
@@ -63,10 +81,15 @@ describe('JPEG stripping (SPEC 8.1)', () => {
           for (const [k, v] of Object.entries(o)) if (v !== undefined) clean[k] = v;
           const r = cleanJpeg(makeJpeg(clean));
           expect(r.kind).toBe('cleaned');
-          if (r.kind === 'cleaned') expect(selfCheckJpeg(r.output)).toBeNull();
+          if (r.kind === 'cleaned') {
+            expect(selfCheckJpeg(r.output)).toBeNull();
+            const again = cleanJpeg(r.output);
+            expect(again.kind).toBe('cleaned');
+            if (again.kind === 'cleaned') expect(again.output).toEqual(r.output);
+          }
         },
       ),
-      { numRuns: 200 },
+      { seed: 20261024, numRuns: 200 },
     );
   });
 
@@ -77,9 +100,14 @@ describe('JPEG stripping (SPEC 8.1)', () => {
         const m = base.slice();
         m.set(patch.subarray(0, Math.min(patch.length, m.length - at)), at);
         const r = cleanJpeg(m);
-        if (r.kind === 'cleaned') expect(selfCheckJpeg(r.output)).toBeNull();
+        if (r.kind === 'cleaned') {
+          expect(selfCheckJpeg(r.output)).toBeNull();
+          const again = cleanJpeg(r.output);
+          expect(again.kind).toBe('cleaned');
+          if (again.kind === 'cleaned') expect(again.output).toEqual(r.output);
+        }
       }),
-      { numRuns: 4000 },
+      { seed: 20261024, numRuns: 4000 },
     );
   });
 });
@@ -129,9 +157,14 @@ describe('PNG stripping (SPEC 8.2)', () => {
         const m = base.slice();
         m.set(patch.subarray(0, Math.min(patch.length, m.length - at)), at);
         const r = cleanPng(m);
-        if (r.kind === 'cleaned') expect(selfCheckPng(r.output)).toBeNull();
+        if (r.kind === 'cleaned') {
+          expect(selfCheckPng(r.output)).toBeNull();
+          const again = cleanPng(r.output);
+          expect(again.kind).toBe('cleaned');
+          if (again.kind === 'cleaned') expect(again.output).toEqual(r.output);
+        }
       }),
-      { numRuns: 4000 },
+      { seed: 20261025, numRuns: 4000 },
     );
   });
 });

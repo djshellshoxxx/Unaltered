@@ -1,3 +1,4 @@
+import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { cleanMp3, cleanWav, selfCheckAudio } from '../../src/core/strip/audio';
 import { detectKind } from '../../src/core/strip/detect';
@@ -25,9 +26,13 @@ describe('WAV stripping', () => {
     expect([...r.output]).toEqual([...clean]);
   });
   it('replaces odd-length chunk pad bytes with zero', () => {
-    const r = cleanWav(makeWav({ oddPad: 5 }));
+    const input = makeWav({ oddPad: 5 });
+    input[input.length - 1] = 0x7f;
+    const r = cleanWav(input);
     if (r.kind !== 'cleaned') throw new Error();
     expect(r.output.length % 2).toBe(0);
+    expect(r.output.at(-1)).toBe(0);
+    expect([...r.output.slice(-6, -1)]).toEqual(PCM.slice(0, 5));
   });
   it('rejects malformed input and refuses RF64', () => {
     const w = makeWav();
@@ -55,6 +60,23 @@ describe('WAV stripping', () => {
     new DataView(w.buffer).setUint32(4, w.length - 8, true);
     expect(cleanWav(w).kind).toBe('rejected');
   });
+  it('rejects every truncation of an untagged WAV', () => {
+    const input = makeWav();
+    for (let n = 0; n < input.length; n++) expect(cleanWav(input.slice(0, n)).kind, `cut ${n}`).toBe('rejected');
+  });
+  it('handles many tiny WAV chunks without exhausting the JavaScript argument stack', () => {
+    const base = makeWav();
+    const count = 130_000;
+    const fact = Uint8Array.of(0x66, 0x61, 0x63, 0x74, 4, 0, 0, 0, 4, 0, 0, 0);
+    const input = new Uint8Array(base.length + count * fact.length);
+    input.set(base.subarray(0, 36)); // RIFF header and fmt chunk
+    for (let i = 0; i < count; i++) input.set(fact, 36 + i * fact.length);
+    input.set(base.subarray(36), 36 + count * fact.length);
+    new DataView(input.buffer).setUint32(4, input.length - 8, true);
+    const result = cleanWav(input);
+    expect(['cleaned', 'rejected']).toContain(result.kind);
+    if (result.kind === 'cleaned') expect(selfCheckAudio('wav', result.output)).toBeNull();
+  });
 });
 
 describe('MP3 stripping', () => {
@@ -71,6 +93,23 @@ describe('MP3 stripping', () => {
     if (r.kind !== 'cleaned') throw new Error();
     expect(r.removed).toEqual([]);
     expect(r.output.length).toBe(FRAME.length * 2);
+  });
+  it('preserves mixed MPEG versions and padding using declared frame lengths', () => {
+    // Fixed standard Layer III header/length pairs; payload bytes include false sync words.
+    const frames = [[0xfb, 0x90, 417], [0xfb, 0x92, 418], [0xf3, 0x80, 208], [0xe3, 0x80, 417]].map(([version, rate, length]) => {
+      const frame = new Uint8Array(length!).fill(0xff);
+      frame.set([0xff, version!, rate!, 0]);
+      return frame;
+    });
+    const r = cleanMp3(makeMp3({ id3v2: true, ape: true, id3v1: true, frames }));
+    expect(r.kind).toBe('cleaned');
+    if (r.kind !== 'cleaned') throw new Error();
+    expect(r.output).toEqual(Uint8Array.from(frames.flatMap((frame) => [...frame])));
+  });
+  it('accepts eight leading ID3 tags and rejects a ninth', () => {
+    const tag = [73, 68, 51, 3, 0, 0, 0, 0, 0, 0];
+    expect(cleanMp3(Uint8Array.from([...Array.from({ length: 8 }, () => tag).flat(), ...FRAME])).kind).toBe('cleaned');
+    expect(cleanMp3(Uint8Array.from([...Array.from({ length: 9 }, () => tag).flat(), ...FRAME])).kind).toBe('rejected');
   });
   it('rejects truncated audio frames rather than declaring them cleaned', () => {
     expect(cleanMp3(makeMp3().slice(0, -1)).kind).toBe('rejected');
@@ -120,6 +159,68 @@ describe('MP3 stripping', () => {
     new DataView(ape.buffer).setUint32(ape.length - 20, 0xfffff, true);
     expect(cleanMp3(ape).kind).toBe('rejected');
   });
+  it('rejects an APE length that consumes every audio frame', () => {
+    const input = makeMp3({ ape: true });
+    // The footer declares a header, so its stored size excludes those 32 bytes.
+    new DataView(input.buffer).setUint32(input.length - 20, input.length - 32, true);
+    expect(cleanMp3(input).kind).toBe('rejected');
+  });
+});
+
+describe('bounded deterministic audio properties (synthetic containers)', () => {
+  const seed = 20261024;
+  it('preserves varied WAV samples and MP3 frame bytes through cleaning twice', () => {
+    fc.assert(fc.property(
+      fc.uint8Array({ minLength: 2, maxLength: 256 }).filter((samples) => samples.length % 2 === 0),
+      fc.uint8Array({ minLength: 413, maxLength: 413 }),
+      fc.record({ id3v2: fc.boolean(), ape: fc.boolean(), id3v1: fc.boolean() }),
+      (samples, payload, tags) => {
+        const frame = Uint8Array.from([0xff, 0xfb, 0x90, 0, ...payload]);
+        for (const [cleaner, input] of [
+          [cleanWav, makeWav({ extra: true, trailing: 'SECRET', samples })],
+          [cleanMp3, makeMp3({ ...tags, frames: [frame, frame] })],
+        ] as const) {
+          const before = input.slice();
+          const first = cleaner(input);
+          expect(first.kind).toBe('cleaned');
+          if (first.kind !== 'cleaned') throw new Error();
+          expect(input).toEqual(before);
+          if (cleaner === cleanWav) {
+            expect(first.output.slice(-samples.length)).toEqual(samples);
+          } else expect(first.output).toEqual(Uint8Array.from([...frame, ...frame]));
+          const second = cleaner(first.output);
+          expect(second.kind).toBe('cleaned');
+          if (second.kind !== 'cleaned') throw new Error();
+          expect(second.output).toEqual(first.output);
+          expect(second.removed).toEqual([]);
+        }
+      },
+    ), { seed, numRuns: 200 });
+  });
+
+  for (const [format, clean, base] of [
+    ['wav', cleanWav, makeWav({ extra: true, trailing: 'SECRET' })],
+    ['mp3', cleanMp3, makeMp3({ id3v2: true, ape: true, id3v1: true })],
+  ] as const) {
+    it(`${format}: mutations return a result and accepted output validates and is stable`, () => {
+      fc.assert(fc.property(fc.nat(base.length - 1), fc.uint8Array({ minLength: 1, maxLength: 8 }), (at, patch) => {
+        const input = base.slice();
+        input.set(patch.subarray(0, input.length - at), at);
+        const before = input.slice();
+        const result = clean(input);
+        expect(input).toEqual(before);
+        expect(['cleaned', 'rejected', 'unsupported']).toContain(result.kind);
+        if (result.kind === 'cleaned') {
+          expect(selfCheckAudio(format, result.output)).toBeNull();
+          const again = clean(result.output);
+          expect(again.kind).toBe('cleaned');
+          if (again.kind !== 'cleaned') throw new Error();
+          expect(again.output).toEqual(result.output);
+          expect(again.removed).toEqual([]);
+        }
+      }), { seed, numRuns: 1000 });
+    });
+  }
 });
 
 describe('audio detection and dispatch', () => {

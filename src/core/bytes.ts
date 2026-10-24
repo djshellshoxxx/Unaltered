@@ -16,6 +16,11 @@ export function fromHex(h: string): Uint8Array {
 }
 
 export function concat(...parts: Uint8Array[]): Uint8Array {
+  return concatParts(parts);
+}
+
+/** Accept untrusted segment counts without spreading them into function arguments. */
+export function concatParts(parts: readonly Uint8Array[]): Uint8Array {
   let n = 0;
   for (const p of parts) n += p.length;
   const out = new Uint8Array(n);
