@@ -87,6 +87,11 @@ The four small-input parser regressions are fixed and the targeted 69-test suite
 at the managed tunnel, so M0-3/R1 remains open. No required gate is skipped or relaxed. Native CI and human accessibility,
 Spanish, usability, independent audit/rebuild and signing controls remain prerequisites for any release claim.
 
+Native follow-up: source`9495512a3108062a5ea3195c1cb6bff59743a125`, run40106725622, passed Linux/Windows/macOS build/tests
+and checksum identity, all19 app checks in each browser engine, pinned-Chromium2GiB memory, reference, provenance and secret
+checks. Bounded Blob reads resolved the reproduced WebKit responsiveness failure without relaxing50ms. M0-3/R1 and the
+human/signing/audit controls stay open; see the latest handoff milestone for exact evidence and ownership.
+
 ## Historical status notes (2026-10-14 build session; superseded where newer evidence exists)
 - **Done in code, with caveats:** M0-5 fixtures are *synthetic* (generated with the reference library, no live calendar involved). FR-1d: the 2 GiB / <200 MiB memory test runs in Node (`UNALTERED_BIG=1 npm test`, passed), not yet in a CI browser. A11Y-1: axe scans pass; the manual screen-reader pass is still open. Q3 = drop ICC (default); Q4 = warn only (v0.1).
 - **Still open, needs a person, network or credentials:** M0-3 (live CORS, run `npm run network-check`), OPS-1..6, CI-2 (action SHAs cannot be verified offline), CI secret-scan job, UT-1, Q5/Q6/Q7 (Firefox and Tor Browser untested), REL-1..5, LEGAL-1, differential tests on real calendar proofs, coverage-guided fuzzing (REL-2), Firefox/WebKit e2e.
