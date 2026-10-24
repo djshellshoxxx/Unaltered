@@ -14,11 +14,15 @@ test('hashes a real 2 GiB file in the browser with less than 200 MiB extra rende
   const file = join(directory, 'two-gibibytes.bin');
   const size = 2 * 1024 ** 3;
   const cdp = await browser.newBrowserCDPSession();
+  const started = Date.now();
+  const phase = (name: string): void => { console.log(`memory-acceptance ${name} elapsedMs=${Date.now() - started}`); };
   try {
     // A sparse file has the same browser-readable bytes as a real zero-filled file without a 2 GiB allocation.
     const handle = await open(file, 'w');
     try { await handle.truncate(size); } finally { await handle.close(); }
+    phase('file-created');
     await page.goto('/index.html#stamp');
+    phase('page-ready');
     const rss = async (): Promise<number> => {
       const { processInfo } = await cdp.send('SystemInfo.getProcessInfo');
       const renderers = processInfo.filter((p) => p.type === 'renderer');
@@ -34,16 +38,25 @@ test('hashes a real 2 GiB file in the browser with less than 200 MiB extra rende
     const before = await rss();
     let peak = before;
     let sampling = true;
+    let nextHeartbeat = Date.now() + 10_000;
     const monitor = (async () => {
       while (sampling) {
         peak = Math.max(peak, await rss());
+        if (Date.now() >= nextHeartbeat) {
+          const progress = await page.evaluate(() => document.querySelector('progress')?.getAttribute('value') ?? null);
+          phase(`progress=${progress} extraRendererRss=${peak - before}`);
+          nextHeartbeat = Date.now() + 10_000;
+        }
         await new Promise((resolve) => setTimeout(resolve, 50));
       }
     })();
     try {
       const worker = page.waitForEvent('worker');
+      phase('input-start');
       await page.setInputFiles('#stamp-file', file);
+      phase('input-selected');
       await worker; // A silently substituted main-thread implementation does not satisfy FR-1.
+      phase('worker-observed');
       // Surface a terminal UI/read failure or a failed RSS monitor immediately instead of hiding it
       // behind the digest wait. This preserves the success criteria and the existing time limit.
       const completed = page.waitForFunction(() => document.querySelector('.item .digest') !== null
@@ -51,6 +64,7 @@ test('hashes a real 2 GiB file in the browser with less than 200 MiB extra rende
       await Promise.race([completed, monitor]);
       expect(await page.locator('.item .error').allTextContents()).toEqual([]);
       await expect(page.locator('.item .digest')).toBeVisible();
+      phase('digest-visible');
     } finally {
       sampling = false;
       await monitor;

@@ -142,6 +142,12 @@ jobs:
         env:
           CI: "true"
           UNALTERED_BIG_BROWSER: "1"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: failure()
+        with:
+          name: browser-memory-failures
+          path: test-results
+          if-no-files-found: ignore
 
   windows:
     name: Windows build and tests
