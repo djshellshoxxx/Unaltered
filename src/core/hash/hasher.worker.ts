@@ -1,15 +1,13 @@
 // Dedicated worker: streams the Blob in chunks so memory does not scale with file size (FR-1).
 import { equalBytes } from '../bytes';
-import { hashSource } from './stream';
-
-const CROSS_CHECK_MAX = 64 * 1024 * 1024;
+import { CROSS_CHECK_MAX, hashSource, readCrossCheckInput } from './stream';
 
 // The WebCrypto differential check (FR-1) runs here so the main thread never copies the file.
 async function cross(blob: Blob, digest: Uint8Array): Promise<'ok' | 'mismatch' | 'skipped'> {
   const subtle = globalThis.crypto?.subtle;
   if (!subtle || blob.size > CROSS_CHECK_MAX) return 'skipped';
   try {
-    const other = new Uint8Array(await subtle.digest('SHA-256', await blob.arrayBuffer()));
+    const other = new Uint8Array(await subtle.digest('SHA-256', await readCrossCheckInput(blob)));
     return equalBytes(other, digest) ? 'ok' : 'mismatch';
   } catch {
     return 'skipped';

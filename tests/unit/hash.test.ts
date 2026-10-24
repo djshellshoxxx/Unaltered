@@ -50,6 +50,34 @@ describe('FR-1 hashing', () => {
     const result = await hashSource(src, { chunkSize: 2 });
     expect(result!.hex).toBe('ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
   });
+  it('streams real Blobs through bounded slices without starting a whole-file stream or allocating slice buffers', async () => {
+    const blob = new Blob([new Uint8Array(9000).fill(7)]);
+    const slice = blob.slice.bind(blob);
+    let slices = 0;
+    blob.stream = (): never => { throw new Error('whole-file stream started'); };
+    blob.slice = (start = 0, end = blob.size): Blob => {
+      expect(end - start).toBeLessThanOrEqual(1024);
+      slices++;
+      const part = slice(start, end);
+      part.arrayBuffer = async (): Promise<ArrayBuffer> => { throw new Error('slice buffer allocated instead of BYOB'); };
+      return part;
+    };
+    const result = await hashSource(blob, { chunkSize: 1024 });
+    expect(result!.hex).toBe(createHash('sha256').update(new Uint8Array(9000).fill(7)).digest('hex'));
+    expect(slices).toBeGreaterThan(1);
+  });
+  it('cross-checks a file without asking its backend for a whole-file ArrayBuffer', async () => {
+    const bytes = new Uint8Array(9 * 1024 * 1024).fill(3);
+    const blob = new Blob([bytes]);
+    const slice = blob.slice.bind(blob);
+    blob.arrayBuffer = async (): Promise<ArrayBuffer> => { throw new Error('whole-file backend read'); };
+    blob.slice = (start = 0, end = blob.size): Blob => {
+      expect(end - start).toBeLessThanOrEqual(4 * 1024 * 1024);
+      return slice(start, end);
+    };
+    const result = await hashBlob(blob, { noWorker: true });
+    expect(result.hex).toBe(createHash('sha256').update(bytes).digest('hex'));
+  });
   it('rejects invalid chunk sizes instead of hanging or allocating invalid buffers', async () => {
     for (const chunkSize of [0, -1, 0.5, NaN, Infinity]) {
       await expect(hashSource(new Blob(['x']), { chunkSize })).rejects.toMatchObject({ code: 'INPUT_INVALID' });

@@ -1,5 +1,8 @@
 # Unaltered
 
+Unaltered is a **software artwork** and an experimental client-side file fingerprinting and timestamp tool. This descriptor
+does not change its functions, MIT licence, risks, acceptance criteria, or applicable maintainer, hosting and legal obligations.
+
 **Prove a file existed, unchanged, at a point in time, without trusting us.**
 
 > **Status: v0.3.1 development build, unaudited; release artifacts remain unsigned.** See [docs/AUDIT.md](docs/AUDIT.md) and the current [validation record](docs/COMPLETION_STATUS.md).

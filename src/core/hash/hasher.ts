@@ -2,7 +2,7 @@
 // chunked code on the main thread (yielding between chunks) where workers are unavailable, e.g. file:// in Chrome.
 import { toHex, equalBytes } from '../bytes';
 import { UnalteredError } from '../errors';
-import { CHUNK_SIZE, hashSource } from './stream';
+import { CHUNK_SIZE, CROSS_CHECK_MAX, hashSource, readCrossCheckInput } from './stream';
 
 export interface HashResult {
   digest: Uint8Array;
@@ -21,7 +21,7 @@ export interface HashOptions {
 declare const __WORKER_URL__: string | null;
 declare const __WORKER_INLINE__: string | null;
 
-export const CROSS_CHECK_MAX = 64 * 1024 * 1024;
+export { CROSS_CHECK_MAX } from './stream';
 
 const MISMATCH = 'Internal error: two fingerprint calculations disagree. Do not use this result.';
 
@@ -108,7 +108,7 @@ function hashInWorker(w: Worker, blob: Blob, opts: HashOptions): Promise<{ diges
 async function crossCheck(blob: Blob, digest: Uint8Array): Promise<void> {
   const subtle = globalThis.crypto?.subtle;
   if (!subtle || blob.size > CROSS_CHECK_MAX) return;
-  const other = new Uint8Array(await subtle.digest('SHA-256', await blob.arrayBuffer()));
+  const other = new Uint8Array(await subtle.digest('SHA-256', await readCrossCheckInput(blob)));
   if (!equalBytes(other, digest)) {
     throw new UnalteredError('INTERNAL_HASH_MISMATCH', MISMATCH);
   }

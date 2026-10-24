@@ -25,6 +25,13 @@ receipt must still exercise a confirmed upgrade through the app and an independe
 No app backend, relay, new host, security exception or proxy was added. Repeat the commands on a host that permits these
 destinations; retain the Oct 22 observations below as historical evidence.
 
+The same probe subsequently ran on native CI [run 40104783971](https://github.com/djshellshoxxx/Unaltered/actions/runs/40104783971)
+at `2026-10-24T14:58:34.311Z`, with pinned Chromium156.0.8078.4. Alice and Finney POSTs succeeded (200,207/226 bytes),
+their pending GETs failed browser CORS reads (`TypeError`/`ERR_FAILED`), and Bob POST/GET timed out. Both explorers returned
+the correct genesis height/hash/header with double-SHA-256 integrity verification. No CSP violation occurred. The parallel
+Node diagnostic confirmed missing ACAO on the pending404 replies; these are now separate native Node and actual-browser
+observations. Confirmed upgrade through the app/reference client remains untested. R1 is still open.
+
 ## 1. Calendar servers (OpenTimestamps)
 
 Source: `opentimestamps/calendar.py` (python-opentimestamps 0.4.5) and `otsclient/cmds.py` (client 0.7.2).
