@@ -65,7 +65,8 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
       const end = Math.min(done + chunk, reader ? streamEnd : src.size);
       let buf: Uint8Array;
       if (reader && buffer) {
-        const read = await reader.read(new Uint8Array(buffer, 0, end - done), { min: end - done });
+        // Consume available bytes; requiring a whole-slice minimum can leave native aggregation pending.
+        const read = await reader.read(new Uint8Array(buffer, 0, end - done));
         if (read.done || !read.value?.byteLength || read.value.byteLength > end - done) {
           throw new UnalteredError('INPUT_INVALID', 'The file ended before its declared size.');
         }
