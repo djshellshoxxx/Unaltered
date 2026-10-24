@@ -43,8 +43,10 @@ test('hashes a real 2 GiB file in the browser with less than 200 MiB extra rende
       while (sampling) {
         peak = Math.max(peak, await rss());
         if (Date.now() >= nextHeartbeat) {
-          const progress = await page.evaluate(() => document.querySelector('progress')?.getAttribute('value') ?? null);
-          phase(`progress=${progress} extraRendererRss=${peak - before}`);
+          // Do not pause 50 ms RSS sampling while the browser answers the diagnostic query.
+          void page.evaluate(() => document.querySelector('progress')?.getAttribute('value') ?? null)
+            .then((progress) => phase(`progress=${progress} extraRendererRss=${peak - before}`))
+            .catch(() => phase('progress-query-unavailable'));
           nextHeartbeat = Date.now() + 10_000;
         }
         await new Promise((resolve) => setTimeout(resolve, 50));
