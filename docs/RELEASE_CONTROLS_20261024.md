@@ -9,6 +9,7 @@ Scope: v0.3.1 workflow preparation on `codex/resume-acceptance-20261024`, resume
 - All three release builders (Linux, Windows, macOS), typecheck/lint/unit gates, checksum-list agreement and Linux artefact verification remain required. Missing release artefacts fail upload.
 - Only the final draft job receives `contents: write`. Its sole release command is `gh release create --verify-tag --draft --prerelease`; it neither creates a missing tag nor edits or overwrites an existing release. Duplicate release creation fails. Signing keys are absent from this workflow.
 - Ordinary CI now builds/tests on macOS, verifies macOS artefact checksums, retains its five distributable artefacts and checksum list, and compares Linux, Windows and macOS checksum lists. Linux and Windows uploads now also include the CLI and Linux archive. Existing browser, memory, differential, provenance and reproducibility gates are preserved.
+- Integration adds an informational real-browser CORS diagnostic after the required Chromium e2e step, using the installed pinned browser and built app CSP. This supplements the existing Node network diagnostic; failures do not relax any required e2e assertion and cannot establish a confirmed upgrade round trip.
 - `docs/RELEASE.md` now distinguishes draft preparation from separately authorized signing and publication.
 
 ## Local evidence
