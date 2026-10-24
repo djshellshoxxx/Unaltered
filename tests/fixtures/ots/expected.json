@@ -1,0 +1,34 @@
+{
+  "batch": {
+    "digests": [
+      "15c27816b41541594fbf35e58a55903a5aa8c567269a4411514fd380f06770b5",
+      "c2bb3ccfff6a5dec63bfc98b37438bd1cbf44fb16376761c797302e8392207aa",
+      "69453e62c1eea568938af2cf8c1dca9285036a30ec84c6620f747540eedc30c1"
+    ],
+    "pending": [
+      "https://finney.calendar.eternitywall.com"
+    ],
+    "tip": "6ee613d0d5e35604682b9d780417eb7ac78bd46d78c6661fd70a2ab0dc25be47"
+  },
+  "confirmed.ots": {
+    "bitcoin": [
+      {
+        "commitment": "1d0ac9ece2e976f87622b7b8840099a25e95e5f840fcbacfe89ef9004ee0ed1d",
+        "height": 358391
+      }
+    ],
+    "commitment": "1d0ac9ece2e976f87622b7b8840099a25e95e5f840fcbacfe89ef9004ee0ed1d",
+    "digest": "96990e1d64b166f9af8853b816e0e34a7f2b94354125f78599f209a3769c795a",
+    "pending": [
+      "https://bob.btc.calendar.opentimestamps.org"
+    ]
+  },
+  "pending.ots": {
+    "bitcoin": [],
+    "commitment": "b905be8798fdfbb2f651f578d210e3d699a8e8189b1f747d4c69e6e45d320d7d",
+    "digest": "96990e1d64b166f9af8853b816e0e34a7f2b94354125f78599f209a3769c795a",
+    "pending": [
+      "https://alice.btc.calendar.opentimestamps.org"
+    ]
+  }
+}

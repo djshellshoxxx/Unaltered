@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # Dependabot only PROPOSES updates. Every dependency PR must be reviewed by diff
+  # (including transitive additions and lockfile integrity hashes). See docs/OPSEC.md §3.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    # Let new releases age before proposing them, so malicious versions are more likely to be yanked first.
+    cooldown:
+      default-days: 7
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
