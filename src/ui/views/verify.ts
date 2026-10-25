@@ -1,9 +1,10 @@
 // Verify view (FR-7, FR-8, FR-11) and receipt upgrade (FR-6).
 import { fromHex, groupHex } from '../../core/bytes';
-import { isAbort, safeMessage } from '../../core/errors';
+import { isAbort, safeMessage, UnalteredError } from '../../core/errors';
 import { hashBlob } from '../../core/hash/hasher';
 import { upgrade } from '../../core/ots/calendar';
 import { parseProof } from '../../core/ots/codec';
+import { LIMITS } from '../../core/ots/types';
 import { verify, type VerifyReport, type VerifyState } from '../../core/ots/verify';
 import { announce, dropZone, el, formatBytes, setChildren } from '../dom';
 import { downloadLink, revokeAll } from '../download';
@@ -31,6 +32,10 @@ const BODY: Record<VerifyState, StringKey> = {
 
 const HEX64 = /^[0-9a-f]{64}$/;
 
+function checkReceiptSize(file: File): void {
+  if (file.size > LIMITS.maxInputBytes) throw new UnalteredError('PROOF_TOO_LARGE', 'The receipt file is too large.');
+}
+
 export interface VerifyView {
   setPrefill(hex: string | null): void;
 }
@@ -42,14 +47,23 @@ export function mountVerify(root: HTMLElement): VerifyView {
   let prefill: string | null = null;
   let busy = false;
   let abort: AbortController | null = null;
+  let generation = 0;
 
   const inputs = el('div', { class: 'inputs' });
   const actions = el('div', { class: 'actions' });
   const out = el('div', { class: 'verify-result', 'aria-live': 'polite' });
   const upOut = el('div', { class: 'upgrade-result', 'aria-live': 'polite' });
   let upFile: File | null = null;
+  let upGeneration = 0;
   const upInputs = el('div', { class: 'inputs' });
   const upActions = el('div', { class: 'actions' });
+
+  function resetVerification(): void {
+    generation++;
+    busy = false;
+    abort = null;
+    setChildren(out);
+  }
 
   function renderInputs(): void {
     setChildren(
@@ -61,13 +75,13 @@ export function mountVerify(root: HTMLElement): VerifyView {
             { class: 'notice' },
             el('p', {}, t('verify.prefilled')),
             el('code', { class: 'digest' }, groupHex(prefill)),
-            el('button', { type: 'button', class: 'button small', onclick: () => ((prefill = null), renderInputs(), renderActions()) }, t('common.remove')),
+            el('button', { type: 'button', class: 'button small', onclick: () => ((prefill = null), resetVerification(), renderInputs(), renderActions()) }, t('common.remove')),
           )
         : null,
-      dropZone({ id: 'verify-file', label: t('verify.dropFile'), hint: t('verify.dropFileHint'), onFiles: (f) => ((file = f[0] ?? null), renderInputs(), renderActions()) }),
+      dropZone({ id: 'verify-file', label: t('verify.dropFile'), hint: t('verify.dropFileHint'), onFiles: (f) => ((file = f[0] ?? null), resetVerification(), renderInputs(), renderActions()) }),
       file ? el('p', { class: 'picked' }, `${file.name} · ${formatBytes(file.size)}`) : null,
       el('h3', {}, t('verify.step2')),
-      dropZone({ id: 'verify-receipt', label: t('verify.dropReceipt'), hint: t('verify.dropReceiptHint'), accept: '.ots', onFiles: (f) => ((receipt = f[0] ?? null), renderInputs(), renderActions()) }),
+      dropZone({ id: 'verify-receipt', label: t('verify.dropReceipt'), hint: t('verify.dropReceiptHint'), accept: '.ots', onFiles: (f) => ((receipt = f[0] ?? null), resetVerification(), renderInputs(), renderActions()) }),
       receipt ? el('p', { class: 'picked' }, `${receipt.name} · ${formatBytes(receipt.size)}`) : null,
     );
   }
@@ -76,43 +90,56 @@ export function mountVerify(root: HTMLElement): VerifyView {
     setChildren(
       actions,
       el('button', { type: 'button', class: 'button primary big', disabled: busy || !receipt || (!file && !prefill), onclick: () => void run() }, busy ? t('verify.checking') : t('verify.check')),
-      busy ? el('button', { type: 'button', class: 'button', onclick: () => abort?.abort() }, t('common.cancel')) : null,
+      busy ? el('button', { type: 'button', class: 'button', onclick: () => { abort?.abort(); resetVerification(); renderActions(); } }, t('common.cancel')) : null,
     );
   }
 
   async function run(): Promise<void> {
     if (!receipt) return;
+    const selectedReceipt = receipt;
+    const selectedFile = file;
+    const selectedPrefill = prefill;
+    const operation = ++generation;
+    const controller = new AbortController();
+    const current = (): boolean => operation === generation && !controller.signal.aborted && out.isConnected;
     busy = true;
-    abort = new AbortController();
+    abort = controller;
     renderActions();
     setChildren(out, el('p', { role: 'status' }, t('verify.working')));
     try {
+      checkReceiptSize(selectedReceipt);
       let digest: Uint8Array;
       let hex: string;
-      if (file) {
-        const h = await hashBlob(file, { signal: abort.signal });
+      if (selectedFile) {
+        const h = await hashBlob(selectedFile, { signal: controller.signal });
+        if (!current()) return;
         digest = h.digest;
         hex = h.hex;
       } else {
-        hex = prefill!;
+        hex = selectedPrefill!;
         digest = fromHex(hex);
       }
-      const bytes = new Uint8Array(await receipt.arrayBuffer());
-      const report = await verify(digest, bytes, verifyConfigFromSettings(abort.signal));
-      setChildren(out, renderReport(report, hex, file === null));
+      const bytes = new Uint8Array(await selectedReceipt.arrayBuffer());
+      if (!current()) return;
+      const report = await verify(digest, bytes, verifyConfigFromSettings(controller.signal));
+      if (!current()) return;
+      setChildren(out, renderReport(report, hex, selectedFile === null));
       announce(t(TITLE[report.state]));
     } catch (e) {
-      setChildren(out, isAbort(e) ? null : el('p', { class: 'error', role: 'alert' }, safeMessage(e)));
+      if (current()) setChildren(out, isAbort(e) ? null : el('p', { class: 'error', role: 'alert' }, safeMessage(e)));
+    } finally {
+      if (current()) {
+        busy = false;
+        abort = null;
+        renderActions();
+      }
     }
-    busy = false;
-    abort = null;
-    renderActions();
   }
 
   function renderUpgrade(): void {
     setChildren(
       upInputs,
-      dropZone({ id: 'upgrade-receipt', label: t('upgrade.drop'), hint: t('verify.dropReceiptHint'), accept: '.ots', onFiles: (f) => ((upFile = f[0] ?? null), renderUpgrade()) }),
+      dropZone({ id: 'upgrade-receipt', label: t('upgrade.drop'), hint: t('verify.dropReceiptHint'), accept: '.ots', onFiles: (f) => { upFile = f[0] ?? null; upGeneration++; setChildren(upOut); renderUpgrade(); } }),
       upFile ? el('p', { class: 'picked' }, `${upFile.name} · ${formatBytes(upFile.size)}`) : null,
     );
     setChildren(upActions, el('button', { type: 'button', class: 'button primary', disabled: !upFile, onclick: () => void runUpgrade() }, t('upgrade.run')));
@@ -121,11 +148,16 @@ export function mountVerify(root: HTMLElement): VerifyView {
   async function runUpgrade(): Promise<void> {
     if (!upFile) return;
     const f = upFile;
+    const operation = ++upGeneration;
+    const current = (): boolean => operation === upGeneration && upOut.isConnected;
     setChildren(upOut, el('p', { role: 'status' }, t('verify.working')));
     try {
+      checkReceiptSize(f);
       const bytes = new Uint8Array(await f.arrayBuffer());
+      if (!current()) return;
       parseProof(bytes);
       const r = await upgrade(bytes, stampConfigFromSettings());
+      if (!current()) return;
       const kids: (Node | null)[] = [];
       if (r.status === 'bitcoin-confirmed') {
         kids.push(el('p', { class: 'notice ok', role: 'status' }, r.changed ? t('upgrade.confirmed') : t('upgrade.alreadyConfirmed')));
@@ -145,7 +177,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
       if (failed.length > 0) kids.push(el('ul', { class: 'calendars' }, ...failed.map((c) => el('li', {}, `✖ ${new URL(c.url).host} – ${c.error ?? ''}`))));
       setChildren(upOut, ...kids);
     } catch (e) {
-      setChildren(upOut, el('p', { class: 'error', role: 'alert' }, safeMessage(e)));
+      if (current()) setChildren(upOut, el('p', { class: 'error', role: 'alert' }, safeMessage(e)));
     }
   }
 
@@ -169,7 +201,9 @@ export function mountVerify(root: HTMLElement): VerifyView {
 
   return {
     setPrefill(hex) {
-      prefill = hex && HEX64.test(hex) ? hex : null;
+      const next = hex && HEX64.test(hex) ? hex : null;
+      if (next !== prefill) resetVerification();
+      prefill = next;
       renderInputs();
       renderActions();
     },
