@@ -27,8 +27,10 @@ Tests run at `03fc5ac` (local, Node 22.22.0, pinned deps via `npm ci --ignore-sc
 
 ## Still open
 
-No exact-head native CI exists for this branch (CI runs only on main pushes, PRs or manual dispatch). Getting it needs a draft PR
-or a dispatch on this head; see the PR note in the final status. R1 (live upgrade + reference verification), unsigned commits/signing,
+Draft PR #7 (stacked on #6, base `codex/resume-acceptance-20261024`) was opened to get exact-head native CI.
+[Run 40586156255](https://github.com/djshellshoxxx/Unaltered/actions/runs/40586156255) at `fc8f9aa` (source identical to `03fc5ac`):
+all 11 required jobs succeeded, including three-OS byte-identity, Chromium/Firefox/WebKit e2e and the Chromium 2GiB memory job;
+the informational live network job failed, as on #6. The number of memory attempts was not inspected. Later handoff-only commits need their own PR checks. R1 (live upgrade + reference verification), unsigned commits/signing,
 human accessibility/Spanish/usability, audit/rebuild and release controls remain open as in `docs/HANDOFF_20261024.md`.
 U-N1 (language remount discards transient receipts; old operations are not aborted on remount) is still a product decision.
 The missing old checkpoint `1e0fd6b3d4e1d1b89b3ad01b78cc28a4c93c08dc` has not been recovered. No merge, release, tag or deployment.
