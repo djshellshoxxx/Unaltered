@@ -10,11 +10,11 @@ Never force-push; never push to main. Main `8bcae50`, PR #6 head `0b448d8` uncha
 | #6 | `codex/resume-acceptance-20261024` | `0b448d8` | main | 0.3.1 integration (earlier sessions) |
 | #7 | `codex/ui-correctness-checkpoint-20261025` | `c0ae8e7` | #6 | Verify: receipt bounds, stale-completion suppression, abort superseded runs |
 | #8 | `codex/ordinary-fixes-20261027` | this commit | #7 | CLI receipt bounds, Stamp cancel state, hashing-abort tests, R1 tooling |
-| proposal | `codex/proposal-language-presentation-20261027` | `f1eaafa` | #8 | **Needs product decision**: keep state across language switch |
+| #9 | `codex/proposal-language-presentation-20261027` | `bea5aae` | #8 | **PROPOSAL, needs product decision**: keep state across language switch |
 
 ## PR #7 status
 
-- Independent review of `0b448d8..c0ae8e7`: **no blocking defects**. Reviewer reproduced 13 probes (input changes during
+- Independent review of `0b448d8..c0ae8e7` (reviewer agent, read-only): **no blocking defects**. Reviewer reproduced 13 probes (input changes during
   hashing, between hash and read, during network; rapid repeats; stale `finally`; over-limit with a file) and a mutation
   check (removing the abort fails all 5 new tests). Non-blocking: remount does not stop old work (proposal covers it);
   Upgrade requests are not cancellable (bounded by the 15 s fetch timeout); new tests used only the prefill path (#8 adds
@@ -26,11 +26,18 @@ Never force-push; never push to main. Main `8bcae50`, PR #6 head `0b448d8` uncha
 
 ## Memory gate (required) — open, pre-existing, now the main blocker
 
-- Native: `0b448d8` 3/3 (run 40111133625), `fc8f9aa` pass, `c0ae8e7` fail, `1532064` (#8) fail (job 122491912806, 9m34s).
-  Both failures last about setup + the 540 s per-attempt deadline, matching the historical read stall
-  (`docs/HANDOFF_20261024.md`). Hash source, memory spec and diagnostics are unchanged since `0b448d8`.
-- Local, this executor (Chromium 156, 4 vCPU): `c0ae8e7` 3/3 pass (35.4/31.1/32.5 s). A 10-attempt run is recorded below.
-- Conclusion so far: the 0b448d8 EOF-lifecycle change did not make the native gate repeatable; no change in #7/#8 touches it.
+- Native, each a fixed 3-attempt run on unchanged hash source:
+
+  | Result | Commit, run |
+  |---|---|
+  | **pass** | `0b448d8` (run 40111133625), `fc8f9aa` (40586156255), `bea5aae` #9 (40592405203, 2m08s) |
+  | **fail** | `c0ae8e7` (job 122481018812, 9m51s), `1532064` (job 122491912806, 9m34s), `be7e14d` (job 122498576476, 10m53s) |
+
+  Every failure lasts about setup plus the 540 s per-attempt deadline, matching the historical read stall.
+  The failing `be7e14d` and passing `bea5aae` ran at the same time, and `bea5aae` contains all of `be7e14d`. So the
+  stall is intermittent per run, not caused by any change in #7/#8/#9.
+- Local, this executor (same pinned Chromium 156, 4 vCPU): 13/13 (`c0ae8e7` 3/3; `c80f2ac` 10/10, 30–35 s each).
+- Conclusion: the 0b448d8 EOF-lifecycle change did not make the native gate repeatable (about 50% of recent runs).
   Next: read the failure logs/artifact `browser-memory-failures` (spec prints `memory-acceptance worker-io=` read state)
   with an authenticated session, then continue the read-stall investigation. Gates (2 GiB, <200 MiB RSS, 540 s, 3 fixed attempts) unchanged.
 
@@ -47,8 +54,11 @@ Never force-push; never push to main. Main `8bcae50`, PR #6 head `0b448d8` uncha
 
 Node (this executor): Alice's confirmed upgrade `GET` → `200`, `Access-Control-Allow-Origin: *`; our upgrade + verify →
 VERIFIED, block 428648; reference library verified the same receipt against blockchain.info's header. Browser here:
-`TLS_OR_PROXY` (`ERR_CERT_AUTHORITY_INVALID`, executor TLS inspection), so no CORS conclusion. Closes when the
-`r1-acceptance` CI job (native runner) passes. Bob/Finney confirmed replies remain unobserved.
+`TLS_OR_PROXY` (`ERR_CERT_AUTHORITY_INVALID`, executor TLS inspection), so no CORS conclusion. The browser was not
+made to trust that CA (that would override the browser's own refusal). Native `r1-acceptance` job **failed fast** on
+`be7e14d` (job 122498576578, 31 s) and `bea5aae` (job 122499717803, 34 s). Its logs are unread, so the cause is unknown
+and it is **not** evidence about CORS. Next: read that job's log; the JSON includes the classification.
+Bob/Finney confirmed replies remain unobserved.
 
 ## Product decision pending
 
