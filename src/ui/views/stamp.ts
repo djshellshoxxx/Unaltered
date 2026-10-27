@@ -1,6 +1,6 @@
 // Stamp view (FR-1..FR-5, FR-10, FR-11, FR-12): pick file(s), optionally clean, fingerprint, create receipt.
 import { groupHex } from '../../core/bytes';
-import { isAbort, safeMessage } from '../../core/errors';
+import { isAbort, safeMessage, UnalteredError } from '../../core/errors';
 import { hashBlob, type HashResult } from '../../core/hash/hasher';
 import { calendarsOf, stampBatch, type CalendarResult } from '../../core/ots/calendar';
 import { MIME, detectBlob, stripMetadata, type FileKind, type StripOutcome } from '../../core/strip';
@@ -26,6 +26,10 @@ interface Item {
   proof: Uint8Array | null;
   abort: AbortController;
   card: HTMLElement;
+}
+
+function throwIfCancelled(signal: AbortSignal): void {
+  if (signal.aborted) throw new UnalteredError('ABORTED', 'Cancelled.');
 }
 
 // Kinds the cleaner can rewrite (images and audio).
@@ -74,10 +78,11 @@ export function mountStamp(root: HTMLElement): void {
     refreshItem(it);
     try {
       it.kind = await detectBlob(it.file);
+      throwIfCancelled(signal);
       let target: Blob = it.file;
       if (isImage(it.kind) && it.strip) {
         const out = await stripMetadata(it.file);
-        if (signal.aborted) return;
+        throwIfCancelled(signal);
         it.outcome = out;
         if (out.kind === 'rejected') {
           it.error = t('stamp.rejected', { reason: out.reason });
@@ -96,8 +101,13 @@ export function mountStamp(root: HTMLElement): void {
         },
       });
     } catch (e) {
-      if (isAbort(e) || signal.aborted) return;
-      it.error = safeMessage(e);
+      if (isAbort(e) || signal.aborted) {
+        // A newer run or Remove owns the item now; only the item's own Cancel leaves it here to settle.
+        if (it.abort.signal !== signal || !items.includes(it)) return;
+        it.error = t('stamp.cancelled');
+      } else {
+        it.error = safeMessage(e);
+      }
     }
     it.busy = false;
     refreshItem(it);
