@@ -32,6 +32,18 @@ the correct genesis height/hash/header with double-SHA-256 integrity verificatio
 Node diagnostic confirmed missing ACAO on the pending404 replies; these are now separate native Node and actual-browser
 observations. Confirmed upgrade through the app/reference client remains untested. R1 is still open.
 
+### Confirmed-upgrade reply — 2026-10-27 (Node; browser pending)
+
+First observation of a **confirmed `200`** upgrade reply, using the upstream already-anchored `incomplete.txt.ots` example
+(no new submission; procedure in [R1_ACCEPTANCE.md](R1_ACCEPTANCE.md)). From Node 22.22.0 at about 21:45 UTC:
+`GET alice.btc.calendar.opentimestamps.org/timestamp/<commitment>` returned `200`, `Access-Control-Allow-Origin: *`,
+699 bytes. This project's `upgrade()` produced a `bitcoin-confirmed` receipt and `verify()` returned `VERIFIED` at block
+428648 (`2016-09-07T05:56:43Z`, mempool.space and blockstream.info agreeing). The reference library (0.4.5) independently
+verified that receipt against block 428648's header from blockchain.info: same time (1473227803), file digest matched.
+The browser run on this executor failed before any HTTP reply with `net::ERR_CERT_AUTHORITY_INVALID` (the executor
+inspects TLS with a CA the browser does not trust), so it says nothing about CORS. The new informational CI step runs the
+same procedure on native runners. **R1 stays open** until a browser `PASS` and the reference check agree on one receipt.
+
 ## 1. Calendar servers (OpenTimestamps)
 
 Source: `opentimestamps/calendar.py` (python-opentimestamps 0.4.5) and `otsclient/cmds.py` (client 0.7.2).
