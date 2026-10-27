@@ -41,7 +41,7 @@ First observation of a **confirmed `200`** upgrade reply, using the upstream alr
 428648 (`2016-09-07T05:56:43Z`, mempool.space and blockstream.info agreeing). The reference library (0.4.5) independently
 verified that receipt against block 428648's header from blockchain.info: same time (1473227803), file digest matched.
 The browser run on this executor failed before any HTTP reply with `net::ERR_CERT_AUTHORITY_INVALID` (the executor
-inspects TLS with a CA the browser does not trust), so it says nothing about CORS. The new informational CI step runs the
+inspects TLS with a CA the browser does not trust), so it says nothing about CORS. The new informational CI job `r1-acceptance` runs the
 same procedure on native runners. **R1 stays open** until a browser `PASS` and the reference check agree on one receipt.
 
 ## 1. Calendar servers (OpenTimestamps)

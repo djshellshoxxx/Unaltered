@@ -117,13 +117,6 @@ jobs:
         continue-on-error: true
         shell: bash
         run: node scripts/browser-network-check.mjs | tee -a "$GITHUB_STEP_SUMMARY"
-      # R1: confirmed upgrade through the app plus the reference implementation; no new calendar submission.
-      - name: R1 confirmed-upgrade acceptance (informational)
-        if: always() && matrix.browser == 'chromium'
-        continue-on-error: true
-        timeout-minutes: 5
-        shell: bash
-        run: bash scripts/r1-acceptance.sh | tee -a "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: failure()
         with:
@@ -309,3 +302,26 @@ jobs:
       - name: Check
         shell: bash
         run: node scripts/network-check.mjs | tee -a "$GITHUB_STEP_SUMMARY"
+
+  # R1 (docs/R1_ACCEPTANCE.md): confirmed upgrade through the app in Chromium plus the reference implementation.
+  # Uses an upstream receipt anchored in 2016, so no new calendar submission. Informational like network-check;
+  # a separate job so its outcome is visible as a check conclusion.
+  r1-acceptance:
+    name: R1 confirmed upgrade in the browser plus reference verification (informational)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Run
+        shell: bash
+        run: bash scripts/r1-acceptance.sh | tee -a "$GITHUB_STEP_SUMMARY"
