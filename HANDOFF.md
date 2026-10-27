@@ -1,41 +1,67 @@
-# Unaltered checkpoint — 2026-10-27
+# Unaltered handoff — 2026-10-27 (second continuation)
 
-Owner: this task owns only `djshellshoxxx/Unaltered`. Root integrates; no workers are active. No other repo was changed.
+Owner: this task owns only `djshellshoxxx/Unaltered`. Root integrates; one reviewer agent ran (read-only, finished).
+Never force-push; never push to main. Main `8bcae50`, PR #6 head `0b448d8` unchanged.
 
-- Checkpoint branch: `codex/ui-correctness-checkpoint-20261025` (fast-forward only; never force-push).
-- Tested source/test SHA: `03fc5ac` (this handoff commit sits on top of it). Previous checkpoint: `800b9cc` (source `7a33625`).
-- Parent/PR6 head: `0b448d887df89fab22f701810197e51285590e2b`. Main remains `8bcae50f90d08efcead4c5ff549543d4cc703af4`.
+## Branch stack (all draft PRs, none merged)
 
-## 2026-10-27 continuation
+| PR | Branch | Head | Base | Content |
+|---|---|---|---|---|
+| #6 | `codex/resume-acceptance-20261024` | `0b448d8` | main | 0.3.1 integration (earlier sessions) |
+| #7 | `codex/ui-correctness-checkpoint-20261025` | `c0ae8e7` | #6 | Verify: receipt bounds, stale-completion suppression, abort superseded runs |
+| #8 | `codex/ordinary-fixes-20261027` | this commit | #7 | CLI receipt bounds, Stamp cancel state, hashing-abort tests, R1 tooling |
+| proposal | `codex/proposal-language-presentation-20261027` | `f1eaafa` | #8 | **Needs product decision**: keep state across language switch |
 
-Integration review of `7a33625` against `0b448d8` (production diff is `src/ui/views/verify.ts` only): receipt size is checked
-before any read or hash, Verify/Upgrade completions are generation-checked after every await, and Cancel aborts.
-One finding was fixed in `03fc5ac`: an input change invalidated the running verification but did not abort its controller,
-so a superseded hash worker (up to the 2GiB input) kept running beside a new run, and its requests stayed live.
-`resetVerification()` now aborts the controller it discards, matching Cancel. Five new browser regressions
-(`a superseded verification is aborted after …`) failed before the fix for receipt/file/fingerprint/remove (cancel already passed) and pass after.
-Upgrade still lets issued calendar requests finish (no signal is threaded through `upgrade()`); its stale results are ignored. Not changed.
+## PR #7 status
 
-Tests run at `03fc5ac` (local, Node 22.22.0, pinned deps via `npm ci --ignore-scripts`, Playwright Chrome Headless Shell 156):
-- `npm run check`: OPSEC/type/lint pass; 126 unit/property pass, 1 opt-in large test skipped.
-- `npm run build` twice: full `dist` tree byte-identical; `sha256sum -c SHA256SUMS` all five OK.
-- Full Playwright suite, retries 0: 37 passed, 1 skipped (opt-in memory spec). Offline `file://` passed in this environment.
-- Known flake, not a regression: the 50ms main-thread responsiveness test failed once at `800b9cc` (84ms gap at
-  `change-dispatched`) and once on unmodified `0b448d8` in a separate worktree; it passed 5/5 isolated and in later full runs. Threshold unchanged.
-- Not run: Firefox/WebKit, 2GiB browser/Node memory acceptance, live network, release workflow. Hash/trust/transport source,
-  workflows, gates and lockfile are unchanged versus `0b448d8` (`git diff --stat` empty for those paths).
+- Independent review of `0b448d8..c0ae8e7`: **no blocking defects**. Reviewer reproduced 13 probes (input changes during
+  hashing, between hash and read, during network; rapid repeats; stale `finally`; over-limit with a file) and a mutation
+  check (removing the abort fails all 5 new tests). Non-blocking: remount does not stop old work (proposal covers it);
+  Upgrade requests are not cancellable (bounded by the 15 s fetch timeout); new tests used only the prefill path (#8 adds
+  hashing-time cases).
+- Native CI: `fc8f9aa` (same source as `03fc5ac`) run 40586156255 — all 11 required jobs passed.
+  `c0ae8e7` (handoff-only change) run 40587001019 — 10/11 required passed, **Browser 2 GiB memory acceptance failed**
+  (job 122481018812, 9m51s). Logs not inspected: the GitHub API is rate-limited from this executor and MCP has no log access.
+- **Not ready to merge**: the required memory gate failed on its exact head. The merge into #6 also still needs the owner's go-ahead.
 
-## Still open
+## Memory gate (required) — open, pre-existing, now the main blocker
 
-Draft PR #7 (stacked on #6, base `codex/resume-acceptance-20261024`) was opened to get exact-head native CI.
-[Run 40586156255](https://github.com/djshellshoxxx/Unaltered/actions/runs/40586156255) at `fc8f9aa` (source identical to `03fc5ac`):
-all 11 required jobs succeeded, including three-OS byte-identity, Chromium/Firefox/WebKit e2e and the Chromium 2GiB memory job;
-the informational live network job failed, as on #6. The number of memory attempts was not inspected. Later handoff-only commits need their own PR checks. R1 (live upgrade + reference verification), unsigned commits/signing,
-human accessibility/Spanish/usability, audit/rebuild and release controls remain open as in `docs/HANDOFF_20261024.md`.
-U-N1 (language remount discards transient receipts; old operations are not aborted on remount) is still a product decision.
-The missing old checkpoint `1e0fd6b3d4e1d1b89b3ad01b78cc28a4c93c08dc` has not been recovered. No merge, release, tag or deployment.
+- Native: `0b448d8` 3/3 (run 40111133625), `fc8f9aa` pass, `c0ae8e7` fail, `1532064` (#8) fail (job 122491912806, 9m34s).
+  Both failures last about setup + the 540 s per-attempt deadline, matching the historical read stall
+  (`docs/HANDOFF_20261024.md`). Hash source, memory spec and diagnostics are unchanged since `0b448d8`.
+- Local, this executor (Chromium 156, 4 vCPU): `c0ae8e7` 3/3 pass (35.4/31.1/32.5 s). A 10-attempt run is recorded below.
+- Conclusion so far: the 0b448d8 EOF-lifecycle change did not make the native gate repeatable; no change in #7/#8 touches it.
+  Next: read the failure logs/artifact `browser-memory-failures` (spec prints `memory-acceptance worker-io=` read state)
+  with an authenticated session, then continue the read-stall investigation. Gates (2 GiB, <200 MiB RSS, 540 s, 3 fixed attempts) unchanged.
 
-Detail: [UI evidence](docs/LOCAL_UI_ACCEPTANCE_20261025.md), then [historical handoff](docs/HANDOFF_20261024.md).
-Recovery: fetch the branch, check out the verified commit, `npm ci --ignore-scripts`, `npm run check`, `npm run build`,
-then `node_modules/.bin/playwright test --retries=0` (set `CHROMIUM_PATH` if a system Chromium is used).
-Keep the original 2GiB/<200MiB RSS/540s/50ms gates; never infer live browser CORS from Node probes or add a backend to work around R1.
+## #8 contents (all tested locally; see PR #8 body)
+
+- CLI reads at most `maxInputBytes + 1` receipt bytes, before hashing (same message as the browser). 3 unit tests.
+- Stamp: an item's own Cancel settled nothing and left it "working"; now shows "Cancelled…" with Remove. Browser test.
+- Spanish agreement fix in `stamp.rejected` (not a native-speaker review).
+- 4 Verify tests: input change during hashing terminates the superseded worker.
+- R1 tooling: `docs/R1_ACCEPTANCE.md`, `scripts/r1-acceptance.{mjs,sh}`, `tests/differential/verify_reference.py`,
+  informational CI job `r1-acceptance`. No new calendar submissions.
+
+## R1 — open, closer
+
+Node (this executor): Alice's confirmed upgrade `GET` → `200`, `Access-Control-Allow-Origin: *`; our upgrade + verify →
+VERIFIED, block 428648; reference library verified the same receipt against blockchain.info's header. Browser here:
+`TLS_OR_PROXY` (`ERR_CERT_AUTHORITY_INVALID`, executor TLS inspection), so no CORS conclusion. Closes when the
+`r1-acceptance` CI job (native runner) passes. Bob/Finney confirmed replies remain unobserved.
+
+## Product decision pending
+
+Language switch (U-N1): see `docs/proposals/LANGUAGE_SWITCH.md` on the proposal branch. Recommended: language as
+presentation state (keep inputs/results/running work). Alternatives A (stop old work), B (warn first), C (status quo).
+
+## Still open (need people or credentials)
+
+Signing (commits unsigned; no key), human screen-reader/Spanish/usability review, independent audit and rebuild,
+release controls, OPS-1..6, LEGAL-1. Automated checks do not satisfy these.
+
+## Recovery
+
+`git fetch origin`, check out a branch above, `npm ci --ignore-scripts`, `npm run check`, `npm run build`,
+`node_modules/.bin/playwright test --retries=0`. Known local flake: the 50 ms responsiveness test fails about 1 in 4
+full-suite runs, including on unmodified `0b448d8`; 10/10 isolated passes on #8 and the proposal. Threshold unchanged.
