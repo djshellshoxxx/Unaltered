@@ -6,6 +6,24 @@ import { UnalteredError } from '../errors';
 
 export const CHUNK_SIZE = 4 * 1024 * 1024;
 export const CROSS_CHECK_MAX = 64 * 1024 * 1024;
+/** A slice read that delivers nothing for this long is abandoned and the same range is reopened. */
+export const STALL_MS = 30_000;
+/** Consecutive stalls at one file offset before giving up with a typed error instead of hanging. */
+export const MAX_STALLS = 3;
+
+const STALLED = Symbol('stalled');
+
+function within<T>(pending: Promise<T>, ms: number): Promise<T | typeof STALLED> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const stall = new Promise<typeof STALLED>((resolve) => { timer = setTimeout(() => resolve(STALLED), ms); });
+  return Promise.race([pending, stall]).finally(() => clearTimeout(timer));
+}
+
+/** Drops a reader whose read is stuck. Its cancellation is not awaited: a stuck backend may never settle it. */
+function abandon(reader: ReadableStreamBYOBReader): void {
+  reader.cancel().catch(() => {});
+  try { reader.releaseLock(); } catch { /* Older engines refuse while a read is pending; the reader is dropped anyway. */ }
+}
 
 /** WebCrypto needs one input buffer; fill it with bounded backend reads on every engine. */
 export async function readCrossCheckInput(blob: Blob): Promise<ArrayBuffer> {
@@ -32,6 +50,8 @@ export interface StreamOptions {
   onProgress?: (bytesDone: number) => void;
   /** Called between chunks so a main-thread fallback can yield to the event loop. */
   yieldFn?: () => Promise<void>;
+  /** Stall timeout for one Blob slice read; tests shorten it. */
+  stallMs?: number;
 }
 
 export interface StreamResult {
@@ -40,14 +60,20 @@ export interface StreamResult {
   bytes: number;
 }
 
+function unreadable(): UnalteredError {
+  return new UnalteredError('INPUT_UNREADABLE', 'The browser stopped delivering the file. Try again, or copy the file to a local disk first.');
+}
+
 /** Returns null if cancelled. */
 export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Promise<StreamResult | null> {
   const chunk = opts.chunkSize ?? CHUNK_SIZE;
   if (!Number.isSafeInteger(chunk) || chunk <= 0 || !Number.isSafeInteger(src.size) || src.size < 0) {
     throw new UnalteredError('INPUT_INVALID', 'Invalid file or hashing chunk size.');
   }
+  const stallMs = opts.stallMs ?? STALL_MS;
   const h = sha256.create();
   let done = 0;
+  let stalls = 0;
   let reader: ReadableStreamBYOBReader | null = null;
   // WebKit may service a whole-Blob stream on the main thread even when requested by a worker.
   // Bound each backend read while retaining BYOB buffer reuse for large-file memory acceptance.
@@ -65,7 +91,19 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
       const end = Math.min(done + chunk, reader ? streamEnd : src.size);
       let buf: Uint8Array;
       if (reader && buffer) {
-        const read = await reader.read(new Uint8Array(buffer, 0, end - done), { min: end - done });
+        const read = blob
+          ? await within(reader.read(new Uint8Array(buffer, 0, end - done), { min: end - done }), stallMs)
+          : await reader.read(new Uint8Array(buffer, 0, end - done), { min: end - done });
+        if (read === STALLED) {
+          // Nothing from this read reached the hash, so reopening [done, streamEnd) neither skips nor repeats bytes.
+          // The pending read keeps the old buffer; continue with a new one.
+          abandon(reader);
+          reader = null;
+          if (++stalls >= MAX_STALLS) throw unreadable();
+          buffer = new ArrayBuffer(chunk);
+          reader = blob!.slice(done, streamEnd).stream().getReader({ mode: 'byob' });
+          continue;
+        }
         if (read.done || !read.value?.byteLength || read.value.byteLength > end - done) {
           throw new UnalteredError('INPUT_INVALID', 'The file ended before its declared size.');
         }
@@ -77,16 +115,22 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
       }
       h.update(buf);
       done += buf.length;
+      stalls = 0;
       opts.onProgress?.(done);
       if (opts.yieldFn) await opts.yieldFn();
       if (blob && reader && done === streamEnd) {
         // Let the file backend finish the slice before reopening it. A separate tiny view
         // observes EOF without transferring/detaching the reusable hashing buffer.
-        const eof = await reader.read(new Uint8Array(1));
-        if (!eof.done || eof.value?.byteLength) {
-          throw new UnalteredError('INPUT_INVALID', 'A file slice exceeded its declared size.');
+        const eof = await within(reader.read(new Uint8Array(1)), stallMs);
+        if (eof === STALLED) {
+          // The slice's bytes were all delivered and hashed; only the end-of-slice confirmation is missing.
+          abandon(reader);
+        } else {
+          if (!eof.done || eof.value?.byteLength) {
+            throw new UnalteredError('INPUT_INVALID', 'A file slice exceeded its declared size.');
+          }
+          reader.releaseLock();
         }
-        reader.releaseLock();
         reader = null;
         if (done < src.size) {
           streamEnd = Math.min(done + chunk, src.size);

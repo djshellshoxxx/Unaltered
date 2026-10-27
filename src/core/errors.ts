@@ -2,6 +2,7 @@
 export type ErrorCode =
   | 'ABORTED'
   | 'INPUT_INVALID'
+  | 'INPUT_UNREADABLE'
   | 'INTERNAL_HASH_MISMATCH'
   | 'PROOF_TOO_LARGE'
   | 'PROOF_MALFORMED'
