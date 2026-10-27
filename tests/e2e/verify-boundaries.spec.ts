@@ -118,6 +118,37 @@ test.describe('verification completion ownership', () => {
     await expect(page.locator('.result-PENDING')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Check', exact: true })).toBeEnabled();
   });
+
+  // A superseded operation's result is discarded, so its signal must also stop the hash worker and requests it owns.
+  for (const change of ['cancel', 'receipt', 'file', 'fingerprint', 'remove fingerprint'] as const) {
+    test(`a superseded verification is aborted after ${change}`, async ({ page }) => {
+      await page.goto(`/index.html#h=${HEX}`);
+      await holdReceiptRead(page);
+      await page.evaluate(() => {
+        const created: AbortController[] = [];
+        (window as unknown as { __controllers: AbortController[] }).__controllers = created;
+        const Original = window.AbortController;
+        window.AbortController = class extends Original {
+          constructor() {
+            super();
+            created.push(this);
+          }
+        };
+      });
+      await page.setInputFiles('#verify-receipt', receipt('held.ots'));
+      await page.getByRole('button', { name: 'Check', exact: true }).click();
+      await waitForHeldRead(page);
+      expect(await page.evaluate(() => (window as unknown as { __controllers: AbortController[] }).__controllers.map((c) => c.signal.aborted))).toEqual([false]);
+      if (change === 'cancel') await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+      else if (change === 'receipt') await page.setInputFiles('#verify-receipt', receipt('new.ots', Buffer.from('invalid')));
+      else if (change === 'file') await page.setInputFiles('#verify-file', { name: 'different.txt', mimeType: 'text/plain', buffer: Buffer.from('different') });
+      else if (change === 'fingerprint') await page.goto(`/index.html#h=${'00'.repeat(32)}`);
+      else await page.getByRole('button', { name: 'Remove', exact: true }).click();
+      expect(await page.evaluate(() => (window as unknown as { __controllers: AbortController[] }).__controllers[0]!.signal.aborted)).toBe(true);
+      await releaseReceiptRead(page);
+      await expect(page.locator('.verify-result')).toBeEmpty();
+    });
+  }
 });
 
 test('held network verification cannot replace a newer result', async ({ page }) => {

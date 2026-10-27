@@ -58,9 +58,11 @@ export function mountVerify(root: HTMLElement): VerifyView {
   const upInputs = el('div', { class: 'inputs' });
   const upActions = el('div', { class: 'actions' });
 
+  // Supersedes any running verification: its result is discarded, so its hash worker and requests are stopped too.
   function resetVerification(): void {
     generation++;
     busy = false;
+    abort?.abort();
     abort = null;
     setChildren(out);
   }
@@ -90,7 +92,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
     setChildren(
       actions,
       el('button', { type: 'button', class: 'button primary big', disabled: busy || !receipt || (!file && !prefill), onclick: () => void run() }, busy ? t('verify.checking') : t('verify.check')),
-      busy ? el('button', { type: 'button', class: 'button', onclick: () => { abort?.abort(); resetVerification(); renderActions(); } }, t('common.cancel')) : null,
+      busy ? el('button', { type: 'button', class: 'button', onclick: () => { resetVerification(); renderActions(); } }, t('common.cancel')) : null,
     );
   }
 
