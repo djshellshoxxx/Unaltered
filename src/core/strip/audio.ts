@@ -133,11 +133,14 @@ export function cleanMp3(input: Uint8Array): AudioResult {
   if (removed.length > 0) while (p < end && input[p] === 0) p++;
   if (!isSync(input, p)) return rej('No MP3 audio was found where expected.');
   start = p;
-  if (end - start >= 128 && tag4(input, end - 128).startsWith('TAG')) {
+  // Trailing tags never begin with a sync word, so a frame chain that already reaches `end` leaves no room for one.
+  // Checking before each removal keeps tag-like bytes inside the final frame's payload as audio.
+  const framesReachEnd = (): boolean => validateMp3Frames(input, start, end) === null;
+  if (!framesReachEnd() && end - start >= 128 && tag4(input, end - 128).startsWith('TAG')) {
     end -= 128;
     removed.push('ID3v1 tag');
   }
-  if (end - start >= 32 && String.fromCharCode(...input.subarray(end - 32, end - 24)) === 'APETAGEX') {
+  if (!framesReachEnd() && end - start >= 32 && String.fromCharCode(...input.subarray(end - 32, end - 24)) === 'APETAGEX') {
     const dv = new DataView(input.buffer, input.byteOffset, input.byteLength);
     const size = dv.getUint32(end - 20, true) + (dv.getUint32(end - 12, true) & 0x80000000 ? 32 : 0);
     if (size < 32 || size > end - start) return rej('The APE tag is malformed.');

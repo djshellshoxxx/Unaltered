@@ -65,12 +65,14 @@ def main():
         for i, server in enumerate(servers):
             print(f"Starting server {i+1}/{len(servers)}: {server['cmd']}")
 
-            # Use shell=True to support commands with cd and &&
+            # Use shell=True to support commands with cd and &&. Server output is
+            # discarded rather than piped: nothing reads these pipes, so a verbose
+            # server would block once the OS pipe buffer filled.
             process = subprocess.Popen(
                 server['cmd'],
                 shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
             )
             server_processes.append(process)
 

@@ -57,6 +57,10 @@ function mutate(source, target, crc32) {
       at += 12 + size;
     }
   }
+  // Half the WAV mutations restore the RIFF length so feedback reaches the chunk walk instead of the container check.
+  if (target === 'wav' && random(2) && bytes.length >= 12) {
+    new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).setUint32(4, bytes.length - 8, true);
+  }
   return bytes;
 }
 

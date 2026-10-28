@@ -15,8 +15,8 @@ describe('parser fuzz targets', () => {
     proof('litecoin.ots'),
   ]);
 
-  it('exposes the four intended parser targets and both valid and hostile seeds', () => {
-    expect(TARGETS).toEqual(['proof', 'timestamp', 'jpeg', 'png']);
+  it('exposes the six intended parser targets and both valid and hostile seeds', () => {
+    expect(TARGETS).toEqual(['proof', 'timestamp', 'jpeg', 'png', 'wav', 'mp3']);
     for (const target of TARGETS) {
       const targetSeeds = seeds.filter((seed) => seed.target === target);
       expect(targetSeeds.length, target).toBeGreaterThan(0);
@@ -38,6 +38,14 @@ describe('parser fuzz targets', () => {
     expect(outcomeByLabel.get('png-metadata-valid')).toBe('accepted');
     expect(outcomeByLabel.get('png-bad-crc')).toBe('rejected');
     expect(outcomeByLabel.get('png-unsupported-apng')).toBe('rejected');
+    expect(outcomeByLabel.get('wav-metadata-valid')).toBe('accepted');
+    expect(outcomeByLabel.get('wav-odd-pad-valid')).toBe('accepted');
+    expect(outcomeByLabel.get('wav-truncated')).toBe('rejected');
+    expect(outcomeByLabel.get('wav-unsupported-rf64')).toBe('rejected');
+    expect(outcomeByLabel.get('mp3-metadata-valid')).toBe('accepted');
+    expect(outcomeByLabel.get('mp3-untagged-valid')).toBe('accepted');
+    expect(outcomeByLabel.get('mp3-truncated')).toBe('rejected');
+    expect(outcomeByLabel.get('mp3-unsupported-free-format')).toBe('rejected');
   });
 
   it('keeps unsupported proof inputs as seeds without deriving timestamp bodies', () => {

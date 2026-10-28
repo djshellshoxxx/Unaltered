@@ -2,12 +2,15 @@
 import { equalBytes, toHex } from '../../src/core/bytes';
 import { UnalteredError } from '../../src/core/errors';
 import * as codec from '../../src/core/ots/codec';
+import { cleanMp3, cleanWav, selfCheckAudio } from '../../src/core/strip/audio';
 import { cleanJpeg, selfCheckJpeg } from '../../src/core/strip/jpeg';
 import { cleanPng, selfCheckPng } from '../../src/core/strip/png';
 export { crc32 } from '../../src/core/strip/png';
+import { makeMp3, makeWav } from '../helpers/audio';
 import { makeJpeg, makePng } from '../helpers/images';
 
-export type Target = 'proof' | 'timestamp' | 'jpeg' | 'png';
+export type Target = 'proof' | 'timestamp' | 'jpeg' | 'png' | 'wav' | 'mp3';
+type CleanerTarget = Exclude<Target, 'proof' | 'timestamp'>;
 export type CaseResult = 'accepted' | 'rejected';
 
 const ZERO_DIGEST = new Uint8Array(32);
@@ -51,19 +54,29 @@ function parseCase(target: 'proof' | 'timestamp', bytes: Uint8Array): CaseResult
   return 'accepted';
 }
 
-function imageCase(target: 'jpeg' | 'png', bytes: Uint8Array): CaseResult {
+const CLEANERS: Record<CleanerTarget, { clean: (bytes: Uint8Array) => { kind: string; output?: Uint8Array; removed?: string[] }; check: (bytes: Uint8Array) => string | null }> = {
+  jpeg: { clean: cleanJpeg, check: selfCheckJpeg },
+  png: { clean: cleanPng, check: selfCheckPng },
+  wav: { clean: cleanWav, check: (bytes) => selfCheckAudio('wav', bytes) },
+  mp3: { clean: cleanMp3, check: (bytes) => selfCheckAudio('mp3', bytes) },
+};
+
+function cleanerCase(target: CleanerTarget, bytes: Uint8Array): CaseResult {
   const original = copy(bytes);
-  const first = target === 'jpeg' ? cleanJpeg(bytes) : cleanPng(bytes);
+  const { clean, check } = CLEANERS[target];
+  const first = clean(bytes);
   if (first.kind !== 'cleaned') {
     if (!equalBytes(bytes, original)) throw new Error(`${target.toUpperCase()} parser mutated rejected input.`);
     return 'rejected'; // Includes documented unsupported formats.
   }
 
-  const check = target === 'jpeg' ? selfCheckJpeg : selfCheckPng;
+  if (!first.output || !first.removed) throw new Error(`${target.toUpperCase()} cleaner returned an incomplete result.`);
   if (check(first.output) !== null) throw new Error(`${target.toUpperCase()} cleaner emitted output that fails self-check.`);
   if (first.output.length > bytes.length) throw new Error(`${target.toUpperCase()} cleaner expanded its input.`);
-  const second = target === 'jpeg' ? cleanJpeg(first.output) : cleanPng(first.output);
-  if (second.kind !== 'cleaned' || !equalBytes(second.output, first.output)) {
+  // MP3 cleaning only removes leading/trailing tags, so reporting nothing removed means nothing changed.
+  if (target === 'mp3' && first.removed.length === 0 && !equalBytes(first.output, bytes)) throw new Error('MP3 cleaner changed bytes without reporting a removal.');
+  const second = clean(first.output);
+  if (second.kind !== 'cleaned' || !second.output || !equalBytes(second.output, first.output)) {
     throw new Error(`${target.toUpperCase()} cleaner is not byte-idempotent.`);
   }
   if (!equalBytes(bytes, original)) throw new Error(`${target.toUpperCase()} parser mutated input.`);
@@ -78,7 +91,9 @@ export function runCase(target: Target, bytes: Uint8Array): CaseResult {
       return parseCase(target, bytes);
     case 'jpeg':
     case 'png':
-      return imageCase(target, bytes);
+    case 'wav':
+    case 'mp3':
+      return cleanerCase(target, bytes);
   }
 }
 
@@ -112,9 +127,17 @@ export function seedCases(proofs: Uint8Array[]): SeedCase[] {
     { target: 'png', bytes: makePng({ text: true, exif: true, trailing: new TextEncoder().encode('SYNTHETIC-TAIL') }), label: 'png-metadata-valid' },
     { target: 'png', bytes: makePng({ badCrc: true }), label: 'png-bad-crc' },
     { target: 'png', bytes: makePng({ apng: true }), label: 'png-unsupported-apng' },
+    { target: 'wav', bytes: makeWav({ extra: true, trailing: 'SYNTHETIC-TAIL' }), label: 'wav-metadata-valid' },
+    { target: 'wav', bytes: makeWav({ oddPad: 5 }), label: 'wav-odd-pad-valid' },
+    { target: 'wav', bytes: makeWav().slice(0, -1), label: 'wav-truncated' },
+    { target: 'wav', bytes: Uint8Array.from([0x52, 0x46, 0x36, 0x34, ...makeWav().subarray(4)]), label: 'wav-unsupported-rf64' },
+    { target: 'mp3', bytes: makeMp3({ id3v2: true, ape: true, id3v1: true }), label: 'mp3-metadata-valid' },
+    { target: 'mp3', bytes: makeMp3(), label: 'mp3-untagged-valid' },
+    { target: 'mp3', bytes: makeMp3().slice(0, -1), label: 'mp3-truncated' },
+    { target: 'mp3', bytes: Uint8Array.from([0xff, 0xfb, 0x00, 0x00, ...makeMp3().subarray(4)]), label: 'mp3-unsupported-free-format' },
   );
   return seeds;
 }
 
 /** Resolve compile-time exhaustiveness for driver config validation. */
-export const TARGETS: readonly Target[] = ['proof', 'timestamp', 'jpeg', 'png'];
+export const TARGETS: readonly Target[] = ['proof', 'timestamp', 'jpeg', 'png', 'wav', 'mp3'];

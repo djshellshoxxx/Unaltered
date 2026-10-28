@@ -159,6 +159,27 @@ describe('MP3 stripping', () => {
     new DataView(ape.buffer).setUint32(ape.length - 20, 0xfffff, true);
     expect(cleanMp3(ape).kind).toBe('rejected');
   });
+  it('keeps tag-like bytes inside the final audio frame as audio', () => {
+    const enc = (s: string): number[] => [...s].map((c) => c.charCodeAt(0));
+    const id3v1Like = Uint8Array.from(FRAME);
+    id3v1Like.set(enc('TAG'), FRAME.length - 128);
+    // An APEv2-like footer whose declared size is exactly the last frame would otherwise drop that frame.
+    const apeLike = Uint8Array.from(FRAME);
+    apeLike.set([...enc('APETAGEX'), 0xd0, 7, 0, 0, FRAME.length & 255, FRAME.length >> 8, 0, 0], FRAME.length - 32);
+    for (const last of [id3v1Like, apeLike]) {
+      const audio = Uint8Array.from([...FRAME, ...last]);
+      const bare = cleanMp3(audio);
+      expect(bare.kind).toBe('cleaned');
+      if (bare.kind !== 'cleaned') throw new Error();
+      expect(bare.output).toEqual(audio);
+      expect(bare.removed).toEqual([]);
+      const tagged = cleanMp3(makeMp3({ id3v2: true, id3v1: true, frames: [Uint8Array.from(FRAME), last] }));
+      expect(tagged.kind).toBe('cleaned');
+      if (tagged.kind !== 'cleaned') throw new Error();
+      expect(tagged.output).toEqual(audio);
+      expect(cleanMp3(tagged.output)).toEqual({ kind: 'cleaned', output: audio, removed: [] });
+    }
+  });
   it('rejects an APE length that consumes every audio frame', () => {
     const input = makeMp3({ ape: true });
     // The footer declares a header, so its stored size excludes those 32 bytes.
