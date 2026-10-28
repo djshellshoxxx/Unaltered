@@ -136,6 +136,68 @@ describe('FR-1 hashing', () => {
       expect(streams.every((stream) => !stream.locked)).toBe(true);
     } finally { clearTimeout(timer); }
   });
+  describe('a slice read that stops delivering data (native read stall)', () => {
+    // hangs(start, attempt, phase) decides whether a slice stream for [start, end) stalls on its Nth open.
+    function stallingBlob(bytes: Uint8Array, hangs: (start: number, attempt: number, phase: 'data' | 'eof') => boolean) {
+      const blob = new Blob([bytes as BlobPart]);
+      const slice = blob.slice.bind(blob);
+      const opens = new Map<number, number>();
+      const ranges: number[][] = [];
+      let cancels = 0;
+      blob.slice = (start = 0, end = blob.size): Blob => {
+        ranges.push([start, end]);
+        const attempt = (opens.get(start) ?? 0) + 1;
+        opens.set(start, attempt);
+        const part = slice(start, end);
+        let offset = start;
+        part.stream = () => new ReadableStream({ type: 'bytes', pull(controller) {
+          const request = controller.byobRequest!;
+          if (hangs(start, attempt, offset === end ? 'eof' : 'data')) return new Promise<void>(() => {});
+          if (offset === end) {
+            controller.close();
+            request.respond(0);
+            return;
+          }
+          const view = new Uint8Array(request.view!.buffer, request.view!.byteOffset, request.view!.byteLength);
+          const length = Math.min(view.length, end - offset);
+          view.set(bytes.subarray(offset, offset + length));
+          offset += length;
+          request.respond(length);
+        }, cancel() {
+          cancels++;
+          return new Promise<void>(() => {}); // A cancellation that never settles must not be awaited.
+        } });
+        part.arrayBuffer = async (): Promise<ArrayBuffer> => { throw new Error('unexpected allocated slice read'); };
+        return part;
+      };
+      return { blob, ranges, cancels: () => cancels };
+    }
+    const bytes = Uint8Array.from({ length: 7 }, (_, i) => i + 1);
+    const expected = createHash('sha256').update(bytes).digest('hex');
+
+    it('reopens a stalled slice and hashes every byte exactly once', async () => {
+      const f = stallingBlob(bytes, (start, attempt, phase) => start === 3 && attempt === 1 && phase === 'data');
+      const progress: number[] = [];
+      const result = await hashSource(f.blob, { chunkSize: 3, stallMs: 20, onProgress: (n) => progress.push(n) });
+      expect(result!.hex).toBe(expected);
+      expect(f.ranges).toEqual([[0, 3], [3, 6], [3, 6], [6, 7]]);
+      expect(progress).toEqual([3, 6, 7]);
+      expect(f.cancels()).toBe(1);
+    });
+    it('continues after a stalled end-of-slice check without re-reading delivered bytes', async () => {
+      const f = stallingBlob(bytes, (start, attempt, phase) => start === 0 && attempt === 1 && phase === 'eof');
+      const result = await hashSource(f.blob, { chunkSize: 3, stallMs: 20 });
+      expect(result!.hex).toBe(expected);
+      expect(f.ranges).toEqual([[0, 3], [3, 6], [6, 7]]);
+    });
+    it('fails with a typed error, instead of hanging, when a slice keeps stalling', async () => {
+      const f = stallingBlob(bytes, (start, _attempt, phase) => start === 3 && phase === 'data');
+      const started = Date.now();
+      await expect(hashSource(f.blob, { chunkSize: 3, stallMs: 20 })).rejects.toMatchObject({ code: 'INPUT_UNREADABLE' });
+      expect(Date.now() - started).toBeLessThan(2000);
+      expect(f.ranges).toEqual([[0, 3], [3, 6], [3, 6], [3, 6]]);
+    });
+  });
   it('rejects invalid chunk sizes instead of hanging or allocating invalid buffers', async () => {
     for (const chunkSize of [0, -1, 0.5, NaN, Infinity]) {
       await expect(hashSource(new Blob(['x']), { chunkSize })).rejects.toMatchObject({ code: 'INPUT_INVALID' });
