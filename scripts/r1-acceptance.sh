@@ -24,5 +24,7 @@ read -r upgraded block < <(node -e 'const r=require(process.argv[1]);console.log
 python3 -m venv "$work/venv" && "$work/venv/bin/pip" install -q opentimestamps==0.4.5
 # Third source, independent of the app's explorers (mempool.space, blockstream.info). An own node is better.
 hash=$(curl -fsS "https://blockchain.info/block-height/$block?format=json" | python3 -c 'import json,sys;print(json.load(sys.stdin)["blocks"][0]["hash"])')
-header=$(curl -fsS "https://blockchain.info/rawblock/$hash?format=hex" | head -c 160)
+# Download fully, then truncate: piping curl into head under pipefail makes curl exit 23 (SIGPIPE).
+curl -fsS -o "$work/rawblock.hex" "https://blockchain.info/rawblock/$hash?format=hex"
+header=$(head -c 160 "$work/rawblock.hex")
 "$work/venv/bin/python" tests/differential/verify_reference.py "$work/incomplete.txt" "$upgraded" "$header"
