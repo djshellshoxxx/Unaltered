@@ -228,6 +228,47 @@ describe('FR-1 hashing', () => {
       };
       return blob;
     }
+    // Delivers at most `step` bytes per read, waiting `delayMs` first; reads of attempt 1 at `hangAfter` bytes never settle.
+    function trickleBlob(step: number, delayMs: number, hangAt: number | null) {
+      const blob = new Blob([bytes as BlobPart]);
+      const slice = blob.slice.bind(blob);
+      const ranges: number[][] = [];
+      let opened = 0;
+      blob.slice = (start = 0, end = blob.size): Blob => {
+        ranges.push([start, end]);
+        const attempt = ++opened;
+        const part = slice(start, end);
+        let offset = start;
+        part.stream = () => new ReadableStream({ type: 'bytes', async pull(controller) {
+          if (hangAt !== null && attempt === 1 && offset >= hangAt && offset !== end) return new Promise<void>(() => {});
+          await new Promise((r) => setTimeout(r, delayMs));
+          let request: ReadableStreamBYOBRequest | null;
+          try { request = controller.byobRequest; } catch { return; }
+          if (!request) return;
+          if (offset === end) { controller.close(); request.respond(0); return; }
+          const view = new Uint8Array(request.view!.buffer, request.view!.byteOffset, request.view!.byteLength);
+          const length = Math.min(view.length, end - offset, step);
+          view.set(bytes.subarray(offset, offset + length));
+          offset += length;
+          request.respond(length);
+        }, cancel() { return new Promise<void>(() => {}); } });
+        part.arrayBuffer = async (): Promise<ArrayBuffer> => { throw new Error('unexpected allocated slice read'); };
+        return part;
+      };
+      return { blob, ranges };
+    }
+    it('does not abandon a slow device that keeps delivering small pieces', async () => {
+      const f = trickleBlob(1, 15, null); // 7 bytes at 15 ms each: far longer than stallMs in total, never silent for stallMs
+      const result = await hashSource(f.blob, { chunkSize: 7, stallMs: 60 });
+      expect(result!.hex).toBe(expected);
+      expect(f.ranges).toEqual([[0, 7]]);
+    });
+    it('resumes after the bytes already delivered when a read stalls mid-chunk', async () => {
+      const f = trickleBlob(2, 1, 4); // first open delivers bytes 0-3 then goes silent
+      const result = await hashSource(f.blob, { chunkSize: 7, stallMs: 30 });
+      expect(result!.hex).toBe(expected);
+      expect(f.ranges).toEqual([[0, 7], [4, 7]]);
+    });
     it('ignores bytes an abandoned read delivers after its timeout', async () => {
       const blob = lateBlob(3, 80, false);
       const progress: number[] = [];
