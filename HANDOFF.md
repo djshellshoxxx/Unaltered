@@ -1,3 +1,51 @@
+# Continuation 2026-10-28 (f) — audio fuzzing, independent pass, toolkit follow-up
+
+Branch `codex/accepted-gates-20261028` (draft PR28). Start: `9e16d5bafddd207d7fa14621fe01a6d692885213`, whose exact-head CI run
+40721017408 passed all required jobs (this supersedes the "unexecuted at this snapshot" note in section (e) below). New commits:
+`99562ed` (MP3 trailer fix, WAV/MP3 fuzz targets, two toolkit fixes), `0b4ee6f` (independent-review fixes) and this
+documentation/evidence commit. Main `9f06c46` and PR25 `92e2420` were not rewritten, merged or pushed to. Root (one Claude
+Code session) owns integration; one toolkit worker and one read-only product reviewer finished with disjoint ownership; none active.
+No paid broker/API calls, credentials, releases, tags, deployments or settings changes.
+
+Changes (details, evidence and residuals: `docs/REVIEW_20261028.md`, section "Continuation (f)"):
+- `src/core/strip/audio.ts`: ID3v1/APEv2 trailers are removed only while the MP3 frame chain does not already reach the end.
+  Before: tag-like payload bytes rejected valid files and an APE-like footer silently dropped a real audio frame.
+- `tests/fuzz/targets.ts`, `scripts/parser-fuzz.mjs`: `wav` and `mp3` targets (six total), RIFF-length repair for half of WAV mutations.
+- `src/ui/views/verify.ts`, `src/ui/strings.ts`: share-link (no file) results no longer say "this exact file" (EN/ES; Spanish
+  not native-reviewed). `src/cli/run.ts`: refuse pipes/devices and content longer than stat size. `src/ui/store.ts`,
+  `src/ui/views/settings.ts`: remove receipts by identity, bound loaded list to 500. `scripts/build.mjs`: replacer-function fill
+  plus inline-bytes-equal-CSP-hash gate (dist output byte-identical).
+- Toolkit: `skills/webapp-testing/scripts/with_server.py` (unread pipes), `skills/brainstorming/scripts/stop-server.sh`
+  (canonical `/tmp` containment); regressions `tests/toolkit/test_followup_20261028.py`. Updater/download trust stays residual.
+- Every fix has a regression that failed on the old code and passes now (unit, browser or offline Python).
+
+Results run here (Linux executor, Node 22.22.0, pinned Chromium 1243; OpenTimestamps 0.4.5 reference in a local venv):
+- `UNALTERED_PYTHON=<venv>/bin/python npm run check` at `0b4ee6f`: OPSEC/type/lint pass, 156 Vitest pass, 1 optional skip; 5 Node pass.
+- Python toolkit unittest: 8 pass. `npm run build`: two builds byte-identical across the build.mjs change (10 files).
+- `playwright test --retries=0` (Chromium): 56 pass, 1 optional skip (2 GiB spec). The offline single-file `file://` test ran and
+  passed in this executor (it was administrator-blocked in the previous one; no policy was changed).
+- `UNALTERED_BIG_BROWSER=1 playwright test tests/e2e/memory.spec.ts --repeat-each=3 --retries=0`: 3/3 pass, digest visible at
+  48.0/49.4/49.1 s, <200 MiB assertion held (max sampled extra renderer RSS 64.4 MiB), 540 s deadline unchanged.
+- Fuzz seed 20261028: 250000 mutations (250036 inputs), six targets, 322 s with `--seconds 900`, no finding
+  (`docs/evidence/fuzz-20261028-audio.json`). With the standard `--seconds 300` under concurrent load: 226873 mutations,
+  wall-clock stop, no finding (`...-audio-300s.json`). Bounded campaigns, not exhaustive coverage.
+- Firefox/WebKit/Tor: not available locally (only pinned Chromium); CI covers Firefox/WebKit app tests. Not a pass.
+
+PR25 reconciliation (read-only; scratch worktree, nothing pushed): PR25 touches only `src/core/hash/stream.ts`,
+`tests/unit/hash.test.ts`, `tests/e2e/memory.spec.ts`, `.github/workflows/ci.yml` and `HANDOFF.md`; PR28 touches none of the first
+three. Trial merge of `92e2420` onto `0b4ee6f` conflicts only in `HANDOFF.md`. On that merge: typecheck/lint clean, 157 Vitest
+pass (2 skips, reference interpreter not set), Chromium 56 pass with zero retries, Chromium 2 GiB 3/3 (digest 36.1/36.9/36.5 s,
+max sampled extra RSS 64.8 MiB). Firefox/WebKit 2 GiB completion was not run (no engines here; PR25's new job runs off-PR only).
+Recommendation for the owner: merge PR28 first, then merge main into PR25 resolving `HANDOFF.md` by keeping both sections, and
+require fresh exact-head CI (incl. a manual dispatch for the Firefox/WebKit 2 GiB job) before PR25 merges. The policy change
+(stall timer measures silence, not chunk-fill time) still needs the owner's decision; PR25's owner keeps those files.
+
+Ready queue left: none independently executable here beyond longer/native fuzz campaigns. Blocked/conditional (unchanged):
+PR28 owner approval/merge; PR25 policy decision and Firefox/WebKit 2 GiB evidence; pending-404 CORS policy and Bob/Finney
+confirmed paths; signing; human screen-reader/Spanish/usability; independent audit/rebuild (REL-3/4); release/account/legal
+controls; toolkit download pinning (needs verified upstream digests). Missing checkpoint `1e0fd6b` remains unrecovered.
+Next: confirm exact-head CI on the pushed head in PR28, then follow the recommendation above.
+
 # Continuation 2026-10-28 (e) — reviewed security candidate
 
 Source/test/workflow commit: `d908d6037acf2aebf635d528a2fd06581d4c7866`, on

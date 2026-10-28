@@ -10,16 +10,18 @@ npm test
 npm run fuzz:parsers -- --iterations 250000 --seconds 300 --seed 20261028
 ```
 
-The driver bundles four synchronous entrypoints: detached OTS proof, bare calendar timestamp, JPEG and PNG. Initial cases
-come only from the repository's synthetic/reference fixtures. Unsupported Litecoin remains a negative proof seed. Mutations
-flip/replace/insert/delete/truncate bytes; half of PNG mutations repair surviving chunk CRCs to reach deeper parser branches.
+The driver bundles six synchronous entrypoints: detached OTS proof, bare calendar timestamp, JPEG, PNG, WAV and MP3 (WAV/MP3
+added 2026-10-28 continuation (f)). Initial cases come only from the repository's synthetic/reference fixtures. Unsupported
+Litecoin, RF64 WAV and free-format MP3 remain negative seeds. Mutations flip/replace/insert/delete/truncate bytes; half of PNG
+mutations repair surviving chunk CRCs and half of WAV mutations restore the RIFF length to reach deeper parser branches.
 Inputs reaching new positive-count V8 ranges are retained for further mutation. Coverage includes bundled parser/helpers and
 oracle wrappers; it is not an edge-coverage percentage, native decoder/sanitizer coverage, or proof that every branch was tested.
 
 Normal parser rejection is allowed. Unexpected exceptions are findings. Once OTS parsing succeeds, canonical round-trip,
 digest and attestation-commitment equivalence failures remain findings, even if they throw a typed parser error. Accepted
-image output must pass self-check, remain byte-idempotent, never grow and leave the input unchanged. This does not establish
-pixel equivalence, browser decoding of every mutation, full sanitization or robustness of third-party decoders.
+image/audio output must pass self-check, remain byte-idempotent, never grow and leave the input unchanged; an MP3 result
+that reports no removal must equal its input. This does not establish
+pixel or audio equivalence, browser decoding of every mutation, full sanitization or robustness of third-party decoders.
 
 Bounds are independent of all product acceptance limits: 64 KiB per fuzz input, 256 retained inputs per target, one input at
 a time, one-second parent deadline per input, 128 MiB worker old-generation heap plus 16 MiB young generation. These heap
