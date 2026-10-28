@@ -64,6 +64,22 @@ npm run build        # dist/: single-file offline HTML, multi-file site, zip, SH
 - **Fail closed.** If something is unsupported or ambiguous, we refuse and say so. We never silently pass.
 - **Few, audited dependencies.** Every runtime dependency needs a written justification.
 
+## Bundled agent toolkit
+
+This repository also carries a separate toolkit of agent skills and Python scripts for building and releasing JUCE audio
+plug-in projects. It is not part of the Unaltered app, its build or its release artefacts.
+
+| Path | What it is |
+|---|---|
+| `shared/scripts/` | Python and shell helpers for project creation, versioning, release builds, release notes, update setup, port auditing, VM registry, and project inspection |
+| `skills/` | About 70 agent skill folders and a `registry.json` |
+| `skills/_third_party_licenses/` | Licence and notice files for bundled third-party skill material |
+| `.github/agents/feature-auditor.agent.md` | Instructions for an audit agent that checks a project's source against its specification |
+
+The project-creation script expects a separate `JUCE-Plugin-Starter` checkout, which is not in this repository. The
+scripts were byte-compiled and `create_project.py --help` ran; they have no functional tests. See the
+[toolkit wiki](docs/wiki/Home.md).
+
 ## Licence
 
 MIT. See [LICENSE](LICENSE).

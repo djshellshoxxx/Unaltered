@@ -35,7 +35,12 @@ function throwIfCancelled(signal: AbortSignal): void {
 // Kinds the cleaner can rewrite (images and audio).
 const isImage = (k: FileKind): boolean => k === 'jpeg' || k === 'png' || k === 'wav' || k === 'mp3';
 
-export function mountStamp(root: HTMLElement): void {
+export interface StampView {
+  /** Re-renders every visible string in the current language from the retained state; never restarts work. */
+  relabel(): void;
+}
+
+export function mountStamp(root: HTMLElement): StampView {
   revokeAll();
   let nextId = 1;
   const items: Item[] = [];
@@ -370,16 +375,27 @@ export function mountStamp(root: HTMLElement): void {
     setChildren(result, ...res);
   }
 
-  setChildren(
-    root,
-    el('h2', { id: 'stamp-h', tabindex: -1 }, t('stamp.title')),
-    el('p', { class: 'lead' }, t('copy.stays')),
-    el('p', {}, t('copy.notTrue')),
-    dropZone({ id: 'stamp-file', label: t('stamp.drop'), hint: t('stamp.dropHint'), multiple: true, onFiles: add }),
-    list,
-    actions,
-    result,
-    el('p', { class: 'muted' }, t('copy.visibleToServers')),
-  );
+  function renderFrame(): void {
+    setChildren(
+      root,
+      el('h2', { id: 'stamp-h', tabindex: -1 }, t('stamp.title')),
+      el('p', { class: 'lead' }, t('copy.stays')),
+      el('p', {}, t('copy.notTrue')),
+      dropZone({ id: 'stamp-file', label: t('stamp.drop'), hint: t('stamp.dropHint'), multiple: true, onFiles: add }),
+      list,
+      actions,
+      result,
+      el('p', { class: 'muted' }, t('copy.visibleToServers')),
+    );
+  }
+
+  renderFrame();
   refreshActions();
+  return {
+    relabel() {
+      renderFrame();
+      items.forEach(refreshItem);
+      refreshActions();
+    },
+  };
 }

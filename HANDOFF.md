@@ -1,3 +1,12 @@
+# Continuation 2026-10-28 (c) — owner decisions applied
+
+- Owner approved and main now holds #6, #7, #8, #11 (incl. #10 watchdog, #13 worker-error fix) as merge commits; main `8c182ca` CI run 40622738468 green on every required job, including the 2 GiB gate (3/3) and byte-identical builds. Only the informational live check is red (calendar 404 without CORS on pending lookups).
+- Owner chose the **recommended language-switch option** (U-N1: language is presentation state). Branch `claude/stoic-mccarthy-m7xpb8` merges `codex/proposal-language-presentation-20261027` (`bea5aae`) into main cleanly; `docs/proposals/LANGUAGE_SWITCH.md` marked accepted.
+- Owner approved merging #3 (`55ca050`, README + toolkit wiki). Its README was written when the repo held only the JUCE toolkit; resolved by keeping the app README as primary and adding a "Bundled agent toolkit" section; wiki Home retitled "Toolkit Wiki" and pointed at the app README.
+- Local on the merged tree: `npm run check` 138 passed / 1 skipped; build ok; Chromium e2e 46/46 on rerun (first run: the known 50 ms worker-responsiveness flake); `language-switch.spec.ts` 12/12 over 3 repeats.
+- Owner asked to close old PRs whose content is in main: #1, #2, #4, #5, #10, and diagnostic #12.
+- Still open: slow-device timeout policy, R1 live-server evidence and pending-lookup CORS wording, signing, human accessibility/Spanish/usability review, independent audit and rebuild, release controls.
+
 # Continuation 2026-10-28 (b) — branch `claude/stoic-mccarthy-m7xpb8`
 
 Base: `cbc4c7e` (#11 head, = #8 + R1 script fix + #10 watchdog + bounded cancel cleanup). Main `8bcae50` and every other branch untouched; nothing merged. #9 (language proposal) still isolated, owner decision still pending. #12 stays diagnostic-only.
