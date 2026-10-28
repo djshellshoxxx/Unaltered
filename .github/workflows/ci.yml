@@ -78,7 +78,7 @@ jobs:
           diff /tmp/build1.sums /tmp/build2.sums
       - name: Keep Linux checksums for the cross-platform comparison
         run: cp dist/SHA256SUMS linux-SHA256SUMS
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: unaltered-linux-build
           path: |
@@ -117,7 +117,7 @@ jobs:
         continue-on-error: true
         shell: bash
         run: node scripts/browser-network-check.mjs | tee -a "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
           name: e2e-failures-${{ matrix.browser }}
@@ -143,7 +143,7 @@ jobs:
         env:
           CI: "true"
           UNALTERED_BIG_BROWSER: "1"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
           name: browser-memory-failures
@@ -188,7 +188,7 @@ jobs:
           }
           if ($bad -ne 0) { exit 1 }
           Write-Host 'All files in the Windows zip match its SHA256SUMS.'
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: unaltered-windows-build
           path: |
@@ -199,7 +199,7 @@ jobs:
             dist/SHA256SUMS
             windows-SHA256SUMS
           if-no-files-found: error
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
           name: e2e-failures-windows
@@ -227,7 +227,7 @@ jobs:
           cd dist
           shasum -a 256 -c SHA256SUMS
           cp SHA256SUMS ../macos-SHA256SUMS
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: unaltered-macos-build
           path: |
