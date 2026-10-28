@@ -1,3 +1,28 @@
+# Continuation 2026-10-28 (d) — accepted gate work, separate ownership
+
+- Reconciled main `9f06c46d061f8a0f67d8684b6c9c6cbbd163242d`, exact-head CI40651059987 completed success. Earlier browser
+  results are historical, not acceptance of this continuation. All old work/branches are preserved; local800b9cc is an ancestor of main.
+- Work branch: `codex/accepted-gates-20261028`, based on that main. Claude-owned PR25 remains at
+  `92e2420da02b2ba11d0161f72f7bb9ff338170b4` and currently conflicts with main; do not edit/rebase/merge its timeout work.
+  Language preservation is already merged. Dependabot PR27 is separate. Specific PR approval requires owner confirmation.
+- Unowned accepted slice: REL-2 / SPEC12 coverage-guided parser fuzz tooling. Added four V8-feedback entrypoints, synthetic
+  corpus retention, bounded independent worker supervision and exact finding replay; no dependencies or runtime code changed.
+  See `docs/FUZZING.md`. Local `npm run check`:142 Vitest passes,1 optional large-input skip,4 supervisor tests pass; OPSEC/type/lint
+  pass. The longer seeded campaign completed250028 inputs (250000 mutations) in230333ms without finding; bounded64KiB input,
+  four targets, V8 feedback, Node24.19.0. Compact exact report: `docs/evidence/fuzz-20261028.json`; this is not exhaustive coverage.
+- Root integrates. One inexpensive worker completed only fuzz-target/oracle files. A disjoint read-only app/CLI/build/tooling
+  code audit is running; root covers core modules. Deep security review follows code audit and corrections, with explicit limits.
+  Code audit reproduced stale Stamp receipts after changing cleaning and a skip link that switched views. Both are fixed;
+  all six new regressions failed before and pass after. Full local Chromium suite:51 pass,1 optional memory skip,1 failure on
+  managed `file://` administrator policy. Build id5d6e1799e43b37c5. No duplicate timeout implementation.
+  Deep security review is running and has identified further issues in combined-proof bounds, chunk-list cost and Upgrade
+  wording; those are not fixed by this first checkpoint. Legacy toolkit executable review is separate and in progress.
+- No merge, deployment/release, new credentials/security settings or paid Claude usage. New branch pushes trigger no CI/release
+  in inspected workflows (CI:main/PR/manual; release:manual). Preserve2GiB/540s/<200MiB Chromium and50ms limits unchanged.
+- Next: finish deep/legacy review, reproduce/fix supported security findings, rerun affected gates, secret
+  scan and updated source/evidence checkpoint. R1, signing, human accessibility/Spanish/usability, independent audit/rebuild and
+  release/account/legal controls remain open. This is agent-assisted internal review, not the independent audit required by REL-3.
+
 # Continuation 2026-10-28 (c) — owner decisions applied
 
 - Owner approved and main now holds #6, #7, #8, #11 (incl. #10 watchdog, #13 worker-error fix) as merge commits; main `8c182ca` CI run 40622738468 green on every required job, including the 2 GiB gate (3/3) and byte-identical builds. Only the informational live check is red (calendar 404 without CORS on pending lookups).

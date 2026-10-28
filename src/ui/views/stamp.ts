@@ -76,11 +76,16 @@ export function mountStamp(root: HTMLElement): StampView {
     it.error = null;
     it.hash = null;
     it.outcome = null;
+    // A receipt belongs to the previous byte target; changing cleaning requires a new stamp.
+    it.proof = null;
+    lastCalendars = null;
+    stampError = null;
     it.progress = 0;
     it.downloadedCleaned = false;
     it.ackHidden = false;
     it.ackOrientation = false;
     refreshItem(it);
+    refreshActions();
     try {
       it.kind = await detectBlob(it.file);
       throwIfCancelled(signal);

@@ -64,7 +64,8 @@ Do tasks in order within a milestone unless marked parallel.
 
 ## M5: Release
 - [x] **REL-1** Refresh `THREAT_MODEL.md` and `DEPENDENCIES.md` internal review record (2026-10-24; bounded scope and outstanding external review in `REVIEW_REFRESH_20261024.md`).
-- [ ] **REL-2** Long fuzz run; fix findings.
+- [ ] **REL-2** Long fuzz run; fix findings. Coverage-guided harness and a 250000-mutation seeded pilot added 2026-10-28
+  (`FUZZING.md`, `evidence/fuzz-20261028.json`); broader corpora/longer campaigns and security-review findings remain open.
 - [ ] **REL-3** Independent audit; publish report.
 - [ ] **REL-4** Second person reproduces the build byte-for-byte.
 - [ ] **REL-5** Sign `SHA256SUMS`; publish release, IPFS CID, key in 2+ places.
