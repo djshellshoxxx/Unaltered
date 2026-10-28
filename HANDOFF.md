@@ -5,6 +5,18 @@ Source/test/workflow commit: `d908d6037acf2aebf635d528a2fd06581d4c7866`, on
 This handoff/evidence commit is documentation-only. Main remains `9f06c46d061f8a0f67d8684b6c9c6cbbd163242d`;
 Claude-owned PR25 remains `92e2420da02b2ba11d0161f72f7bb9ff338170b4`. Neither branch was rewritten or merged.
 
+Follow-up checkpoint887e724 is published as draft PR28. Native run40719843975 at that exact head passed Linux,
+Windows, provenance, differential/toolkit tests, all55 app tests in each Chromium/Firefox/WebKit (no retry markers),
+and all three unchanged2GiB attempts (digest38.44/38.19/38.02s). macOS remained queued and cross-OS comparison had
+not run when this note was refreshed, so this is not full native acceptance. A local current-build2GiB attempt also
+passed44.3s. Informational R1 passed the real Alice confirmed-upgrade/app/reference path at block428648; details and
+residuals are in `docs/NETWORK.md`. Pending404 CORS and Bob/Finney confirmed paths remain open.
+
+The same run exposed stale style-based R1 diagnostic fields after the neutral Upgrade copy change. A small follow-up
+derives confirmation only after Verify and excludes status notices from unknown-calendar warnings; node syntax/lint pass.
+That diagnostic correction changes no product bytes, transport, acceptance threshold or release trigger. Its final exact
+head must receive its own CI status. The PR description/checks are the live completion record; historical runs stay preserved.
+
 Completed after the first checkpoint: aggregate proof budgets and transactional merge rollback; stack-safe serialization;
 bounded WAV/PNG removal summaries; explicit Blob URL ownership/revocation and stable relabel downloads; truthful Upgrade
 wording; five bundled-toolkit corrections (script/benchmark injection, port killing, redirect credential forwarding and omitted
@@ -28,8 +40,8 @@ Three coordinated workers completed bounded roles (Luna targets/tests, Sol code/
 and changed-range review); none remain active. Root owns integration. All47 active product/tooling/workflow files and66 bundled
 executable scripts were included in source review, with dynamic/external limits in the detailed record. No paid Claude calls.
 
-Native CI for this final checkpoint is unexecuted **at this documentation snapshot**. Root will open a draft review candidate
-after push and reconcile exact-head CI; its PR description/checks will carry the completed result without changing this source.
+Native CI for the final diagnostic/evidence checkpoint is unexecuted **at this documentation snapshot**. Root will reconcile
+exact-head CI in draft PR28; its description/checks will carry the completed result without another source change.
 Do not attribute old73fc82e/9f06c46 browser evidence to this new head. Ordinary E2E may retry once in CI; inspect attempts before
 claiming repeatable50ms performance. Original Chromium2GiB/540s/<200MiB job remains three attempts/zero retries, unchanged.
 
