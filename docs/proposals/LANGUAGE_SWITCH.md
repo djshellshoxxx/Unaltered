@@ -1,6 +1,6 @@
 # Proposal: language is presentation state (U-N1)
 
-**Status: proposal, awaiting a product decision.** Not part of #7 or #8. Nothing in SPEC FR-14, UX.md or DECISIONS.md says
+**Status: accepted by the owner on 2026-10-28 (recommended option) and integrated.** Originally proposed separately from #7 and #8. Nothing in SPEC FR-14, UX.md or DECISIONS.md says
 what a language switch does to loaded files, receipts, results or running work, so this is a choice for the owner.
 
 ## Current behaviour (observed)
