@@ -2,7 +2,7 @@
 import { fromHex, groupHex } from '../../core/bytes';
 import { isAbort, safeMessage, UnalteredError } from '../../core/errors';
 import { hashBlob } from '../../core/hash/hasher';
-import { upgrade } from '../../core/ots/calendar';
+import { upgrade, type UpgradeResult } from '../../core/ots/calendar';
 import { parseProof } from '../../core/ots/codec';
 import { LIMITS } from '../../core/ots/types';
 import { verify, type VerifyReport, type VerifyState } from '../../core/ots/verify';
@@ -38,7 +38,17 @@ function checkReceiptSize(file: File): void {
 
 export interface VerifyView {
   setPrefill(hex: string | null): void;
+  /** Re-renders every visible string in the current language from the retained state; never restarts work. */
+  relabel(): void;
 }
+
+// What an output area shows, kept as data so a language switch can render it again without repeating the work.
+type Shown =
+  | { kind: 'working' }
+  | { kind: 'report'; report: VerifyReport; hex: string; fromLink: boolean }
+  | { kind: 'upgraded'; result: UpgradeResult; fileName: string }
+  | { kind: 'error'; message: string }
+  | null;
 
 export function mountVerify(root: HTMLElement): VerifyView {
   revokeAll();
@@ -55,6 +65,18 @@ export function mountVerify(root: HTMLElement): VerifyView {
   const upOut = el('div', { class: 'upgrade-result', 'aria-live': 'polite' });
   let upFile: File | null = null;
   let upGeneration = 0;
+  let shown: Shown = null;
+  let upShown: Shown = null;
+
+  function show(next: Shown): void {
+    shown = next;
+    setChildren(out, render(next));
+  }
+
+  function showUpgrade(next: Shown): void {
+    upShown = next;
+    setChildren(upOut, ...renderUpgradeOutput(next));
+  }
   const upInputs = el('div', { class: 'inputs' });
   const upActions = el('div', { class: 'actions' });
 
@@ -64,7 +86,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
     busy = false;
     abort?.abort();
     abort = null;
-    setChildren(out);
+    show(null);
   }
 
   function renderInputs(): void {
@@ -107,7 +129,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
     busy = true;
     abort = controller;
     renderActions();
-    setChildren(out, el('p', { role: 'status' }, t('verify.working')));
+    show({ kind: 'working' });
     try {
       checkReceiptSize(selectedReceipt);
       let digest: Uint8Array;
@@ -125,10 +147,10 @@ export function mountVerify(root: HTMLElement): VerifyView {
       if (!current()) return;
       const report = await verify(digest, bytes, verifyConfigFromSettings(controller.signal));
       if (!current()) return;
-      setChildren(out, renderReport(report, hex, selectedFile === null));
+      show({ kind: 'report', report, hex, fromLink: selectedFile === null });
       announce(t(TITLE[report.state]));
     } catch (e) {
-      if (current()) setChildren(out, isAbort(e) ? null : el('p', { class: 'error', role: 'alert' }, safeMessage(e)));
+      if (current()) show(isAbort(e) ? null : { kind: 'error', message: safeMessage(e) });
     } finally {
       if (current()) {
         busy = false;
@@ -141,7 +163,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
   function renderUpgrade(): void {
     setChildren(
       upInputs,
-      dropZone({ id: 'upgrade-receipt', label: t('upgrade.drop'), hint: t('verify.dropReceiptHint'), accept: '.ots', onFiles: (f) => { upFile = f[0] ?? null; upGeneration++; setChildren(upOut); renderUpgrade(); } }),
+      dropZone({ id: 'upgrade-receipt', label: t('upgrade.drop'), hint: t('verify.dropReceiptHint'), accept: '.ots', onFiles: (f) => { upFile = f[0] ?? null; upGeneration++; showUpgrade(null); renderUpgrade(); } }),
       upFile ? el('p', { class: 'picked' }, `${upFile.name} · ${formatBytes(upFile.size)}`) : null,
     );
     setChildren(upActions, el('button', { type: 'button', class: 'button primary', disabled: !upFile, onclick: () => void runUpgrade() }, t('upgrade.run')));
@@ -152,51 +174,64 @@ export function mountVerify(root: HTMLElement): VerifyView {
     const f = upFile;
     const operation = ++upGeneration;
     const current = (): boolean => operation === upGeneration && upOut.isConnected;
-    setChildren(upOut, el('p', { role: 'status' }, t('verify.working')));
+    showUpgrade({ kind: 'working' });
     try {
       checkReceiptSize(f);
       const bytes = new Uint8Array(await f.arrayBuffer());
       if (!current()) return;
       parseProof(bytes);
-      const r = await upgrade(bytes, stampConfigFromSettings());
+      const result = await upgrade(bytes, stampConfigFromSettings());
       if (!current()) return;
-      const kids: (Node | null)[] = [];
-      if (r.status === 'bitcoin-confirmed') {
-        kids.push(el('p', { class: 'notice ok', role: 'status' }, r.changed ? t('upgrade.confirmed') : t('upgrade.alreadyConfirmed')));
-        if (r.changed) {
-          const name = f.name.replace(/\.ots$/i, '') + '.upgraded.ots';
-          kids.push(downloadLink(t('upgrade.download', { name }), name, r.ots, 'application/octet-stream'), el('p', { class: 'muted' }, t('upgrade.newFile')));
-        }
-      } else {
-        kids.push(el('p', { class: 'notice pending', role: 'status' }, t('upgrade.stillPending')));
-        if (r.changed) {
-          const name = f.name.replace(/\.ots$/i, '') + '.upgraded.ots';
-          kids.push(downloadLink(t('upgrade.download', { name }), name, r.ots, 'application/octet-stream'), el('p', { class: 'muted' }, t('upgrade.newFile')));
-        }
-      }
-      if (r.unknownCalendars.length > 0) kids.push(el('p', { class: 'warn' }, t('upgrade.unknownCalendar', { hosts: r.unknownCalendars.join(', ') })));
-      const failed = r.calendars.filter((c) => !c.ok);
-      if (failed.length > 0) kids.push(el('ul', { class: 'calendars' }, ...failed.map((c) => el('li', {}, `✖ ${new URL(c.url).host} – ${c.error ?? ''}`))));
-      setChildren(upOut, ...kids);
+      showUpgrade({ kind: 'upgraded', result, fileName: f.name });
     } catch (e) {
-      if (current()) setChildren(upOut, el('p', { class: 'error', role: 'alert' }, safeMessage(e)));
+      if (current()) showUpgrade({ kind: 'error', message: safeMessage(e) });
     }
   }
 
-  setChildren(
-    root,
-    el('h2', { id: 'verify-h', tabindex: -1 }, t('verify.title')),
-    el('p', { class: 'lead' }, t('copy.stays')),
-    inputs,
-    actions,
-    out,
-    el('hr'),
-    el('h3', {}, t('upgrade.title')),
-    el('p', {}, t('upgrade.intro')),
-    upInputs,
-    upActions,
-    upOut,
-  );
+  function render(next: Shown): Node | null {
+    if (!next) return null;
+    if (next.kind === 'working') return el('p', { role: 'status' }, t('verify.working'));
+    if (next.kind === 'error') return el('p', { class: 'error', role: 'alert' }, next.message);
+    if (next.kind === 'report') return renderReport(next.report, next.hex, next.fromLink);
+    return null;
+  }
+
+  function renderUpgradeOutput(next: Shown): (Node | null)[] {
+    if (!next || next.kind !== 'upgraded') return [render(next)];
+    const r = next.result;
+    const kids: (Node | null)[] = [];
+    const name = next.fileName.replace(/\.ots$/i, '') + '.upgraded.ots';
+    const download = (): Node[] => [downloadLink(t('upgrade.download', { name }), name, r.ots, 'application/octet-stream'), el('p', { class: 'muted' }, t('upgrade.newFile'))];
+    if (r.status === 'bitcoin-confirmed') {
+      kids.push(el('p', { class: 'notice ok', role: 'status' }, r.changed ? t('upgrade.confirmed') : t('upgrade.alreadyConfirmed')));
+    } else {
+      kids.push(el('p', { class: 'notice pending', role: 'status' }, t('upgrade.stillPending')));
+    }
+    if (r.changed) kids.push(...download());
+    if (r.unknownCalendars.length > 0) kids.push(el('p', { class: 'warn' }, t('upgrade.unknownCalendar', { hosts: r.unknownCalendars.join(', ') })));
+    const failed = r.calendars.filter((c) => !c.ok);
+    if (failed.length > 0) kids.push(el('ul', { class: 'calendars' }, ...failed.map((c) => el('li', {}, `✖ ${new URL(c.url).host} – ${c.error ?? ''}`))));
+    return kids;
+  }
+
+  function renderFrame(): void {
+    setChildren(
+      root,
+      el('h2', { id: 'verify-h', tabindex: -1 }, t('verify.title')),
+      el('p', { class: 'lead' }, t('copy.stays')),
+      inputs,
+      actions,
+      out,
+      el('hr'),
+      el('h3', {}, t('upgrade.title')),
+      el('p', {}, t('upgrade.intro')),
+      upInputs,
+      upActions,
+      upOut,
+    );
+  }
+
+  renderFrame();
   renderInputs();
   renderActions();
   renderUpgrade();
@@ -208,6 +243,14 @@ export function mountVerify(root: HTMLElement): VerifyView {
       prefill = next;
       renderInputs();
       renderActions();
+    },
+    relabel() {
+      renderFrame();
+      renderInputs();
+      renderActions();
+      renderUpgrade();
+      show(shown);
+      showUpgrade(upShown);
     },
   };
 }
