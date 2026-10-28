@@ -1,10 +1,9 @@
 // Command-line verifier (SPEC "CLI verifier"): same core as the web app, for scripts and for checking a receipt
 // without a browser. Pure of process globals so it can be tested; main.ts wires it to the real process.
 import { open } from 'node:fs/promises';
-import { readFile } from 'node:fs/promises';
 import { groupHex } from '../core/bytes';
 import { hashSource, type ChunkSource } from '../core/hash/stream';
-import { defaultVerifyConfig, verify, type VerifyState } from '../core/ots';
+import { defaultVerifyConfig, LIMITS, verify, type VerifyState } from '../core/ots';
 
 export interface CliIO {
   out(text: string): void;
@@ -53,6 +52,26 @@ async function hashFile(path: string): Promise<{ hex: string; digest: Uint8Array
   }
 }
 
+/**
+ * Reads a receipt without loading more than one byte past the parser limit, like the browser's size check:
+ * an oversized receipt reaches the core with `maxInputBytes + 1` bytes and is rejected there with its usual message.
+ */
+export async function readReceipt(path: string): Promise<Uint8Array> {
+  const fh = await open(path, 'r');
+  try {
+    const buf = new Uint8Array(LIMITS.maxInputBytes + 1);
+    let got = 0;
+    while (got < buf.length) {
+      const { bytesRead } = await fh.read(buf, got, buf.length - got, got);
+      if (bytesRead === 0) break;
+      got += bytesRead;
+    }
+    return buf.subarray(0, got);
+  } finally {
+    await fh.close();
+  }
+}
+
 export async function run(argv: readonly string[], io: CliIO): Promise<number> {
   const [cmd, file, receipt] = argv;
   try {
@@ -62,8 +81,9 @@ export async function run(argv: readonly string[], io: CliIO): Promise<number> {
       return 0;
     }
     if (cmd === 'verify' && file && argv.length <= 3) {
+      // Receipt first, as in the browser: a missing or oversized receipt is reported before a long hash.
+      const ots = await readReceipt(receipt ?? `${file}.ots`);
       const { hex, digest } = await hashFile(file);
-      const ots = new Uint8Array(await readFile(receipt ?? `${file}.ots`));
       const report = await verify(digest, ots, defaultVerifyConfig());
       io.out(`file sha-256: ${groupHex(hex)}\nresult: ${report.state}\n${report.detail}\n`);
       if (report.bitcoin) io.out(`bitcoin block ${report.bitcoin.height}, ${report.bitcoin.blockTimeUtc} (no later than about this time)\nsources: ${report.bitcoin.sourcesAgreeing.join(', ')}\n`);

@@ -196,3 +196,42 @@ test('an older upgrade cannot replace the current receipt error', async ({ page 
   await expect(page.locator('.upgrade-result')).not.toContainText('Not confirmed yet');
   await expect(page.locator('.upgrade-result a')).toHaveCount(0);
 });
+
+// Adapted from the independent PR #7 review (probe P4): the abort reaches the hash worker, not only the controller.
+for (const change of ['cancel', 'receipt', 'file', 'fingerprint'] as const) {
+  test(`a change during hashing terminates the superseded hash worker (${change})`, async ({ page }) => {
+    await page.goto(`/index.html#h=${HEX}`);
+    await holdReceiptRead(page);
+    await page.evaluate(() => {
+      const state = { workers: [] as boolean[], held: [] as (() => void)[] };
+      (window as unknown as { __hashGate: typeof state }).__hashGate = state;
+      const Original = window.Worker;
+      window.Worker = class extends Original {
+        private readonly index = state.workers.push(false) - 1;
+        override terminate(): void {
+          state.workers[this.index] = true;
+          super.terminate();
+        }
+        override postMessage(message: unknown, transfer?: unknown): void {
+          state.held.push(() => super.postMessage(message, transfer as Transferable[]));
+        }
+      } as typeof Worker;
+    });
+    await page.setInputFiles('#verify-file', { name: 'doc.txt', mimeType: 'text/plain', buffer: Buffer.from('lifecycle fixture') });
+    await page.setInputFiles('#verify-receipt', receipt('r.ots'));
+    await page.getByRole('button', { name: 'Check', exact: true }).click();
+    await page.waitForFunction(() => (window as unknown as { __hashGate: { held: unknown[] } }).__hashGate.held.length === 1);
+    if (change === 'cancel') await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+    else if (change === 'receipt') await page.setInputFiles('#verify-receipt', receipt('r2.ots'));
+    else if (change === 'file') await page.setInputFiles('#verify-file', { name: 'b.txt', mimeType: 'text/plain', buffer: Buffer.from('b') });
+    else await page.goto(`/index.html#h=${'00'.repeat(32)}`);
+    expect(await page.evaluate(() => (window as unknown as { __hashGate: { workers: boolean[] } }).__hashGate.workers)).toEqual([true]);
+    await page.evaluate(async () => {
+      for (const go of (window as unknown as { __hashGate: { held: (() => void)[] } }).__hashGate.held.splice(0)) go();
+      await new Promise<void>((resolve) => setTimeout(resolve, 100));
+    });
+    await expect(page.locator('.verify-result')).toBeEmpty();
+    expect(await page.evaluate(() => (window as unknown as { __receiptGate: ReadGate }).__receiptGate.reads)).toEqual([]);
+    await expect(page.getByRole('button', { name: 'Check', exact: true })).toBeEnabled();
+  });
+}

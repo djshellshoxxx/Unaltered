@@ -1,24 +1,12 @@
 // Opt-in live browser CORS probe. Run after npm run build; submits one random commitment per calendar.
 // Uses the built app's CSP and the browser's normal security policy. No route mocks or CORS bypass.
 import { chromium } from '@playwright/test';
-import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { serveDist } from './lib/serve-dist.mjs';
 
 const hosts = ['alice.btc.calendar.opentimestamps.org', 'bob.btc.calendar.opentimestamps.org', 'finney.calendar.eternitywall.com'];
 const explorers = ['mempool.space', 'blockstream.info'];
 const genesis = '000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f';
-const root = resolve('dist/web');
-const server = createServer(async (req, res) => {
-  try {
-    const path = new URL(req.url, 'http://localhost').pathname;
-    if (!/^\/[a-zA-Z0-9._-]+$/.test(path)) { res.writeHead(404).end(); return; }
-    const body = await readFile(join(root, path));
-    const type = path.endsWith('.html') ? 'text/html' : path.endsWith('.css') ? 'text/css' : 'text/javascript';
-    res.writeHead(200, { 'content-type': type, 'x-content-type-options': 'nosniff' }).end(body);
-  } catch { res.writeHead(404).end(); }
-});
-await new Promise((done) => server.listen(0, '127.0.0.1', done));
+const site = await serveDist();
 let browser;
 try {
   browser = await chromium.launch({
@@ -28,8 +16,7 @@ try {
   const page = await browser.newPage();
   const failures = [];
   page.on('requestfailed', (request) => failures.push({ host: new URL(request.url()).host, error: request.failure()?.errorText }));
-  const port = server.address().port;
-  await page.goto(`http://127.0.0.1:${port}/index.html`);
+  await page.goto(`${site.origin}/index.html`);
   const results = await page.evaluate(async ({ hosts, explorers, genesis }) => {
     const csp = [];
     document.addEventListener('securitypolicyviolation', (e) => csp.push(`${e.violatedDirective} ${e.blockedURI}`));
@@ -89,5 +76,5 @@ try {
   process.exitCode = ok ? 0 : 1;
 } finally {
   await browser?.close();
-  await new Promise((done) => server.close(done));
+  await site.close();
 }
