@@ -5,7 +5,7 @@ import { hashBlob, type HashResult } from '../../core/hash/hasher';
 import { calendarsOf, stampBatch, type CalendarResult } from '../../core/ots/calendar';
 import { MIME, detectBlob, stripMetadata, type FileKind, type StripOutcome } from '../../core/strip';
 import { announce, copyText, dropZone, el, formatBytes, setChildren } from '../dom';
-import { cleanedName, downloadLink, receiptName, revokeAll } from '../download';
+import { cleanedName, downloadLink, receiptName, revokeAll, revokeOwner } from '../download';
 import { stampConfigFromSettings } from '../state';
 import { addReceipt, isEnabled } from '../store';
 import { t } from '../strings';
@@ -70,6 +70,7 @@ export function mountStamp(root: HTMLElement): StampView {
 
   async function process(it: Item): Promise<void> {
     it.abort.abort();
+    revokeOwner(it);
     it.abort = new AbortController();
     const signal = it.abort.signal;
     it.busy = true;
@@ -170,7 +171,7 @@ export function mountStamp(root: HTMLElement): StampView {
             it.downloadedCleaned = true;
             refreshItem(it);
             refreshActions();
-          }),
+          }, { owner: it, key: 'cleaned' }),
           it.downloadedCleaned ? el('p', { class: 'muted' }, t('stamp.cleanedDownloaded')) : el('p', { class: 'warn' }, t('stamp.mustDownload')),
           el('p', { class: 'muted' }, t('stamp.fileNameWarning')),
           c.orientation !== undefined && c.orientation !== 1
@@ -219,7 +220,7 @@ export function mountStamp(root: HTMLElement): StampView {
         el(
           'div',
           { class: 'notice ok' },
-          downloadLink(t('stamp.downloadReceipt', { name }), name, it.proof, 'application/octet-stream'),
+          downloadLink(t('stamp.downloadReceipt', { name }), name, it.proof, 'application/octet-stream', undefined, { owner: it, key: 'receipt' }),
           el('p', { class: 'muted' }, t('stamp.receiptName')),
           shareRow(it),
           labelRow(it),
@@ -277,6 +278,7 @@ export function mountStamp(root: HTMLElement): StampView {
 
   function remove(it: Item): void {
     it.abort.abort();
+    revokeOwner(it);
     items.splice(items.indexOf(it), 1);
     it.card.remove();
     if (items.length === 0) {

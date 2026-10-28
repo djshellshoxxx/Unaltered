@@ -15,6 +15,8 @@ const putTag = (s: string): Uint8Array => Uint8Array.from(s, (c) => c.charCodeAt
 // (LIST/INFO, bext originator, iXML, id3, _PMX XMP, ...) are removed.
 const WAV_KEEP = new Set(['fmt ', 'data', 'fact', 'smpl', 'inst', 'cue ']);
 const WAV_NAMES: Record<string, string> = { LIST: 'text tags (LIST)', bext: 'broadcast info (bext)', iXML: 'iXML metadata', 'id3 ': 'ID3 tag', ID3: 'ID3 tag', _PMX: 'XMP metadata' };
+const MAX_REMOVAL_SUMMARY_LABELS = 64;
+const REMOVAL_SUMMARY_OVERFLOW = 'Additional metadata chunks';
 
 export function cleanWav(input: Uint8Array): AudioResult {
   const n = input.length;
@@ -26,8 +28,17 @@ export function cleanWav(input: Uint8Array): AudioResult {
   if (riffEnd < 12 || riffEnd > n) return rej('The WAV container has an invalid length.');
   const parts: Uint8Array[] = [];
   const removed: string[] = [];
+  const removedSet = new Set<string>();
   const note = (s: string): void => {
-    if (!removed.includes(s)) removed.push(s);
+    if (removedSet.has(s)) return;
+    if (removed.length < MAX_REMOVAL_SUMMARY_LABELS) {
+      removedSet.add(s);
+      removed.push(s);
+    } else if (!removedSet.has(REMOVAL_SUMMARY_OVERFLOW)) {
+      // Retain at most 64 specific labels and one generic overflow note.
+      removedSet.add(REMOVAL_SUMMARY_OVERFLOW);
+      removed.push(REMOVAL_SUMMARY_OVERFLOW);
+    }
   };
   let pos = 12;
   let sawFmt = false;
