@@ -1,0 +1,38 @@
+{
+  "name": "unaltered",
+  "version": "0.3.1",
+  "private": true,
+  "description": "Prove a file existed, unchanged, at a point in time. Client-only, no accounts.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "build": "node scripts/build.mjs",
+    "test:e2e": "npm run build && playwright test",
+    "check:opsec": "bash scripts/opsec-check.sh",
+    "check": "npm run check:opsec && npm run typecheck && npm run lint && npm run test",
+    "check:all": "npm run check && npm run test:e2e",
+    "fixtures": "python3 tests/differential/gen_fixtures.py tests/fixtures/ots",
+    "network-check": "node scripts/network-check.mjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.0",
+    "@types/node": "26.6.5",
+    "esbuild": "0.28.2",
+    "eslint": "10.12.0",
+    "fast-check": "4.10.2",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.2",
+    "vitest": "5.0.4"
+  },
+  "dependencies": {
+    "@noble/hashes": "2.4.0"
+  }
+}
