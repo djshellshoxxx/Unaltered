@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import fc from 'fast-check';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { groupHex } from '../../src/core/bytes';
 import { hashBlob } from '../../src/core/hash/hasher';
 import { hashSource } from '../../src/core/hash/stream';
@@ -244,6 +244,48 @@ describe('FR-1 hashing', () => {
         new Promise<string>((r) => setTimeout(() => r('HUNG'), 1500)),
       ]);
       expect(outcome).toBeNull();
+    });
+  });
+  describe('worker outcomes', () => {
+    // A stand-in worker that answers 'start' with one scripted message, as the real worker would.
+    function fakeWorker(reply: Record<string, unknown>): { terminated: () => number } {
+      let terminated = 0;
+      class FakeWorker {
+        onmessage: ((ev: { data: unknown }) => void) | null = null;
+        onerror: (() => void) | null = null;
+        postMessage(): void { setTimeout(() => this.onmessage?.({ data: reply }), 0); }
+        terminate(): void { terminated++; }
+      }
+      vi.stubGlobal('Worker', FakeWorker);
+      vi.stubGlobal('__WORKER_URL__', 'worker.js');
+      return { terminated: () => terminated };
+    }
+    function countingBlob(): { blob: Blob; slices: () => number } {
+      const blob = new Blob(['abc']);
+      let slices = 0;
+      const slice = blob.slice.bind(blob);
+      blob.slice = (...args: Parameters<Blob['slice']>): Blob => { slices++; return slice(...args); };
+      return { blob, slices: () => slices };
+    }
+    afterEach(() => { vi.unstubAllGlobals(); });
+
+    it.each(['INPUT_UNREADABLE', 'INPUT_INVALID'])('reports a worker %s without re-hashing the file on the main thread', async (code) => {
+      const worker = fakeWorker({ type: 'failed', code, message: 'typed failure' });
+      const { blob, slices } = countingBlob();
+      await expect(hashBlob(blob)).rejects.toMatchObject({ code, message: 'typed failure' });
+      expect(slices()).toBe(0);
+      expect(worker.terminated()).toBe(1);
+    });
+    it('still falls back to the main thread when the worker itself cannot hash', async () => {
+      fakeWorker({ type: 'error' });
+      const { blob, slices } = countingBlob();
+      expect((await hashBlob(blob)).hex).toBe(createHash('sha256').update('abc').digest('hex'));
+      expect(slices()).toBeGreaterThan(0);
+    });
+    it('does not trust an unexpected failure code from the worker', async () => {
+      fakeWorker({ type: 'failed', code: 'NET_FAILED', message: 'x' });
+      const { blob } = countingBlob();
+      expect((await hashBlob(blob)).hex).toBe(createHash('sha256').update('abc').digest('hex'));
     });
   });
   it('rejects invalid chunk sizes instead of hanging or allocating invalid buffers', async () => {

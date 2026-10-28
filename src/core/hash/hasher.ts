@@ -1,7 +1,7 @@
 // Main-thread API for hashing (SPEC 5.2). Uses a Web Worker where possible and falls back to the same
 // chunked code on the main thread (yielding between chunks) where workers are unavailable, e.g. file:// in Chrome.
 import { toHex, equalBytes } from '../bytes';
-import { UnalteredError } from '../errors';
+import { UnalteredError, type ErrorCode } from '../errors';
 import { CHUNK_SIZE, CROSS_CHECK_MAX, hashSource, readCrossCheckInput } from './stream';
 
 export interface HashResult {
@@ -24,6 +24,9 @@ declare const __WORKER_INLINE__: string | null;
 export { CROSS_CHECK_MAX } from './stream';
 
 const MISMATCH = 'Internal error: two fingerprint calculations disagree. Do not use this result.';
+
+/** Input failures a working worker reports; retrying them on the main thread would re-read the whole file. */
+const WORKER_FAILURES: readonly ErrorCode[] = ['INPUT_INVALID', 'INPUT_UNREADABLE'];
 
 const nextTick = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
 
@@ -80,13 +83,17 @@ function hashInWorker(w: Worker, blob: Blob, opts: HashOptions): Promise<{ diges
     };
     if (opts.signal?.aborted) return abort();
     opts.signal?.addEventListener('abort', abort, { once: true });
-    w.onmessage = (ev: MessageEvent<{ type: string; done?: number; digest?: Uint8Array; bytes?: number; cross?: string }>) => {
+    w.onmessage = (ev: MessageEvent<{ type: string; done?: number; digest?: Uint8Array; bytes?: number; cross?: string; code?: string; message?: string }>) => {
       const m = ev.data;
       if (m.type === 'progress') opts.onProgress?.(m.done ?? 0);
       else if (m.type === 'done') {
         opts.signal?.removeEventListener('abort', abort);
         w.terminate();
         resolve({ digest: m.digest as Uint8Array, bytes: m.bytes as number, cross: m.cross ?? 'skipped' });
+      } else if (m.type === 'failed' && WORKER_FAILURES.includes(m.code as ErrorCode) && typeof m.message === 'string') {
+        opts.signal?.removeEventListener('abort', abort);
+        w.terminate();
+        reject(new UnalteredError(m.code as ErrorCode, m.message));
       } else {
         w.terminate();
         resolve('unavailable');
