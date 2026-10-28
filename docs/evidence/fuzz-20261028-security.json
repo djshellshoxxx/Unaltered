@@ -1,0 +1,52 @@
+{
+  "sourceCommit": "8d8f9922d7a7010e7ff1db23b97d6a365d8150d5",
+  "targetSha256": "6b899430f145002bf28f2b55fd8584d9c90854ac88c1e970c8c6a85b13285c31",
+  "node": "v24.19.0",
+  "v8": "13.6.233.17-node.51",
+  "options": {
+    "iterations": 250000,
+    "seconds": 300,
+    "seed": 20261028,
+    "out": "scratch/fuzz"
+  },
+  "limits": {
+    "maxInputBytes": 65536,
+    "maxCorpusPerTarget": 256,
+    "caseDeadlineMs": 1000,
+    "workerOldHeapMiB": 128
+  },
+  "status": "budget-complete",
+  "executed": 250028,
+  "mutations": 250000,
+  "targets": {
+    "proof": {
+      "accepted": 1103,
+      "rejected": 61409,
+      "ranges": 156,
+      "corpus": 31
+    },
+    "timestamp": {
+      "accepted": 1055,
+      "rejected": 61455,
+      "ranges": 159,
+      "corpus": 31
+    },
+    "jpeg": {
+      "accepted": 755,
+      "rejected": 61748,
+      "ranges": 170,
+      "corpus": 50
+    },
+    "png": {
+      "accepted": 828,
+      "rejected": 61675,
+      "ranges": 72,
+      "corpus": 15
+    }
+  },
+  "seedExecutions": 28,
+  "retainedSeeds": 24,
+  "elapsedMs": 228607,
+  "stopReason": "iterations",
+  "sourceState": "Recorded HEAD is the first checkpoint; security parser changes were uncommitted and are retained in the next checkpoint. Exact bundled target is identified by SHA256."
+}

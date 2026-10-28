@@ -1,4 +1,46 @@
-# Continuation 2026-10-28 (d) — accepted gate work, separate ownership
+# Continuation 2026-10-28 (e) — reviewed security candidate
+
+Source/test/workflow commit: `d908d6037acf2aebf635d528a2fd06581d4c7866`, on
+`codex/accepted-gates-20261028`, above the verified first checkpoint `8d8f9922d7a7010e7ff1db23b97d6a365d8150d5`.
+This handoff/evidence commit is documentation-only. Main remains `9f06c46d061f8a0f67d8684b6c9c6cbbd163242d`;
+Claude-owned PR25 remains `92e2420da02b2ba11d0161f72f7bb9ff338170b4`. Neither branch was rewritten or merged.
+
+Completed after the first checkpoint: aggregate proof budgets and transactional merge rollback; stack-safe serialization;
+bounded WAV/PNG removal summaries; explicit Blob URL ownership/revocation and stable relabel downloads; truthful Upgrade
+wording; five bundled-toolkit corrections (script/benchmark injection, port killing, redirect credential forwarding and omitted
+tool results). Test audit also removed a typed-error false-pass path and strengthened request-count/transformed-byte oracles.
+See [internal review, scope and residuals](docs/REVIEW_20261028.md). This is not REL-3 independent audit acceptance.
+
+Fresh integrating-executor results on this source:
+
+- `UNALTERED_PYTHON=/tmp/unaltered-reference/bin/python npm run check`: OPSEC/type/lint pass,150 Vitest pass,1 optional Node2GiB
+  skip;5 Node supervisor/renderer regressions pass. Python OpenTimestamps0.4.5 reference oracle actually executed.
+- Four offline Python toolkit regressions pass; six regenerated reference fixtures byte-identical. Native differential CI also
+  runs those Python regressions. No SDK/credentials/live requests are used by the new toolkit tests.
+- Full local Chromium154 with `--retries=0`:54 pass,1 optional browser-memory skip,1 failure before app execution at
+  `file://.../dist/unaltered-0.3.1.html#stamp`: `ERR_BLOCKED_BY_ADMINISTRATOR`. Policy is preserved; offline acceptance needs native CI.
+- Two builds byte-identical, all five distributable checksums pass; build id`b1ebd362733ac666`,36.4KiB gzip.
+- Both250000-mutation campaigns completed250028 inputs without finding,230333ms before parser corrections and228607ms after;
+  exact source state/bundle SHA/limits: `docs/evidence/fuzz-20261028*.json`. No exhaustive/native-decoder coverage claimed.
+- Source/staged secret checks and OPSEC pass; final outgoing-history scan and remote SHA verification precede publication.
+
+Three coordinated workers completed bounded roles (Luna targets/tests, Sol code/toolkit review/fixes, Astra deeper product security
+and changed-range review); none remain active. Root owns integration. All47 active product/tooling/workflow files and66 bundled
+executable scripts were included in source review, with dynamic/external limits in the detailed record. No paid Claude calls.
+
+Native CI for this final checkpoint is unexecuted **at this documentation snapshot**. Root will open a draft review candidate
+after push and reconcile exact-head CI; its PR description/checks will carry the completed result without changing this source.
+Do not attribute old73fc82e/9f06c46 browser evidence to this new head. Ordinary E2E may retry once in CI; inspect attempts before
+claiming repeatable50ms performance. Original Chromium2GiB/540s/<200MiB job remains three attempts/zero retries, unchanged.
+
+Next owner: inspect exact remote branch/PR head, review `9f06c46..HEAD`, reconcile current main/PR25 ownership and CI, then obtain
+the required specific PR approval before integration. No merge attempt is planned here; no merge source/target was mutated.
+R1 live confirmed app/reference round-trip and pending-CORS policy, signing, human accessibility/Spanish/usability, independent
+audit/rebuild and release/account/legal controls remain open. No backend/proxy/browser bypass, release/deployment/tag, purchase,
+credentials or account-security changes occurred. Recover by fetching this branch, reading these notes, and reproducing the
+commands in `docs/REVIEW_20261028.md` / `docs/FUZZING.md`. Preserve historical failures, old checkpoints and unique remote work.
+
+# Historical continuation 2026-10-28 (d) — accepted gate work, separate ownership
 
 - Reconciled main `9f06c46d061f8a0f67d8684b6c9c6cbbd163242d`, exact-head CI40651059987 completed success. Earlier browser
   results are historical, not acceptance of this continuation. All old work/branches are preserved; local800b9cc is an ancestor of main.
