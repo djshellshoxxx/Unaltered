@@ -1,0 +1,92 @@
+diff --git a/tests/e2e/hash-io-diagnostics.ts b/tests/e2e/hash-io-diagnostics.ts
+index 28350c5..e6b9dfa 100644
+--- a/tests/e2e/hash-io-diagnostics.ts
++++ b/tests/e2e/hash-io-diagnostics.ts
+@@ -1,11 +1,15 @@
+ /** Installed by Playwright inside the real worker; no product logging or additional worker messages. */
+-export function installHashIoDiagnostics(): void {
++export function installHashIoDiagnostics(delay?: { afterBytes: number; milliseconds: number }): void {
+   const state = {
+     operation: 'installed', since: performance.now(),
+     slices: 0, reads: 0, cancels: 0, releases: 0, bytes: 0,
+-    start: 0, end: 0, requested: 0, returned: 0, readDone: false,
++    start: 0, end: 0, requested: 0, returned: 0, readDone: false, injectedDelays: 0,
+   };
+   (globalThis as unknown as { __hashIoTrace: typeof state }).__hashIoTrace = state;
++  let delayFinished: () => void = () => {};
++  const delayed = new Promise<void>((resolve) => { delayFinished = resolve; });
++  (globalThis as unknown as { __hashIoDelay: Promise<void> }).__hashIoDelay = delayed;
++  if (!delay) delayFinished();
+   const mark = (operation: string): void => { state.operation = operation; state.since = performance.now(); };
+   const slice = Blob.prototype.slice;
+   Blob.prototype.slice = function (this: Blob, start = 0, end = this.size, type?: string): Blob {
+@@ -18,14 +22,24 @@ export function installHashIoDiagnostics(): void {
+   Object.defineProperty(prototype, 'read', { configurable: true, writable: true,
+     value: function (this: ReadableStreamBYOBReader, view: Uint8Array<ArrayBuffer>, options?: { min?: number }) {
+       state.reads++; state.requested = view.byteLength;
+-      mark('read-await');
+-      const result = read.call(this, view, options);
+-      // Observe the original promise without replacing it or delaying the application's await.
+-      void result.then((value) => {
+-        state.returned = value.value?.byteLength ?? 0; state.bytes += state.returned; state.readDone = value.done;
+-        mark('read-settled');
+-      }, () => mark('read-rejected'));
+-      return result;
++      const perform = () => {
++        mark('read-await');
++        const result = read.call(this, view, options);
++        // Ordinary observations preserve the original promise.
++        void result.then((value) => {
++          state.returned = value.value?.byteLength ?? 0; state.bytes += state.returned; state.readDone = value.done;
++          mark('read-settled');
++        }, () => mark('read-rejected'));
++        return result;
++      };
++      if (delay && state.injectedDelays === 0 && state.bytes >= delay.afterBytes && view.byteLength > 1) {
++        state.injectedDelays++; mark('diagnostic-delay');
++        return new Promise<void>((resolve) => setTimeout(resolve, delay.milliseconds)).then(() => {
++          delayFinished();
++          return perform();
++        });
++      }
++      return perform();
+     },
+   });
+   const cancel = prototype.cancel;
+diff --git a/tests/e2e/memory.spec.ts b/tests/e2e/memory.spec.ts
+index a26bb8a..92e161e 100644
+--- a/tests/e2e/memory.spec.ts
++++ b/tests/e2e/memory.spec.ts
+@@ -42,6 +42,8 @@ test('hashes a real 2 GiB file in the browser with less than 200 MiB extra rende
+     let hashWorker: import('@playwright/test').Worker | undefined;
+     let ioQueryPending = false;
+     let lastIo: unknown;
++    const delayedAttempt = test.info().repeatEachIndex === 2;
++    let delayObserved = !delayedAttempt;
+     let nextHeartbeat = Date.now() + 10_000;
+     const monitor = (async () => {
+       while (sampling) {
+@@ -70,7 +72,14 @@ test('hashes a real 2 GiB file in the browser with less than 200 MiB extra rende
+       phase('input-selected');
+       hashWorker = await worker; // A silently substituted main-thread implementation does not satisfy FR-1.
+       hashWorker.on('close', () => phase('worker-closed'));
+-      await hashWorker.evaluate(installHashIoDiagnostics);
++      // The third fixed attempt crosses the old ~32 s stall window deliberately. RSS sampling
++      // keeps running; only one worker read is delayed, with all data and deadlines unchanged.
++      await hashWorker.evaluate(installHashIoDiagnostics, delayedAttempt ? { afterBytes: 1024 ** 3, milliseconds: 5000 } : undefined);
++      if (delayedAttempt) {
++        phase('midpoint-delay-planned-ms=5000');
++        void hashWorker.evaluate(async () => { await (globalThis as unknown as { __hashIoDelay: Promise<void> }).__hashIoDelay; })
++          .then(() => { delayObserved = true; phase('midpoint-delay-observed'); }, () => phase('midpoint-delay-unavailable'));
++      }
+       phase('worker-observed');
+       // Surface a terminal UI/read failure or a failed RSS monitor immediately instead of hiding it
+       // behind the digest wait. This preserves the success criteria and the existing time limit.
+@@ -79,6 +88,7 @@ test('hashes a real 2 GiB file in the browser with less than 200 MiB extra rende
+       await Promise.race([completed, monitor]);
+       expect(await page.locator('.item .error').allTextContents()).toEqual([]);
+       await expect(page.locator('.item .digest')).toBeVisible();
++      expect(delayObserved).toBe(true);
+       phase('digest-visible');
+     } finally {
+       sampling = false;
