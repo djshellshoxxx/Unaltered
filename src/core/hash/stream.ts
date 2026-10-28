@@ -10,6 +10,8 @@ export const CROSS_CHECK_MAX = 64 * 1024 * 1024;
 export const STALL_MS = 30_000;
 /** Consecutive stalls at one file offset before giving up with a typed error instead of hanging. */
 export const MAX_STALLS = 3;
+/** Longest the cleanup waits for a reader's cancellation to settle; a stuck backend may never settle it. */
+export const CANCEL_SETTLE_MS = 1_000;
 
 const STALLED = Symbol('stalled');
 
@@ -140,8 +142,9 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
     }
   } finally {
     if (reader) {
-      await reader.cancel();
-      reader.releaseLock();
+      const cancelling = reader.cancel().catch(() => {});
+      try { reader.releaseLock(); } catch { /* A pending read keeps the lock on older engines; the reader is dropped anyway. */ }
+      await within(cancelling, CANCEL_SETTLE_MS);
     }
   }
   const digest = h.digest();

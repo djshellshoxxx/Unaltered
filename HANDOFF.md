@@ -1,3 +1,14 @@
+# Continuation 2026-10-28 (integration checkpoint, branch claude/friendly-faraday-papf5c)
+
+Topology (verified): #6 `0b448d8` <- #7 (+5) <- #8 (+11) <- #9 (+12, PROPOSAL, not integrated). #10 `0fa99d7` is one commit directly on #6; #12 (`diag/read-stall-ab-20261027`, DIAGNOSTIC, do not merge) targets #10's branch. This branch = #8 `6d60024` + R1 script fix + merge of #10 + the fixes below. Only this branch is pushed to; nothing merged anywhere.
+
+- R1: `scripts/r1-acceptance.sh` failed after a PASSING browser step because `curl | head -c` took SIGPIPE (exit 23) under `pipefail`. Fixed; CI on `c880b6a` shows the reference step `ok: true`, block 428648. Still browser + reference evidence only, not the live-server acceptance R1 needs.
+- Live calendar check: `GET /timestamp/<hex>` returns 404 without `Access-Control-Allow-Origin` on alice, bob and finney (red on #8 too). A browser sees a network error for a pending lookup. App behaviour for that case is undecided.
+- Watchdog defect found in review of #10: after a stall, cleanup awaited `reader.cancel()` unbounded, so a backend whose cancel never settles hung the hash on cancellation. Cleanup now waits at most `CANCEL_SETTLE_MS` (1 s). Regression test fails before the change (HUNG), passes after. Added test: bytes an abandoned read delivers late are ignored.
+- Known watchdog trade-offs, unchanged: a device slower than about 140 KB/s for three consecutive 4 MiB reads now errors; each abandoned stalled read retains its 4 MiB buffer until it settles. The 30 s timeout covers the first-chunk open too. Whether a progress-based timeout is better is a policy call, separate from correctness.
+- Stall is NOT proven fixed. Evidence still needed: the #12 A/B (8 shards x 2 arms, native). Gates and limits unchanged.
+- `npm run check` on this branch: 134 passed, 1 skipped (local, Linux).
+
 # Unaltered handoff — 2026-10-27 (second continuation)
 
 Owner: this task owns only `djshellshoxxx/Unaltered`. Root integrates; one reviewer agent ran (read-only, finished).

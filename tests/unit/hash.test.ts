@@ -198,6 +198,54 @@ describe('FR-1 hashing', () => {
       expect(f.ranges).toEqual([[0, 3], [3, 6], [3, 6], [3, 6]]);
     });
   });
+  describe('stall recovery edge cases', () => {
+    const bytes = Uint8Array.from({ length: 7 }, (_, i) => i + 1);
+    const expected = createHash('sha256').update(bytes).digest('hex');
+    // A slice stream whose first open for `slowStart` answers only after `delayMs` (later than the stall timeout).
+    function lateBlob(slowStart: number, delayMs: number, neverCancel: boolean, opens = new Map<number, number>()) {
+      const blob = new Blob([bytes as BlobPart]);
+      const slice = blob.slice.bind(blob);
+      blob.slice = (start = 0, end = blob.size): Blob => {
+        const attempt = (opens.get(start) ?? 0) + 1;
+        opens.set(start, attempt);
+        const part = slice(start, end);
+        let offset = start;
+        part.stream = () => new ReadableStream({ type: 'bytes', async pull(controller) {
+          const slow = start === slowStart && attempt === 1 && offset !== end;
+          if (slow) await new Promise((r) => setTimeout(r, delayMs));
+          let request: ReadableStreamBYOBRequest | null;
+          try { request = controller.byobRequest; } catch { return; }
+          if (!request) return;
+          if (offset === end) { controller.close(); request.respond(0); return; }
+          const view = new Uint8Array(request.view!.buffer, request.view!.byteOffset, request.view!.byteLength);
+          const length = Math.min(view.length, end - offset);
+          view.set(bytes.subarray(offset, offset + length));
+          offset += length;
+          request.respond(length);
+        }, cancel() { return neverCancel ? new Promise<void>(() => {}) : undefined; } });
+        part.arrayBuffer = async (): Promise<ArrayBuffer> => { throw new Error('unexpected allocated slice read'); };
+        return part;
+      };
+      return blob;
+    }
+    it('ignores bytes an abandoned read delivers after its timeout', async () => {
+      const blob = lateBlob(3, 80, false);
+      const progress: number[] = [];
+      const result = await hashSource(blob, { chunkSize: 3, stallMs: 20, onProgress: (n) => progress.push(n) });
+      expect(result!.hex).toBe(expected);
+      expect(progress).toEqual([3, 6, 7]);
+      await new Promise((r) => setTimeout(r, 120)); // let the abandoned read settle; nothing may throw or double count
+    });
+    it('returns null when cancelled right after a stall, even if cancelling the reopened stream never settles', async () => {
+      const opens = new Map<number, number>();
+      const blob = lateBlob(3, 10_000, true, opens);
+      const outcome = await Promise.race([
+        hashSource(blob, { chunkSize: 3, stallMs: 20, isCancelled: () => (opens.get(3) ?? 0) >= 2 }),
+        new Promise<string>((r) => setTimeout(() => r('HUNG'), 1500)),
+      ]);
+      expect(outcome).toBeNull();
+    });
+  });
   it('rejects invalid chunk sizes instead of hanging or allocating invalid buffers', async () => {
     for (const chunkSize of [0, -1, 0.5, NaN, Infinity]) {
       await expect(hashSource(new Blob(['x']), { chunkSize })).rejects.toMatchObject({ code: 'INPUT_INVALID' });
