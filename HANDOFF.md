@@ -8,6 +8,8 @@ Topology (verified): #6 `0b448d8` <- #7 (+5) <- #8 (+11) <- #9 (+12, PROPOSAL, n
 - Known watchdog trade-offs, unchanged: a device slower than about 140 KB/s for three consecutive 4 MiB reads now errors; each abandoned stalled read retains its 4 MiB buffer until it settles. The 30 s timeout covers the first-chunk open too. Whether a progress-based timeout is better is a policy call, separate from correctness.
 - Stall is NOT proven fixed. Evidence still needed: the #12 A/B (8 shards x 2 arms, native). Gates and limits unchanged.
 - `npm run check` on this branch: 134 passed, 1 skipped (local, Linux).
+- A/B result (#12, run 40617290194, diag head `6f5b6c9`): watchdog 8/8 shards (24/24 attempts) passed in about 2 min each; baseline `0b448d8` source 3/8 shards (12/17 attempts) passed, all 5 failures were 540 s timeouts, none a memory failure. Supporting evidence that #10 recovers from the stall; not a root cause, not a slow-device test, Chromium only. Baseline shard 4 log: 495/512 slices done at 531 s with a read pending 30 s, so at least one failure was a very slow pipeline rather than one permanent hang (unverified in general).
+- Exact-head CI on `e698b4c` (#11): all green including the 2 GiB gate and R1 job, except the informational live check (known CORS 404 on pending lookups).
 
 # Unaltered handoff — 2026-10-27 (second continuation)
 
