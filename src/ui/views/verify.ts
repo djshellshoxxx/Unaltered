@@ -30,6 +30,14 @@ const BODY: Record<VerifyState, StringKey> = {
   UNREACHABLE: 'verify.body.UNREACHABLE',
 };
 
+// A share-link check hashes no file, so wording that speaks about "this file" would overstate the result.
+const LINK_TITLE: Partial<Record<VerifyState, StringKey>> = { NO_MATCH_FILE: 'verify.state.link.NO_MATCH_FILE' };
+const LINK_BODY: Partial<Record<VerifyState, StringKey>> = {
+  VERIFIED: 'verify.link.VERIFIED',
+  PENDING: 'verify.link.PENDING',
+  NO_MATCH_FILE: 'verify.link.NO_MATCH_FILE',
+};
+
 const HEX64 = /^[0-9a-f]{64}$/;
 
 function checkReceiptSize(file: File): void {
@@ -149,7 +157,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
       const report = await verify(digest, bytes, verifyConfigFromSettings(controller.signal));
       if (!current()) return;
       show({ kind: 'report', report, hex, fromLink: selectedFile === null });
-      announce(t(TITLE[report.state]));
+      announce(t(reportTitleKey(report.state, selectedFile === null)));
     } catch (e) {
       if (current()) show(isAbort(e) ? null : { kind: 'error', message: safeMessage(e) });
     } finally {
@@ -256,7 +264,13 @@ export function mountVerify(root: HTMLElement): VerifyView {
   };
 }
 
+function reportTitleKey(state: VerifyState, fromLink: boolean): StringKey {
+  return (fromLink ? LINK_TITLE[state] : undefined) ?? TITLE[state];
+}
+
 function renderReport(r: VerifyReport, hex: string, fromLink: boolean): HTMLElement {
+  const title = reportTitleKey(r.state, fromLink);
+  const linkBody = fromLink ? LINK_BODY[r.state] : undefined;
   const detailRows: Node[] = [
     el('dt', {}, t('verify.d.fingerprint')),
     el('dd', {}, el('code', { class: 'digest' }, groupHex(hex)), fromLink ? el('span', { class: 'muted' }, ` ${t('verify.d.fromLink')}`) : null),
@@ -277,9 +291,10 @@ function renderReport(r: VerifyReport, hex: string, fromLink: boolean): HTMLElem
   const card = el(
     'div',
     { class: `result result-${r.state}`, role: 'status' },
-    el('div', { class: 'result-head' }, el('span', { class: 'icon', 'aria-hidden': 'true' }, ICON[r.state]), el('h3', {}, t(TITLE[r.state]))),
-    el('p', {}, t(BODY[r.state])),
-    r.state !== 'VERIFIED' && r.detail ? el('p', { class: 'muted' }, r.detail) : null,
+    el('div', { class: 'result-head' }, el('span', { class: 'icon', 'aria-hidden': 'true' }, ICON[r.state]), el('h3', {}, t(title))),
+    el('p', {}, t(linkBody ?? BODY[r.state])),
+    // The core detail describes a file; the link-specific body replaces it.
+    r.state !== 'VERIFIED' && !linkBody && r.detail ? el('p', { class: 'muted' }, r.detail) : null,
     el('dl', { class: 'details' }, ...detailRows),
   );
   if (r.state === 'VERIFIED') {

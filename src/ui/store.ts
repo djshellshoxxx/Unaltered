@@ -8,6 +8,7 @@ export interface ReceiptRec {
 const KEY = 'unaltered.receipts.v1';
 const FLAG = 'unaltered.receipts.enabled';
 const HEX64 = /^[0-9a-f]{64}$/;
+const MAX_RECEIPTS = 500;
 
 function storage(): Storage | null {
   try {
@@ -57,7 +58,9 @@ export function loadReceipts(): ReceiptRec[] {
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
+    // Stored data is untrusted (another tab, an older build or a hand edit); keep the same bound addReceipt keeps.
     return parsed
+      .slice(0, MAX_RECEIPTS)
       .filter((r): r is ReceiptRec => typeof r === 'object' && r !== null && typeof r.digestHex === 'string' && HEX64.test(r.digestHex) && typeof r.createdAtUtc === 'string' && typeof r.label === 'string')
       .map((r) => ({ digestHex: r.digestHex, createdAtUtc: r.createdAtUtc.slice(0, 40), label: r.label.slice(0, 200) }));
   } catch {
@@ -78,11 +81,14 @@ export function addReceipt(rec: ReceiptRec): boolean {
   if (!isEnabled() || !HEX64.test(rec.digestHex)) return false;
   const list = loadReceipts().filter((r) => !(r.digestHex === rec.digestHex && r.createdAtUtc === rec.createdAtUtc));
   list.unshift({ digestHex: rec.digestHex, createdAtUtc: rec.createdAtUtc, label: rec.label.slice(0, 200) });
-  return save(list.slice(0, 500));
+  return save(list.slice(0, MAX_RECEIPTS));
 }
 
-export function removeReceipt(index: number): boolean {
+/** Removes by identity, not position: another tab may have changed the stored list since it was rendered. */
+export function removeReceipt(rec: Pick<ReceiptRec, 'digestHex' | 'createdAtUtc'>): boolean {
   const list = loadReceipts();
-  list.splice(index, 1);
+  const at = list.findIndex((r) => r.digestHex === rec.digestHex && r.createdAtUtc === rec.createdAtUtc);
+  if (at === -1) return true;
+  list.splice(at, 1);
   return save(list);
 }

@@ -151,6 +151,30 @@ test.describe('verification completion ownership', () => {
   }
 });
 
+test('share-link results say no file was checked; file results keep file wording', async ({ page }) => {
+  await page.goto(`/index.html#h=${HEX}`);
+  await page.setInputFiles('#verify-receipt', receipt('pending.ots'));
+  await page.getByRole('button', { name: 'Check', exact: true }).click();
+  const pending = page.locator('.result-PENDING');
+  await expect(pending).toContainText('The fingerprint from the link matches the receipt');
+  await expect(pending).toContainText('No file was checked');
+  await expect(pending).not.toContainText('The file matches the receipt');
+
+  await page.goto(`/index.html#h=${'00'.repeat(32)}`);
+  await page.setInputFiles('#verify-receipt', receipt('pending.ots'));
+  await page.getByRole('button', { name: 'Check', exact: true }).click();
+  const noMatch = page.locator('.result-NO_MATCH_FILE');
+  await expect(noMatch.getByRole('heading', { name: 'No match: different fingerprint' })).toBeVisible();
+  await expect(noMatch).toContainText('No file was checked');
+  await expect(noMatch).not.toContainText('This file');
+
+  await page.setInputFiles('#verify-file', { name: 'different.txt', mimeType: 'text/plain', buffer: Buffer.from('different') });
+  await page.getByRole('button', { name: 'Check', exact: true }).click();
+  const fileNoMatch = page.locator('.result-NO_MATCH_FILE');
+  await expect(fileNoMatch.getByRole('heading', { name: 'No match: this file is different' })).toBeVisible();
+  await expect(fileNoMatch).not.toContainText('No file was checked');
+});
+
 test('held network verification cannot replace a newer result', async ({ page }) => {
   await page.goto(`/index.html#h=${HEX}`);
   await holdNetworkResponse(page);
