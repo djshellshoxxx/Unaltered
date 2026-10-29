@@ -12,11 +12,17 @@ export function revokeAll(): void {
   for (const owner of scopes.keys()) revokeOwner(owner);
 }
 
+// C0/C1 controls, and bidirectional controls that can make a name display with its characters reordered
+// (for example a fake extension), are never kept.
+const isUnsafeCodePoint = (cp: number): boolean =>
+  cp < 0x20 || (cp >= 0x7f && cp <= 0x9f) || cp === 0x061c || cp === 0x200e || cp === 0x200f || (cp >= 0x202a && cp <= 0x202e) || (cp >= 0x2066 && cp <= 0x2069);
+
 /** Replace characters that are not safe in a download file name. */
 export function safeFileName(name: string): string {
-  const noControl = Array.from(name, (ch) => (ch.charCodeAt(0) < 32 ? '_' : ch)).join('');
+  const noControl = Array.from(name, (ch) => (isUnsafeCodePoint(ch.codePointAt(0)!) ? '_' : ch)).join('');
   const cleaned = noControl.replace(/[\\/:*?"<>|]/g, '_').replace(/^\.+/, '_');
-  return cleaned.length > 0 ? cleaned.slice(0, 200) : 'file';
+  // Cut by code point so a surrogate pair is never split.
+  return cleaned.length > 0 ? Array.from(cleaned).slice(0, 200).join('') : 'file';
 }
 
 export function downloadLink(label: string, fileName: string, data: Blob | Uint8Array, mime: string, onClick?: () => void, scope?: { owner: object; key: string }): HTMLAnchorElement {

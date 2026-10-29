@@ -3,7 +3,9 @@
 import argparse
 import os
 import subprocess
+import sys
 from pathlib import Path
+from urllib.parse import urlparse
 
 
 def parse_env(path: Path) -> dict[str, str]:
@@ -100,10 +102,18 @@ def main() -> int:
             script = Path(__file__).with_name("setup_winsparkle.sh")
         run_script(script, root)
 
+    # Without a public key the updater cannot check signatures, so it stays off until one is configured.
+    public_key = env.get("AUTO_UPDATE_EDDSA_PUBLIC_KEY", "")
+    if not public_key:
+        print(
+            "AUTO_UPDATE_EDDSA_PUBLIC_KEY is empty: leaving ENABLE_AUTO_UPDATE=FALSE. "
+            "Generate a key pair, set the public key in .env and run this again.",
+            file=sys.stderr,
+        )
     updates = {
-        "ENABLE_AUTO_UPDATE": "TRUE",
+        "ENABLE_AUTO_UPDATE": "TRUE" if public_key else "FALSE",
         "AUTO_UPDATE_MODE": env.get("AUTO_UPDATE_MODE", "public"),
-        "AUTO_UPDATE_EDDSA_PUBLIC_KEY": env.get("AUTO_UPDATE_EDDSA_PUBLIC_KEY", ""),
+        "AUTO_UPDATE_EDDSA_PUBLIC_KEY": public_key,
     }
 
     if github_user and github_repo:
@@ -115,6 +125,13 @@ def main() -> int:
             "AUTO_UPDATE_FEED_URL_WINDOWS",
             f"https://raw.githubusercontent.com/{github_user}/{github_repo}/{branch}/appcast-windows.xml",
         )
+
+    for key in ("AUTO_UPDATE_FEED_URL_MACOS", "AUTO_UPDATE_FEED_URL_WINDOWS"):
+        feed = updates.get(key, env.get(key, ""))
+        parsed = urlparse(feed)
+        if feed and (parsed.scheme != "https" or not parsed.hostname):
+            print(f"{key} must be an https:// URL; .env was not changed.", file=sys.stderr)
+            return 1
 
     write_env(env_path, updates)
 

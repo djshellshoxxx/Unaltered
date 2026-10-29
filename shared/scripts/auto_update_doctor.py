@@ -4,6 +4,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
 
 
 TRUTHY = {"1", "true", "yes", "on"}
@@ -24,6 +25,12 @@ def parse_env(path: Path) -> dict[str, str]:
 
 def is_truthy(value: str | None) -> bool:
     return bool(value and value.strip().lower() in TRUTHY)
+
+
+def is_https(url: str) -> bool:
+    # A feed fetched over any other scheme can be replaced in transit.
+    parsed = urlparse(url)
+    return parsed.scheme == "https" and bool(parsed.hostname)
 
 
 def has_xml_tags(path: Path) -> bool:
@@ -61,12 +68,14 @@ def run_checks(root: Path) -> dict[str, object]:
         "ENABLE_AUTO_UPDATE should be TRUE to ship updater support",
         "pass" if is_truthy(env.get("ENABLE_AUTO_UPDATE")) else "warn",
     )
+    # Enabled updates without a public key would accept any update the feed serves, so that combination fails.
+    has_key = bool(env.get("AUTO_UPDATE_EDDSA_PUBLIC_KEY"))
     add_check(
         checks,
         "Public EdDSA key configured",
-        bool(env.get("AUTO_UPDATE_EDDSA_PUBLIC_KEY")),
+        has_key,
         "AUTO_UPDATE_EDDSA_PUBLIC_KEY should be set in .env",
-        "pass" if env.get("AUTO_UPDATE_EDDSA_PUBLIC_KEY") else "warn",
+        "pass" if has_key else "fail" if is_truthy(env.get("ENABLE_AUTO_UPDATE")) else "warn",
     )
     add_check(
         checks,
@@ -167,16 +176,16 @@ def run_checks(root: Path) -> dict[str, object]:
     add_check(
         checks,
         "macOS feed URL",
-        bool(mac_feed),
+        is_https(mac_feed),
         mac_feed or "AUTO_UPDATE_FEED_URL_MACOS is missing",
-        "pass" if mac_feed else "warn",
+        "pass" if is_https(mac_feed) else "fail" if mac_feed else "warn",
     )
     add_check(
         checks,
         "Windows feed URL",
-        bool(win_feed),
+        is_https(win_feed),
         win_feed or "AUTO_UPDATE_FEED_URL_WINDOWS is missing",
-        "pass" if win_feed else "warn",
+        "pass" if is_https(win_feed) else "fail" if win_feed else "warn",
     )
 
     mac_appcast = root / "appcast-macos.xml"
