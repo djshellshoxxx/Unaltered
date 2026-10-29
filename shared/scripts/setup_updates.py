@@ -47,11 +47,16 @@ def default_branch(root: Path) -> str:
     return branch or "main"
 
 
-def run_script(script: Path, root: Path) -> None:
+# Download settings the setup scripts read; .env values apply unless the process environment already sets them.
+DOWNLOAD_KEYS = ("SPARKLE_VERSION", "SPARKLE_SHA256", "WINSPARKLE_VERSION", "WINSPARKLE_SHA256")
+
+
+def run_script(script: Path, root: Path, env: dict[str, str]) -> None:
+    child_env = {**{key: env[key] for key in DOWNLOAD_KEYS if env.get(key)}, **os.environ}
     if script.suffix == ".py":
-        subprocess.run(["python3", str(script)], cwd=root, check=True)
+        subprocess.run(["python3", str(script)], cwd=root, check=True, env=child_env)
     else:
-        subprocess.run([str(script)], cwd=root, check=True)
+        subprocess.run([str(script)], cwd=root, check=True, env=child_env)
 
 
 def ensure_appcast(path: Path, title: str, version: str) -> None:
@@ -94,13 +99,13 @@ def main() -> int:
         script = root / "scripts" / "setup_sparkle.sh"
         if not script.exists():
             script = Path(__file__).with_name("setup_sparkle.sh")
-        run_script(script, root)
+        run_script(script, root, env)
 
     if args.platform in {"windows", "all"} and not args.skip_download:
         script = root / "scripts" / "setup_winsparkle.sh"
         if not script.exists():
             script = Path(__file__).with_name("setup_winsparkle.sh")
-        run_script(script, root)
+        run_script(script, root, env)
 
     # Without a public key the updater cannot check signatures, so it stays off until one is configured.
     public_key = env.get("AUTO_UPDATE_EDDSA_PUBLIC_KEY", "")

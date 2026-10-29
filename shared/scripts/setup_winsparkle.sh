@@ -6,8 +6,8 @@ ROOT_DIR="$(pwd)"
 EXTERNAL_DIR="$ROOT_DIR/external"
 WINSPARKLE_DIR="$EXTERNAL_DIR/WinSparkle"
 WINSPARKLE_VERSION="${WINSPARKLE_VERSION:-0.9.2}"
-if [[ ! "$WINSPARKLE_VERSION" =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
-    echo "Error: WINSPARKLE_VERSION must look like 1.2.3"
+if [[ ! "$WINSPARKLE_VERSION" =~ ^[0-9]+(\.[0-9]+)*(-[A-Za-z0-9]+(\.[A-Za-z0-9]+)*)?$ ]]; then
+    echo "Error: WINSPARKLE_VERSION must look like 1.2.3 or 1.2.3-beta.1"
     exit 1
 fi
 WINSPARKLE_URL="https://github.com/vslavik/winsparkle/releases/download/v${WINSPARKLE_VERSION}/WinSparkle-${WINSPARKLE_VERSION}.zip"

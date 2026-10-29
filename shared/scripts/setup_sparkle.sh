@@ -5,8 +5,8 @@ set -euo pipefail
 ROOT_DIR="$(pwd)"
 EXTERNAL_DIR="$ROOT_DIR/external"
 SPARKLE_VERSION="${SPARKLE_VERSION:-2.8.0}"
-if [[ ! "$SPARKLE_VERSION" =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
-    echo "Error: SPARKLE_VERSION must look like 1.2.3"
+if [[ ! "$SPARKLE_VERSION" =~ ^[0-9]+(\.[0-9]+)*(-[A-Za-z0-9]+(\.[A-Za-z0-9]+)*)?$ ]]; then
+    echo "Error: SPARKLE_VERSION must look like 1.2.3 or 1.2.3-beta.1"
     exit 1
 fi
 SPARKLE_FRAMEWORK="$EXTERNAL_DIR/Sparkle.framework"

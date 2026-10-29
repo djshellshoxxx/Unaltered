@@ -60,9 +60,15 @@ class WinSparkleDownloadTests(unittest.TestCase):
             self.assertEqual(args[args.index(flag) + 1], '=https')
 
     def test_version_cannot_change_the_download_path(self):
-        result = self.run_setup(WINSPARKLE_VERSION='0.9.2/../../x')
-        self.assertNotEqual(result.returncode, 0)
-        self.assertFalse(self.log.exists(), 'curl ran with an unvalidated version')
+        for version in ('0.9.2/../../x', '0.9.2-..', '0.9.2\n1'):
+            result = self.run_setup(WINSPARKLE_VERSION=version)
+            self.assertNotEqual(result.returncode, 0, version)
+            self.assertFalse(self.log.exists(), f'curl ran with an unvalidated version {version!r}')
+
+    def test_prerelease_version_is_accepted(self):
+        self.run_setup(WINSPARKLE_VERSION='0.9.2-rc.1', WINSPARKLE_SHA256='00' * 32)
+        args = self.log.read_text().splitlines()
+        self.assertIn('https://github.com/vslavik/winsparkle/releases/download/v0.9.2-rc.1/WinSparkle-0.9.2-rc.1.zip', args)
 
 
 class SetupUpdatesTests(unittest.TestCase):
@@ -92,6 +98,21 @@ class SetupUpdatesTests(unittest.TestCase):
         result = self.setup('GITHUB_USER=u\nGITHUB_REPO=r\nAUTO_UPDATE_EDDSA_PUBLIC_KEY=abc=\n')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.env_value('ENABLE_AUTO_UPDATE'), 'TRUE')
+
+    def test_download_digest_from_env_file_reaches_the_setup_script(self):
+        bin_dir = self.project / 'bin'
+        bin_dir.mkdir()
+        (bin_dir / 'curl').write_text(STUB_CURL)
+        (bin_dir / 'curl').chmod(0o755)
+        (self.project / 'scripts').mkdir()
+        shutil.copy(SCRIPTS / 'setup_winsparkle.sh', self.project / 'scripts' / 'setup_winsparkle.sh')
+        (self.project / '.env').write_text(f"WINSPARKLE_SHA256={'00' * 32}\n")
+        env = {k: v for k, v in os.environ.items() if k not in ('WINSPARKLE_SHA256', 'WINSPARKLE_VERSION')}
+        result = subprocess.run([sys.executable, '-I', str(SCRIPTS / 'setup_updates.py'), '--project-root',
+                                 str(self.project), '--platform', 'windows'], capture_output=True, text=True, timeout=60,
+                                env={**env, 'PATH': f"{bin_dir}:{env['PATH']}", 'CURL_ARGS_LOG': str(self.project / 'log')})
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('does not match WINSPARKLE_SHA256', result.stdout + result.stderr)
 
     def test_plain_http_feed_is_refused_without_writing(self):
         original = 'AUTO_UPDATE_EDDSA_PUBLIC_KEY=abc=\nAUTO_UPDATE_FEED_URL_MACOS=http://example.invalid/appcast.xml\n'
