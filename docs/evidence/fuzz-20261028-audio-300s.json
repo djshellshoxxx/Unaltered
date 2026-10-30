@@ -1,0 +1,65 @@
+{
+  "sourceCommit": "99562edae69618d2ccf4ac33fef955974b67eafd",
+  "targetSha256": "1c847d28958b7353801a4dee4090250e14bd02d29f47136e57ebe69c52f23603",
+  "node": "v22.22.0",
+  "v8": "12.4.254.21-node.33",
+  "options": {
+    "iterations": 250000,
+    "seconds": 300,
+    "seed": 20261028,
+    "out": "scratch/fuzz"
+  },
+  "limits": {
+    "maxInputBytes": 65536,
+    "maxCorpusPerTarget": 256,
+    "caseDeadlineMs": 1000,
+    "workerOldHeapMiB": 128
+  },
+  "status": "budget-complete",
+  "executed": 226909,
+  "mutations": 226873,
+  "targets": {
+    "proof": {
+      "accepted": 559,
+      "rejected": 37266,
+      "ranges": 158,
+      "corpus": 33
+    },
+    "timestamp": {
+      "accepted": 921,
+      "rejected": 36901,
+      "ranges": 157,
+      "corpus": 30
+    },
+    "jpeg": {
+      "accepted": 475,
+      "rejected": 37340,
+      "ranges": 174,
+      "corpus": 49
+    },
+    "png": {
+      "accepted": 494,
+      "rejected": 37321,
+      "ranges": 70,
+      "corpus": 14
+    },
+    "wav": {
+      "accepted": 546,
+      "rejected": 37270,
+      "ranges": 42,
+      "corpus": 11
+    },
+    "mp3": {
+      "accepted": 1269,
+      "rejected": 36547,
+      "ranges": 51,
+      "corpus": 12
+    }
+  },
+  "output": "scratch/fuzz/(local campaign directory, not committed)",
+  "seedExecutions": 36,
+  "retainedSeeds": 32,
+  "elapsedMs": 300001,
+  "stopReason": "wall-clock",
+  "note": "Continuation (f): same seed with the standard 300 s budget, run under concurrent build/test load; stopped on wall-clock before 250000 mutations."
+}

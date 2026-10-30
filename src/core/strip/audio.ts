@@ -15,6 +15,8 @@ const putTag = (s: string): Uint8Array => Uint8Array.from(s, (c) => c.charCodeAt
 // (LIST/INFO, bext originator, iXML, id3, _PMX XMP, ...) are removed.
 const WAV_KEEP = new Set(['fmt ', 'data', 'fact', 'smpl', 'inst', 'cue ']);
 const WAV_NAMES: Record<string, string> = { LIST: 'text tags (LIST)', bext: 'broadcast info (bext)', iXML: 'iXML metadata', 'id3 ': 'ID3 tag', ID3: 'ID3 tag', _PMX: 'XMP metadata' };
+const MAX_REMOVAL_SUMMARY_LABELS = 64;
+const REMOVAL_SUMMARY_OVERFLOW = 'Additional metadata chunks';
 
 export function cleanWav(input: Uint8Array): AudioResult {
   const n = input.length;
@@ -26,8 +28,17 @@ export function cleanWav(input: Uint8Array): AudioResult {
   if (riffEnd < 12 || riffEnd > n) return rej('The WAV container has an invalid length.');
   const parts: Uint8Array[] = [];
   const removed: string[] = [];
+  const removedSet = new Set<string>();
   const note = (s: string): void => {
-    if (!removed.includes(s)) removed.push(s);
+    if (removedSet.has(s)) return;
+    if (removed.length < MAX_REMOVAL_SUMMARY_LABELS) {
+      removedSet.add(s);
+      removed.push(s);
+    } else if (!removedSet.has(REMOVAL_SUMMARY_OVERFLOW)) {
+      // Retain at most 64 specific labels and one generic overflow note.
+      removedSet.add(REMOVAL_SUMMARY_OVERFLOW);
+      removed.push(REMOVAL_SUMMARY_OVERFLOW);
+    }
   };
   let pos = 12;
   let sawFmt = false;
@@ -122,25 +133,36 @@ export function cleanMp3(input: Uint8Array): AudioResult {
   if (removed.length > 0) while (p < end && input[p] === 0) p++;
   if (!isSync(input, p)) return rej('No MP3 audio was found where expected.');
   start = p;
-  if (end - start >= 128 && tag4(input, end - 128).startsWith('TAG')) {
+  // Trailing tags never begin with a sync word, so a frame chain that already reaches `end` leaves no room for one.
+  // Checking before each removal never cuts a complete final frame; the end-of-input check below decides what remains.
+  const framesReachEnd = (): boolean => validateMp3Frames(input, start, end) === null;
+  if (!framesReachEnd() && end - start >= 128 && tag4(input, end - 128).startsWith('TAG')) {
     end -= 128;
     removed.push('ID3v1 tag');
   }
-  if (end - start >= 32 && String.fromCharCode(...input.subarray(end - 32, end - 24)) === 'APETAGEX') {
+  if (!framesReachEnd() && end - start >= 32 && String.fromCharCode(...input.subarray(end - 32, end - 24)) === 'APETAGEX') {
     const dv = new DataView(input.buffer, input.byteOffset, input.byteLength);
     const size = dv.getUint32(end - 20, true) + (dv.getUint32(end - 12, true) & 0x80000000 ? 32 : 0);
     if (size < 32 || size > end - start) return rej('The APE tag is malformed.');
     end -= size;
     removed.push('APEv2 tag');
   }
+  // A frame chain can also reach `end` because a truncated final frame's declared length covers a real tag. Tag-like
+  // bytes still at the end are then either audio or metadata; refuse rather than keep a possible tag or drop audio.
+  if (endsWithTagLikeBytes(input, start, end)) return rej('The end of the MP3 could be audio or a metadata tag, so it cannot be cleaned safely.');
   const bad = validateMp3Frames(input, start, end);
   if (bad) return bad;
   return { kind: 'cleaned', output: input.slice(start, end), removed };
 }
 
+function endsWithTagLikeBytes(input: Uint8Array, start: number, end: number): boolean {
+  return (end - start >= 128 && tag4(input, end - 128).startsWith('TAG')) || (end - start >= 32 && String.fromCharCode(...input.subarray(end - 32, end - 24)) === 'APETAGEX');
+}
+
 export function selfCheckAudio(format: 'wav' | 'mp3', out: Uint8Array): string | null {
   if (format === 'mp3') {
     if (!isSync(out, 0)) return 'Cleaned MP3 does not start with an audio frame.';
+    if (endsWithTagLikeBytes(out, 0, out.length)) return 'Cleaned MP3 still ends with tag-like bytes.';
     const bad = validateMp3Frames(out, 0, out.length);
     return bad && bad.kind !== 'cleaned' ? bad.reason : null;
   }

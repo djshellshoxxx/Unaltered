@@ -5,7 +5,7 @@ import { hashBlob, type HashResult } from '../../core/hash/hasher';
 import { calendarsOf, stampBatch, type CalendarResult } from '../../core/ots/calendar';
 import { MIME, detectBlob, stripMetadata, type FileKind, type StripOutcome } from '../../core/strip';
 import { announce, copyText, dropZone, el, formatBytes, setChildren } from '../dom';
-import { cleanedName, downloadLink, receiptName, revokeAll } from '../download';
+import { cleanedName, downloadLink, receiptName, revokeAll, revokeOwner } from '../download';
 import { stampConfigFromSettings } from '../state';
 import { addReceipt, isEnabled } from '../store';
 import { t } from '../strings';
@@ -35,7 +35,12 @@ function throwIfCancelled(signal: AbortSignal): void {
 // Kinds the cleaner can rewrite (images and audio).
 const isImage = (k: FileKind): boolean => k === 'jpeg' || k === 'png' || k === 'wav' || k === 'mp3';
 
-export function mountStamp(root: HTMLElement): void {
+export interface StampView {
+  /** Re-renders every visible string in the current language from the retained state; never restarts work. */
+  relabel(): void;
+}
+
+export function mountStamp(root: HTMLElement): StampView {
   revokeAll();
   let nextId = 1;
   const items: Item[] = [];
@@ -65,17 +70,23 @@ export function mountStamp(root: HTMLElement): void {
 
   async function process(it: Item): Promise<void> {
     it.abort.abort();
+    revokeOwner(it);
     it.abort = new AbortController();
     const signal = it.abort.signal;
     it.busy = true;
     it.error = null;
     it.hash = null;
     it.outcome = null;
+    // A receipt belongs to the previous byte target; changing cleaning requires a new stamp.
+    it.proof = null;
+    lastCalendars = null;
+    stampError = null;
     it.progress = 0;
     it.downloadedCleaned = false;
     it.ackHidden = false;
     it.ackOrientation = false;
     refreshItem(it);
+    refreshActions();
     try {
       it.kind = await detectBlob(it.file);
       throwIfCancelled(signal);
@@ -160,7 +171,7 @@ export function mountStamp(root: HTMLElement): void {
             it.downloadedCleaned = true;
             refreshItem(it);
             refreshActions();
-          }),
+          }, { owner: it, key: 'cleaned' }),
           it.downloadedCleaned ? el('p', { class: 'muted' }, t('stamp.cleanedDownloaded')) : el('p', { class: 'warn' }, t('stamp.mustDownload')),
           el('p', { class: 'muted' }, t('stamp.fileNameWarning')),
           c.orientation !== undefined && c.orientation !== 1
@@ -209,7 +220,7 @@ export function mountStamp(root: HTMLElement): void {
         el(
           'div',
           { class: 'notice ok' },
-          downloadLink(t('stamp.downloadReceipt', { name }), name, it.proof, 'application/octet-stream'),
+          downloadLink(t('stamp.downloadReceipt', { name }), name, it.proof, 'application/octet-stream', undefined, { owner: it, key: 'receipt' }),
           el('p', { class: 'muted' }, t('stamp.receiptName')),
           shareRow(it),
           labelRow(it),
@@ -267,6 +278,7 @@ export function mountStamp(root: HTMLElement): void {
 
   function remove(it: Item): void {
     it.abort.abort();
+    revokeOwner(it);
     items.splice(items.indexOf(it), 1);
     it.card.remove();
     if (items.length === 0) {
@@ -370,16 +382,27 @@ export function mountStamp(root: HTMLElement): void {
     setChildren(result, ...res);
   }
 
-  setChildren(
-    root,
-    el('h2', { id: 'stamp-h', tabindex: -1 }, t('stamp.title')),
-    el('p', { class: 'lead' }, t('copy.stays')),
-    el('p', {}, t('copy.notTrue')),
-    dropZone({ id: 'stamp-file', label: t('stamp.drop'), hint: t('stamp.dropHint'), multiple: true, onFiles: add }),
-    list,
-    actions,
-    result,
-    el('p', { class: 'muted' }, t('copy.visibleToServers')),
-  );
+  function renderFrame(): void {
+    setChildren(
+      root,
+      el('h2', { id: 'stamp-h', tabindex: -1 }, t('stamp.title')),
+      el('p', { class: 'lead' }, t('copy.stays')),
+      el('p', {}, t('copy.notTrue')),
+      dropZone({ id: 'stamp-file', label: t('stamp.drop'), hint: t('stamp.dropHint'), multiple: true, onFiles: add }),
+      list,
+      actions,
+      result,
+      el('p', { class: 'muted' }, t('copy.visibleToServers')),
+    );
+  }
+
+  renderFrame();
   refreshActions();
+  return {
+    relabel() {
+      renderFrame();
+      items.forEach(refreshItem);
+      refreshActions();
+    },
+  };
 }

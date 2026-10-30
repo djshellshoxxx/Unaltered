@@ -44,8 +44,10 @@ Typical flow:
 ## Toolkit Wrapper
 
 `../../shared/scripts/setup_updates.py` can:
-- download Sparkle or WinSparkle
-- set the core updater env keys
+- download Sparkle or WinSparkle over HTTPS only; set `SPARKLE_SHA256` / `WINSPARKLE_SHA256` (environment or `.env`) to the published archive
+  digest to have the download checked
+- set the core updater env keys; `ENABLE_AUTO_UPDATE` stays `FALSE` until `AUTO_UPDATE_EDDSA_PUBLIC_KEY` is set, and
+  non-HTTPS feed URLs are refused
 - generate appcast placeholder files
 - run the doctor immediately after setup
 

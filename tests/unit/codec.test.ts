@@ -11,6 +11,9 @@ import { ATT_BITCOIN, ATT_PENDING, HEADER_MAGIC, LIMITS } from '../../src/core/o
 const dir = 'tests/fixtures/ots';
 const load = (n: string): Uint8Array => new Uint8Array(readFileSync(join(dir, n)));
 const expected = JSON.parse(readFileSync(join(dir, 'expected.json'), 'utf8')) as Record<string, any>;
+const configuredPython = process.env.UNALTERED_PYTHON;
+const referencePython = configuredPython ?? '/tmp/venv/bin/python';
+const hasReferencePython = existsSync(referencePython);
 
 describe('codec vs reference fixtures (python-opentimestamps)', () => {
   for (const f of ['pending.ots', 'confirmed.ots', 'batch0.ots', 'batch1.ots', 'batch2.ots']) {
@@ -48,9 +51,9 @@ describe('codec vs reference fixtures (python-opentimestamps)', () => {
     expect(() => parseProof(load('litecoin.ots'))).toThrowError(/Litecoin/);
   });
 
-  it('python reference reads what we serialise (when python-opentimestamps is available)', () => {
-    const py = process.env.UNALTERED_PYTHON ?? '/tmp/venv/bin/python';
-    if (!existsSync(py)) return;
+  (configuredPython || hasReferencePython ? it : it.skip)('python reference reads what we serialise (when python-opentimestamps is available)', () => {
+    // Explicit CI configuration is a required oracle: fail clearly if its interpreter is missing.
+    expect(existsSync(referencePython), `Reference interpreter not found: ${referencePython}`).toBe(true);
     const tmp = mkdtempSync(join(tmpdir(), 'ots-'));
     const files: string[] = [];
     for (const f of ['pending.ots', 'confirmed.ots', 'batch0.ots']) {
@@ -58,7 +61,7 @@ describe('codec vs reference fixtures (python-opentimestamps)', () => {
       writeFileSync(out, serializeProof(parseProof(load(f))));
       files.push(out);
     }
-    const res = JSON.parse(execFileSync(py, ['-I', 'tests/differential/read_ours.py', ...files], { encoding: 'utf8' })) as Record<string, any>;
+    const res = JSON.parse(execFileSync(referencePython, ['-I', 'tests/differential/read_ours.py', ...files], { encoding: 'utf8' })) as Record<string, any>;
     expect(res[files[1]!].digest).toBe(expected['confirmed.ots'].digest);
     expect(res[files[1]!].attestations.filter((a: any) => a.type === 'bitcoin')[0].height).toBe(358391);
     expect(res[files[0]!].attestations[0].commitment).toBe(expected['pending.ots'].commitment);
@@ -116,18 +119,20 @@ describe('codec rejects hostile input (SR-9, SR-10)', () => {
       fc.property(fc.nat(good.length - 1), fc.uint8Array({ minLength: 1, maxLength: 8 }), (at, patch) => {
         const m = good.slice();
         m.set(patch.subarray(0, Math.min(patch.length, m.length - at)), at);
+        let p: ReturnType<typeof parseProof>;
         try {
-          const p = parseProof(m);
-          const canonical = serializeProof(p);
-          const reparsed = parseProof(canonical);
-          expect(serializeProof(reparsed)).toEqual(canonical);
-          expect(reparsed.digest).toEqual(p.digest);
-          const commitments = (proof: typeof p): string[] => collectAttestations(proof.root)
-            .map(({ node, attestation }) => `${toHex(node.msg)}:${JSON.stringify(attestation)}`).sort();
-          expect(commitments(reparsed)).toEqual(commitments(p));
+          p = parseProof(m);
         } catch (e) {
           expect((e as { name: string }).name).toBe('UnalteredError');
+          return;
         }
+        const canonical = serializeProof(p);
+        const reparsed = parseProof(canonical);
+        expect(serializeProof(reparsed)).toEqual(canonical);
+        expect(reparsed.digest).toEqual(p.digest);
+        const commitments = (proof: typeof p): string[] => collectAttestations(proof.root)
+          .map(({ node, attestation }) => `${toHex(node.msg)}:${JSON.stringify(attestation)}`).sort();
+        expect(commitments(reparsed)).toEqual(commitments(p));
       }),
       { seed: 20261024, numRuns: 3000 },
     );

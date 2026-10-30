@@ -4,7 +4,7 @@ import { VIEWS, parseHash } from './ui/router';
 import { detectLang, setLang, t } from './ui/strings';
 import { mountAbout } from './ui/views/about';
 import { mountSettings } from './ui/views/settings';
-import { mountStamp } from './ui/views/stamp';
+import { mountStamp, type StampView } from './ui/views/stamp';
 import { mountVerify, type VerifyView } from './ui/views/verify';
 
 function frameBust(): boolean {
@@ -32,6 +32,11 @@ function start(): void {
     about: document.getElementById('about')!,
     settings: document.getElementById('settings')!,
   };
+  document.getElementById('skip')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    document.getElementById('app')?.focus();
+  });
+  let stampView: StampView | null = null;
   let verifyView: VerifyView | null = null;
   let pendingPrefill: string | null = null;
 
@@ -54,15 +59,21 @@ function start(): void {
 
   function mountAll(): void {
     renderChrome();
-    mountStamp(sections.stamp);
+    stampView = mountStamp(sections.stamp);
     verifyView = mountVerify(sections.verify);
     if (pendingPrefill) verifyView.setPrefill(pendingPrefill);
     mountAbout(sections.about);
     mountSettings(sections.settings, onLang);
   }
 
+  // Language is presentation state: views that hold the user's files and results re-render in place,
+  // keeping their inputs, results and any running work (docs/proposals/LANGUAGE_SWITCH.md).
   function onLang(): void {
-    mountAll();
+    renderChrome();
+    stampView?.relabel();
+    verifyView?.relabel();
+    mountAbout(sections.about);
+    mountSettings(sections.settings, onLang);
     route(false);
     sections.settings.querySelector<HTMLElement>('#lang input:checked')?.focus();
   }
