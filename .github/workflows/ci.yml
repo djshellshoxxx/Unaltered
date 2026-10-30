@@ -150,6 +150,40 @@ jobs:
           path: test-results
           if-no-files-found: ignore
 
+  # Firefox and WebKit have no RSS probe, so this checks only that the real 2 GiB file completes in a worker with the
+  # correct digest inside the unchanged time limit. It does not evidence the memory ceiling. Slow, so it runs on main
+  # and on manual dispatch, not on every pull request; the Chromium job above stays the per-push gate.
+  browser-large-file:
+    name: Browser 2 GiB completion (${{ matrix.browser }})
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [firefox, webkit]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - run: npm run build
+      - run: npx playwright test tests/e2e/memory.spec.ts --repeat-each=3 --retries=0 --max-failures=1
+        env:
+          CI: "true"
+          UNALTERED_BIG_BROWSER: "1"
+          UNALTERED_BROWSER: ${{ matrix.browser }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: failure()
+        with:
+          name: browser-large-file-failures-${{ matrix.browser }}
+          path: test-results
+          if-no-files-found: ignore
+
   windows:
     name: Windows build and tests
     runs-on: windows-latest

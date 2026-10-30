@@ -5,16 +5,19 @@ import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import { installHashIoDiagnostics } from './hash-io-diagnostics';
 
-// FR-1 requires browser evidence, not only the virtual-source Node test. This Linux/Chromium-only
-// acceptance test measures all renderer RSS (including the worker and ArrayBuffer backing stores).
+// FR-1 requires browser evidence, not only the virtual-source Node test. On Linux/Chromium this acceptance test
+// measures all renderer RSS (including the worker and ArrayBuffer backing stores). Firefox and WebKit expose no
+// comparable measurement, so there it checks only what is observable: the real 2 GiB file completes in a worker
+// within the same time limit with the correct digest and no error. The 200 MiB memory ceiling is not evidenced there.
 test('hashes a real 2 GiB file in the browser with less than 200 MiB extra renderer RSS', async ({ page, browser, browserName }) => {
   test.skip(process.env.UNALTERED_BIG_BROWSER !== '1', 'Opt-in 2 GiB browser acceptance test.');
-  test.skip(process.platform !== 'linux' || browserName !== 'chromium', 'RSS measurement uses Linux procfs and Chromium CDP.');
+  test.skip(process.platform !== 'linux', 'The acceptance run uses Linux procfs for Chromium and a Linux runner for the other engines.');
+  const measuresRss = browserName === 'chromium';
   test.setTimeout(600_000);
   const directory = await mkdtemp(join(tmpdir(), 'unaltered-browser-memory-'));
   const file = join(directory, 'two-gibibytes.bin');
   const size = 2 * 1024 ** 3;
-  const cdp = await browser.newBrowserCDPSession();
+  const cdp = measuresRss ? await browser.newBrowserCDPSession() : null;
   const started = Date.now();
   const phase = (name: string): void => { console.log(`memory-acceptance ${name} elapsedMs=${Date.now() - started}`); };
   try {
@@ -25,6 +28,7 @@ test('hashes a real 2 GiB file in the browser with less than 200 MiB extra rende
     await page.goto('/index.html#stamp');
     phase('page-ready');
     const rss = async (): Promise<number> => {
+      if (!cdp) return 0;
       const { processInfo } = await cdp.send('SystemInfo.getProcessInfo');
       const renderers = processInfo.filter((p) => p.type === 'renderer');
       expect(renderers.length).toBeGreaterThan(0);
@@ -70,7 +74,7 @@ test('hashes a real 2 GiB file in the browser with less than 200 MiB extra rende
       phase('input-selected');
       hashWorker = await worker; // A silently substituted main-thread implementation does not satisfy FR-1.
       hashWorker.on('close', () => phase('worker-closed'));
-      await hashWorker.evaluate(installHashIoDiagnostics);
+      await hashWorker.evaluate(installHashIoDiagnostics).catch(() => phase('worker-io-diagnostics-unavailable'));
       phase('worker-observed');
       // Surface a terminal UI/read failure or a failed RSS monitor immediately instead of hiding it
       // behind the digest wait. This preserves the success criteria and the existing time limit.
@@ -91,10 +95,14 @@ test('hashes a real 2 GiB file in the browser with less than 200 MiB extra rende
     for (let offset = 0; offset < size; offset += chunk.length) expected.update(chunk);
     const digest = await page.locator('.item .digest').textContent();
     expect(digest?.replace(/ /g, '')).toBe(expected.digest('hex'));
-    expect(peak - before).toBeLessThan(200 * 1024 ** 2);
-    test.info().annotations.push({ type: 'peak-extra-renderer-rss-bytes', description: String(peak - before) });
+    if (cdp) {
+      expect(peak - before).toBeLessThan(200 * 1024 ** 2);
+      test.info().annotations.push({ type: 'peak-extra-renderer-rss-bytes', description: String(peak - before) });
+    } else {
+      test.info().annotations.push({ type: 'rss-not-measured', description: `${browserName}: memory ceiling not evidenced by this run` });
+    }
   } finally {
-    await cdp.detach();
+    await cdp?.detach();
     await rm(directory, { recursive: true, force: true });
   }
 });

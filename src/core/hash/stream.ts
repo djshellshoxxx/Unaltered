@@ -76,6 +76,7 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
   const h = sha256.create();
   let done = 0;
   let stalls = 0;
+  let reported = 0;
   let reader: ReadableStreamBYOBReader | null = null;
   // WebKit may service a whole-Blob stream on the main thread even when requested by a worker.
   // Bound each backend read while retaining BYOB buffer reuse for large-file memory acceptance.
@@ -93,11 +94,14 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
       const end = Math.min(done + chunk, reader ? streamEnd : src.size);
       let buf: Uint8Array;
       if (reader && buffer) {
+        // Blob reads take whatever the backend has ready, so the stall timer measures time without any
+        // bytes, not time to fill a whole chunk: a slow device that keeps delivering is never abandoned.
         const read = blob
-          ? await within(reader.read(new Uint8Array(buffer, 0, end - done), { min: end - done }), stallMs)
+          ? await within(reader.read(new Uint8Array(buffer, 0, end - done)), stallMs)
           : await reader.read(new Uint8Array(buffer, 0, end - done), { min: end - done });
         if (read === STALLED) {
-          // Nothing from this read reached the hash, so reopening [done, streamEnd) neither skips nor repeats bytes.
+          // Nothing from this read reached the hash, so reopening [done, streamEnd) neither skips nor repeats bytes
+          // (bytes from earlier partial reads were already hashed and counted in `done`).
           // The pending read keeps the old buffer; continue with a new one.
           abandon(reader);
           reader = null;
@@ -118,8 +122,12 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
       h.update(buf);
       done += buf.length;
       stalls = 0;
-      opts.onProgress?.(done);
-      if (opts.yieldFn) await opts.yieldFn();
+      // Partial reads can be much smaller than a chunk; report and yield once per chunk of progress.
+      if (done - reported >= chunk || done === src.size) {
+        reported = done;
+        opts.onProgress?.(done);
+        if (opts.yieldFn) await opts.yieldFn();
+      }
       if (blob && reader && done === streamEnd) {
         // Let the file backend finish the slice before reopening it. A separate tiny view
         // observes EOF without transferring/detaching the reusable hashing buffer.

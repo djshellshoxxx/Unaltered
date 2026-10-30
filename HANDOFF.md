@@ -1,3 +1,11 @@
+# Continuation 2026-10-30 — PR25 timeout policy integrated (main merged in, not rebased)
+
+- The owner approved the silence-based stall policy of PR25 (decision D6, 2026-10-30). `main` (`da9b0a3`) was merged into
+  `claude/friendly-faraday-papf5c`; the branch was **not** rebased and its stall-timer code and tests are unchanged.
+- `HANDOFF.md` was the only conflict. Both sides are kept: every section from main unchanged, and the PR25 section below,
+  placed by date above "(c) — owner decisions applied". Exact-head CI and the Firefox/WebKit 2 GiB dispatch are recorded in
+  the next top-level handoff section written after the merge.
+
 # Continuation 2026-10-29 (g) — MP3 trailer regression, updater trust, download names
 
 Branch `claude/unaltered-continuation-20261029` (draft PR29), stacked on PR28 `codex/accepted-gates-20261028` at
@@ -159,6 +167,15 @@ commands in `docs/REVIEW_20261028.md` / `docs/FUZZING.md`. Preserve historical f
 - Next: finish deep/legacy review, reproduce/fix supported security findings, rerun affected gates, secret
   scan and updated source/evidence checkpoint. R1, signing, human accessibility/Spanish/usability, independent audit/rebuild and
   release/account/legal controls remain open. This is agent-assisted internal review, not the independent audit required by REL-3.
+
+# Continuation 2026-10-28 (c) — PR #25, head `73fc82e`
+
+Owner approved: watchdog timeout policy, Firefox/WebKit 2 GiB check, language switch (#9). #25 covers the first two; the language switch is a separate PR and is not started.
+
+- Timeout policy: Blob reads no longer pass a full-chunk `min`, so any delivered bytes reset the 30 s stall timer (silence, not chunk-fill time). Reopen-from-last-hashed-byte and 3-consecutive-stall `INPUT_UNREADABLE` unchanged. Progress and yielding are throttled to once per chunk of progress because Firefox delivers ~64 KiB reads. New unit tests (slow trickle not abandoned; mid-chunk stall resumes at the right offset) fail on the old logic.
+- Firefox/WebKit: `tests/e2e/memory.spec.ts` runs there without an RSS probe (completion, digest, 540 s limit only; the 200 MiB ceiling is NOT evidenced). CI job `Browser 2 GiB completion (firefox|webkit)` runs on main and manual dispatch only. Dispatched run 40626267870 on `73fc82e`: Firefox 3/3 (~38 s each), WebKit 3/3 (~19 s each), both real passes with digest.
+- Chromium 2 GiB gate on `73fc82e` with the new rule: passed in both the PR run and the dispatched run (2 x 3 attempts, ~2.2-2.5 min per job), plus 3/3 locally. Six attempts is not an A/B; the stall is still not proven fixed. Re-running the 8-shard baseline-vs-candidate comparison against this head would be the like-for-like evidence.
+- Everything else on `73fc82e` green except the informational live check (known CORS 404 on pending calendar lookups).
 
 # Continuation 2026-10-28 (c) — owner decisions applied
 
