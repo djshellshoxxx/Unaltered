@@ -6,7 +6,10 @@ import { UnalteredError } from '../errors';
 
 export const CHUNK_SIZE = 4 * 1024 * 1024;
 export const CROSS_CHECK_MAX = 64 * 1024 * 1024;
-/** A slice read that delivers nothing for this long is abandoned and the same range is reopened. */
+/**
+ * A slice read that delivers no bytes for this long is abandoned and the unhashed rest of the slice is reopened.
+ * Progress-based: reads take whatever the backend has (no BYOB `min`), so a slow but moving source never trips it.
+ */
 export const STALL_MS = 30_000;
 /** Consecutive stalls at one file offset before giving up with a typed error instead of hanging. */
 export const MAX_STALLS = 3;
@@ -94,7 +97,7 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
       let buf: Uint8Array;
       if (reader && buffer) {
         const read = blob
-          ? await within(reader.read(new Uint8Array(buffer, 0, end - done), { min: end - done }), stallMs)
+          ? await within(reader.read(new Uint8Array(buffer, 0, end - done)), stallMs)
           : await reader.read(new Uint8Array(buffer, 0, end - done), { min: end - done });
         if (read === STALLED) {
           // Nothing from this read reached the hash, so reopening [done, streamEnd) neither skips nor repeats bytes.
@@ -118,6 +121,8 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
       h.update(buf);
       done += buf.length;
       stalls = 0;
+      // Partial reads are hashed at once but reported, and yielded on, only per requested region as before.
+      if (done < end) continue;
       opts.onProgress?.(done);
       if (opts.yieldFn) await opts.yieldFn();
       if (blob && reader && done === streamEnd) {
