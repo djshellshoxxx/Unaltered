@@ -81,6 +81,67 @@ confirmed paths; signing; human screen-reader/Spanish/usability; independent aud
 controls; toolkit download pinning (needs verified upstream digests). Missing checkpoint `1e0fd6b` remains unrecovered.
 Next: confirm exact-head CI on the pushed head in PR28, then follow the recommendation above.
 
+# Historical continuation 2026-10-28 (f, takeover) — durable Claude takeover; documentation only
+
+_Imported verbatim on 2026-10-30 from `codex/claude-handoff-20261028` (`d358f6c`); heading marked historical. Written before the audio-fuzz (f) section above._
+
+
+Repository: `djshellshoxxx/Unaltered`. Documentation checkpoint branch:
+`codex/claude-handoff-20261028`; resolve its current exact SHA with `git rev-parse HEAD`
+and verify against `git ls-remote origin refs/heads/codex/claude-handoff-20261028`.
+The checkpoint containing this section changes only `HANDOFF.md` and
+[`docs/CLAUDE_TAKEOVER.md`](docs/CLAUDE_TAKEOVER.md), preserving the delivered autonomous
+Claude prompt, coordinated/disjoint ownership, appropriate models, selective caching,
+shared budget/reserve and ready-versus-blocked queues. No competing development starts.
+
+**Tested source head** (distinct from this documentation-only head):
+`9e16d5bafddd207d7fa14621fe01a6d692885213`, still backed up on
+`codex/accepted-gates-20261028`, draft [PR28](https://github.com/djshellshoxxx/Unaltered/pull/28).
+[Exact-head run40721017408](https://github.com/djshellshoxxx/Unaltered/actions/runs/40721017408)
+is completed/success: all11 required jobs passed. Chromium/Firefox/WebKit each passed55
+app cases without retry/flaky markers; the original Chromium real2GiB job passed3/3,
+zero retries, independent digest, <200MiB renderer RSS and540-second deadline unchanged
+(digest38.04/37.82/37.73s). Linux/Windows/macOS tests/builds, byte-identical checksums,
+provenance, reference/toolkit tests and secret checks passed. Real browser Alice upgrade,
+app Verify and independent reference verification passed at block428648. The separate
+informational live-service job failed: pending404 lacks CORS headers; Bob/Finney
+confirmed paths remain unobserved. This supersedes only the pending-CI snapshot below.
+
+At this checkpoint's start, the tree was clean with no untracked source and no local
+branch commits absent from fetched remote refs. Ignored `dist/`, `node_modules/`,
+`scratch/fuzz/` and `test-results/` are generated/local outputs, retained and not uploaded.
+The new branch is for handoff documents only; source PR28 remains at its tested head.
+Other local branches are historical checkpoints, not active assignments; their existing
+handoffs/backups are retained. No externally owned branch is edited.
+
+Live refs rechecked: main `9f06c46d061f8a0f67d8684b6c9c6cbbd163242d`;
+Claude-owned draft [PR25](https://github.com/djshellshoxxx/Unaltered/pull/25)
+`92e2420da02b2ba11d0161f72f7bb9ff338170b4`, conflicting with main. PR28 remains
+draft/unmerged and requires specific owner approval before integration. Preserve PR25's
+timeout/hash/memory-test ownership; old73fc82e evidence does not qualify an integrated head.
+
+Ready: reconcile accepted requirements; broader bounded synthetic fuzz/limits and feasible
+browser-version/Tor coverage; reproduce remaining supported defects and review new ranges.
+Blocked/conditional: pending-provider CORS, unobserved calendar paths, PR-specific approval,
+signing, human screen-reader/Spanish/usability, independent audit/rebuild and account/legal/
+release controls. Prefer ready work, revisit blockers only after relevant changes. Internal
+AI review is not independent acceptance. Full commands, prerequisites, ownership and safe
+restart instructions are in the takeover prompt and the existing detailed review/evidence.
+
+This bounded handoff task runs no product tests/campaigns, paid calls, new workers, merges,
+releases or deployments. It reuses matching recorded evidence; documentation-only checks
+and outgoing secret review precede publication. Inspected CI triggers are main/PR/manual;
+release preparation is manual. This new branch has no PR, so a normal push requests no CI
+or release. Exact publication SHA and clean/unpushed status are reported after verification.
+
+The first executor read reported “No usable execution environment is available” while
+startup was pending; the same selected executor then became usable and the read succeeded.
+No replacement or denied-route workaround occurred. The recorded local `file://`
+`ERR_BLOCKED_BY_ADMINISTRATOR` remains a browser policy restriction; native offline tests
+passed. There is no outstanding publication denial observed in this task. No paid Claude
+calls were made; remaining shared broker budget is unknown, never assumed to reset.
+Preserve a reserve for checkpointing and verify broker limits before any future paid use.
+
 # Continuation 2026-10-28 (e) — reviewed security candidate
 
 Source/test/workflow commit: `d908d6037acf2aebf635d528a2fd06581d4c7866`, on
