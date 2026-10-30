@@ -90,7 +90,10 @@ test.describe('stamp, upgrade, verify (network mocked)', () => {
     await expect(page.locator('.result-SOURCES_DISAGREE')).toContainText('sources disagree');
 
     expect(await cspViolations(page)).toEqual([]);
-    expect(viol.list).toEqual([]);
+    // WebKit reports the deliberately CORS-blocked pending lookups (see installNetwork) as page errors. Only those
+    // exact lookups are expected; any other page error still fails.
+    const corsBlockedLookup = /^pageerror: \/(alice\.btc\.calendar\.opentimestamps\.org|bob\.btc\.calendar\.opentimestamps\.org|finney\.calendar\.eternitywall\.com)\/timestamp\/[0-9a-f]{64} due to access control checks\.$/;
+    expect(viol.list.filter((e) => !corsBlockedLookup.test(e))).toEqual([]);
   });
 
   test('a readable pending 404 shows only the pending notice', async ({ page, context }) => {
