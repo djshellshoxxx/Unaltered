@@ -190,6 +190,35 @@ describe('FR-1 hashing', () => {
       expect(result!.hex).toBe(expected);
       expect(f.ranges).toEqual([[0, 3], [3, 6], [6, 7]]);
     });
+    it('does not treat a slow but steadily delivering slice as a stall (progress-based timeout)', async () => {
+      // One byte per pull, each well under stallMs, but a whole 3-byte region takes longer than stallMs.
+      const blob = new Blob([bytes as BlobPart]);
+      const slice = blob.slice.bind(blob);
+      const ranges: number[][] = [];
+      blob.slice = (start = 0, end = blob.size): Blob => {
+        ranges.push([start, end]);
+        const part = slice(start, end);
+        let offset = start;
+        part.stream = () => new ReadableStream({ type: 'bytes', async pull(controller) {
+          const request = controller.byobRequest!;
+          if (offset === end) {
+            controller.close();
+            request.respond(0);
+            return;
+          }
+          await new Promise((r) => setTimeout(r, 15));
+          new Uint8Array(request.view!.buffer, request.view!.byteOffset, 1)[0] = bytes[offset]!;
+          offset += 1;
+          request.respond(1);
+        } });
+        return part;
+      };
+      const progress: number[] = [];
+      const result = await hashSource(blob, { chunkSize: 3, stallMs: 30, onProgress: (n) => progress.push(n) });
+      expect(result!.hex).toBe(expected);
+      expect(ranges).toEqual([[0, 3], [3, 6], [6, 7]]);
+      expect(progress).toEqual([3, 6, 7]);
+    });
     it('fails with a typed error, instead of hanging, when a slice keeps stalling', async () => {
       const f = stallingBlob(bytes, (start, _attempt, phase) => start === 3 && phase === 'data');
       const started = Date.now();
