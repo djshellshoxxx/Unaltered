@@ -1,3 +1,38 @@
+# Continuation 2026-10-29 (g) — MP3 trailer regression, updater trust, download names
+
+Branch `claude/unaltered-continuation-20261029` (draft PR29), stacked on PR28 `codex/accepted-gates-20261028` at
+`d124dd47971fdff1ef600e27e918d7421f1cbec3` (exact-head CI run 40730873116: all 11 required jobs green; informational live check red,
+known pending-404 CORS). Commits: `758be7c` (fixes), `82440ed` (review follow-up) and this documentation/evidence commit. Main
+`9f06c46`, PR28 `d124dd4` and PR25 `92e2420` were not rewritten, merged or pushed to. Root (one Claude Code session) integrates;
+one read-only reviewer finished; none active. No paid broker/API calls, credentials, releases, tags, deployments or settings changes.
+Section (f) was written by an earlier session on PR28 after the `codex/claude-handoff-20261028` prompt; reconciled here.
+
+Changes (details: `docs/REVIEW_20261028.md`, "Continuation (g)"):
+- `src/core/strip/audio.ts`: a truncated final frame whose declared length reached end of file hid a real ID3v1/APEv2 tag; since
+  `99562ed` the "cleaned" copy kept it with `removed: []`. Tag-like trailing bytes are now refused; self-check rejects them too.
+- `src/ui/download.ts`: download names drop C1 and bidirectional controls; truncation by code point.
+- Toolkit `shared/scripts/`: HTTPS-only downloads incl. redirects, optional archive SHA-256 (environment or `.env`), validated
+  versions; updater stays disabled without a public key; non-HTTPS feeds refused; doctor fails both. Digests stay optional (none
+  verified offline). Regressions: `tests/unit/audio.test.ts`, `tests/unit/ui.test.ts`, `tests/toolkit/test_updater_trust_20261029.py`;
+  each fails on its parent and passes now.
+
+Results run here (Linux executor, 4 vCPU, Node 22.22.0, pinned Chromium 1243; OpenTimestamps 0.4.5 in a scratch venv):
+- `UNALTERED_PYTHON=<venv>/bin/python npx vitest run`: 159 pass, 1 optional Node 2 GiB skip. `npm run check` (no reference set):
+  OPSEC/type/lint pass, 156 pass, 2 skips; 5 Node pass. Toolkit unittest: 18 pass. Six reference fixtures regenerate byte-identical.
+- `npm run build` twice: byte-identical (10 files); five `SHA256SUMS` OK. Final build id `dd9631a63565c907`.
+- `playwright test --retries=0` (Chromium) on the final build: 56 pass, 1 optional skip. An earlier full run during a concurrent
+  4-core fuzz campaign failed only the 50 ms worker-responsiveness test (101 ms gap at change dispatch); without that load it passed
+  5/5 isolated and in the full run. Threshold unchanged. 2 GiB browser gate not run locally (hash code untouched); CI runs it.
+- Fuzz seed 20261029: 1000000 mutations (1000036 inputs), six targets, 1153 s, no finding (`docs/evidence/fuzz-20261029.json`;
+  bundle SHA equals the bundle at `758be7c`). Bounded campaign, not exhaustive coverage.
+- Firefox/WebKit/Tor: not available locally; CI covers Firefox/WebKit app tests.
+
+Ready queue left: none independently executable here beyond further campaigns. Blocked/conditional (unchanged): PR28/PR29 owner
+approval and merge order (PR28, then PR29 retargeted to main, then PR25 per section (f)); PR25 timeout policy and Firefox/WebKit 2 GiB
+evidence; pending-404 CORS policy and Bob/Finney confirmed paths; signing; human screen-reader/Spanish/usability; independent
+audit/rebuild (REL-3/4); release/account/legal controls; mandatory toolkit digests (need verified upstream values). Missing checkpoint
+`1e0fd6b` remains unrecovered. Next: confirm exact-head CI on PR29's pushed head.
+
 # Continuation 2026-10-28 (f) — audio fuzzing, independent pass, toolkit follow-up
 
 Branch `codex/accepted-gates-20261028` (draft PR28). Start: `9e16d5bafddd207d7fa14621fe01a6d692885213`, whose exact-head CI run
