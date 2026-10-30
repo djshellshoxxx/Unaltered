@@ -239,6 +239,9 @@ test.describe('platform behaviour', () => {
     await page.goto('/index.html');
     const res = await page.evaluate(async () => {
       const big = new File([new Uint8Array(48 * 1024 * 1024)], 'big.bin');
+      // The fixture lives in renderer memory, unlike a picked disk file. Wait until the browser can serve it, so blob
+      // transport is not measured as app work (a failing trace showed the app's first 16-byte read pending ~148 ms).
+      await big.slice(big.size - 1).arrayBuffer();
       await new Promise((r) => setTimeout(r, 100));
       const start = performance.now();
       const phases: { phase: string; ms: number }[] = [];
