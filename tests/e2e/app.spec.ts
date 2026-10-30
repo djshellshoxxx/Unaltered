@@ -107,6 +107,9 @@ test.describe('stamp, upgrade, verify (network mocked)', () => {
     await page.setInputFiles('#verify-receipt', { name: 'n.ots', mimeType: 'application/octet-stream', buffer: upgraded });
     await page.getByRole('button', { name: 'Check', exact: true }).click();
     await expect(page.locator('.result-VERIFIED')).toBeVisible();
+    // No file was hashed, so the result must not speak about "this exact file".
+    await expect(page.locator('.result-VERIFIED')).toContainText('No file was checked');
+    await expect(page.locator('.result-VERIFIED')).not.toContainText('This exact file');
     // the share link carries only the fingerprint
     expect(page.url()).not.toContain('note');
   });

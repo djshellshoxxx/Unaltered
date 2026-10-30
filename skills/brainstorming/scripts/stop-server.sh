@@ -109,9 +109,14 @@ if [[ -f "$PID_FILE" ]]; then
   rm -f "$PID_FILE" "$SERVER_ID_FILE" "${STATE_DIR}/server.log"
   mark_stopped "stop-server.sh"
 
-  # Only delete ephemeral /tmp directories
+  # Only delete ephemeral /tmp directories. Compare canonical paths so `..`
+  # segments or symlinks cannot redirect the delete outside /tmp.
   if [[ "$SESSION_DIR" == /tmp/* ]]; then
-    rm -rf "$SESSION_DIR"
+    tmp_root="$(CDPATH= cd -- /tmp 2>/dev/null && pwd -P)"
+    session_real="$(CDPATH= cd -- "$SESSION_DIR" 2>/dev/null && pwd -P)"
+    if [[ -n "$tmp_root" && -n "$session_real" && "$session_real" == "$tmp_root"/?* ]]; then
+      rm -rf -- "$session_real"
+    fi
   fi
 
   echo '{"status": "stopped"}'

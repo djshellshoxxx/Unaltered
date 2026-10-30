@@ -159,6 +159,33 @@ describe('MP3 stripping', () => {
     new DataView(ape.buffer).setUint32(ape.length - 20, 0xfffff, true);
     expect(cleanMp3(ape).kind).toBe('rejected');
   });
+  it('refuses tag-like trailing bytes it cannot tell apart from audio', () => {
+    const enc = (s: string): number[] => [...s].map((c) => c.charCodeAt(0));
+    const id3v1Like = Uint8Array.from(FRAME);
+    id3v1Like.set(enc('TAG'), FRAME.length - 128);
+    // An APEv2-like footer whose declared size is exactly the last frame would otherwise drop that frame.
+    const apeLike = Uint8Array.from(FRAME);
+    apeLike.set([...enc('APETAGEX'), 0xd0, 7, 0, 0, FRAME.length & 255, FRAME.length >> 8, 0, 0], FRAME.length - 32);
+    for (const last of [id3v1Like, apeLike]) {
+      // Never cut the complete final frame, and never report its bytes as a removed tag.
+      expect(cleanMp3(Uint8Array.from([...FRAME, ...last])).kind).toBe('rejected');
+      expect(cleanMp3(makeMp3({ id3v2: true, id3v1: true, frames: [Uint8Array.from(FRAME), last] })).kind).toBe('rejected');
+    }
+  });
+  it('does not keep a real trailing tag that a truncated final frame appears to cover', () => {
+    const enc = (s: string): number[] => [...s].map((c) => c.charCodeAt(0));
+    const id3v1 = new Array<number>(128).fill(0);
+    [...enc('TAG'), ...enc('SECRET-TITLE')].forEach((b, i) => (id3v1[i] = b));
+    const apeFooter = [...enc('APETAGEX'), 0xd0, 7, 0, 0, 64, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, ...new Array<number>(8).fill(0)];
+    const ape = [...enc('Artist\0SECRET-APE'.padEnd(32, '\0')), ...apeFooter];
+    for (const tag of [id3v1, ape]) {
+      // The final frame is cut short by exactly the tag length, so the declared frame length ends at end of file.
+      const input = Uint8Array.from([...FRAME, ...FRAME.slice(0, FRAME.length - tag.length), ...tag]);
+      expect(contains(input, 'SECRET-')).toBe(true);
+      expect(cleanMp3(input).kind).toBe('rejected');
+      expect(selfCheckAudio('mp3', input)).not.toBeNull();
+    }
+  });
   it('rejects an APE length that consumes every audio frame', () => {
     const input = makeMp3({ ape: true });
     // The footer declares a header, so its stored size excludes those 32 bytes.

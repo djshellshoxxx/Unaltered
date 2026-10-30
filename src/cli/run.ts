@@ -24,11 +24,20 @@ const USAGE = `unaltered <command>
 exit codes for verify: 0 verified, 2 pending, 3 file differs, 4 invalid receipt, 5 sources disagree, 6 unreachable, 1 usage/other
 `;
 
+const NOT_REGULAR = 'not a regular file';
+const SIZE_CHANGED = 'the file size changed while reading';
+const cliError = (code: string): Error => Object.assign(new Error(code), { code });
+
 /** Streams a file in chunks so memory stays flat regardless of size (FR-1). */
 async function hashFile(path: string): Promise<{ hex: string; digest: Uint8Array }> {
   const fh = await open(path, 'r');
   try {
-    const size = (await fh.stat()).size;
+    const info = await fh.stat();
+    // Pipes and devices report a size that is not their content length; hashing that many bytes would print the
+    // fingerprint of empty or partial input as if it were the file's. Procfs files and files that grow while
+    // being read pass this check and are caught by the end-of-file probe below.
+    if (!info.isFile()) throw cliError(NOT_REGULAR);
+    const size = info.size;
     const src: ChunkSource = {
       size,
       slice: (start, end) => ({
@@ -37,7 +46,7 @@ async function hashFile(path: string): Promise<{ hex: string; digest: Uint8Array
           let got = 0;
           while (got < buf.length) {
             const { bytesRead } = await fh.read(buf, got, buf.length - got, start + got);
-            if (bytesRead === 0) throw new Error('file changed while reading');
+            if (bytesRead === 0) throw cliError(SIZE_CHANGED);
             got += bytesRead;
           }
           return buf.buffer;
@@ -46,6 +55,7 @@ async function hashFile(path: string): Promise<{ hex: string; digest: Uint8Array
     };
     const r = await hashSource(src);
     if (!r) throw new Error('cancelled');
+    if ((await fh.read(new Uint8Array(1), 0, 1, size)).bytesRead !== 0) throw cliError(SIZE_CHANGED);
     return { hex: r.hex, digest: r.digest };
   } finally {
     await fh.close();
@@ -92,7 +102,9 @@ export async function run(argv: readonly string[], io: CliIO): Promise<number> {
     }
   } catch (e) {
     // Generic message only (SR-8): never echo paths or stack traces from lower layers.
-    io.err(`error: ${e instanceof Error && 'code' in e && (e as { code?: string }).code === 'ENOENT' ? 'file not found' : 'could not complete the operation'}\n`);
+    const code = e instanceof Error && 'code' in e ? (e as { code?: string }).code : undefined;
+    const known = code === NOT_REGULAR || code === SIZE_CHANGED ? code : undefined;
+    io.err(`error: ${code === 'ENOENT' ? 'file not found' : known ?? 'could not complete the operation'}\n`);
     return 1;
   }
   io.err(USAGE);

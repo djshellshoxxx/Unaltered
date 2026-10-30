@@ -278,6 +278,8 @@ jobs:
           python-version: "3.12"
       - run: npm ci --ignore-scripts
       # Dev-only (never shipped). Version pinned; hashes of the sdist are reviewed in docs/DEPENDENCIES.md.
+      - name: Offline bundled toolkit regressions (no SDK or services)
+        run: python -m unittest discover -s tests/toolkit -p 'test_*.py' -v
       - run: python -m venv /tmp/venv && /tmp/venv/bin/pip install opentimestamps==0.4.5
       - name: Fixtures regenerate byte-identically from the reference implementation
         run: |

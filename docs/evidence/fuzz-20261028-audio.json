@@ -1,0 +1,65 @@
+{
+  "sourceCommit": "0b4ee6f97d8cda4ff4cef900382928190e7f4364",
+  "targetSha256": "1c847d28958b7353801a4dee4090250e14bd02d29f47136e57ebe69c52f23603",
+  "node": "v22.22.0",
+  "v8": "12.4.254.21-node.33",
+  "options": {
+    "iterations": 250000,
+    "seconds": 900,
+    "seed": 20261028,
+    "out": "scratch/fuzz-full"
+  },
+  "limits": {
+    "maxInputBytes": 65536,
+    "maxCorpusPerTarget": 256,
+    "caseDeadlineMs": 1000,
+    "workerOldHeapMiB": 128
+  },
+  "status": "budget-complete",
+  "executed": 250036,
+  "mutations": 250000,
+  "targets": {
+    "proof": {
+      "accepted": 605,
+      "rejected": 41074,
+      "ranges": 158,
+      "corpus": 33
+    },
+    "timestamp": {
+      "accepted": 1021,
+      "rejected": 40656,
+      "ranges": 157,
+      "corpus": 30
+    },
+    "jpeg": {
+      "accepted": 519,
+      "rejected": 41151,
+      "ranges": 175,
+      "corpus": 50
+    },
+    "png": {
+      "accepted": 535,
+      "rejected": 41135,
+      "ranges": 70,
+      "corpus": 14
+    },
+    "wav": {
+      "accepted": 607,
+      "rejected": 41063,
+      "ranges": 42,
+      "corpus": 11
+    },
+    "mp3": {
+      "accepted": 1358,
+      "rejected": 40312,
+      "ranges": 52,
+      "corpus": 13
+    }
+  },
+  "output": "scratch/fuzz-full/(local campaign directory, not committed)",
+  "seedExecutions": 36,
+  "retainedSeeds": 32,
+  "elapsedMs": 322455,
+  "stopReason": "iterations",
+  "note": "Continuation (f): six targets incl. WAV/MP3; 900 s wall-clock budget so the 250000-iteration budget completes (322 s). Parser sources identical at 99562ed and 0b4ee6f."
+}

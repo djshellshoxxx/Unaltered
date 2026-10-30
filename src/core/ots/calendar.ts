@@ -101,7 +101,9 @@ export async function stampBatch(digests: Uint8Array[], cfg: StampConfig): Promi
         if (res.status !== 200) throw new UnalteredError('NET_HTTP', `The server answered with status ${res.status}.`);
         const ts = parseTimestampBody(res.bytes, tip.msg);
         if (ts.attestations.length === 0 && ts.children.length === 0) throw new UnalteredError('PROOF_MALFORMED', 'The server sent an empty answer.');
-        mergeTree(tip, ts);
+        mergeTree(tip, ts, () => {
+          roots.forEach((root, i) => serializeProof({ digest: digests[i]!, root }));
+        });
         return { url: b, ok: true };
       } catch (e) {
         if (e instanceof UnalteredError && e.code === 'ABORTED') throw e;
@@ -174,8 +176,10 @@ export async function upgrade(ots: Uint8Array, cfg: StampConfig): Promise<Upgrad
         const got = collectAttestations(ts);
         if (got.length === 0) throw new UnalteredError('PROOF_MALFORMED', 'The server sent an empty answer.');
         const sameOnly = got.every((g) => g.attestation.kind === 'pending' && g.attestation.uri === attestation.uri);
-        mergeTree(node, ts);
-        if (!sameOnly) node.attestations = node.attestations.filter((a) => a !== attestation);
+        mergeTree(node, ts, () => {
+          if (!sameOnly) node.attestations = node.attestations.filter((a) => a !== attestation);
+          serializeProof(proof); // Includes the whole original proof, not only this pending commitment.
+        });
         calendars.push({ url: base, ok: true });
       } catch (e) {
         if (e instanceof UnalteredError && e.code === 'ABORTED') throw e;

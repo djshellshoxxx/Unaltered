@@ -26,6 +26,8 @@ export function crc32(data: Uint8Array): number {
 
 const typeName = (b: Uint8Array, o: number): string => String.fromCharCode(b[o]!, b[o + 1]!, b[o + 2]!, b[o + 3]!);
 const KEEP = new Set(['IHDR', 'PLTE', 'tRNS', 'IDAT', 'IEND', 'sRGB']);
+const MAX_REMOVAL_SUMMARY_LABELS = 64;
+const REMOVAL_SUMMARY_OVERFLOW = 'Additional metadata chunks';
 
 export function cleanPng(input: Uint8Array): PngResult {
   const n = input.length;
@@ -33,8 +35,17 @@ export function cleanPng(input: Uint8Array): PngResult {
   const dv = new DataView(input.buffer, input.byteOffset, input.byteLength);
   const out: Uint8Array[] = [SIG];
   const removed: string[] = [];
+  const removedSet = new Set<string>();
   const note = (s: string): void => {
-    if (!removed.includes(s)) removed.push(s);
+    if (removedSet.has(s)) return;
+    if (removed.length < MAX_REMOVAL_SUMMARY_LABELS) {
+      removedSet.add(s);
+      removed.push(s);
+    } else if (!removedSet.has(REMOVAL_SUMMARY_OVERFLOW)) {
+      // Attacker-controlled chunk types cannot grow the retained summary past 65 labels.
+      removedSet.add(REMOVAL_SUMMARY_OVERFLOW);
+      removed.push(REMOVAL_SUMMARY_OVERFLOW);
+    }
   };
   let pos = 8;
   let first = true;

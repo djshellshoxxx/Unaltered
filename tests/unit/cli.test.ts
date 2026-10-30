@@ -1,3 +1,4 @@
+import { execFileSync, spawn } from 'node:child_process';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -18,6 +19,33 @@ describe('cli', () => {
     const { o, io: i } = io();
     expect(await run(['hash', f], i)).toBe(0);
     expect(o.out.startsWith('ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad')).toBe(true);
+  });
+  it.runIf(process.platform === 'linux')('refuses a procfs file whose stat size is not its content length', async () => {
+    // /proc files stat as regular files of size 0; hashing them would print the empty-input fingerprint.
+    for (const argv of [['hash', '/proc/self/status'], ['verify', '/proc/self/status', '/proc/self/status']]) {
+      const { o, io: i } = io();
+      expect(await run(argv, i)).toBe(1);
+      expect(o.out).toBe('');
+      expect(o.err).toBe('error: the file size changed while reading\n');
+    }
+  });
+  it.runIf(process.platform === 'linux')('refuses a named pipe instead of hashing it as empty input', async () => {
+    const fifo = join(tmp(), 'pipe');
+    execFileSync('mkfifo', [fifo]);
+    const writer = spawn('sh', ['-c', 'printf hello > "$1"', 'sh', fifo], { stdio: 'ignore' });
+    try {
+      const { o, io: i } = io();
+      expect(await run(['hash', fifo], i)).toBe(1);
+      expect(o.out).toBe('');
+      expect(o.err).toBe('error: not a regular file\n');
+    } finally {
+      writer.kill();
+    }
+  });
+  it('fails a directory instead of fingerprinting it', async () => {
+    const { o, io: i } = io();
+    expect(await run(['hash', tmp()], i)).toBe(1);
+    expect(o.out).toBe('');
   });
   it('prints usage and exits 1 on bad arguments', async () => {
     const { o, io: i } = io();
