@@ -207,6 +207,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
     } else {
       kids.push(el('p', { class: 'notice pending', role: 'status' }, t('upgrade.stillPending')));
     }
+    if (r.status !== 'bitcoin-confirmed' && r.calendars.some((c) => c.unreadable)) kids.push(el('p', { class: 'notice pending' }, t('upgrade.unreadable')));
     if (r.changed) kids.push(...download());
     if (r.unknownCalendars.length > 0) kids.push(el('p', { class: 'warn' }, t('upgrade.unknownCalendar', { hosts: r.unknownCalendars.join(', ') })));
     const failed = r.calendars.filter((c) => !c.ok);

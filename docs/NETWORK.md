@@ -44,6 +44,24 @@ The browser run on this executor failed before any HTTP reply with `net::ERR_CER
 inspects TLS with a CA the browser does not trust), so it says nothing about CORS. The new informational CI job `r1-acceptance` runs the
 same procedure on native runners. **R1 stays open** until a browser `PASS` and the reference check agree on one receipt.
 
+### App behaviour for unreadable pending replies — 2026-10-30
+
+Decision: option (b), "pending, check later". Hosts, CSP and allowlist are unchanged; no relay, `no-cors` or proxy.
+A browser cannot tell a pending `404` without `Access-Control-Allow-Origin` from an outage: both surface as a `fetch`
+`TypeError`, which `netFetch` reports as `NET_FAILED`. During **upgrade only**, such a calendar result is marked
+`unreadable` (still `ok: false`; it is never treated as a confirmation, and the receipt is not changed). When the receipt
+stays pending and any calendar was unreadable, the Verify page adds, under "Not confirmed yet. Try again in a few hours.":
+
+> This browser could not read the answer from one or more calendar servers. While a receipt is still pending, calendar
+> servers usually answer in a way browsers are not allowed to read, so this is expected. Your receipt is unchanged and
+> still pending. Check again later.
+
+The per-calendar failure list ("Could not reach a server.") is still shown. A confirmed `200` reply carries
+`Access-Control-Allow-Origin: *` (observed 2026-10-27, Node), so the browser upgrade path is expected to work once Bitcoin
+confirms; that remains unverified in a live browser (R1). The CLI has no `upgrade` command, so the copy does not point to it.
+Spanish copy is a draft awaiting native-speaker review. Tests: `tests/unit/ots-flow.test.ts` (unreadable vs HTTP error),
+`tests/e2e/app.spec.ts` (the e2e calendar mock now refuses CORS on pending `404`s, matching the live servers).
+
 ## 1. Calendar servers (OpenTimestamps)
 
 Source: `opentimestamps/calendar.py` (python-opentimestamps 0.4.5) and `otsclient/cmds.py` (client 0.7.2).

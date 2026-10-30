@@ -48,6 +48,8 @@ test.describe('stamp, upgrade, verify (network mocked)', () => {
     await page.setInputFiles('#upgrade-receipt', { name: 'note.txt.ots', mimeType: 'application/octet-stream', buffer: pending });
     await page.getByRole('button', { name: 'Check for confirmation' }).click();
     await expect(page.getByText('Not confirmed yet')).toBeVisible();
+    await expect(page.getByText('This browser could not read the answer')).toBeVisible();
+    await expect(page.getByRole('link', { name: /Download upgraded receipt/ })).toHaveCount(0);
 
     // Bitcoin confirms
     chain.confirmed = true;
@@ -89,6 +91,17 @@ test.describe('stamp, upgrade, verify (network mocked)', () => {
 
     expect(await cspViolations(page)).toEqual([]);
     expect(viol.list).toEqual([]);
+  });
+
+  test('a readable pending 404 shows only the pending notice', async ({ page, context }) => {
+    await installNetwork(context, { pendingCors: true });
+    const pending = await stampNote(page);
+    await page.goto('/index.html#verify');
+    await page.setInputFiles('#upgrade-receipt', { name: 'n.ots', mimeType: 'application/octet-stream', buffer: pending });
+    await page.getByRole('button', { name: 'Check for confirmation' }).click();
+    await expect(page.getByText('Not confirmed yet')).toBeVisible();
+    await expect(page.getByText('This browser could not read the answer')).toHaveCount(0);
+    await expect(page.locator('.upgrade-result ul.calendars')).toHaveCount(0);
   });
 
   test('share link pre-fills the fingerprint and verifies without the file', async ({ page, context }) => {

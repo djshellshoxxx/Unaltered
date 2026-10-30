@@ -18,7 +18,10 @@ export interface Chain {
   skew: Set<string>;
 }
 
-export async function installNetwork(ctx: BrowserContext, opts: { confirm?: boolean } = {}): Promise<Chain> {
+// Live calendars answer a pending lookup with 404 and no Access-Control-Allow-Origin (docs/NETWORK.md), so a browser
+// cannot read it. Playwright's fulfill adds a permissive header when none is given, so a non-matching origin is sent
+// instead: the browser rejects the read exactly as for a missing header. `pendingCors: true` sends a permissive header.
+export async function installNetwork(ctx: BrowserContext, opts: { confirm?: boolean; pendingCors?: boolean } = {}): Promise<Chain> {
   const chain: Chain = { roots: new Map(), digestPosts: [], timestampGets: [], confirmed: opts.confirm ?? false, skew: new Set() };
   const HEIGHT = 840_000;
   const calHosts = ['alice.btc.calendar.opentimestamps.org', 'bob.btc.calendar.opentimestamps.org', 'finney.calendar.eternitywall.com'];
@@ -36,7 +39,7 @@ export async function installNetwork(ctx: BrowserContext, opts: { confirm?: bool
       const m = /^\/timestamp\/([0-9a-f]+)$/.exec(url.pathname);
       if (m) {
         chain.timestampGets.push(m[1]!);
-        if (!chain.confirmed) return route.fulfill({ status: 404, headers: CORS, body: 'Pending confirmation in Bitcoin blockchain' });
+        if (!chain.confirmed) return route.fulfill({ status: 404, headers: opts.pendingCors ? CORS : { 'access-control-allow-origin': 'https://other.invalid' }, body: 'Pending confirmation in Bitcoin blockchain' });
         const commitment = fromHex(m[1]!);
         const extra = Uint8Array.of(1, 2, 3, 4);
         const append = concat(commitment, extra);

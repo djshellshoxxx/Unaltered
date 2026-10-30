@@ -107,6 +107,7 @@ export const en = {
   'upgrade.confirmed': 'Confirmed in Bitcoin. Download the upgraded receipt and keep it.',
   'upgrade.alreadyConfirmed': 'This receipt is already confirmed in Bitcoin. Nothing to upgrade.',
   'upgrade.stillPending': 'Not confirmed yet. Try again in a few hours.',
+  'upgrade.unreadable': 'This browser could not read the answer from one or more calendar servers. While a receipt is still pending, calendar servers usually answer in a way browsers are not allowed to read, so this is expected. Your receipt is unchanged and still pending. Check again later.',
   'upgrade.download': 'Download upgraded receipt ({name})',
   'upgrade.newFile': 'This is a new file. Your original receipt was not changed. Keep both.',
   'upgrade.unknownCalendar': 'This receipt names calendar servers that this app does not contact: {hosts}. They were skipped.',
@@ -278,6 +279,8 @@ const es: Table = {
   'upgrade.confirmed': 'Confirmado en Bitcoin. Descarga el recibo actualizado y guárdalo.',
   'upgrade.alreadyConfirmed': 'Este recibo ya está confirmado en Bitcoin. No hay nada que actualizar.',
   'upgrade.stillPending': 'Aún no está confirmado. Inténtalo de nuevo en unas horas.',
+  // TODO(human review): Spanish copy not final.
+  'upgrade.unreadable': 'Este navegador no pudo leer la respuesta de uno o más servidores de calendario. Mientras un recibo está pendiente, los servidores suelen responder de una forma que los navegadores no pueden leer, así que es lo esperado. Tu recibo no cambió y sigue pendiente. Vuelve a comprobarlo más tarde.',
   'upgrade.download': 'Descargar recibo actualizado ({name})',
   'upgrade.newFile': 'Es un archivo nuevo. Tu recibo original no se modificó. Guarda ambos.',
   'upgrade.unknownCalendar': 'Este recibo nombra servidores de calendario con los que esta aplicación no se conecta: {hosts}. Se omitieron.',
