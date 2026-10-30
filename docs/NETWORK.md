@@ -111,3 +111,25 @@ a live browser check. Do not work around this with `no-cors`, disabled TLS verif
 Options, in order of preference (SPEC section 9): (a) remove that host from `src/core/net/allowlist.ts` (the CSP is generated from
 it) and use only hosts that allow CORS, provided at least two calendars and two explorers remain; (b) ship a CLI for stamping and keep
 the browser for hashing and verification; (c) an optional relay, which adds a trusted party and needs its own ADR.
+
+### Owner decision D10 — 2026-10-30: pending `404` without CORS is a documented known limitation
+
+The owner decided to keep the pending-reply CORS gap as a **known limitation**. No proxy, relay, `no-cors` mode or CSP change
+is added, and none is planned. Calendar operators control these headers; the app cannot change them.
+
+What it means for users: while a receipt is still pending, a browser cannot read the calendar's `404` reply, so the app cannot
+tell "still pending" from "server unreachable". The receipt is never changed or called confirmed on such a reply. Confirmed
+`200` replies carry `Access-Control-Allow-Origin: *` (Alice observed end to end in a real browser with an independent reference
+check; Bob and Finney not yet observed, see [R1_BOB_FINNEY_TEMPLATE.md](R1_BOB_FINNEY_TEMPLATE.md)). The informational
+`network-check` CI job stays red for this reason and is not a required check.
+
+Fallbacks already listed in SPEC section 9, recorded here and **not implemented**:
+
+| SPEC 9 option | Status |
+|---|---|
+| (a) Use only hosts that allow CORS | Not applicable to pending replies: no listed calendar sends ACAO on its pending `404`. Not implemented. |
+| (b) CLI for stamping; browser for hashing and verification | A CLI exists for hashing; it has no `upgrade` command. Not extended. |
+| (c) Optional relay | Rejected by default in SPEC 9 (adds a trusted party, needs its own ADR). Not implemented. |
+
+R1 status on this date: Alice confirmed path closed for Chromium on native CI; pending-reply CORS = known limitation (D10);
+Bob/Finney confirmed paths = not observed (D11 check prepared, not run).
