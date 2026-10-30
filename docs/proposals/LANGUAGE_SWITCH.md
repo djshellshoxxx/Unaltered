@@ -36,6 +36,14 @@ Treat language as presentation state:
 - `tests/e2e/language-switch.spec.ts`: four cases (result kept and translated; in-progress verification completes once;
   stamped item kept without re-hashing; in-progress hash finishes once). All four fail on the current behaviour.
 
+## Verification added 2026-10-30
+
+`tests/e2e/language-switch.spec.ts` now also covers: a created receipt not yet downloaded survives EN→ES→EN and still
+downloads the same proof with no new calendar submission; an upgrade result and its download survive a switch with no
+new calendar lookup; an upgrade held on the network during a switch completes once (one lookup per calendar). All seven
+cases fail when `onLang()` is changed back to `mountAll()`. **The Spanish copy is not final: it needs a native-speaker
+review (owner / human reviewer); these tests assert only that the state is kept and that the text is in the selected language.**
+
 ## Consequences and limits
 
 - Error texts from the core (`safeMessage`) are English in both languages today; a kept error stays English. Unchanged.
