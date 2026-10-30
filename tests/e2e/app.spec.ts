@@ -48,6 +48,8 @@ test.describe('stamp, upgrade, verify (network mocked)', () => {
     await page.setInputFiles('#upgrade-receipt', { name: 'note.txt.ots', mimeType: 'application/octet-stream', buffer: pending });
     await page.getByRole('button', { name: 'Check for confirmation' }).click();
     await expect(page.getByText('Not confirmed yet')).toBeVisible();
+    await expect(page.getByText('This browser could not read the answer')).toBeVisible();
+    await expect(page.getByRole('link', { name: /Download upgraded receipt/ })).toHaveCount(0);
 
     // Bitcoin confirms
     chain.confirmed = true;
@@ -88,7 +90,21 @@ test.describe('stamp, upgrade, verify (network mocked)', () => {
     await expect(page.locator('.result-SOURCES_DISAGREE')).toContainText('sources disagree');
 
     expect(await cspViolations(page)).toEqual([]);
-    expect(viol.list).toEqual([]);
+    // WebKit reports the deliberately CORS-blocked pending lookups (see installNetwork) as page errors. Only those
+    // exact lookups are expected; any other page error still fails.
+    const corsBlockedLookup = /^pageerror: \/(alice\.btc\.calendar\.opentimestamps\.org|bob\.btc\.calendar\.opentimestamps\.org|finney\.calendar\.eternitywall\.com)\/timestamp\/[0-9a-f]{64} due to access control checks\.$/;
+    expect(viol.list.filter((e) => !corsBlockedLookup.test(e))).toEqual([]);
+  });
+
+  test('a readable pending 404 shows only the pending notice', async ({ page, context }) => {
+    await installNetwork(context, { pendingCors: true });
+    const pending = await stampNote(page);
+    await page.goto('/index.html#verify');
+    await page.setInputFiles('#upgrade-receipt', { name: 'n.ots', mimeType: 'application/octet-stream', buffer: pending });
+    await page.getByRole('button', { name: 'Check for confirmation' }).click();
+    await expect(page.getByText('Not confirmed yet')).toBeVisible();
+    await expect(page.getByText('This browser could not read the answer')).toHaveCount(0);
+    await expect(page.locator('.upgrade-result ul.calendars')).toHaveCount(0);
   });
 
   test('share link pre-fills the fingerprint and verifies without the file', async ({ page, context }) => {

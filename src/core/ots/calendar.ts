@@ -26,6 +26,11 @@ export interface CalendarResult {
   url: string;
   ok: boolean;
   error?: string;
+  /**
+   * Upgrade only: the browser could not read the calendar's reply. A cross-origin 404 for a pending lookup has no
+   * Access-Control-Allow-Origin, so it is indistinguishable here from an outage. Not a confirmation either way.
+   */
+  unreadable?: boolean;
 }
 
 export interface StampResult {
@@ -183,7 +188,8 @@ export async function upgrade(ots: Uint8Array, cfg: StampConfig): Promise<Upgrad
         calendars.push({ url: base, ok: true });
       } catch (e) {
         if (e instanceof UnalteredError && e.code === 'ABORTED') throw e;
-        calendars.push({ url: base, ok: false, error: safeMessage(e) });
+        const unreadable = e instanceof UnalteredError && e.code === 'NET_FAILED';
+        calendars.push(unreadable ? { url: base, ok: false, error: safeMessage(e), unreadable } : { url: base, ok: false, error: safeMessage(e) });
       }
     }),
   );
