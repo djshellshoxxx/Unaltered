@@ -1,0 +1,52 @@
+{
+  "sourceCommit": "9f06c46d061f8a0f67d8684b6c9c6cbbd163242d",
+  "targetSha256": "cc324b363ef1ad533fe62f3aacdea042c611e8ad12864829a80ed2c0851745fc",
+  "node": "v24.19.0",
+  "v8": "13.6.233.17-node.51",
+  "options": {
+    "iterations": 250000,
+    "seconds": 300,
+    "seed": 20261028,
+    "out": "scratch/fuzz"
+  },
+  "limits": {
+    "maxInputBytes": 65536,
+    "maxCorpusPerTarget": 256,
+    "caseDeadlineMs": 1000,
+    "workerOldHeapMiB": 128
+  },
+  "status": "budget-complete",
+  "executed": 250028,
+  "mutations": 250000,
+  "targets": {
+    "proof": {
+      "accepted": 1058,
+      "rejected": 61454,
+      "ranges": 154,
+      "corpus": 30
+    },
+    "timestamp": {
+      "accepted": 1587,
+      "rejected": 60923,
+      "ranges": 154,
+      "corpus": 29
+    },
+    "jpeg": {
+      "accepted": 796,
+      "rejected": 61707,
+      "ranges": 171,
+      "corpus": 49
+    },
+    "png": {
+      "accepted": 1139,
+      "rejected": 61364,
+      "ranges": 70,
+      "corpus": 15
+    }
+  },
+  "seedExecutions": 28,
+  "retainedSeeds": 24,
+  "elapsedMs": 230333,
+  "stopReason": "iterations",
+  "sourceState": "Recorded HEAD is the main baseline; new fuzz tooling was uncommitted and is retained in this checkpoint. Parser source did not change during the campaign."
+}

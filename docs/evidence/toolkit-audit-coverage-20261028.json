@@ -1,0 +1,398 @@
+[
+  {
+    "file": "shared/scripts/auto_update_doctor.py",
+    "lines": 262,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "shared/scripts/build_release.py",
+    "lines": 119,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "shared/scripts/bump_version.py",
+    "lines": 238,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "shared/scripts/create_project.py",
+    "lines": 229,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "shared/scripts/find_starter_repo.py",
+    "lines": 91,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "shared/scripts/generate_release_notes.py",
+    "lines": 328,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "shared/scripts/inspect_juce_project.py",
+    "lines": 245,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "shared/scripts/port_audit.py",
+    "lines": 125,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "shared/scripts/setup_sparkle.sh",
+    "lines": 41,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "shared/scripts/setup_updates.py",
+    "lines": 141,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "shared/scripts/setup_winsparkle.sh",
+    "lines": 59,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "shared/scripts/vm_registry.py",
+    "lines": 115,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/activation-rule.mjs",
+    "lines": 43,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/algorithmic-art/templates/generator_template.js",
+    "lines": 223,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/brainstorming/scripts/helper.js",
+    "lines": 167,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/brainstorming/scripts/server.cjs",
+    "lines": 723,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/brainstorming/scripts/start-server.sh",
+    "lines": 209,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/brainstorming/scripts/stop-server.sh",
+    "lines": 120,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/caveman-compress/scripts/__init__.py",
+    "lines": 9,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/caveman-compress/scripts/__main__.py",
+    "lines": 3,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/caveman-compress/scripts/benchmark.py",
+    "lines": 80,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/caveman-compress/scripts/cli.py",
+    "lines": 86,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/caveman-compress/scripts/compress.py",
+    "lines": 1078,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/caveman-compress/scripts/detect.py",
+    "lines": 144,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/caveman-compress/scripts/validate.py",
+    "lines": 434,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/caveman-explore/tests/skill-file.test.mjs",
+    "lines": 44,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/caveman-learn/tests/index.js",
+    "lines": 1,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/caveman-learn/tests/skill-file.test.mjs",
+    "lines": 52,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/claude-api/shared/evals/report/build-report-lite.mjs",
+    "lines": 488,
+    "coverage": "source-read",
+    "notes": "Previously selective; remaining executable source read during correction follow-up. Not executed against live APIs or real build inputs."
+  },
+  {
+    "file": "skills/claude-api/shared/evals/report/runner-scaffold.mjs",
+    "lines": 602,
+    "coverage": "source-read",
+    "notes": "Previously selective; remaining executable source read during correction follow-up. Not executed against live APIs or real build inputs."
+  },
+  {
+    "file": "skills/claude-api/shared/preserved-thinking-migration/drop_block_probe.py",
+    "lines": 1072,
+    "coverage": "source-read",
+    "notes": "Previously selective; remaining executable source read during correction follow-up. Not executed against live APIs or real build inputs."
+  },
+  {
+    "file": "skills/claude-api/shared/preserved-thinking-migration/prefix_diff.py",
+    "lines": 1532,
+    "coverage": "source-read",
+    "notes": "Completed remaining canonicalization, block/run classification, thinking-chain, compaction, pair attribution, capture grouping and CLI source read. No live protocol validation or exhaustive dynamic coverage."
+  },
+  {
+    "file": "skills/compile.mjs",
+    "lines": 298,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/executing-plans/scripts/task-done",
+    "lines": 52,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/executing-plans/scripts/task-start",
+    "lines": 28,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/mcp-builder/scripts/connections.py",
+    "lines": 151,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/mcp-builder/scripts/evaluation.py",
+    "lines": 375,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/paper-search/scripts/paper.sh",
+    "lines": 54,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/paper-search/scripts/search.sh",
+    "lines": 42,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/skill-creator/eval-viewer/generate_review.py",
+    "lines": 446,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/skill-creator/scripts/__init__.py",
+    "lines": 0,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/skill-creator/scripts/aggregate_benchmark.py",
+    "lines": 401,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/skill-creator/scripts/generate_report.py",
+    "lines": 326,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/skill-creator/scripts/improve_description.py",
+    "lines": 247,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/skill-creator/scripts/package_skill.py",
+    "lines": 136,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/skill-creator/scripts/quick_validate.py",
+    "lines": 103,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/skill-creator/scripts/run_eval.py",
+    "lines": 310,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/skill-creator/scripts/run_loop.py",
+    "lines": 328,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/skill-creator/scripts/utils.py",
+    "lines": 47,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/slack-gif-creator/core/easing.py",
+    "lines": 234,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/slack-gif-creator/core/frame_composer.py",
+    "lines": 176,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/slack-gif-creator/core/gif_builder.py",
+    "lines": 269,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/slack-gif-creator/core/validators.py",
+    "lines": 136,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/subagent-driven-development/scripts/review-package",
+    "lines": 53,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/subagent-driven-development/scripts/sdd-workspace",
+    "lines": 87,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/subagent-driven-development/scripts/task-brief",
+    "lines": 43,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/systematic-debugging/condition-based-waiting-example.ts",
+    "lines": 158,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/systematic-debugging/find-polluter.sh",
+    "lines": 72,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/verbs-gate.mjs",
+    "lines": 213,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/web-artifacts-builder/scripts/bundle-artifact.sh",
+    "lines": 54,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/web-artifacts-builder/scripts/init-artifact.sh",
+    "lines": 322,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/webapp-testing/examples/console_logging.py",
+    "lines": 35,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/webapp-testing/examples/element_discovery.py",
+    "lines": 40,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/webapp-testing/examples/static_html_automation.py",
+    "lines": 33,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/webapp-testing/scripts/with_server.py",
+    "lines": 106,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  },
+  {
+    "file": "skills/writing-skills/render-graphs.js",
+    "lines": 169,
+    "coverage": "source-read",
+    "notes": "Source inspected without invoking its CLI. Shared inspect/doctor/bump also read as AST-unparsed executable statements."
+  }
+]
