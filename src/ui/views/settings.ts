@@ -99,13 +99,13 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
           : el(
               'ul',
               { class: 'receipt-list' },
-              ...list.map((r, i) =>
+              ...list.map((r) =>
                 el(
                   'li',
                   {},
                   el('span', {}, r.label ? el('strong', {}, `${r.label} · `) : null, r.createdAtUtc),
                   el('code', { class: 'digest' }, groupHex(r.digestHex)),
-                  el('button', { type: 'button', class: 'button small', onclick: () => (removeReceipt(i), renderReceipts()) }, t('common.remove')),
+                  el('button', { type: 'button', class: 'button small', onclick: () => (removeReceipt(r), renderReceipts()) }, t('common.remove')),
                 ),
               ),
             ),

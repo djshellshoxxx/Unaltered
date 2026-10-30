@@ -3,7 +3,9 @@
 import argparse
 import os
 import subprocess
+import sys
 from pathlib import Path
+from urllib.parse import urlparse
 
 
 def parse_env(path: Path) -> dict[str, str]:
@@ -45,11 +47,16 @@ def default_branch(root: Path) -> str:
     return branch or "main"
 
 
-def run_script(script: Path, root: Path) -> None:
+# Download settings the setup scripts read; .env values apply unless the process environment already sets them.
+DOWNLOAD_KEYS = ("SPARKLE_VERSION", "SPARKLE_SHA256", "WINSPARKLE_VERSION", "WINSPARKLE_SHA256")
+
+
+def run_script(script: Path, root: Path, env: dict[str, str]) -> None:
+    child_env = {**{key: env[key] for key in DOWNLOAD_KEYS if env.get(key)}, **os.environ}
     if script.suffix == ".py":
-        subprocess.run(["python3", str(script)], cwd=root, check=True)
+        subprocess.run(["python3", str(script)], cwd=root, check=True, env=child_env)
     else:
-        subprocess.run([str(script)], cwd=root, check=True)
+        subprocess.run([str(script)], cwd=root, check=True, env=child_env)
 
 
 def ensure_appcast(path: Path, title: str, version: str) -> None:
@@ -92,18 +99,26 @@ def main() -> int:
         script = root / "scripts" / "setup_sparkle.sh"
         if not script.exists():
             script = Path(__file__).with_name("setup_sparkle.sh")
-        run_script(script, root)
+        run_script(script, root, env)
 
     if args.platform in {"windows", "all"} and not args.skip_download:
         script = root / "scripts" / "setup_winsparkle.sh"
         if not script.exists():
             script = Path(__file__).with_name("setup_winsparkle.sh")
-        run_script(script, root)
+        run_script(script, root, env)
 
+    # Without a public key the updater cannot check signatures, so it stays off until one is configured.
+    public_key = env.get("AUTO_UPDATE_EDDSA_PUBLIC_KEY", "")
+    if not public_key:
+        print(
+            "AUTO_UPDATE_EDDSA_PUBLIC_KEY is empty: leaving ENABLE_AUTO_UPDATE=FALSE. "
+            "Generate a key pair, set the public key in .env and run this again.",
+            file=sys.stderr,
+        )
     updates = {
-        "ENABLE_AUTO_UPDATE": "TRUE",
+        "ENABLE_AUTO_UPDATE": "TRUE" if public_key else "FALSE",
         "AUTO_UPDATE_MODE": env.get("AUTO_UPDATE_MODE", "public"),
-        "AUTO_UPDATE_EDDSA_PUBLIC_KEY": env.get("AUTO_UPDATE_EDDSA_PUBLIC_KEY", ""),
+        "AUTO_UPDATE_EDDSA_PUBLIC_KEY": public_key,
     }
 
     if github_user and github_repo:
@@ -115,6 +130,13 @@ def main() -> int:
             "AUTO_UPDATE_FEED_URL_WINDOWS",
             f"https://raw.githubusercontent.com/{github_user}/{github_repo}/{branch}/appcast-windows.xml",
         )
+
+    for key in ("AUTO_UPDATE_FEED_URL_MACOS", "AUTO_UPDATE_FEED_URL_WINDOWS"):
+        feed = updates.get(key, env.get(key, ""))
+        parsed = urlparse(feed)
+        if feed and (parsed.scheme != "https" or not parsed.hostname):
+            print(f"{key} must be an https:// URL; .env was not changed.", file=sys.stderr)
+            return 1
 
     write_env(env_path, updates)
 

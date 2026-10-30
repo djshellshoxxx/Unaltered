@@ -23,6 +23,7 @@ export interface DetachedProof {
   readonly root: TsNode;
 }
 
+/** Structural attestation presence only. Bitcoin data must still pass verification against the original file. */
 export type ProofStatus = 'pending' | 'bitcoin-confirmed';
 
 // Wire constants (python-opentimestamps)

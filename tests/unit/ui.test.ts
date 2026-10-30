@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CALENDARS } from '../../src/core/net/allowlist';
+import { cleanedName, receiptName, safeFileName } from '../../src/ui/download';
 import { VIEWS, parseHash } from '../../src/ui/router';
 import { restoreDefaults, settings, stampConfigFromSettings, verifyConfigFromSettings, isDefault } from '../../src/ui/state';
 import { TABLES, detectLang, en, setLang, t } from '../../src/ui/strings';
@@ -62,5 +63,22 @@ describe('settings (FR-13)', () => {
     expect(verifyConfigFromSettings().minSources).toBe(2);
     restoreDefaults();
     expect(isDefault()).toBe(true);
+  });
+});
+
+describe('download names', () => {
+  it('replaces control and bidirectional override characters', () => {
+    // U+202E would display "photo\u202Egpj.exe" as "photoexe.jpg".
+    for (const ch of ['\u202e', '\u202d', '\u2066', '\u2069', '\u200f', '\u061c', '\u0085', '\u007f', '\u0007']) {
+      expect(safeFileName(`photo${ch}gpj.exe`)).toBe('photo_gpj.exe');
+    }
+    expect(receiptName('a\u202eb')).toBe('a_b.ots');
+    expect(cleanedName('a\u2067b.jpg', 'jpeg')).toBe('a_b-cleaned.jpg');
+  });
+  it('keeps ordinary non-ASCII names and never splits a surrogate pair', () => {
+    expect(safeFileName('foto día ñ 写真.jpg')).toBe('foto día ñ 写真.jpg');
+    const cut = safeFileName('a' + '😀'.repeat(250));
+    expect(Array.from(cut)).toHaveLength(200);
+    expect(/[\uD800-\uDFFF]/u.test(cut.replace(/😀/gu, ''))).toBe(false);
   });
 });

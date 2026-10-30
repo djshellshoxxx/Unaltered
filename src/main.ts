@@ -32,6 +32,10 @@ function start(): void {
     about: document.getElementById('about')!,
     settings: document.getElementById('settings')!,
   };
+  document.getElementById('skip')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    document.getElementById('app')?.focus();
+  });
   let stampView: StampView | null = null;
   let verifyView: VerifyView | null = null;
   let pendingPrefill: string | null = null;

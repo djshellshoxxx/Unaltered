@@ -422,6 +422,12 @@ def read_credentials():
 CREDENTIALS_HINT = "set ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN (neither is ever printed)"
 
 
+class NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        # Replays carry credentials and captured content; never follow a redirect.
+        return None
+
+
 def post(base_url, path, body, betas, api_key, timeout):
     data = json.dumps(body).encode("utf-8")
     req = urllib.request.Request(base_url.rstrip("/") + path, data=data, method="POST")
@@ -432,7 +438,7 @@ def post(base_url, path, body, betas, api_key, timeout):
     req.add_header("anthropic-beta", ",".join(betas))
     t0 = time.time()
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with urllib.request.build_opener(NoRedirectHandler()).open(req, timeout=timeout) as resp:
             raw = resp.read()
             return resp.status, dict((k.lower(), v) for k, v in resp.headers.items()), raw, time.time() - t0
     except urllib.error.HTTPError as e:

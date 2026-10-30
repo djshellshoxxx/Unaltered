@@ -1,3 +1,165 @@
+# Continuation 2026-10-29 (g) — MP3 trailer regression, updater trust, download names
+
+Branch `claude/unaltered-continuation-20261029` (draft PR29), stacked on PR28 `codex/accepted-gates-20261028` at
+`d124dd47971fdff1ef600e27e918d7421f1cbec3` (exact-head CI run 40730873116: all 11 required jobs green; informational live check red,
+known pending-404 CORS). Commits: `758be7c` (fixes), `82440ed` (review follow-up) and this documentation/evidence commit. Main
+`9f06c46`, PR28 `d124dd4` and PR25 `92e2420` were not rewritten, merged or pushed to. Root (one Claude Code session) integrates;
+one read-only reviewer finished; none active. No paid broker/API calls, credentials, releases, tags, deployments or settings changes.
+Section (f) was written by an earlier session on PR28 after the `codex/claude-handoff-20261028` prompt; reconciled here.
+
+Changes (details: `docs/REVIEW_20261028.md`, "Continuation (g)"):
+- `src/core/strip/audio.ts`: a truncated final frame whose declared length reached end of file hid a real ID3v1/APEv2 tag; since
+  `99562ed` the "cleaned" copy kept it with `removed: []`. Tag-like trailing bytes are now refused; self-check rejects them too.
+- `src/ui/download.ts`: download names drop C1 and bidirectional controls; truncation by code point.
+- Toolkit `shared/scripts/`: HTTPS-only downloads incl. redirects, optional archive SHA-256 (environment or `.env`), validated
+  versions; updater stays disabled without a public key; non-HTTPS feeds refused; doctor fails both. Digests stay optional (none
+  verified offline). Regressions: `tests/unit/audio.test.ts`, `tests/unit/ui.test.ts`, `tests/toolkit/test_updater_trust_20261029.py`;
+  each fails on its parent and passes now.
+
+Results run here (Linux executor, 4 vCPU, Node 22.22.0, pinned Chromium 1243; OpenTimestamps 0.4.5 in a scratch venv):
+- `UNALTERED_PYTHON=<venv>/bin/python npx vitest run`: 159 pass, 1 optional Node 2 GiB skip. `npm run check` (no reference set):
+  OPSEC/type/lint pass, 156 pass, 2 skips; 5 Node pass. Toolkit unittest: 18 pass. Six reference fixtures regenerate byte-identical.
+- `npm run build` twice: byte-identical (10 files); five `SHA256SUMS` OK. Final build id `dd9631a63565c907`.
+- `playwright test --retries=0` (Chromium) on the final build: 56 pass, 1 optional skip. An earlier full run during a concurrent
+  4-core fuzz campaign failed only the 50 ms worker-responsiveness test (101 ms gap at change dispatch); without that load it passed
+  5/5 isolated and in the full run. Threshold unchanged. 2 GiB browser gate not run locally (hash code untouched); CI runs it.
+- Fuzz seed 20261029: 1000000 mutations (1000036 inputs), six targets, 1153 s, no finding (`docs/evidence/fuzz-20261029.json`;
+  bundle SHA equals the bundle at `758be7c`). Bounded campaign, not exhaustive coverage.
+- Firefox/WebKit/Tor: not available locally; CI covers Firefox/WebKit app tests.
+
+Ready queue left: none independently executable here beyond further campaigns. Blocked/conditional (unchanged): PR28/PR29 owner
+approval and merge order (PR28, then PR29 retargeted to main, then PR25 per section (f)); PR25 timeout policy and Firefox/WebKit 2 GiB
+evidence; pending-404 CORS policy and Bob/Finney confirmed paths; signing; human screen-reader/Spanish/usability; independent
+audit/rebuild (REL-3/4); release/account/legal controls; mandatory toolkit digests (need verified upstream values). Missing checkpoint
+`1e0fd6b` remains unrecovered. Next: confirm exact-head CI on PR29's pushed head.
+
+# Continuation 2026-10-28 (f) — audio fuzzing, independent pass, toolkit follow-up
+
+Branch `codex/accepted-gates-20261028` (draft PR28). Start: `9e16d5bafddd207d7fa14621fe01a6d692885213`, whose exact-head CI run
+40721017408 passed all required jobs (this supersedes the "unexecuted at this snapshot" note in section (e) below). New commits:
+`99562ed` (MP3 trailer fix, WAV/MP3 fuzz targets, two toolkit fixes), `0b4ee6f` (independent-review fixes) and this
+documentation/evidence commit. Main `9f06c46` and PR25 `92e2420` were not rewritten, merged or pushed to. Root (one Claude
+Code session) owns integration; one toolkit worker and one read-only product reviewer finished with disjoint ownership; none active.
+No paid broker/API calls, credentials, releases, tags, deployments or settings changes.
+
+Changes (details, evidence and residuals: `docs/REVIEW_20261028.md`, section "Continuation (f)"):
+- `src/core/strip/audio.ts`: ID3v1/APEv2 trailers are removed only while the MP3 frame chain does not already reach the end.
+  Before: tag-like payload bytes rejected valid files and an APE-like footer silently dropped a real audio frame.
+- `tests/fuzz/targets.ts`, `scripts/parser-fuzz.mjs`: `wav` and `mp3` targets (six total), RIFF-length repair for half of WAV mutations.
+- `src/ui/views/verify.ts`, `src/ui/strings.ts`: share-link (no file) results no longer say "this exact file" (EN/ES; Spanish
+  not native-reviewed). `src/cli/run.ts`: refuse pipes/devices and content longer than stat size. `src/ui/store.ts`,
+  `src/ui/views/settings.ts`: remove receipts by identity, bound loaded list to 500. `scripts/build.mjs`: replacer-function fill
+  plus inline-bytes-equal-CSP-hash gate (dist output byte-identical).
+- Toolkit: `skills/webapp-testing/scripts/with_server.py` (unread pipes), `skills/brainstorming/scripts/stop-server.sh`
+  (canonical `/tmp` containment); regressions `tests/toolkit/test_followup_20261028.py`. Updater/download trust stays residual.
+- Every fix has a regression that failed on the old code and passes now (unit, browser or offline Python).
+
+Results run here (Linux executor, Node 22.22.0, pinned Chromium 1243; OpenTimestamps 0.4.5 reference in a local venv):
+- `UNALTERED_PYTHON=<venv>/bin/python npm run check` at `0b4ee6f`: OPSEC/type/lint pass, 156 Vitest pass, 1 optional skip; 5 Node pass.
+- Python toolkit unittest: 8 pass. `npm run build`: two builds byte-identical across the build.mjs change (10 files).
+- `playwright test --retries=0` (Chromium): 56 pass, 1 optional skip (2 GiB spec). The offline single-file `file://` test ran and
+  passed in this executor (it was administrator-blocked in the previous one; no policy was changed).
+- `UNALTERED_BIG_BROWSER=1 playwright test tests/e2e/memory.spec.ts --repeat-each=3 --retries=0`: 3/3 pass, digest visible at
+  48.0/49.4/49.1 s, <200 MiB assertion held (max sampled extra renderer RSS 64.4 MiB), 540 s deadline unchanged.
+- Fuzz seed 20261028: 250000 mutations (250036 inputs), six targets, 322 s with `--seconds 900`, no finding
+  (`docs/evidence/fuzz-20261028-audio.json`). With the standard `--seconds 300` under concurrent load: 226873 mutations,
+  wall-clock stop, no finding (`...-audio-300s.json`). Bounded campaigns, not exhaustive coverage.
+- Firefox/WebKit/Tor: not available locally (only pinned Chromium); CI covers Firefox/WebKit app tests. Not a pass.
+
+PR25 reconciliation (read-only; scratch worktree, nothing pushed): PR25 touches only `src/core/hash/stream.ts`,
+`tests/unit/hash.test.ts`, `tests/e2e/memory.spec.ts`, `.github/workflows/ci.yml` and `HANDOFF.md`; PR28 touches none of the first
+three. Trial merge of `92e2420` onto `0b4ee6f` conflicts only in `HANDOFF.md`. On that merge: typecheck/lint clean, 157 Vitest
+pass (2 skips, reference interpreter not set), Chromium 56 pass with zero retries, Chromium 2 GiB 3/3 (digest 36.1/36.9/36.5 s,
+max sampled extra RSS 64.8 MiB). Firefox/WebKit 2 GiB completion was not run (no engines here; PR25's new job runs off-PR only).
+Recommendation for the owner: merge PR28 first, then merge main into PR25 resolving `HANDOFF.md` by keeping both sections, and
+require fresh exact-head CI (incl. a manual dispatch for the Firefox/WebKit 2 GiB job) before PR25 merges. The policy change
+(stall timer measures silence, not chunk-fill time) still needs the owner's decision; PR25's owner keeps those files.
+
+Ready queue left: none independently executable here beyond longer/native fuzz campaigns. Blocked/conditional (unchanged):
+PR28 owner approval/merge; PR25 policy decision and Firefox/WebKit 2 GiB evidence; pending-404 CORS policy and Bob/Finney
+confirmed paths; signing; human screen-reader/Spanish/usability; independent audit/rebuild (REL-3/4); release/account/legal
+controls; toolkit download pinning (needs verified upstream digests). Missing checkpoint `1e0fd6b` remains unrecovered.
+Next: confirm exact-head CI on the pushed head in PR28, then follow the recommendation above.
+
+# Continuation 2026-10-28 (e) — reviewed security candidate
+
+Source/test/workflow commit: `d908d6037acf2aebf635d528a2fd06581d4c7866`, on
+`codex/accepted-gates-20261028`, above the verified first checkpoint `8d8f9922d7a7010e7ff1db23b97d6a365d8150d5`.
+This handoff/evidence commit is documentation-only. Main remains `9f06c46d061f8a0f67d8684b6c9c6cbbd163242d`;
+Claude-owned PR25 remains `92e2420da02b2ba11d0161f72f7bb9ff338170b4`. Neither branch was rewritten or merged.
+
+Follow-up checkpoint887e724 is published as draft PR28. Native run40719843975 at that exact head passed Linux,
+Windows, provenance, differential/toolkit tests, all55 app tests in each Chromium/Firefox/WebKit (no retry markers),
+and all three unchanged2GiB attempts (digest38.44/38.19/38.02s). macOS remained queued and cross-OS comparison had
+not run when this note was refreshed, so this is not full native acceptance. A local current-build2GiB attempt also
+passed44.3s. Informational R1 passed the real Alice confirmed-upgrade/app/reference path at block428648; details and
+residuals are in `docs/NETWORK.md`. Pending404 CORS and Bob/Finney confirmed paths remain open.
+
+The same run exposed stale style-based R1 diagnostic fields after the neutral Upgrade copy change. A small follow-up
+derives confirmation only after Verify and excludes status notices from unknown-calendar warnings; node syntax/lint pass.
+That diagnostic correction changes no product bytes, transport, acceptance threshold or release trigger. Its final exact
+head must receive its own CI status. The PR description/checks are the live completion record; historical runs stay preserved.
+
+Completed after the first checkpoint: aggregate proof budgets and transactional merge rollback; stack-safe serialization;
+bounded WAV/PNG removal summaries; explicit Blob URL ownership/revocation and stable relabel downloads; truthful Upgrade
+wording; five bundled-toolkit corrections (script/benchmark injection, port killing, redirect credential forwarding and omitted
+tool results). Test audit also removed a typed-error false-pass path and strengthened request-count/transformed-byte oracles.
+See [internal review, scope and residuals](docs/REVIEW_20261028.md). This is not REL-3 independent audit acceptance.
+
+Fresh integrating-executor results on this source:
+
+- `UNALTERED_PYTHON=/tmp/unaltered-reference/bin/python npm run check`: OPSEC/type/lint pass,150 Vitest pass,1 optional Node2GiB
+  skip;5 Node supervisor/renderer regressions pass. Python OpenTimestamps0.4.5 reference oracle actually executed.
+- Four offline Python toolkit regressions pass; six regenerated reference fixtures byte-identical. Native differential CI also
+  runs those Python regressions. No SDK/credentials/live requests are used by the new toolkit tests.
+- Full local Chromium154 with `--retries=0`:54 pass,1 optional browser-memory skip,1 failure before app execution at
+  `file://.../dist/unaltered-0.3.1.html#stamp`: `ERR_BLOCKED_BY_ADMINISTRATOR`. Policy is preserved; offline acceptance needs native CI.
+- Two builds byte-identical, all five distributable checksums pass; build id`b1ebd362733ac666`,36.4KiB gzip.
+- Both250000-mutation campaigns completed250028 inputs without finding,230333ms before parser corrections and228607ms after;
+  exact source state/bundle SHA/limits: `docs/evidence/fuzz-20261028*.json`. No exhaustive/native-decoder coverage claimed.
+- Source/staged secret checks and OPSEC pass; final outgoing-history scan and remote SHA verification precede publication.
+
+Three coordinated workers completed bounded roles (Luna targets/tests, Sol code/toolkit review/fixes, Astra deeper product security
+and changed-range review); none remain active. Root owns integration. All47 active product/tooling/workflow files and66 bundled
+executable scripts were included in source review, with dynamic/external limits in the detailed record. No paid Claude calls.
+
+Native CI for the final diagnostic/evidence checkpoint is unexecuted **at this documentation snapshot**. Root will reconcile
+exact-head CI in draft PR28; its description/checks will carry the completed result without another source change.
+Do not attribute old73fc82e/9f06c46 browser evidence to this new head. Ordinary E2E may retry once in CI; inspect attempts before
+claiming repeatable50ms performance. Original Chromium2GiB/540s/<200MiB job remains three attempts/zero retries, unchanged.
+
+Next owner: inspect exact remote branch/PR head, review `9f06c46..HEAD`, reconcile current main/PR25 ownership and CI, then obtain
+the required specific PR approval before integration. No merge attempt is planned here; no merge source/target was mutated.
+R1 live confirmed app/reference round-trip and pending-CORS policy, signing, human accessibility/Spanish/usability, independent
+audit/rebuild and release/account/legal controls remain open. No backend/proxy/browser bypass, release/deployment/tag, purchase,
+credentials or account-security changes occurred. Recover by fetching this branch, reading these notes, and reproducing the
+commands in `docs/REVIEW_20261028.md` / `docs/FUZZING.md`. Preserve historical failures, old checkpoints and unique remote work.
+
+# Historical continuation 2026-10-28 (d) — accepted gate work, separate ownership
+
+- Reconciled main `9f06c46d061f8a0f67d8684b6c9c6cbbd163242d`, exact-head CI40651059987 completed success. Earlier browser
+  results are historical, not acceptance of this continuation. All old work/branches are preserved; local800b9cc is an ancestor of main.
+- Work branch: `codex/accepted-gates-20261028`, based on that main. Claude-owned PR25 remains at
+  `92e2420da02b2ba11d0161f72f7bb9ff338170b4` and currently conflicts with main; do not edit/rebase/merge its timeout work.
+  Language preservation is already merged. Dependabot PR27 is separate. Specific PR approval requires owner confirmation.
+- Unowned accepted slice: REL-2 / SPEC12 coverage-guided parser fuzz tooling. Added four V8-feedback entrypoints, synthetic
+  corpus retention, bounded independent worker supervision and exact finding replay; no dependencies or runtime code changed.
+  See `docs/FUZZING.md`. Local `npm run check`:142 Vitest passes,1 optional large-input skip,4 supervisor tests pass; OPSEC/type/lint
+  pass. The longer seeded campaign completed250028 inputs (250000 mutations) in230333ms without finding; bounded64KiB input,
+  four targets, V8 feedback, Node24.19.0. Compact exact report: `docs/evidence/fuzz-20261028.json`; this is not exhaustive coverage.
+- Root integrates. One inexpensive worker completed only fuzz-target/oracle files. A disjoint read-only app/CLI/build/tooling
+  code audit is running; root covers core modules. Deep security review follows code audit and corrections, with explicit limits.
+  Code audit reproduced stale Stamp receipts after changing cleaning and a skip link that switched views. Both are fixed;
+  all six new regressions failed before and pass after. Full local Chromium suite:51 pass,1 optional memory skip,1 failure on
+  managed `file://` administrator policy. Build id5d6e1799e43b37c5. No duplicate timeout implementation.
+  Deep security review is running and has identified further issues in combined-proof bounds, chunk-list cost and Upgrade
+  wording; those are not fixed by this first checkpoint. Legacy toolkit executable review is separate and in progress.
+- No merge, deployment/release, new credentials/security settings or paid Claude usage. New branch pushes trigger no CI/release
+  in inspected workflows (CI:main/PR/manual; release:manual). Preserve2GiB/540s/<200MiB Chromium and50ms limits unchanged.
+- Next: finish deep/legacy review, reproduce/fix supported security findings, rerun affected gates, secret
+  scan and updated source/evidence checkpoint. R1, signing, human accessibility/Spanish/usability, independent audit/rebuild and
+  release/account/legal controls remain open. This is agent-assisted internal review, not the independent audit required by REL-3.
+
 # Continuation 2026-10-28 (c) — owner decisions applied
 
 - Owner approved and main now holds #6, #7, #8, #11 (incl. #10 watchdog, #13 worker-error fix) as merge commits; main `8c182ca` CI run 40622738468 green on every required job, including the 2 GiB gate (3/3) and byte-identical builds. Only the informational live check is red (calendar 404 without CORS on pending lookups).
