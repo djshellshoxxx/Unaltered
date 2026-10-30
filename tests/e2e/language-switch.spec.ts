@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { fromHex, toHex } from '../../src/core/bytes';
 import { collectAttestations, parseProof, serializeProof } from '../../src/core/ots/codec';
+import { TABLES } from '../../src/ui/strings';
 import { installNetwork, sha256hex } from './helpers';
 
 // PROPOSAL (docs/proposals/LANGUAGE_SWITCH.md): language is presentation state. Switching it keeps the selected
@@ -161,7 +162,7 @@ test('an upgrade result and its download survive a language switch without askin
 
   await switchToSpanish(page);
   await page.goto('/index.html#verify');
-  await expect(page.getByText('Confirmado en Bitcoin.', { exact: false })).toBeVisible();
+  await expect(page.locator('.upgrade-result [role=status]')).toHaveText(TABLES.es['upgrade.confirmed']);
   const link = page.getByRole('link', { name: 'Descargar recibo actualizado (up.upgraded.ots)' });
   const [dl] = await Promise.all([page.waitForEvent('download'), link.click()]);
   const upgraded = parseProof(new Uint8Array(readFileSync((await dl.path())!)));
