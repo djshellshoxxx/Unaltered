@@ -78,13 +78,11 @@ const template = read('src/index.html');
 
 const buildHash = hex256(Buffer.from(cliJs + '\0' + mainMulti + '\0' + workerJs + '\0' + css + '\0' + template)).slice(0, 16);
 
+// One pass with a replacer function: string replacements would expand `$&`, `$'` and similar patterns inside the
+// bundle or CSS, and sequential passes would fill a token that an earlier value happened to contain.
 function fill(html, { cspValue, styles, script }) {
-  return html
-    .replace('{{CSP}}', cspValue)
-    .replace('{{STYLES}}', styles)
-    .replace('{{SCRIPT}}', script)
-    .replace('{{VERSION}}', version)
-    .replace('{{BUILD}}', buildHash);
+  const values = { CSP: cspValue, STYLES: styles, SCRIPT: script, VERSION: version, BUILD: buildHash };
+  return html.replace(/\{\{(CSP|STYLES|SCRIPT|VERSION|BUILD)\}\}/g, (_, key) => values[key]);
 }
 
 // Multi-file page: SRI on every script/stylesheet (SR-3).
@@ -114,6 +112,10 @@ for (const html of [multiHtml, singleHtml]) {
   if (/unsafe-inline|unsafe-eval/.test(html.match(/Content-Security-Policy" content="([^"]*)"/)[1])) throw new Error("CSP contains 'unsafe-*'");
   if (/\{\{[A-Z]+\}\}/.test(html.replace(/<script>[\s\S]*?<\/script>/g, ''))) throw new Error('unfilled template token');
 }
+// The single-file CSP allows exactly these hashes, so the inlined bytes must be exactly the hashed bytes.
+const inlined = (tag) => [...singleHtml.matchAll(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, 'g'))].map((m) => m[1]);
+if (JSON.stringify(inlined('script')) !== JSON.stringify([mainSingle])) throw new Error('single-file inline script differs from its CSP-hashed bundle');
+if (JSON.stringify(inlined('style')) !== JSON.stringify([css])) throw new Error('single-file inline style differs from its CSP-hashed stylesheet');
 if (/\beval\s*\(|new Function\s*\(/.test(mainMulti.replace(/"(?:[^"\\]|\\.)*"/g, '""'))) throw new Error('eval found in bundle');
 
 // ---- sizes (NFR-3) --------------------------------------------------------------------------------------------

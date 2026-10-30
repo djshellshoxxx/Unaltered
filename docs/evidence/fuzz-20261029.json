@@ -1,0 +1,65 @@
+{
+  "sourceCommit": "d124dd47971fdff1ef600e27e918d7421f1cbec3",
+  "targetSha256": "3bee853796c050de497d0a53c07e354dc6abba499e5bf8feda1101ea4b55561b",
+  "node": "v22.22.0",
+  "v8": "12.4.254.21-node.33",
+  "options": {
+    "iterations": 1000000,
+    "seconds": 1800,
+    "seed": 20261029,
+    "out": "scratch/fuzz"
+  },
+  "limits": {
+    "maxInputBytes": 65536,
+    "maxCorpusPerTarget": 256,
+    "caseDeadlineMs": 1000,
+    "workerOldHeapMiB": 128
+  },
+  "status": "budget-complete",
+  "executed": 1000036,
+  "mutations": 1000000,
+  "targets": {
+    "proof": {
+      "accepted": 3046,
+      "rejected": 163633,
+      "ranges": 162,
+      "corpus": 35
+    },
+    "timestamp": {
+      "accepted": 3766,
+      "rejected": 162911,
+      "ranges": 157,
+      "corpus": 27
+    },
+    "jpeg": {
+      "accepted": 1087,
+      "rejected": 165583,
+      "ranges": 183,
+      "corpus": 55
+    },
+    "png": {
+      "accepted": 1264,
+      "rejected": 165406,
+      "ranges": 72,
+      "corpus": 16
+    },
+    "wav": {
+      "accepted": 1954,
+      "rejected": 164716,
+      "ranges": 43,
+      "corpus": 13
+    },
+    "mp3": {
+      "accepted": 4704,
+      "rejected": 161966,
+      "ranges": 53,
+      "corpus": 13
+    }
+  },
+  "output": "scratch/fuzz/(local campaign directory, not committed)",
+  "seedExecutions": 36,
+  "retainedSeeds": 32,
+  "elapsedMs": 1152666,
+  "stopReason": "iterations",
+  "note": "Continuation (g): run on the working tree of 758be7c before it was committed, so sourceCommit records the parent d124dd4. targetSha256 equals the bundle built at 758be7c and 82440ed (re-bundled and compared), i.e. it covers the MP3 ambiguous-trailer fix. Bounded campaign, not exhaustive coverage."
+}

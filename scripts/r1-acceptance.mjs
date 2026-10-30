@@ -57,11 +57,12 @@ try {
   const upOut = page.locator('.upgrade-result');
   await upOut.locator('.notice, [role=alert]').first().waitFor({ timeout: 60_000 });
   const upgrade = {
-    confirmed: await upOut.locator('.notice.ok').count() > 0,
+    // Confirmation is assigned only after Verify, never inferred from Upgrade's structural status/style.
+    confirmed: false,
     stillPending: await upOut.locator('.notice.pending').count() > 0,
     receiptError: (await upOut.locator('[role=alert]').allTextContents())[0] ?? null,
     failedCalendars: await upOut.locator('ul.calendars li').allTextContents(),
-    unknownCalendars: (await upOut.locator('.warn').allTextContents())[0] ?? null,
+    unknownCalendars: (await upOut.locator('.warn:not(.notice)').allTextContents())[0] ?? null,
     downloaded: false,
   };
   let verifyReceipt = resolve(receipt);
@@ -86,6 +87,7 @@ try {
 
   const requests = [...network.values()];
   const upgradeRequests = requests.filter((n) => n.kind === 'upgrade');
+  upgrade.confirmed = state === 'VERIFIED' && (upgrade.downloaded || upgradeRequests.length === 0);
   // TLS/proxy failures happen before any HTTP reply, so they are about this host's network path, not CORS.
   const tls = requests.filter((n) => /ERR_(CERT|SSL|TUNNEL|PROXY)/.test(n.failure ?? ''));
   const blocked = upgradeRequests.filter((n) => n.failure || (n.status && !n.acao));

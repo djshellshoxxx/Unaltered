@@ -1,6 +1,6 @@
 // Parse / serialise OpenTimestamps `.ots` files. Treats all input as hostile (SPEC section 6, SR-9):
 // size cap, node cap, depth cap, iterative traversal, bounds-checked lengths, unknown tags rejected.
-import { compareBytes, concat, equalBytes, Reader, toHex, writeVaruint } from '../bytes';
+import { compareBytes, concat, concatParts, equalBytes, Reader, toHex, writeVaruint } from '../bytes';
 import { UnalteredError } from '../errors';
 import { applyOp, compareOps, opTag } from './ops';
 import {
@@ -159,19 +159,29 @@ function opBytes(op: Op): Uint8Array {
 /** Canonical serialisation, matching the reference implementation's ordering. Iterative. */
 export function serializeTree(root: TsNode): Uint8Array {
   const out: Uint8Array[] = [];
-  const work: (TsNode | Uint8Array)[] = [root];
+  type Work = { node: TsNode; depth: number } | Uint8Array;
+  const work: Work[] = [{ node: root, depth: 1 }];
+  let nodes = 0;
+  let attestations = 0;
+  let bytes = 0;
   // Depth-first: process by popping; push in reverse so that emission order is correct.
   while (work.length > 0) {
     const item = work.pop()!;
     if (item instanceof Uint8Array) {
+      bytes += item.length;
+      if (bytes > LIMITS.maxInputBytes) throw new UnalteredError('PROOF_TOO_LARGE', 'The receipt file is too large.');
       out.push(item);
       continue;
     }
-    const atts = [...item.attestations].sort(compareAtt);
-    const kids = [...item.children].sort((a, b) => compareOps(a.op, b.op));
+    if (++nodes > LIMITS.maxNodes) throw new UnalteredError('PROOF_TOO_LARGE', 'The receipt is too complex.');
+    if (item.depth > LIMITS.maxDepth) throw new UnalteredError('PROOF_TOO_LARGE', 'The receipt is nested too deeply.');
+    attestations += item.node.attestations.length;
+    if (attestations > LIMITS.maxAttestations) throw new UnalteredError('PROOF_TOO_LARGE', 'The receipt contains too many attestations.');
+    const atts = [...item.node.attestations].sort(compareAtt);
+    const kids = [...item.node.children].sort((a, b) => compareOps(a.op, b.op));
     const total = atts.length + kids.length;
     if (total === 0) throw new UnalteredError('PROOF_MALFORMED', 'Cannot serialise an empty timestamp.');
-    const seq: (TsNode | Uint8Array)[] = [];
+    const seq: Work[] = [];
     let i = 0;
     for (const a of atts) {
       i++;
@@ -181,15 +191,20 @@ export function serializeTree(root: TsNode): Uint8Array {
     for (const k of kids) {
       i++;
       if (i < total) seq.push(Uint8Array.from([TAG_MORE]));
-      seq.push(opBytes(k.op), k.node);
+      seq.push(opBytes(k.op), { node: k.node, depth: item.depth + 1 });
     }
     for (let j = seq.length - 1; j >= 0; j--) work.push(seq[j]!);
   }
-  return concat(...out);
+  return concatParts(out);
 }
 
 export function serializeProof(p: DetachedProof): Uint8Array {
-  return concat(HEADER_MAGIC, Uint8Array.from(writeVaruint(MAJOR_VERSION)), Uint8Array.from([TAG_SHA256]), p.digest, serializeTree(p.root));
+  const version = Uint8Array.from(writeVaruint(MAJOR_VERSION));
+  const tree = serializeTree(p.root);
+  if (HEADER_MAGIC.length + version.length + 1 + p.digest.length + tree.length > LIMITS.maxInputBytes) {
+    throw new UnalteredError('PROOF_TOO_LARGE', 'The receipt file is too large.');
+  }
+  return concat(HEADER_MAGIC, version, Uint8Array.from([TAG_SHA256]), p.digest, tree);
 }
 
 function attKey(a: Attestation): string {
@@ -201,31 +216,45 @@ function opKey(op: Op): string {
 }
 
 /** Merge `from` into `into` (same message). Mirrors Timestamp.merge. Iterative; indexed so cost is linear. */
-export function mergeTree(into: TsNode, from: TsNode): void {
+export function mergeTree(into: TsNode, from: TsNode, validate?: () => void): void {
   if (!equalBytes(into.msg, from.msg)) throw new UnalteredError('PROOF_MALFORMED', 'Cannot combine receipts for different data.');
   const work: [TsNode, TsNode][] = [[into, from]];
   let steps = 0;
-  while (work.length > 0) {
-    const [a, b] = work.pop()!;
-    if (++steps > LIMITS.maxNodes * 2) throw new UnalteredError('PROOF_TOO_LARGE', 'The receipt is too complex.');
-    const have = new Set(a.attestations.map(attKey));
-    for (const att of b.attestations) {
-      const k = attKey(att);
-      if (!have.has(k)) {
-        have.add(k);
-        a.attestations.push(att);
+  // Record touched arrays so aggregate rejection cannot poison the previously valid proof.
+  const snapshots = new Map<TsNode, { atts: Attestation[]; attLength: number; children: TsNode['children']; childLength: number }>();
+  try {
+    while (work.length > 0) {
+      const [a, b] = work.pop()!;
+      if (++steps > LIMITS.maxNodes * 2) throw new UnalteredError('PROOF_TOO_LARGE', 'The receipt is too complex.');
+      if (!snapshots.has(a)) snapshots.set(a, { atts: a.attestations, attLength: a.attestations.length, children: a.children, childLength: a.children.length });
+      const have = new Set(a.attestations.map(attKey));
+      for (const att of b.attestations) {
+        const k = attKey(att);
+        if (!have.has(k)) {
+          have.add(k);
+          a.attestations.push(att);
+        }
+      }
+      const kids = new Map(a.children.map((c) => [opKey(c.op), c]));
+      for (const kid of b.children) {
+        const existing = kids.get(opKey(kid.op));
+        if (existing) {
+          if (existing.node !== kid.node) work.push([existing.node, kid.node]);
+        } else {
+          a.children.push(kid);
+          kids.set(opKey(kid.op), kid);
+        }
       }
     }
-    const kids = new Map(a.children.map((c) => [opKey(c.op), c]));
-    for (const kid of b.children) {
-      const existing = kids.get(opKey(kid.op));
-      if (existing) {
-        if (existing.node !== kid.node) work.push([existing.node, kid.node]);
-      } else {
-        a.children.push(kid);
-        kids.set(opKey(kid.op), kid);
-      }
+    validate?.();
+  } catch (error) {
+    for (const [node, original] of snapshots) {
+      node.attestations = original.atts;
+      node.attestations.length = original.attLength;
+      node.children = original.children;
+      node.children.length = original.childLength;
     }
+    throw error;
   }
 }
 

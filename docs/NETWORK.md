@@ -1,5 +1,23 @@
 # Network facts (M0-3)
 
+### Native confirmed-path evidence — 2026-10-28
+
+At source`887e724ba26a3706f404500001a9697dea26ba19`, native CI40719843975/job122927426163 exercised the built app's real
+UI in pinned Chromium156.0.8078.4 with its normal CSP and no route mocks, proxy addition or CORS bypass. The pre-existing
+upstream incomplete receipt was upgraded through Alice: GET200, ACAO`*`, upgraded receipt downloaded. Both Esplora hosts
+returned200 with ACAO`*`; the app returned VERIFIED at block428648. Python OpenTimestamps0.4.5 checked that same downloaded
+receipt against the independently fetched header: digestMatches=true, verifiedTime1473227803, ok=true. No new calendar
+submission was made by this acceptance procedure. See [the exact native log](https://github.com/djshellshoxxx/Unaltered/actions/runs/40719843975/job/122927426163).
+
+This establishes the Alice confirmed upgrade/app/reference path for that source. It does not establish Bob/Finney confirmed
+upgrade compatibility, browser pending404 compatibility, own-node verification or all browsers. The separate informational
+live check still fails; pending404 replies still lack ACAO. Those R1 residuals remain open; older notes below are historical.
+The job's old style-based diagnostics reported confirmed=false and mislabeled the new neutral notice as an unknown-calendar
+warning even though download/VERIFIED/reference evidence succeeded. The following diagnostic correction derives confirmation
+from Verify and excludes status notices from unknown-calendar warnings; the live result is not inferred from those CSS labels.
+
+### Historical status — 2026-10-22
+
 Status: **Live server responses checked on 2026-10-22; browser pending-response CORS remains unresolved.** Calendar submission
 and both explorer endpoints return the required CORS headers. Calendar pending `404` replies do not. These are Node observations
 through the environment's supported HTTPS proxy, not a complete live browser round trip. **Risk R1 remains open.**
