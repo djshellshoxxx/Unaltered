@@ -1,5 +1,7 @@
 # Network facts (M0-3)
 
+Current publication addendum: [final handoff and raw evidence](FINAL_HANDOFF_20261030.md).
+
 ### Current consolidation evidence — 2026-10-30
 
 Source `d09c2401839ea5a06fd794c9666d439b17e500e4`, [PR34](https://github.com/djshellshoxxx/Unaltered/pull/34).

@@ -128,7 +128,7 @@ ec417a90de7e2fba2329e50aa233241cf821987dcb8918bdce718bc0a1ec0fb7  unaltered-0.3.
 ```
 
 These are unsigned validation artifacts, not a release. Compact committed evidence is in
-`docs/evidence/consolidation-20261030.json`; the accompanying handoff archive retains commands, raw logs, JSON browser
+`docs/evidence/consolidation-20261030.json`; the committed evidence archive retains commands, raw logs, JSON browser
 results, source input identities, official pin checks and internal review records. No real sensitive file was used.
 
 ## Remaining blockers and smallest next actions
@@ -175,7 +175,7 @@ On a fresh host, install Node22 and the locked browser builds (`npx playwright i
 create a scratch Python venv with `opentimestamps==0.4.5`, and set `UNALTERED_PYTHON` accordingly. Omit the system-Chromium
 override to use pinned Chromium. Never disable browser/TLS policy to make a gate pass.
 The source branch is published as PR34; final docs/evidence are committed separately, with working-tree and final-head
-verification recorded in the final handoff. Restore the downloadable Git bundle only on top of its recorded main prerequisite.
+verification recorded in the final handoff. Restore the repository branch only on top of its recorded main prerequisite.
 
 Ready-to-run continuation prompt:
 
@@ -209,5 +209,5 @@ Ready-to-run continuation prompt:
   `node node_modules/@playwright/test/cli.js ...`; it fails closed if missing. Executed installed CLI version1.64.1 and
   memory-test collection successfully; thresholds, arguments and pins unchanged. Product/test diff d09c240..f2e7d24 is empty.
   Fresh final-head Sonar evidence is required; old rating failure is not silently treated as a pass.
-- Documentation publication triggers a new exact-head PR run. The downloadable final handoff and PR description record its
+- Documentation publication triggers a new exact-head PR run. The committed final handoff and PR description record its
   actual head/run/job state after publication, separately from source checkpoint evidence. No production/test bytes change.

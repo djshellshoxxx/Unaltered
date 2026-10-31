@@ -1,5 +1,7 @@
 # Completion and validation record
 
+Current publication addendum: [final handoff and raw evidence](FINAL_HANDOFF_20261030.md).
+
 ## Authoritative consolidation — 2026-10-30
 
 **Reviewable candidate; audit-preparation milestone incomplete.** [PR34](https://github.com/djshellshoxxx/Unaltered/pull/34),

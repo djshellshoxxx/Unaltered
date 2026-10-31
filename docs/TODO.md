@@ -1,5 +1,7 @@
 # TODO
 
+Current publication addendum: [final handoff and raw evidence](FINAL_HANDOFF_20261030.md).
+
 Legend: `[ ]` open, `[x]` done. IDs map to milestones in `BUILD_PLAN.md` and requirements in `SPEC.md`.
 Do tasks in order within a milestone unless marked parallel.
 

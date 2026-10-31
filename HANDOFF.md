@@ -1,5 +1,7 @@
 # Current consolidation — 2026-10-30 (America/Los_Angeles)
 
+Current publication addendum: [final handoff and raw evidence](docs/FINAL_HANDOFF_20261030.md).
+
 Reviewable candidate: **[draft PR34](https://github.com/djshellshoxxx/Unaltered/pull/34)**, branch
 `codex/audit-preparation-20261030`, based on current main `da9b0a3626e702381f2ad1d1b1d4cd3128fde2dd`.
 Final source/workflow SHA: `f2e7d24017171475be23f9e069a91ae195fea2c3`; product/test checkpoint: `d09c2401839ea5a06fd794c9666d439b17e500e4`.
@@ -30,7 +32,7 @@ repo-local identity; no signing key was created. No main merge, release, tag, de
 or account/credential change. Owner reviews one candidate; preserve existing PRs25/30/31/33.
 
 Final documentation head, working-tree verification, local baseline/focused-performance results and latest CI are recorded
-in the final evidence addendum and downloadable handoff. Recovery and ready-to-run continuation prompt are in the record.
+in the final evidence addendum and committed handoff. Recovery and ready-to-run continuation prompt are in the record.
 All earlier dated sections are retained as historical evidence, including PR25 context immediately below.
 
 ---
