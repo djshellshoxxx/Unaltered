@@ -145,6 +145,8 @@ export async function hashBlob(blob: Blob, opts: HashOptions = {}): Promise<Hash
     if (!r) throw new UnalteredError('ABORTED', 'Cancelled.');
     result = r;
   }
+  if (opts.signal?.aborted) throw new UnalteredError('ABORTED', 'Cancelled.');
   if (!crossDone) await crossCheck(blob, result.digest);
+  if (opts.signal?.aborted) throw new UnalteredError('ABORTED', 'Cancelled.');
   return { digest: result.digest, hex: toHex(result.digest), bytes: result.bytes };
 }

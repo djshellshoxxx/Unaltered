@@ -111,6 +111,7 @@ export const en = {
   'upgrade.confirmed': 'Bitcoin timestamp data was added. Download the upgraded receipt, then use Verify with the original file to check it.',
   'upgrade.alreadyConfirmed': 'This receipt contains Bitcoin timestamp data. Use Verify with the original file to check it.',
   'upgrade.stillPending': 'Not confirmed yet. Try again in a few hours.',
+  'upgrade.unreadable': 'This browser could not read the answer from one or more calendar servers. This may be a pending reply that the browser is not allowed to read, or a network problem. Your receipt is still pending. Check again later.',
   'upgrade.download': 'Download upgraded receipt ({name})',
   'upgrade.newFile': 'This is a new file. Your original receipt was not changed. Keep both.',
   'upgrade.unknownCalendar': 'This receipt names calendar servers that this app does not contact: {hosts}. They were skipped.',
@@ -286,6 +287,8 @@ const es: Table = {
   'upgrade.confirmed': 'Se añadieron datos de una marca de tiempo de Bitcoin. Descarga el recibo actualizado y usa Verificar con el archivo original para comprobarlos.',
   'upgrade.alreadyConfirmed': 'Este recibo contiene datos de una marca de tiempo de Bitcoin. Usa Verificar con el archivo original para comprobarlos.',
   'upgrade.stillPending': 'Aún no está confirmado. Inténtalo de nuevo en unas horas.',
+  // TODO(human review): Spanish copy not final.
+  'upgrade.unreadable': 'Este navegador no pudo leer la respuesta de uno o más servidores de calendario. Puede ser una respuesta pendiente que el navegador no puede leer o un problema de red. Tu recibo sigue pendiente. Vuelve a comprobarlo más tarde.',
   'upgrade.download': 'Descargar recibo actualizado ({name})',
   'upgrade.newFile': 'Es un archivo nuevo. Tu recibo original no se modificó. Guarda ambos.',
   'upgrade.unknownCalendar': 'Este recibo nombra servidores de calendario con los que esta aplicación no se conecta: {hosts}. Se omitieron.',
