@@ -1,6 +1,7 @@
 // Command-line verifier (SPEC "CLI verifier"): same core as the web app, for scripts and for checking a receipt
 // without a browser. Pure of process globals so it can be tested; main.ts wires it to the real process.
-import { open } from 'node:fs/promises';
+import { constants } from 'node:fs';
+import { open, type FileHandle } from 'node:fs/promises';
 import { groupHex } from '../core/bytes';
 import { hashSource, type ChunkSource } from '../core/hash/stream';
 import { defaultVerifyConfig, LIMITS, verify, type VerifyState } from '../core/ots';
@@ -28,9 +29,21 @@ const NOT_REGULAR = 'not a regular file';
 const SIZE_CHANGED = 'the file size changed while reading';
 const cliError = (code: string): Error => Object.assign(new Error(code), { code });
 
+/** An idle FIFO blocks a normal open before fstat can reject it. Check the opened descriptor without waiting for a writer. */
+async function openRegular(path: string): Promise<FileHandle> {
+  const fh = await open(path, constants.O_RDONLY | (constants.O_NONBLOCK ?? 0));
+  try {
+    if (!(await fh.stat()).isFile()) throw cliError(NOT_REGULAR);
+    return fh;
+  } catch (e) {
+    await fh.close();
+    throw e;
+  }
+}
+
 /** Streams a file in chunks so memory stays flat regardless of size (FR-1). */
 async function hashFile(path: string): Promise<{ hex: string; digest: Uint8Array }> {
-  const fh = await open(path, 'r');
+  const fh = await openRegular(path);
   try {
     const info = await fh.stat();
     // Pipes and devices report a size that is not their content length; hashing that many bytes would print the
@@ -67,7 +80,7 @@ async function hashFile(path: string): Promise<{ hex: string; digest: Uint8Array
  * an oversized receipt reaches the core with `maxInputBytes + 1` bytes and is rejected there with its usual message.
  */
 export async function readReceipt(path: string): Promise<Uint8Array> {
-  const fh = await open(path, 'r');
+  const fh = await openRegular(path);
   try {
     const buf = new Uint8Array(LIMITS.maxInputBytes + 1);
     let got = 0;
