@@ -95,6 +95,28 @@ describe('upgrade (FR-6)', () => {
     expect(r.changed).toBe(false);
   });
 
+  it('marks calendars unreadable (not confirmed, not thrown) when the browser cannot read the pending reply', async () => {
+    const ots = await pendingProof();
+    // A cross-origin 404 without Access-Control-Allow-Origin surfaces in a browser as a TypeError from fetch.
+    const corsBlocked = (() => Promise.reject(new TypeError('Failed to fetch'))) as unknown as typeof fetch;
+    const r = await upgrade(ots, cfgWith(corsBlocked));
+    expect(r.status).toBe('pending');
+    expect(r.changed).toBe(false);
+    expect(r.ots).toEqual(ots);
+    expect(r.calendars).toHaveLength(3);
+    expect(r.calendars.every((c) => !c.ok && c.unreadable === true)).toBe(true);
+  });
+
+  it('does not mark readable HTTP errors as unreadable', async () => {
+    const ots = await pendingProof();
+    const f = routerFetch(() => text('nope', 500));
+    const r = await upgrade(ots, cfgWith(f));
+    expect(r.status).toBe('pending');
+    expect(r.changed).toBe(false);
+    expect(r.ots).toEqual(ots);
+    expect(r.calendars.every((c) => !c.ok && c.unreadable === undefined)).toBe(true);
+  });
+
   it('merges the Bitcoin attestation and drops the satisfied pending one', async () => {
     const ots = await pendingProof();
     const p = parseProof(ots);

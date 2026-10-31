@@ -3,9 +3,28 @@
 Goal: **as few as possible**, and only audited or independently verifiable ones.
 "Audited" is not "certified": no JavaScript library we found has a formal certification (e.g., FIPS validation of the shipped JS). What exists is independent audit reports of varying age and scope. Verify scope before relying on it.
 
-Historical research tables below were reviewed on 2026-10-09, with adoption records dated separately. Current internal review: 2026-10-24 (REL-1); no dependencies changed. The dated snapshot supersedes planning statuses such as “candidate pin” and “decision pending” without rewriting the historical research or claiming that its external sources were rechecked.
+Historical research tables below were reviewed on 2026-10-09, with adoption records dated separately. Current audit-preparation review: 2026-10-30; see the new snapshot before the historical REL-1 record. The dated snapshot supersedes planning statuses such as “candidate pin” and “decision pending” without rewriting the historical research or claiming that its external sources were rechecked.
 
-## Current internal snapshot — 2026-10-24
+## Audit-preparation snapshot — 2026-10-30
+
+Candidate based on main `da9b0a3626e702381f2ad1d1b1d4cd3128fde2dd`; the consolidation changes no dependency or lockfile pin.
+Current lockfile SHA-256: `836f4e61ef6339339bbbf6f07692a31dadd141cbe3755ef5610f7980dff262df`.
+Runtime remains `@noble/hashes@2.4.0`; current exact dev pins: `@axe-core/playwright@4.14.0`, `@eslint/js@10.0.1`, `@playwright/test@1.64.1`, `@types/node@26.6.5`, `esbuild@0.28.2`, `eslint@10.13.0`, `fast-check@4.10.2`, `typescript@6.0.3`, `typescript-eslint@8.72.0`, `vitest@5.0.5`.
+
+Fresh Node22.22.0/npm10.9.4 `npm ci --ignore-scripts` passed (139 packages). `npm audit --omit=dev` reports zero vulnerabilities.
+Full `npm audit` reports 11 moderate entries propagated from dev-only `minimatch@10.2.6`, advisory
+[GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249) (globparts amplification denial of service;
+reported affected range below11.0.1). ESLint/typescript-eslint chains are affected; shipped runtime code is not.
+This remains open: a maintainer/dependency reviewer should evaluate a compatible fixed transitive tree, review its diff,
+then repeat the locked install, checks and provenance. No blanket `npm audit fix` or suggested destructive downgrade was applied.
+The current lint globs are repository-controlled, which narrows exposure but does not close the advisory.
+
+`npm audit signatures` is blocked here by HTTP403 obtaining TUF metadata from `tuf-repo-cdn.sigstore.dev`; no successful
+local provenance check is claimed for this candidate. Native source run41171752457 verifies139 registry signatures and58 attestations. Five current official Action tag-to-full-SHA mappings were freshly
+verified; this is pin identity evidence, not an audit of action behavior. See `CONSOLIDATION_20261030.md` for exact
+candidate checks and native CI status. Older dated evidence below remains historical.
+
+## Historical internal snapshot — 2026-10-24
 
 Source: `1453865ca21a5c8a98b92805a36799de44d97919` (PR #6). `package.json` and `package-lock.json` are unchanged from the resume baseline `e4d80b67d145e940b0458bad93cc069412b39306`. Lockfile format: 3; SHA-256: `cd4546fa88716387db8fe8920777c9dc992f0c9efb343d311a3f0057028f287f`.
 

@@ -1,5 +1,35 @@
 # Network facts (M0-3)
 
+Current publication addendum: [final handoff and raw evidence](FINAL_HANDOFF_20261030.md).
+
+### Current consolidation evidence — 2026-10-30
+
+Source `d09c2401839ea5a06fd794c9666d439b17e500e4`, [PR34](https://github.com/djshellshoxxx/Unaltered/pull/34).
+Native [R1job124450996370](https://github.com/djshellshoxxx/Unaltered/actions/runs/41171752457/job/124450996370)
+checked out31369ca8e82ca077abdc1dfa8489a30fbe665902; fetched full tree equals the source checkpoint. Real pinned Chromium156
+Upgrade/Verify returned PASS at block428648 on the existing2016 Alice receipt. Python OpenTimestamps0.4.5 independently
+verified that same app-downloaded receipt: digestMatches=true, verifiedTime1473227803, ok=true, pending0. No new calendar
+submission was made by this R1 procedure. This closes the Alice confirmed-path question for this source tree only.
+
+Bob/Finney confirmed browser responses, pending404 CORS and broader R1 compatibility remain open. A proposed optional
+Bob/Finney classifier was omitted after review showed it could infer confirmation from a readable200 plus another calendar's
+success. HTTP200 alone and Node-only traffic are not per-target browser/reference proof. No host/CSP/allowlist change,
+backend, relay, no-cors mode, TLS/browser-policy bypass or new credential was introduced.
+
+Upgrade marks NET_FAILED as unreadable and ok:false; it cannot distinguish browser CORS blocking from an outage. The
+current notice says either may be responsible, and that the receipt is still pending. It avoids claiming unchanged proof
+bytes when another calendar legitimately adds pending proof data. All-failure input bytes remain unchanged and no network
+failure confers confirmation or VERIFIED. Readable404 receives the ordinary pending notice. Spanish text remains a draft.
+
+Local final-source attempt: Chromium154, TLS_OR_PROXY, Alice GET failed ERR_TUNNEL_CONNECTION_FAILED, PENDING, no download,
+no CSP violation. Independent blockchain.info header retrieval also HTTP403. Pinned-browser CDNs and Sigstore TUF metadata
+were denied by this executor's destination policy; those are environment observations, not evidence about calendar CORS.
+Repeat `scripts/r1-acceptance.mjs` plus the independent check in R1_ACCEPTANCE.md on an authorized path; native source evidence
+above is distinct from local failure. [Current full ledger and recovery](CONSOLIDATION_20261030.md) tracks final-head status.
+
+All older dated records below, including the imported PR30 proposal, are historical and superseded where this section differs.
+
+
 ### Native confirmed-path evidence — 2026-10-28
 
 At source`887e724ba26a3706f404500001a9697dea26ba19`, native CI40719843975/job122927426163 exercised the built app's real
@@ -61,6 +91,24 @@ verified that receipt against block 428648's header from blockchain.info: same t
 The browser run on this executor failed before any HTTP reply with `net::ERR_CERT_AUTHORITY_INVALID` (the executor
 inspects TLS with a CA the browser does not trust), so it says nothing about CORS. The new informational CI job `r1-acceptance` runs the
 same procedure on native runners. **R1 stays open** until a browser `PASS` and the reference check agree on one receipt.
+
+### Historical PR30 proposal — 2026-10-30 (current consolidation status above supersedes this proposal)
+
+Decision: option (b), "pending, check later". Hosts, CSP and allowlist are unchanged; no relay, `no-cors` or proxy.
+A browser cannot tell a pending `404` without `Access-Control-Allow-Origin` from an outage: both surface as a `fetch`
+`TypeError`, which `netFetch` reports as `NET_FAILED`. During **upgrade only**, such a calendar result is marked
+`unreadable` (still `ok: false`; it is never treated as a confirmation, and the receipt is not changed). When the receipt
+stays pending and any calendar was unreadable, the Verify page adds, under "Not confirmed yet. Try again in a few hours.":
+
+> This browser could not read the answer from one or more calendar servers. While a receipt is still pending, calendar
+> servers usually answer in a way browsers are not allowed to read, so this is expected. Your receipt is unchanged and
+> still pending. Check again later.
+
+The per-calendar failure list ("Could not reach a server.") is still shown. A confirmed `200` reply carries
+`Access-Control-Allow-Origin: *` (observed 2026-10-27, Node), so the browser upgrade path is expected to work once Bitcoin
+confirms; that remains unverified in a live browser (R1). The CLI has no `upgrade` command, so the copy does not point to it.
+Spanish copy is a draft awaiting native-speaker review. Tests: `tests/unit/ots-flow.test.ts` (unreadable vs HTTP error),
+`tests/e2e/app.spec.ts` (the e2e calendar mock now refuses CORS on pending `404`s, matching the live servers).
 
 ## 1. Calendar servers (OpenTimestamps)
 

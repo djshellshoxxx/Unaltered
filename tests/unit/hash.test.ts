@@ -190,6 +190,35 @@ describe('FR-1 hashing', () => {
       expect(result!.hex).toBe(expected);
       expect(f.ranges).toEqual([[0, 3], [3, 6], [6, 7]]);
     });
+    it('does not treat a slow but steadily delivering slice as a stall (progress-based timeout)', async () => {
+      // One byte per pull, each well under stallMs, but a whole 3-byte region takes longer than stallMs.
+      const blob = new Blob([bytes as BlobPart]);
+      const slice = blob.slice.bind(blob);
+      const ranges: number[][] = [];
+      blob.slice = (start = 0, end = blob.size): Blob => {
+        ranges.push([start, end]);
+        const part = slice(start, end);
+        let offset = start;
+        part.stream = () => new ReadableStream({ type: 'bytes', async pull(controller) {
+          const request = controller.byobRequest!;
+          if (offset === end) {
+            controller.close();
+            request.respond(0);
+            return;
+          }
+          await new Promise((r) => setTimeout(r, 15));
+          new Uint8Array(request.view!.buffer, request.view!.byteOffset, 1)[0] = bytes[offset]!;
+          offset += 1;
+          request.respond(1);
+        } });
+        return part;
+      };
+      const progress: number[] = [];
+      const result = await hashSource(blob, { chunkSize: 3, stallMs: 30, onProgress: (n) => progress.push(n) });
+      expect(result!.hex).toBe(expected);
+      expect(ranges).toEqual([[0, 3], [3, 6], [6, 7]]);
+      expect(progress).toEqual([3, 6, 7]);
+    });
     it('fails with a typed error, instead of hanging, when a slice keeps stalling', async () => {
       const f = stallingBlob(bytes, (start, _attempt, phase) => start === 3 && phase === 'data');
       const started = Date.now();
@@ -228,6 +257,47 @@ describe('FR-1 hashing', () => {
       };
       return blob;
     }
+    // Delivers at most `step` bytes per read, waiting `delayMs` first; reads of attempt 1 at `hangAfter` bytes never settle.
+    function trickleBlob(step: number, delayMs: number, hangAt: number | null) {
+      const blob = new Blob([bytes as BlobPart]);
+      const slice = blob.slice.bind(blob);
+      const ranges: number[][] = [];
+      let opened = 0;
+      blob.slice = (start = 0, end = blob.size): Blob => {
+        ranges.push([start, end]);
+        const attempt = ++opened;
+        const part = slice(start, end);
+        let offset = start;
+        part.stream = () => new ReadableStream({ type: 'bytes', async pull(controller) {
+          if (hangAt !== null && attempt === 1 && offset >= hangAt && offset !== end) return new Promise<void>(() => {});
+          await new Promise((r) => setTimeout(r, delayMs));
+          let request: ReadableStreamBYOBRequest | null;
+          try { request = controller.byobRequest; } catch { return; }
+          if (!request) return;
+          if (offset === end) { controller.close(); request.respond(0); return; }
+          const view = new Uint8Array(request.view!.buffer, request.view!.byteOffset, request.view!.byteLength);
+          const length = Math.min(view.length, end - offset, step);
+          view.set(bytes.subarray(offset, offset + length));
+          offset += length;
+          request.respond(length);
+        }, cancel() { return new Promise<void>(() => {}); } });
+        part.arrayBuffer = async (): Promise<ArrayBuffer> => { throw new Error('unexpected allocated slice read'); };
+        return part;
+      };
+      return { blob, ranges };
+    }
+    it('does not abandon a slow device that keeps delivering small pieces', async () => {
+      const f = trickleBlob(1, 15, null); // 7 bytes at 15 ms each: far longer than stallMs in total, never silent for stallMs
+      const result = await hashSource(f.blob, { chunkSize: 7, stallMs: 60 });
+      expect(result!.hex).toBe(expected);
+      expect(f.ranges).toEqual([[0, 7]]);
+    });
+    it('resumes after the bytes already delivered when a read stalls mid-chunk', async () => {
+      const f = trickleBlob(2, 1, 4); // first open delivers bytes 0-3 then goes silent
+      const result = await hashSource(f.blob, { chunkSize: 7, stallMs: 30 });
+      expect(result!.hex).toBe(expected);
+      expect(f.ranges).toEqual([[0, 7], [4, 7]]);
+    });
     it('ignores bytes an abandoned read delivers after its timeout', async () => {
       const blob = lateBlob(3, 80, false);
       const progress: number[] = [];
@@ -244,6 +314,130 @@ describe('FR-1 hashing', () => {
         new Promise<string>((r) => setTimeout(() => r('HUNG'), 1500)),
       ]);
       expect(outcome).toBeNull();
+    });
+  });
+  it('does not return a fallback digest when cancelled by the final progress callback', async () => {
+    const ac = new AbortController();
+    await expect(hashBlob(new Blob(['abc']), {
+      noWorker: true, signal: ac.signal, onProgress: () => ac.abort(),
+    })).rejects.toMatchObject({ code: 'ABORTED' });
+  });
+  it.each(['data', 'eof'] as const)('returns null when cancelled during the final %s read', async (phase) => {
+    const blob = new Blob(['abc']);
+    const slice = blob.slice.bind(blob);
+    let cancelled = false;
+    blob.slice = (start = 0, end = blob.size): Blob => {
+      const part = slice(start, end);
+      let offset = start;
+      part.stream = () => new ReadableStream({ type: 'bytes', async pull(controller) {
+        const request = controller.byobRequest!;
+        const eof = offset === end;
+        if ((phase === 'eof') === eof) {
+          await new Promise((resolve) => setTimeout(resolve, 0));
+          cancelled = true;
+        }
+        if (eof) { controller.close(); request.respond(0); return; }
+        new Uint8Array(request.view!.buffer, request.view!.byteOffset, 3).set([97, 98, 99]);
+        offset = end;
+        request.respond(3);
+      } });
+      return part;
+    };
+    await expect(hashSource(blob, { isCancelled: () => cancelled })).resolves.toBeNull();
+  });
+  it('does not return a fallback digest when cancelled during the WebCrypto cross-check', async () => {
+    const ac = new AbortController();
+    const digest = globalThis.crypto.subtle.digest.bind(globalThis.crypto.subtle);
+    const mocked = vi.spyOn(globalThis.crypto.subtle, 'digest').mockImplementation(async (algorithm, input) => {
+      ac.abort();
+      return digest(algorithm, input);
+    });
+    try {
+      await expect(hashBlob(new Blob(['abc']), { noWorker: true, signal: ac.signal })).rejects.toMatchObject({ code: 'ABORTED' });
+    } finally { mocked.mockRestore(); }
+  });
+  it('keeps progress and yield cadence across partial reads and a reopened slice', async () => {
+    const bytes = Uint8Array.from({ length: 11 }, (_, index) => index);
+    const blob = new Blob([bytes]);
+    const slice = blob.slice.bind(blob);
+    const ranges: number[][] = [];
+    const progress: number[] = [];
+    let yields = 0;
+    blob.slice = (start = 0, end = blob.size): Blob => {
+      ranges.push([start, end]);
+      const part = slice(start, end);
+      let offset = start;
+      part.stream = () => new ReadableStream({ type: 'bytes', pull(controller) {
+        const request = controller.byobRequest!;
+        if (start === 3 && offset === 4) return new Promise<void>(() => {});
+        if (offset === end) { controller.close(); request.respond(0); return; }
+        new Uint8Array(request.view!.buffer, request.view!.byteOffset, 1)[0] = bytes[offset++]!;
+        request.respond(1);
+      } });
+      return part;
+    };
+    const result = await hashSource(blob, {
+      chunkSize: 3, stallMs: 20, onProgress: (done) => progress.push(done), yieldFn: async () => { yields++; },
+    });
+    expect(result!.hex).toBe(createHash('sha256').update(bytes).digest('hex'));
+    expect(ranges).toEqual([[0, 3], [3, 6], [4, 6], [6, 9], [9, 11]]);
+    expect(progress).toEqual([3, 6, 9, 11]);
+    expect(yields).toBe(4);
+  });
+  describe('bounded abandoned hashing buffers', () => {
+    function intermittentBlob(cancelMode: 'pending' | 'settled' | 'rejected', phase: 'data' | 'eof' = 'data') {
+      const bytes = Uint8Array.from({ length: 15 }, (_, index) => index);
+      const blob = new Blob([bytes]);
+      const slice = blob.slice.bind(blob);
+      const ranges: number[][] = [];
+      let cancellations = 0;
+      blob.slice = (start = 0, end = blob.size): Blob => {
+        ranges.push([start, end]);
+        const part = slice(start, end);
+        let offset = start;
+        part.stream = () => new ReadableStream({ type: 'bytes', pull(controller) {
+          const request = controller.byobRequest!;
+          // Each original slice delivers a byte, then needs a reopen; reopened slices finish normally.
+          if (phase === 'data' && start % 3 === 0 && offset === start + 1 && offset < end) return new Promise<void>(() => {});
+          if (phase === 'eof' && offset === end) return new Promise<void>(() => {});
+          if (offset === end) { controller.close(); request.respond(0); return; }
+          const length = start % 3 === 0 ? 1 : end - offset;
+          new Uint8Array(request.view!.buffer, request.view!.byteOffset, length).set(bytes.subarray(offset, offset + length));
+          offset += length;
+          request.respond(length);
+        }, cancel() {
+          cancellations++;
+          if (cancelMode === 'pending') return new Promise<void>(() => {});
+          if (cancelMode === 'rejected') return Promise.reject(new Error('cancel backend failed'));
+        } });
+        return part;
+      };
+      return { blob, bytes, ranges, cancels: () => cancellations };
+    }
+    it.each(['pending', 'rejected'] as const)('bounds abandoned data buffers when cancellations are %s despite continued progress', async (mode) => {
+      const f = intermittentBlob(mode);
+      const progress: number[] = [];
+      await expect(hashSource(f.blob, { chunkSize: 3, stallMs: 20, onProgress: (n) => progress.push(n) }))
+        .rejects.toMatchObject({ code: 'INPUT_UNREADABLE' });
+      expect(f.cancels()).toBe(3);
+      expect(f.ranges).toEqual([[0, 3], [1, 3], [3, 6], [4, 6], [6, 9]]);
+      expect(progress).toEqual([3, 6]);
+    });
+    it('releases the abandoned-buffer budget when cancellation completes', async () => {
+      const f = intermittentBlob('settled');
+      const progress: number[] = [];
+      const result = await hashSource(f.blob, { chunkSize: 3, stallMs: 20, onProgress: (n) => progress.push(n) });
+      expect(result!.hex).toBe(createHash('sha256').update(f.bytes).digest('hex'));
+      expect(f.cancels()).toBe(5); // More than MAX_STALLS is safe when each previous backend releases its buffer.
+      expect(f.ranges.length).toBe(10);
+      expect(progress).toEqual([3, 6, 9, 12, 15]);
+    });
+    it('does not charge one-byte EOF probes against the full hashing-buffer budget', async () => {
+      const f = intermittentBlob('pending', 'eof');
+      const result = await hashSource(f.blob, { chunkSize: 3, stallMs: 20 });
+      expect(result!.hex).toBe(createHash('sha256').update(f.bytes).digest('hex'));
+      expect(f.cancels()).toBe(5);
+      expect(f.ranges).toEqual([[0, 3], [3, 6], [6, 9], [9, 12], [12, 15]]);
     });
   });
   describe('worker outcomes', () => {

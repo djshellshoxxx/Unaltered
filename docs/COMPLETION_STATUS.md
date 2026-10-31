@@ -1,6 +1,31 @@
 # Completion and validation record
 
-## Current replacement executor — 2026-10-24
+Current publication addendum: [final handoff and raw evidence](FINAL_HANDOFF_20261030.md).
+
+## Authoritative consolidation — 2026-10-30
+
+**Reviewable candidate; audit-preparation milestone incomplete.** [PR34](https://github.com/djshellshoxxx/Unaltered/pull/34),
+branch `codex/audit-preparation-20261030`, base `da9b0a3626e702381f2ad1d1b1d4cd3128fde2dd`, final source/test/workflow
+`f2e7d24017171475be23f9e069a91ae195fea2c3`; product/tests are unchanged from `d09c2401839ea5a06fd794c9666d439b17e500e4`. Following commits are documentation/evidence. Version0.3.1 unchanged.
+Read [the current acceptance and recovery ledger](CONSOLIDATION_20261030.md), [branch reconciliation](BRANCH_LEDGER_20261030.md)
+and [internal review](REVIEW_CONSOLIDATION_20261030.md). Dated records below do not establish acceptance of this candidate.
+
+Local check173 Vitest pass/1optional skip +5 Node; actual Python reference21/21, regenerated fixtures7/7, toolkit18/18;
+Node2GiB37/37; two builds identical across all10 files; Chromium2GiB3/3 with max extra renderer RSS58,978,304 bytes.
+Seven language cases21/21, zero retries. Full local Chromium suite59pass/2fail/1skip: managed offline navigation denial and81ms
+responsiveness gap vs unchanged50ms. These failures remain recorded, even when supplemental/native tests pass.
+Native source run41171752457 checked out31369ca whose entire tree equalsd09c240 (063f20dd...). It supplies pinned three-engine,
+platform, provenance, Chromium2GiB and Alice confirmed app/reference evidence. Candidate FF/WebKit2GiB is skipped on PR events;
+manual dispatch is still required and completion alone will not establish memory ceilings there. Final addendum distinguishes
+source-checkpoint CI from documentation-head CI, including exact run/log links and artifact comparisons.
+
+Required software residuals and human/operational gates stay open: native stall A/B, fallback/cross-check cancellation limits,
+11 moderate dev-only minimatch entries, Bob/Finney/pending CORS, human accessibility/Spanish/usability, Tor/Trusted Types,
+independent audit, second-person rebuild, signing and legal/domain/account controls. Commits unsigned, neutral repo-local identity;
+no main merge, PR closure, release, deploy, credential or account change. No M4/M5 or release completion is claimed.
+
+
+## Historical replacement executor — 2026-10-24
 
 Continue from [HANDOFF_20261024.md](HANDOFF_20261024.md). It records source reconciliation, non-overlapping worker ownership,
 reproduced parser bugs and fixes, current checks, exact remote checkpoints and blockers. The missing old local checkpoint
