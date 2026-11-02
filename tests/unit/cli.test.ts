@@ -1,8 +1,9 @@
 import { execFileSync, spawn } from 'node:child_process';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { build } from 'esbuild';
 import { readReceipt, run } from '../../src/cli/run';
 import { LIMITS } from '../../src/core/ots/types';
 
@@ -13,6 +14,30 @@ const io = () => {
 const tmp = () => mkdtempSync(join(tmpdir(), 'unaltered-cli-'));
 
 describe('cli', () => {
+  it.runIf(process.platform === 'linux').each(['hash', 'verify'])('rejects an idle FIFO promptly for %s', async (command) => {
+    const dir = tmp();
+    try {
+      const cli = join(dir, 'cli.mjs');
+      await build({ entryPoints: ['src/cli/main.ts'], outfile: cli, bundle: true, platform: 'node', format: 'esm' });
+      const fifo = join(dir, 'idle-pipe');
+      const file = join(dir, 'a.txt');
+      execFileSync('mkfifo', [fifo]);
+      writeFileSync(file, 'abc');
+      const args = command === 'hash' ? ['hash', fifo] : ['verify', file, fifo];
+      const result = await new Promise<{ code: number | null; signal: string | null; out: string; err: string }>((resolve, reject) => {
+        const child = spawn(process.execPath, [cli, ...args], { timeout: 2000, killSignal: 'SIGKILL' });
+        let out = '';
+        let err = '';
+        child.stdout.on('data', (data: Buffer) => { out += data.toString(); });
+        child.stderr.on('data', (data: Buffer) => { err += data.toString(); });
+        child.on('error', reject);
+        child.on('close', (code, signal) => resolve({ code, signal, out, err }));
+      });
+      expect(result, args[0]).toEqual({ code: 1, signal: null, out: '', err: 'error: not a regular file\n' });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
   it('hashes a file (known vector for "abc")', async () => {
     const f = join(tmp(), 'a.txt');
     writeFileSync(f, 'abc');
