@@ -1,7 +1,28 @@
 # TODO
 
+Current publication addendum: [final handoff and raw evidence](FINAL_HANDOFF_20261030.md).
+
 Legend: `[ ]` open, `[x]` done. IDs map to milestones in `BUILD_PLAN.md` and requirements in `SPEC.md`.
 Do tasks in order within a milestone unless marked parallel.
+
+## Authoritative consolidation status — 2026-10-30
+
+Candidate [PR34](https://github.com/djshellshoxxx/Unaltered/pull/34), final source/workflow `f2e7d24017171475be23f9e069a91ae195fea2c3` (product/tests `d09c2401839ea5a06fd794c9666d439b17e500e4`),
+from main `da9b0a3`. Main already contains PR28/29/32; selected continuation25/30/31/33 is consolidated without closing them.
+See [acceptance, blockers, owners and exact next commands](CONSOLIDATION_20261030.md),
+[all branch dispositions](BRANCH_LEDGER_20261030.md) and current HANDOFF.md. Older acceptance notes below are historical.
+
+- [x] Consolidate silence-based partial-read hashing, cadence tests, conservative pending handling and seven language cases.
+- [x] Reproduce/fix final-boundary cancellation and unresolved data-buffer accumulation; internal changed-range review.
+- [x] Local173+5 check, reference21/21, toolkit18/18, fixtures7/7, ten-file reproducibility, Node2GiB37/37, Chromium real-file2GiB3/3.
+- [ ] Finish candidate acceptance ledger: FF/WebKit2GiB manual dispatch, native stall A/B and documented local browser/performance failures.
+- [ ] Resolve documented fallback cancellation residual (including pending cross-check reads) before claiming universal cancellation support.
+- [ ] Review11 moderate dev-only minimatch audit entries; runtime-only audit0. Local provenance blocked; native source verification recorded.
+- [ ] R1 residuals: Bob/Finney confirmed browser paths and known pending404 CORS/outage limitation. Alice source app/reference path has native evidence.
+- [ ] Human accessibility, all draft Spanish copy, usability3-5 people, Tor/Trusted Types, independent audit/rebuild, signing, operations and legal/domain controls.
+
+**Milestone remains incomplete; M4/M5/release are not complete.** Do not change development version0.3.1 to match historical release plans.
+The detailed existing open requirements remain open; internal agents/native CI do not satisfy human or independent-person gates.
 
 ## Repository and operations (do first)
 - [ ] **OPS-1** Decide pseudonymity policy for maintainers; document it (OPSEC §1). Rename/replace anything personal in the repo **before** the first public release.

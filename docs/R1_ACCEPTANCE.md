@@ -1,5 +1,9 @@
 # R1 acceptance procedure: confirmed upgrade in a browser plus independent verification
 
+Current source evidence (2026-10-30): PR34 source d09c240 has native Alice app/reference PASS on one downloaded receipt;
+see NETWORK.md and CONSOLIDATION_20261030.md for exact checkout/tree/job evidence. Bob/Finney and pending-response residuals
+remain open. A newer documentation head must have its own CI evidence. Local executor attempts remain TLS/proxy-blocked.
+
 R1 asks whether the app, running in a real browser under its own CSP, can upgrade a pending receipt to a Bitcoin-confirmed
 one and verify it, and whether an independent implementation agrees. Pending `404` replies are already known to lack
 `Access-Control-Allow-Origin` ([NETWORK.md](NETWORK.md)); the app keeps such receipts pending and reports the calendar failure.

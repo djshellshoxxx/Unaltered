@@ -1,3 +1,50 @@
+# Current consolidation — 2026-10-30 (America/Los_Angeles)
+
+Current publication addendum: [final handoff and raw evidence](docs/FINAL_HANDOFF_20261030.md).
+
+Reviewable candidate: **[draft PR34](https://github.com/djshellshoxxx/Unaltered/pull/34)**, branch
+`codex/audit-preparation-20261030`, based on current main `da9b0a3626e702381f2ad1d1b1d4cd3128fde2dd`.
+Final source/workflow SHA: `f2e7d24017171475be23f9e069a91ae195fea2c3`; product/test checkpoint: `d09c2401839ea5a06fd794c9666d439b17e500e4`.
+The final workflow-only correction calls the installed pinned Playwright CLI directly, eliminating implicit npx downloads;
+subsequent commits contain documentation/evidence.
+**Audit-preparation milestone incomplete; no M4/M5 or release completion claim.** Start with
+[the consolidated acceptance/recovery record](docs/CONSOLIDATION_20261030.md),
+[every branch disposition](docs/BRANCH_LEDGER_20261030.md), and
+[internal review](docs/REVIEW_CONSOLIDATION_20261030.md). These supersede historical ownership/merge advice below.
+
+Integrated selected #25/#30/#33 work plus #31's unique progress assertion/comments. Main already includes #28/#29/#32.
+Hashing retains silence timing, immediate partial-byte hashing, exact resume, bounded slices/reuse, EOF and typed errors.
+Added demonstrated final-boundary cancellation and retained-data-buffer repairs. The pending notice acknowledges network
+ambiguity and remains truthful for mixed changed-pending results. Seven language cases pass21/21 with no retries.
+All28 original remote branches were checked by ancestry/patch identity and inspected; no source branch was rewritten,
+merged, deleted or closed. Human gate scripts were selected; a false-positive Bob/Finney diagnostic was omitted.
+
+Local Node22 check173+5 pass (1 optional skip); Node2GiB37/37; two builds10/10 byte-identical; real-file Chromium2GiB3/3,
+max extra renderer RSS58,978,304 bytes, unchanged540s/<200MiB. Local full E2E59pass/2fail/1skip preserves managed
+file-navigation denial and81ms responsiveness failure. Native source CI provides distinct pinned-engine, platform and
+Alice app/reference evidence; exact logs/tree equality, all skips and remaining non-PR large-file gate are in the record.
+Local pinned-browser/provenance/service paths are blocked by policy; no bypass or credentials were introduced.
+
+Remaining: candidate FF/WebKit2GiB dispatch (no RSS evidence there), native stall A/B, documented fallback cancellation
+limits, dev minimatch advisory, Bob/Finney confirmed paths/pending CORS, human accessibility/Spanish/usability,
+Tor/Trusted Types, independent audit/rebuild, signing and operational/legal controls. Commits are unsigned with a neutral
+repo-local identity; no signing key was created. No main merge, release, tag, deployment, purchase, paid external agent/API
+or account/credential change. Owner reviews one candidate; preserve existing PRs25/30/31/33.
+
+Final documentation head, working-tree verification, local baseline/focused-performance results and latest CI are recorded
+in the final evidence addendum and committed handoff. Recovery and ready-to-run continuation prompt are in the record.
+All earlier dated sections are retained as historical evidence, including PR25 context immediately below.
+
+---
+
+# Continuation 2026-10-30 — PR25 timeout policy integrated (main merged in, not rebased)
+
+- The owner approved the silence-based stall policy of PR25 (decision D6, 2026-10-30). `main` (`da9b0a3`) was merged into
+  `claude/friendly-faraday-papf5c`; the branch was **not** rebased and its stall-timer code and tests are unchanged.
+- `HANDOFF.md` was the only conflict. Both sides are kept: every section from main unchanged, and the PR25 section below,
+  placed by date above "(c) — owner decisions applied". Exact-head CI and the Firefox/WebKit 2 GiB dispatch are recorded in
+  the next top-level handoff section written after the merge.
+
 # Continuation 2026-10-29 (g) — MP3 trailer regression, updater trust, download names
 
 Branch `claude/unaltered-continuation-20261029` (draft PR29), stacked on PR28 `codex/accepted-gates-20261028` at
@@ -159,6 +206,15 @@ commands in `docs/REVIEW_20261028.md` / `docs/FUZZING.md`. Preserve historical f
 - Next: finish deep/legacy review, reproduce/fix supported security findings, rerun affected gates, secret
   scan and updated source/evidence checkpoint. R1, signing, human accessibility/Spanish/usability, independent audit/rebuild and
   release/account/legal controls remain open. This is agent-assisted internal review, not the independent audit required by REL-3.
+
+# Continuation 2026-10-28 (c) — PR #25, head `73fc82e`
+
+Owner approved: watchdog timeout policy, Firefox/WebKit 2 GiB check, language switch (#9). #25 covers the first two; the language switch is a separate PR and is not started.
+
+- Timeout policy: Blob reads no longer pass a full-chunk `min`, so any delivered bytes reset the 30 s stall timer (silence, not chunk-fill time). Reopen-from-last-hashed-byte and 3-consecutive-stall `INPUT_UNREADABLE` unchanged. Progress and yielding are throttled to once per chunk of progress because Firefox delivers ~64 KiB reads. New unit tests (slow trickle not abandoned; mid-chunk stall resumes at the right offset) fail on the old logic.
+- Firefox/WebKit: `tests/e2e/memory.spec.ts` runs there without an RSS probe (completion, digest, 540 s limit only; the 200 MiB ceiling is NOT evidenced). CI job `Browser 2 GiB completion (firefox|webkit)` runs on main and manual dispatch only. Dispatched run 40626267870 on `73fc82e`: Firefox 3/3 (~38 s each), WebKit 3/3 (~19 s each), both real passes with digest.
+- Chromium 2 GiB gate on `73fc82e` with the new rule: passed in both the PR run and the dispatched run (2 x 3 attempts, ~2.2-2.5 min per job), plus 3/3 locally. Six attempts is not an A/B; the stall is still not proven fixed. Re-running the 8-shard baseline-vs-candidate comparison against this head would be the like-for-like evidence.
+- Everything else on `73fc82e` green except the informational live check (known CORS 404 on pending calendar lookups).
 
 # Continuation 2026-10-28 (c) — owner decisions applied
 

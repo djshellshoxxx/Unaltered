@@ -1,7 +1,9 @@
+import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
-import { fromHex } from '../../src/core/bytes';
-import { serializeProof } from '../../src/core/ots/codec';
-import { sha256hex } from './helpers';
+import { fromHex, toHex } from '../../src/core/bytes';
+import { collectAttestations, parseProof, serializeProof } from '../../src/core/ots/codec';
+import { TABLES } from '../../src/ui/strings';
+import { installNetwork, sha256hex } from './helpers';
 
 // PROPOSAL (docs/proposals/LANGUAGE_SWITCH.md): language is presentation state. Switching it keeps the selected
 // file, receipt and fingerprint and any result, renders them in the new language, and never restarts or repeats work.
@@ -47,6 +49,22 @@ async function switchToSpanish(page: Page): Promise<void> {
   await page.goto(`${page.url().split('#')[0]}#settings`);
   await page.getByRole('radio', { name: 'Español', exact: true }).check();
   await expect(page.locator('html')).toHaveAttribute('lang', 'es');
+}
+
+async function switchToEnglish(page: Page): Promise<void> {
+  await page.goto(`${page.url().split('#')[0]}#settings`);
+  await page.getByRole('radio', { name: 'English', exact: true }).check();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+}
+
+/** Stamps CONTENT through the UI (mocked calendars) and returns the downloaded pending receipt. */
+async function stampedReceipt(page: Page): Promise<Buffer> {
+  await page.goto('/index.html#stamp');
+  await page.setInputFiles('#stamp-file', { name: 'up.txt', mimeType: 'text/plain', buffer: CONTENT });
+  await page.getByLabel(/I understand and want to continue/).check();
+  await page.getByRole('button', { name: 'Create receipt' }).click();
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('link', { name: /Download receipt/ }).click()]);
+  return readFileSync((await dl.path())!);
 }
 
 test('a verification result and its inputs survive a language switch and are shown in the new language', async ({ page }) => {
@@ -107,4 +125,64 @@ test('a fingerprint being computed during a language switch finishes once', asyn
   await page.evaluate(() => (window as unknown as { __c: Counters }).__c.held.splice(0).forEach((go) => go()));
   await expect(page.locator('.item code.digest')).toBeVisible();
   expect((await counters(page)).workers).toBe(1);
+});
+
+test('a receipt created but not yet downloaded survives EN→ES→EN with no new calendar request', async ({ page, context }) => {
+  const chain = await installNetwork(context);
+  await page.goto('/index.html#stamp');
+  await page.setInputFiles('#stamp-file', { name: 'kept.txt', mimeType: 'text/plain', buffer: CONTENT });
+  await expect(page.locator('.item code.digest')).toBeVisible();
+  await page.getByLabel(/I understand and want to continue/).check();
+  await page.getByRole('button', { name: 'Create receipt' }).click();
+  await expect(page.getByRole('link', { name: /Download receipt/ })).toBeVisible();
+  expect(chain.digestPosts).toHaveLength(3);
+
+  await switchToSpanish(page);
+  await page.goto('/index.html#stamp');
+  await expect(page.locator('.item .item-name')).toHaveText('kept.txt');
+  await expect(page.getByRole('link', { name: 'Descargar recibo (kept.txt.ots)' })).toBeVisible();
+
+  await switchToEnglish(page);
+  await page.goto('/index.html#stamp');
+  const link = page.getByRole('link', { name: 'Download receipt (kept.txt.ots)' });
+  const [dl] = await Promise.all([page.waitForEvent('download'), link.click()]);
+  const receipt = parseProof(new Uint8Array(readFileSync((await dl.path())!)));
+  expect(toHex(receipt.digest)).toBe(HEX);
+  expect(chain.digestPosts).toHaveLength(3); // nothing re-submitted
+});
+
+test('an upgrade result and its download survive a language switch without asking the calendars again', async ({ page, context }) => {
+  const chain = await installNetwork(context, { confirm: true });
+  const pending = await stampedReceipt(page);
+  await page.goto('/index.html#verify');
+  await page.setInputFiles('#upgrade-receipt', { name: 'up.ots', mimeType: 'application/octet-stream', buffer: pending });
+  await page.getByRole('button', { name: 'Check for confirmation' }).click();
+  await expect(page.getByRole('link', { name: 'Download upgraded receipt (up.upgraded.ots)' })).toBeVisible();
+  const gets = chain.timestampGets.length;
+
+  await switchToSpanish(page);
+  await page.goto('/index.html#verify');
+  await expect(page.locator('.upgrade-result [role=status]')).toHaveText(TABLES.es['upgrade.confirmed']);
+  const link = page.getByRole('link', { name: 'Descargar recibo actualizado (up.upgraded.ots)' });
+  const [dl] = await Promise.all([page.waitForEvent('download'), link.click()]);
+  const upgraded = parseProof(new Uint8Array(readFileSync((await dl.path())!)));
+  expect(collectAttestations(upgraded.root).some((a) => a.attestation.kind === 'bitcoin')).toBe(true);
+  expect(chain.timestampGets).toHaveLength(gets);
+});
+
+test('an upgrade waiting on the network during a language switch completes once', async ({ page, context }) => {
+  const chain = await installNetwork(context, { confirm: true });
+  const pending = await stampedReceipt(page);
+  const held: (() => Promise<void>)[] = [];
+  await context.route('https://*/timestamp/**', (route) => { held.push(() => route.fallback()); });
+  await page.goto('/index.html#verify');
+  await page.setInputFiles('#upgrade-receipt', { name: 'up.ots', mimeType: 'application/octet-stream', buffer: pending });
+  await page.getByRole('button', { name: 'Check for confirmation' }).click();
+  await expect.poll(() => held.length).toBe(3);
+
+  await switchToSpanish(page);
+  await page.goto('/index.html#verify');
+  await Promise.all(held.splice(0).map((go) => go()));
+  await expect(page.getByRole('link', { name: 'Descargar recibo actualizado (up.upgraded.ots)' })).toBeVisible();
+  expect(chain.timestampGets).toHaveLength(3); // one request per calendar, not repeated
 });

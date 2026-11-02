@@ -1,0 +1,772 @@
+{
+  "date_client": "2026-10-30 America/Los_Angeles",
+  "source_sha": "f2e7d24017171475be23f9e069a91ae195fea2c3",
+  "base_sha": "da9b0a3626e702381f2ad1d1b1d4cd3128fde2dd",
+  "ci_checkout": "31369ca8e82ca077abdc1dfa8489a30fbe665902",
+  "branch": "codex/audit-preparation-20261030",
+  "pr_url": "https://github.com/djshellshoxxx/Unaltered/pull/34",
+  "milestone": "incomplete",
+  "local_commands": [
+    {
+      "name": "final-build-1",
+      "args": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit": 0,
+      "seconds": 0.239,
+      "source_sha": "d09c2401839ea5a06fd794c9666d439b17e500e4",
+      "env": {
+        "CHROMIUM_PATH": "/usr/bin/chromium",
+        "UNALTERED_PYTHON": "/workspace/work/unaltered/ots-reference/bin/python"
+      },
+      "extra_env": {}
+    },
+    {
+      "name": "final-build-2",
+      "args": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit": 0,
+      "seconds": 0.235,
+      "source_sha": "d09c2401839ea5a06fd794c9666d439b17e500e4",
+      "env": {
+        "CHROMIUM_PATH": "/usr/bin/chromium",
+        "UNALTERED_PYTHON": "/workspace/work/unaltered/ots-reference/bin/python"
+      },
+      "extra_env": {}
+    },
+    {
+      "name": "final-chromium-e2e",
+      "args": [
+        "npx",
+        "--no-install",
+        "playwright",
+        "test",
+        "--retries=0",
+        "--reporter=list,json"
+      ],
+      "exit": 1,
+      "seconds": 43.341,
+      "source_sha": "d09c2401839ea5a06fd794c9666d439b17e500e4",
+      "env": {
+        "CHROMIUM_PATH": "/usr/bin/chromium",
+        "UNALTERED_PYTHON": "/workspace/work/unaltered/ots-reference/bin/python"
+      },
+      "extra_env": {
+        "PLAYWRIGHT_JSON_OUTPUT_NAME": "/workspace/work/unaltered/final-chromium-e2e.json"
+      }
+    },
+    {
+      "name": "final-language-repeat",
+      "args": [
+        "npx",
+        "--no-install",
+        "playwright",
+        "test",
+        "tests/e2e/language-switch.spec.ts",
+        "--repeat-each=3",
+        "--retries=0",
+        "--reporter=list,json"
+      ],
+      "exit": 0,
+      "seconds": 16.923,
+      "source_sha": "d09c2401839ea5a06fd794c9666d439b17e500e4",
+      "env": {
+        "CHROMIUM_PATH": "/usr/bin/chromium",
+        "UNALTERED_PYTHON": "/workspace/work/unaltered/ots-reference/bin/python"
+      },
+      "extra_env": {
+        "PLAYWRIGHT_JSON_OUTPUT_NAME": "/workspace/work/unaltered/final-language-repeat.json"
+      }
+    },
+    {
+      "name": "final-node-2gib",
+      "args": [
+        "npx",
+        "--no-install",
+        "vitest",
+        "run",
+        "tests/unit/hash.test.ts"
+      ],
+      "exit": 0,
+      "seconds": 15.72,
+      "source_sha": "d09c2401839ea5a06fd794c9666d439b17e500e4",
+      "env": {
+        "CHROMIUM_PATH": "/usr/bin/chromium",
+        "UNALTERED_PYTHON": "/workspace/work/unaltered/ots-reference/bin/python"
+      },
+      "extra_env": {
+        "UNALTERED_BIG": "1"
+      }
+    },
+    {
+      "name": "final-chromium-2gib",
+      "args": [
+        "npx",
+        "--no-install",
+        "playwright",
+        "test",
+        "tests/e2e/memory.spec.ts",
+        "--repeat-each=3",
+        "--retries=0",
+        "--max-failures=1",
+        "--reporter=list,json"
+      ],
+      "exit": 0,
+      "seconds": 116.715,
+      "source_sha": "d09c2401839ea5a06fd794c9666d439b17e500e4",
+      "env": {
+        "CHROMIUM_PATH": "/usr/bin/chromium",
+        "UNALTERED_PYTHON": "/workspace/work/unaltered/ots-reference/bin/python"
+      },
+      "extra_env": {
+        "UNALTERED_BIG_BROWSER": "1",
+        "PLAYWRIGHT_JSON_OUTPUT_NAME": "/workspace/work/unaltered/final-chromium-2gib.json"
+      }
+    },
+    {
+      "name": "final-r1-browser",
+      "args": [
+        "node",
+        "scripts/r1-acceptance.mjs",
+        "/workspace/work/unaltered/r1/incomplete.txt",
+        "/workspace/work/unaltered/r1/incomplete.txt.ots",
+        "/workspace/work/unaltered/r1/final-out"
+      ],
+      "exit": 1,
+      "seconds": 1.148,
+      "source_sha": "d09c2401839ea5a06fd794c9666d439b17e500e4",
+      "env": {
+        "CHROMIUM_PATH": "/usr/bin/chromium",
+        "UNALTERED_PYTHON": "/workspace/work/unaltered/ots-reference/bin/python"
+      },
+      "extra_env": {}
+    }
+  ],
+  "local_build_manifest": "b842bfb586cc8249250d44e4795c14c4d495fe694ec71d746d434c994c6d19cb  SHA256SUMS\na1acf2b541e7fb2c0d4f7ceb48d8eec15c327e441f17b02d979e7ac3ae86f946  unaltered-0.3.1-linux.tar.gz\n35e33bf657d63ccd9b3dd2b24655eb89f26686c92e12787116c3785df6b45dd1  unaltered-0.3.1-macos.zip\nec417a90de7e2fba2329e50aa233241cf821987dcb8918bdce718bc0a1ec0fb7  unaltered-0.3.1.html\n36e4c1b92201b242fc1232e2441d6fbd1eaf9ae8020b0e83dded1d69fe757375  unaltered-0.3.1.zip\n37930af11f66e1434c17cd78a1c8ff2d97efe147e1bc2553216aa726ee9579ec  unaltered-cli-0.3.1.mjs\n6d462ed94edc8a79cc77880feadfee9181563bd3dc2c50dbadb58efb6270e974  web/hasher.worker.js\n3740c800f07aed3b035916ea2f2e15f71afd928d1b59c1a0258ef43b072672eb  web/index.html\n64314504f93ea2c7a7d6e6057a0dd1c93d79c8c9cac0fbe57e8841ee98cd088b  web/main.js\na6615aedfd8aa0549a9d01c462ddefc2548d3908b9c306e8b0e232cad756d161  web/styles.css\n",
+  "checksums": "35e33bf657d63ccd9b3dd2b24655eb89f26686c92e12787116c3785df6b45dd1  unaltered-0.3.1-macos.zip\n36e4c1b92201b242fc1232e2441d6fbd1eaf9ae8020b0e83dded1d69fe757375  unaltered-0.3.1.zip\n37930af11f66e1434c17cd78a1c8ff2d97efe147e1bc2553216aa726ee9579ec  unaltered-cli-0.3.1.mjs\na1acf2b541e7fb2c0d4f7ceb48d8eec15c327e441f17b02d979e7ac3ae86f946  unaltered-0.3.1-linux.tar.gz\nec417a90de7e2fba2329e50aa233241cf821987dcb8918bdce718bc0a1ec0fb7  unaltered-0.3.1.html\n",
+  "local_node_check": {
+    "vitest_pass": 173,
+    "optional_skip": 1,
+    "node_pass": 5,
+    "log": "check-source-freeze.log"
+  },
+  "python": {
+    "toolkit_pass": 18,
+    "codec_pass": 21,
+    "fixtures_byte_identical": 7
+  },
+  "browser_installs": "all three pinned engines attempted; HTTP403 destination-policy denial; installed Chromium154 supplemental only",
+  "local_browser_results": {
+    "full": {
+      "cases": 62,
+      "status_counts": {
+        "expected": 59,
+        "unexpected": 2,
+        "skipped": 1
+      },
+      "retries": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "failures": [
+        {
+          "title": "works offline from a local file (single-file build) and without any network request",
+          "status": "unexpected",
+          "annotations": [],
+          "results": [
+            {
+              "status": "failed",
+              "duration": 130,
+              "retry": 0,
+              "errors": [
+                {
+                  "location": {
+                    "file": "/workspace/Unaltered/tests/e2e/app.spec.ts",
+                    "column": 16,
+                    "line": 259
+                  },
+                  "message": "Error: page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at file:///workspace/Unaltered/dist/unaltered-0.3.1.html#stamp\nCall log:\n\u001b[2m  - navigating to \"file:///workspace/Unaltered/dist/unaltered-0.3.1.html#stamp\", waiting until \"load\"\u001b[22m\n\n\n  257 |     const version = (JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }).version;\n  258 |     const file = pathToFileURL(resolve('dist', `unaltered-${version}.html`)).href;\n> 259 |     await page.goto(`${file}#stamp`);\n      |                ^\n  260 |     await page.setInputFiles('#stamp-file', { name: 'offline.txt', mimeType: 'text/plain', buffer: NOTE });\n  261 |     await expect(page.locator('.digest').first()).toContainText(groupHex(NOTE_HEX));\n  262 |     expect(await cspViolations(page)).toEqual([]);\n    at /workspace/Unaltered/tests/e2e/app.spec.ts:259:16"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "hashes in a Web Worker without blocking the main thread",
+          "status": "unexpected",
+          "annotations": [],
+          "results": [
+            {
+              "status": "failed",
+              "duration": 1669,
+              "retry": 0,
+              "errors": [
+                {
+                  "location": {
+                    "file": "/workspace/Unaltered/tests/e2e/app.spec.ts",
+                    "column": 80,
+                    "line": 333
+                  },
+                  "message": "Error: {\"phases\":[{\"phase\":\"fixture-transfer-start\",\"ms\":0.6000000000931323},{\"phase\":\"fixture-transfer-added\",\"ms\":0.7000000000698492},{\"phase\":\"fixture-assigned\",\"ms\":1.3000000000465661},{\"phase\":\"main-blob-16-read-start\",\"ms\":5},{\"phase\":\"change-dispatched\",\"ms\":5.600000000093132},{\"phase\":\"main-blob-16-read-end\",\"ms\":12.400000000023283},{\"phase\":\"worker-constructor-start\",\"ms\":12.900000000023283},{\"phase\":\"worker-constructor-end\",\"ms\":13.300000000046566},{\"phase\":\"worker-progress\",\"ms\":153.40000000002328},{\"phase\":\"worker-progress\",\"ms\":228.60000000009313},{\"phase\":\"worker-progress\",\"ms\":296.4000000000233},{\"phase\":\"worker-progress\",\"ms\":482.5},{\"phase\":\"worker-progress\",\"ms\":549.4000000000233},{\"phase\":\"worker-progress\",\"ms\":614.5},{\"phase\":\"worker-progress\",\"ms\":685.1000000000931},{\"phase\":\"worker-progress\",\"ms\":753.3000000000466},{\"phase\":\"worker-progress\",\"ms\":819.1000000000931},{\"phase\":\"worker-progress\",\"ms\":885.7000000000698},{\"phase\":\"worker-progress\",\"ms\":954.5},{\"phase\":\"worker-progress\",\"ms\":1020.8000000000466},{\"phase\":\"worker-done\",\"ms\":1172.9000000000233},{\"phase\":\"worker-terminate-start\",\"ms\":1172.9000000000233},{\"phase\":\"worker-terminate-end\",\"ms\":1173}],\"gaps\":[{\"gap\":81,\"ms\":441.9000000000233,\"phase\":\"worker-progress\"}]}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: < \u001b[32m50\u001b[39m\nReceived:   \u001b[31m81\u001b[39m\n\n  331 |     // sha256 of 48 MiB of zero bytes\n  332 |     expect(res.digest.replace(/ /g, '')).toHaveLength(64);\n> 333 |     expect(res.maxGap, JSON.stringify({ phases: res.phases, gaps: res.gaps })).toBeLessThan(50);\n      |                                                                                ^\n  334 |   });\n  335 |\n  336 |   test('opt-in receipt list and language switch', async ({ page, context }) => {\n    at /workspace/Unaltered/tests/e2e/app.spec.ts:333:80"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "raw_json": "final-chromium-e2e.json"
+    },
+    "language": {
+      "cases": 21,
+      "status_counts": {
+        "expected": 21
+      },
+      "retries": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "failures": [],
+      "raw_json": "final-language-repeat.json"
+    },
+    "memory": [
+      {
+        "title": "hashes a real 2 GiB file in the browser with less than 200 MiB extra renderer RSS",
+        "status": "expected",
+        "annotations": [
+          {
+            "type": "peak-extra-renderer-rss-bytes",
+            "description": "58978304"
+          }
+        ],
+        "results": [
+          {
+            "status": "passed",
+            "duration": 38844,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "title": "hashes a real 2 GiB file in the browser with less than 200 MiB extra renderer RSS",
+        "status": "expected",
+        "annotations": [
+          {
+            "type": "peak-extra-renderer-rss-bytes",
+            "description": "56725504"
+          }
+        ],
+        "results": [
+          {
+            "status": "passed",
+            "duration": 38727,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "title": "hashes a real 2 GiB file in the browser with less than 200 MiB extra renderer RSS",
+        "status": "expected",
+        "annotations": [
+          {
+            "type": "peak-extra-renderer-rss-bytes",
+            "description": "58376192"
+          }
+        ],
+        "results": [
+          {
+            "status": "passed",
+            "duration": 35324,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      }
+    ],
+    "baseline_memory": [
+      {
+        "title": "hashes a real 2 GiB file in the browser with less than 200 MiB extra renderer RSS",
+        "status": "expected",
+        "annotations": [
+          {
+            "type": "peak-extra-renderer-rss-bytes",
+            "description": "79249408"
+          }
+        ],
+        "results": [
+          {
+            "status": "passed",
+            "duration": 35317,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "title": "hashes a real 2 GiB file in the browser with less than 200 MiB extra renderer RSS",
+        "status": "expected",
+        "annotations": [
+          {
+            "type": "peak-extra-renderer-rss-bytes",
+            "description": "80613376"
+          }
+        ],
+        "results": [
+          {
+            "status": "passed",
+            "duration": 38783,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "title": "hashes a real 2 GiB file in the browser with less than 200 MiB extra renderer RSS",
+        "status": "expected",
+        "annotations": [
+          {
+            "type": "peak-extra-renderer-rss-bytes",
+            "description": "80019456"
+          }
+        ],
+        "results": [
+          {
+            "status": "passed",
+            "duration": 36222,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      }
+    ],
+    "focused_responsiveness": {
+      "cases": 5,
+      "status_counts": {
+        "expected": 5
+      },
+      "retries": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "failures": [],
+      "raw_json": "focused-responsiveness.json"
+    }
+  },
+  "baseline": {
+    "method": "candidate archive with stream.ts,errors.ts,hash.test.ts restored from0b448d8, as documented diagnostic workflow; same local Chromium, sequential3attempts each; zero retries",
+    "baseline_source_sha": "0b448d887df89fab22f701810197e51285590e2b",
+    "input_files_sha256": "90410b22e3a40d1cb9ba35f931c7e838769f2d4a78c0bd1886b277e33accb5fa  /workspace/work/unaltered/baseline/src/core/hash/stream.ts\nb70c9f462d5bdbde777d10c8ee62a92ad2c1d6a9c8c139f50d98f76d32ed12a8  /workspace/work/unaltered/baseline/src/core/errors.ts\nc5730a7828a3a92cf3583535a2c30cdb88ed5cd5eb66de6fa2104e8e0120337e  /workspace/work/unaltered/baseline/tests/unit/hash.test.ts\n",
+    "conclusion": "baseline3/3 and candidate3/3 pass; native stall not reproduced; does not prove fixed"
+  },
+  "native_source_artifacts": [
+    {
+      "os": "linux",
+      "artifact_id": 13031123873,
+      "archive_sha256": "40403583a62cc0a06588bc380342c103e544ddfb70713e3b5125a77924088bae",
+      "archive_digest_matches_api": true,
+      "size_bytes": 304099,
+      "manifest_names": [
+        "dist/SHA256SUMS",
+        "linux-SHA256SUMS"
+      ],
+      "manifests_equal_local": true,
+      "files": [
+        {
+          "name": "unaltered-0.3.1-macos.zip",
+          "sha256": "35e33bf657d63ccd9b3dd2b24655eb89f26686c92e12787116c3785df6b45dd1",
+          "bytes": 252719,
+          "equals_local": true
+        },
+        {
+          "name": "unaltered-0.3.1.zip",
+          "sha256": "36e4c1b92201b242fc1232e2441d6fbd1eaf9ae8020b0e83dded1d69fe757375",
+          "bytes": 253249,
+          "equals_local": true
+        },
+        {
+          "name": "unaltered-cli-0.3.1.mjs",
+          "sha256": "37930af11f66e1434c17cd78a1c8ff2d97efe147e1bc2553216aa726ee9579ec",
+          "bytes": 21174,
+          "equals_local": true
+        },
+        {
+          "name": "unaltered-0.3.1-linux.tar.gz",
+          "sha256": "a1acf2b541e7fb2c0d4f7ceb48d8eec15c327e441f17b02d979e7ac3ae86f946",
+          "bytes": 85139,
+          "equals_local": true
+        },
+        {
+          "name": "unaltered-0.3.1.html",
+          "sha256": "ec417a90de7e2fba2329e50aa233241cf821987dcb8918bdce718bc0a1ec0fb7",
+          "bytes": 113237,
+          "equals_local": true
+        }
+      ]
+    },
+    {
+      "os": "macos",
+      "artifact_id": 13030729844,
+      "archive_sha256": "4262870693d94e53f00e24e144d1c8e408b49942c90157a033196803fa192971",
+      "archive_digest_matches_api": true,
+      "size_bytes": 304099,
+      "manifest_names": [
+        "dist/SHA256SUMS",
+        "macos-SHA256SUMS"
+      ],
+      "manifests_equal_local": true,
+      "files": [
+        {
+          "name": "unaltered-0.3.1-macos.zip",
+          "sha256": "35e33bf657d63ccd9b3dd2b24655eb89f26686c92e12787116c3785df6b45dd1",
+          "bytes": 252719,
+          "equals_local": true
+        },
+        {
+          "name": "unaltered-0.3.1.zip",
+          "sha256": "36e4c1b92201b242fc1232e2441d6fbd1eaf9ae8020b0e83dded1d69fe757375",
+          "bytes": 253249,
+          "equals_local": true
+        },
+        {
+          "name": "unaltered-cli-0.3.1.mjs",
+          "sha256": "37930af11f66e1434c17cd78a1c8ff2d97efe147e1bc2553216aa726ee9579ec",
+          "bytes": 21174,
+          "equals_local": true
+        },
+        {
+          "name": "unaltered-0.3.1-linux.tar.gz",
+          "sha256": "a1acf2b541e7fb2c0d4f7ceb48d8eec15c327e441f17b02d979e7ac3ae86f946",
+          "bytes": 85139,
+          "equals_local": true
+        },
+        {
+          "name": "unaltered-0.3.1.html",
+          "sha256": "ec417a90de7e2fba2329e50aa233241cf821987dcb8918bdce718bc0a1ec0fb7",
+          "bytes": 113237,
+          "equals_local": true
+        }
+      ]
+    },
+    {
+      "os": "windows",
+      "artifact_id": 13030809644,
+      "archive_sha256": "6d8f4220a64f1894c503bb4ab18b91b363b737b38cc9350c3e38e9c92e9d7e64",
+      "archive_digest_matches_api": true,
+      "size_bytes": 304103,
+      "manifest_names": [
+        "dist/SHA256SUMS",
+        "windows-SHA256SUMS"
+      ],
+      "manifests_equal_local": true,
+      "files": [
+        {
+          "name": "unaltered-0.3.1-macos.zip",
+          "sha256": "35e33bf657d63ccd9b3dd2b24655eb89f26686c92e12787116c3785df6b45dd1",
+          "bytes": 252719,
+          "equals_local": true
+        },
+        {
+          "name": "unaltered-0.3.1.zip",
+          "sha256": "36e4c1b92201b242fc1232e2441d6fbd1eaf9ae8020b0e83dded1d69fe757375",
+          "bytes": 253249,
+          "equals_local": true
+        },
+        {
+          "name": "unaltered-cli-0.3.1.mjs",
+          "sha256": "37930af11f66e1434c17cd78a1c8ff2d97efe147e1bc2553216aa726ee9579ec",
+          "bytes": 21174,
+          "equals_local": true
+        },
+        {
+          "name": "unaltered-0.3.1-linux.tar.gz",
+          "sha256": "a1acf2b541e7fb2c0d4f7ceb48d8eec15c327e441f17b02d979e7ac3ae86f946",
+          "bytes": 85139,
+          "equals_local": true
+        },
+        {
+          "name": "unaltered-0.3.1.html",
+          "sha256": "ec417a90de7e2fba2329e50aa233241cf821987dcb8918bdce718bc0a1ec0fb7",
+          "bytes": 113237,
+          "equals_local": true
+        }
+      ]
+    }
+  ],
+  "source_ci_jobs": [
+    {
+      "id": 124450996203,
+      "name": "macOS build, tests, and package checksums",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 41171752457
+    },
+    {
+      "id": 124450996367,
+      "name": "End-to-end (firefox, CSP and accessibility)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 41171752457
+    },
+    {
+      "id": 124450996370,
+      "name": "R1 confirmed upgrade in the browser plus reference verification (informational)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 41171752457
+    },
+    {
+      "id": 124450996380,
+      "name": "Differential tests against the reference OpenTimestamps client",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 41171752457
+    },
+    {
+      "id": 124450996392,
+      "name": "Live check of calendars and explorers (CORS and API shape, informational)",
+      "status": "completed",
+      "conclusion": "failure",
+      "run_id": 41171752457
+    },
+    {
+      "id": 124450996395,
+      "name": "End-to-end (webkit, CSP and accessibility)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 41171752457
+    },
+    {
+      "id": 124450996404,
+      "name": "Identity and metadata leak check",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 41171752457
+    },
+    {
+      "id": 124450996415,
+      "name": "End-to-end (chromium, CSP and accessibility)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 41171752457
+    },
+    {
+      "id": 124450996457,
+      "name": "Browser 2 GiB memory acceptance (Chromium)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 41171752457
+    },
+    {
+      "id": 124450996516,
+      "name": "Windows build and tests",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 41171752457
+    },
+    {
+      "id": 124450996543,
+      "name": "Typecheck, lint, unit tests, reproducible build (Linux)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 41171752457
+    },
+    {
+      "id": 124450996552,
+      "name": "Secret scan (verified Gitleaks release)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 41171752457
+    },
+    {
+      "id": 124450996964,
+      "name": "Browser 2 GiB completion (${{ matrix.browser }})",
+      "status": "completed",
+      "conclusion": "skipped",
+      "run_id": 41171752457
+    },
+    {
+      "id": 124451539616,
+      "name": "Linux, Windows, and macOS builds are byte-identical",
+      "status": "queued",
+      "conclusion": null,
+      "run_id": 41171752457
+    }
+  ],
+  "dependencies": {
+    "lock_sha256": "836f4e61ef6339339bbbf6f07692a31dadd141cbe3755ef5610f7980dff262df",
+    "runtime_audit_vulnerabilities": 0,
+    "full_audit_moderate": 11,
+    "advisory": "GHSA-g3hv-75wg-m249",
+    "local_provenance": "TUF Sigstore403",
+    "native_source_provenance": {
+      "signatures": 139,
+      "attestations": 58
+    }
+  },
+  "actions_pins": [
+    {
+      "repo": "actions/checkout",
+      "tag": "v7.0.1",
+      "expected": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+      "resolved": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+      "matches": true,
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "repo": "actions/setup-node",
+      "tag": "v7.1.0",
+      "expected": "949feb2413d6458794dcd2491c4babbbce0c15c1",
+      "resolved": "949feb2413d6458794dcd2491c4babbbce0c15c1",
+      "matches": true,
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "repo": "actions/upload-artifact",
+      "tag": "v7.0.2",
+      "expected": "cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+      "resolved": "cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+      "matches": true,
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "repo": "actions/download-artifact",
+      "tag": "v8.0.2",
+      "expected": "9000827ccba6bdab643e8b6fd33ac0654aef8333",
+      "resolved": "9000827ccba6bdab643e8b6fd33ac0654aef8333",
+      "matches": true,
+      "exit": 0,
+      "error": ""
+    },
+    {
+      "repo": "actions/setup-python",
+      "tag": "v7.1.0",
+      "expected": "6d4fd22b20465ccc0f7354476588e8df7c9ca0e0",
+      "resolved": "6d4fd22b20465ccc0f7354476588e8df7c9ca0e0",
+      "matches": true,
+      "exit": 0,
+      "error": ""
+    }
+  ],
+  "open_software": [
+    "FF/WebKit candidate2GiB manual dispatch; memory ceiling not measured there",
+    "native8shard stallA/B",
+    "local file navigation policy failure and81ms responsiveness full-run failure, despite focused5/5 and pinned native61/61",
+    "pre-existing pending cross-check fallback cancellation hang in controlled model; no native repro",
+    "11moderate dev-only minimatch advisories",
+    "fresh final-head Sonar check required after concrete implicit-npx finding corrected in f2e7d24",
+    "Bob/Finney confirmed browser/reference paths and known pending404CORS"
+  ],
+  "human_gates": [
+    "screen reader",
+    "native Spanish",
+    "usability3-5people",
+    "Tor/Trusted Types",
+    "independent audit",
+    "second-person rebuild",
+    "signing",
+    "operations/account/legal/domain"
+  ],
+  "product_test_checkpoint": "d09c2401839ea5a06fd794c9666d439b17e500e4",
+  "source_ci_source_sha": "d09c2401839ea5a06fd794c9666d439b17e500e4",
+  "initial_ci_equal_full_tree": "063f20dd792428ad05667a45c493ef1ded0c38b5",
+  "product_test_diff_d09_to_f2": [],
+  "workflow_correction": {
+    "commit": "f2e7d24017171475be23f9e069a91ae195fea2c3",
+    "reason": "Sonar check124451150596 annotation ci.yml175: implicit unpinned npx fallback",
+    "change": "new job invokes node node_modules/@playwright/test/cli.js directly",
+    "verified_version": "1.64.1",
+    "memory_test_collection": 1,
+    "fresh_ci_required": true
+  }
+}
