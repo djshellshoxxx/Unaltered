@@ -47,8 +47,7 @@ export function installHashWorkerEvidence(): void {
         const input = message as Record<string, unknown>;
         if (input.type === 'start' && input.blob instanceof Blob) records.get(this)!.starts.push(input.blob.size);
       }
-      if (Array.isArray(options)) super.postMessage(message, options);
-      else super.postMessage(message, options);
+      super.postMessage(message, Array.isArray(options) ? { transfer: options } : options);
     }
   };
 }
