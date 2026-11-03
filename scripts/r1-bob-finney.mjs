@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import { mkdir, mkdtemp, readFile, realpath, stat, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
 import { assessBrowser, assessReference, DIAGNOSTIC_SCOPE, isolateTarget, loadCodec, REFERENCE_VERSION, ROOT, sha256, TARGETS } from './lib/r1-calendars.mjs';
 
@@ -34,14 +35,16 @@ const run = (program, args, timeout) => spawnSync(program, args, { cwd: ROOT, en
 
 async function capture(args, codec) {
   if (args.length < 3 || args.length > 4 || !Object.hasOwn(TARGETS, args[0])) throw new Error(usage);
-  const [target, file, receipt, out = '/tmp/unaltered-r1-bob-finney'] = args;
+  const [target, file, receipt, out] = args;
   const sourceFile = resolve(file);
   const original = await readSmall(resolve(receipt), codec.LIMITS.maxInputBytes);
   const isolated = isolateTarget(original, target, codec);
   const fileSha256 = await hashFile(sourceFile);
   if (Buffer.from(codec.parseProof(isolated).digest).toString('hex') !== fileSha256) throw new Error('The existing receipt does not match the supplied file.');
-  await mkdir(resolve(out), { recursive: true, mode: 0o700 });
-  const directory = await mkdtemp(join(resolve(out), `${target}-`));
+  // The default is an atomically created private directory, never a predictable shared parent.
+  const parent = out === undefined ? tmpdir() : resolve(out);
+  if (out !== undefined) await mkdir(parent, { recursive: true, mode: 0o700 });
+  const directory = await mkdtemp(join(parent, `unaltered-r1-${target}-`));
   await save(join(directory, files.original), original);
   await save(join(directory, files.isolated), isolated);
   const downloads = join(directory, 'browser-downloads');

@@ -18,7 +18,11 @@ export const DIAGNOSTIC_SCOPE = Object.freeze({
   remainingManualChecks: Object.freeze(['APP_DISPLAYED_TIME_COMPARISON', 'INDEPENDENT_HEADER_PROVENANCE']),
 });
 export const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
-const norm = (uri) => uri.replace(/\/+$/, '');
+const norm = (uri) => {
+  let end = uri.length;
+  while (uri[end - 1] === '/') end--;
+  return uri.slice(0, end);
+};
 
 // Reuse the app's bounded parser and allowlist; no alternate proof parser or new dependency.
 let codecPromise;
@@ -82,7 +86,7 @@ export function assessBrowser({ target, fileSha256, original, isolated, download
   }
   if (output && Buffer.from(output.digest).toString('hex') !== fileSha256) reject('OUTPUT_FILE_DIGEST_MISMATCH');
   const block = typeof report?.verify?.block === 'string' && /^\d+$/.test(report.verify.block)
-    ? Number(report.verify.block) : NaN;
+    ? Number(report.verify.block) : Number.NaN;
   if (!Number.isSafeInteger(block) || block < 0) reject('VERIFIED_BLOCK_MISSING');
   const bitcoin = output ? codec.collectAttestations(output.root).filter(({ attestation }) => attestation.kind === 'bitcoin') : [];
   if (!bitcoin.some(({ attestation }) => attestation.height === block)) reject('TARGET_BITCOIN_PROOF_MISSING');

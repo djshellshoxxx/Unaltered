@@ -43,11 +43,14 @@ no app/calendar/CSP failure, a newly downloaded valid receipt containing a Bitco
 and the app's Verify result `VERIFIED`. HTTP200 alone is never sufficient. Pending responses, malformed receipts,
 unsupported receipts, missing inputs, missing browser/runtime/build, and network failures cannot PASS.
 
-The command writes a fresh `bob-*` or `finney-*` directory containing `packet.json`, original/derived receipts, browser
+The command writes a fresh `unaltered-r1-bob-*` or `unaltered-r1-finney-*` directory containing `packet.json`, original/derived receipts, browser
 output, and the captured download if one exists. The packet binds the source file, both input receipts, browser report
 and downloaded receipt with SHA-256. It prints `browserAccepted`, the block height when available, and the directory.
 **This step always exits 2 with status `BLOCKED`**, because the independent reference check is still required. A
 successful browser capture reports `INDEPENDENT_REFERENCE_REQUIRED`; it does not close the target's acceptance gate.
+
+If no output directory is supplied, the capture creates its private evidence directory atomically under the platform's
+temporary directory. A supplied output parent is an explicit operator choice; choose a private, trusted location.
 
 ## Step 2: verify that exact download independently, offline
 
@@ -105,6 +108,12 @@ CSP and transport failures, file/height mismatches, reference-input substitution
 verification. Positive tests use explicitly synthetic policy envelopes to test the decision logic. They provide no
 live Bitcoin, browser, calendar, header-source, or R1 evidence. The suite also runs in the existing Node test command
 under `npm test` and `npm run check`; running it performs no live calendar check.
+
+One integration control runs the actual `--reference` CLI and pinned Python oracle with a synthetic receipt/header,
+checks the retained byte/hash bindings, and then requires rejection of a mismatched header. It is explicitly skipped
+when `UNALTERED_PYTHON` is unset; the existing native differential job supplies that interpreter and requires the test.
+An explicitly configured but missing or incompatible interpreter fails. The synthetic header establishes no Bitcoin
+chain membership, genuine browser capture or calendar confirmation.
 
 | Target | Genuine pre-existing pending receipt | Target-only app/Bitcoin acceptance | Reference on same download | Status |
 |---|---|---|---|---|

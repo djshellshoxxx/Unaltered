@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
 import { assessBrowser, assessReference, isolateTarget, loadCodec, ROOT, sha256, TARGETS } from '../../scripts/lib/r1-calendars.mjs';
 
@@ -156,6 +156,60 @@ for (const [name, change, reason] of [
 const cli = (args, env = {}) => spawnSync(process.execPath, [join(ROOT, 'scripts/r1-bob-finney.mjs'), ...args], {
   cwd: ROOT, env: { ...process.env, ...env }, encoding: 'utf8', timeout: 10_000, maxBuffer: 256 * 1024,
 });
+
+test('pinned Python reference verifies the exact synthetic download and rejects a wrong header', {
+  skip: process.env.UNALTERED_PYTHON ? false : 'Set UNALTERED_PYTHON to the pinned reference environment; native differential CI requires this test.',
+}, async () => {
+  // This header has a matching synthetic Merkle root, not proof of a real Bitcoin block or calendar capture.
+  const dir = await mkdtemp(join(tmpdir(), 'unaltered-r1-reference-test-'));
+  try {
+    const header = Buffer.alloc(80);
+    header.writeUInt32LE(1, 0);
+    digest.copy(header, 36);
+    header.writeUInt32LE(1473227803, 68);
+    const reportBytes = Buffer.from(JSON.stringify(report()));
+    await writeFile(join(dir, 'file.bin'), file);
+    await writeFile(join(dir, 'header.hex'), header.toString('hex'));
+    await writeFile(join(dir, 'original.ots'), original);
+    await writeFile(join(dir, 'isolated.ots'), isolated);
+    await writeFile(join(dir, 'browser.json'), reportBytes);
+    await writeFile(join(dir, 'downloaded.ots'), downloaded);
+    const packet = {
+      schema: 1, target: 'bob', fileSha256: sha256(file), browserExitCode: 0,
+      hashes: { original: sha256(original), isolated: sha256(isolated), report: sha256(reportBytes), downloaded: sha256(downloaded) },
+      browser: inspect(),
+    };
+    const packetBytes = Buffer.from(JSON.stringify(packet));
+    await writeFile(join(dir, 'packet.json'), packetBytes);
+    const args = ['--reference', dir, join(dir, 'file.bin'), join(dir, 'header.hex'), 'synthetic local header; no chain membership or live capture'];
+    const child = cli(args);
+    assert.equal(child.status, 0, child.stderr || child.stdout);
+    const result = JSON.parse(child.stdout);
+    assert.equal(result.status, 'PASS');
+    assertFullGateBlocked(result);
+    assert.equal(dirname(result.evidenceDirectory), dir);
+    const retained = JSON.parse(await readFile(join(result.evidenceDirectory, 'result.json'), 'utf8'));
+    assert.equal(retained.reference.version, '0.4.5');
+    assert.equal(retained.reference.report.ok, true);
+    assert.equal(retained.reference.report.digestMatches, true);
+    assert.deepEqual(retained.reference.report.bitcoin, [{ height, verifiedTime: 1473227803 }]);
+    assert.equal(retained.reference.receiptSha256, sha256(downloaded));
+    assert.equal(retained.packetSha256, sha256(packetBytes));
+    assert.equal(retained.headerSha256, sha256(header));
+    assert.equal(retained.oracleSha256, sha256(await readFile(join(ROOT, 'tests/differential/verify_reference.py'))));
+    assert.deepEqual(await readFile(join(result.evidenceDirectory, 'downloaded.ots')), Buffer.from(downloaded));
+    assertFullGateBlocked(retained);
+    header[36] ^= 1;
+    await writeFile(join(dir, 'header.hex'), header.toString('hex'));
+    const rejected = cli(args);
+    assert.equal(rejected.status, 2, rejected.stderr || rejected.stdout);
+    const rejectedResult = JSON.parse(rejected.stdout);
+    assert.equal(rejectedResult.status, 'BLOCKED');
+    assert.ok(rejectedResult.reasons.includes('REFERENCE_NOT_VERIFIED'));
+    assertFullGateBlocked(rejectedResult);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
 test('old --from-json shortcut is rejected before any browser/reference run', () => {
   const child = cli(['--from-json', '/nonexistent/raw-report.json', '/nonexistent/receipt.ots']);
   assert.equal(child.status, 2, child.stderr);
@@ -174,6 +228,34 @@ test('CLI refuses a missing target before creating any browser evidence', async 
     assertFullGateBlocked(JSON.parse(child.stderr));
     await assert.rejects(stat(join(dir, 'out')), (error) => error.code === 'ENOENT');
   } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+test('default capture creates a private unique directory and preserves a blocked browser result', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'unaltered-r1-default-test-'));
+  let evidenceDirectory;
+  try {
+    await writeFile(join(dir, 'file.bin'), file);
+    await writeFile(join(dir, 'pending.ots'), original);
+    const child = cli(['bob', join(dir, 'file.bin'), join(dir, 'pending.ots')], {
+      CHROMIUM_PATH: join(dir, 'deliberately-missing-browser'),
+    });
+    assert.equal(child.status, 2, child.stderr);
+    const result = JSON.parse(child.stdout);
+    assertFullGateBlocked(result);
+    assert.equal(result.browserAccepted, false);
+    const returnedDirectory = result.evidenceDirectory;
+    assert.equal(dirname(returnedDirectory), resolve(tmpdir()));
+    assert.match(returnedDirectory, /unaltered-r1-bob-[^/\\]+$/);
+    evidenceDirectory = returnedDirectory;
+    if (process.platform !== 'win32') assert.equal((await stat(evidenceDirectory)).mode & 0o777, 0o700);
+    const packet = JSON.parse(await readFile(join(evidenceDirectory, 'packet.json'), 'utf8'));
+    assert.equal(packet.browser.browserAccepted, false);
+    assert.equal(sha256(await readFile(join(evidenceDirectory, 'original.ots'))), sha256(original));
+    assert.match(await readFile(join(evidenceDirectory, 'browser.stderr.txt'), 'utf8'), /executable doesn't exist/i);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+    if (evidenceDirectory) await rm(evidenceDirectory, { recursive: true, force: true });
+  }
 });
 
 test('CLI rejects packet/receipt substitution and cannot PASS without the reference runtime', async () => {
