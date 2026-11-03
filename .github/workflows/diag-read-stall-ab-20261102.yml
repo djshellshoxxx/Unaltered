@@ -103,11 +103,12 @@ jobs:
       # An explicit empty value bypasses the optional /opt browser fallback in the unchanged config.
       # Playwright therefore selects its installed, lockfile-pinned default headless Chromium.
       CHROMIUM_PATH: ""
-      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/unaltered-read-stall-browsers
       PLAYWRIGHT_JSON_OUTPUT_FILE: evidence/memory-results.json
     steps:
-      - name: Start the job admission clock
-        run: date +%s > "$RUNNER_TEMP/read-stall-start-epoch"
+      - name: Start the job admission clock and select the browser cache
+        run: |
+          date +%s > "$RUNNER_TEMP/read-stall-start-epoch"
+          printf 'PLAYWRIGHT_BROWSERS_PATH=%s/unaltered-read-stall-browsers\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
