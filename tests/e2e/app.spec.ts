@@ -133,8 +133,9 @@ test.describe('stamp, upgrade, verify (network mocked)', () => {
       await expect(page.locator('.upgrade-result .notice')).toHaveText(scenario.notices);
       await expect(page.locator('.upgrade-result [role=alert]')).toHaveCount(0);
       const failures = page.locator('.upgrade-result ul.calendars li');
-      await expect(failures).toHaveCount(3);
-      for (const failure of await failures.all()) await expect(failure).toContainText(scenario.error);
+      const hosts = ['alice.btc.calendar.opentimestamps.org', 'bob.btc.calendar.opentimestamps.org', 'finney.calendar.eternitywall.com'];
+      await expect.poll(async () => (await failures.allTextContents()).sort())
+        .toEqual(hosts.map((host) => `✖ ${host} – ${scenario.error}`).sort());
       await expect(page.locator('.upgrade-result a')).toHaveCount(0);
       await expect(page.locator('.result-VERIFIED')).toHaveCount(0);
     });
