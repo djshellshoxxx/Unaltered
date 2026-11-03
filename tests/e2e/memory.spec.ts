@@ -4,15 +4,23 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import { installHashIoDiagnostics } from './hash-io-diagnostics';
+import { installHashWorkerEvidence, requireHashWorkerCompletion } from './hash-worker-evidence';
+
+// Keep the report title aligned with the browser selected in playwright.config.ts.
+const expectsRss = (process.env.UNALTERED_BROWSER ?? 'chromium') === 'chromium';
+const title = expectsRss
+  ? 'hashes a real 2 GiB file in a worker with the correct digest and less than 200 MiB extra renderer RSS'
+  : 'hashes a real 2 GiB file in a worker with the correct digest (renderer RSS is not measured)';
 
 // FR-1 requires browser evidence, not only the virtual-source Node test. On Linux/Chromium this acceptance test
 // measures all renderer RSS (including the worker and ArrayBuffer backing stores). Firefox and WebKit expose no
 // comparable measurement, so there it checks only what is observable: the real 2 GiB file completes in a worker
 // within the same time limit with the correct digest and no error. The 200 MiB memory ceiling is not evidenced there.
-test('hashes a real 2 GiB file in the browser with less than 200 MiB extra renderer RSS', async ({ page, browser, browserName }) => {
+test(title, async ({ page, browser, browserName }) => {
   test.skip(process.env.UNALTERED_BIG_BROWSER !== '1', 'Opt-in 2 GiB browser acceptance test.');
   test.skip(process.platform !== 'linux', 'The acceptance run uses Linux procfs for Chromium and a Linux runner for the other engines.');
   const measuresRss = browserName === 'chromium';
+  expect(measuresRss, 'The report title must match the selected browser engine.').toBe(expectsRss);
   test.setTimeout(600_000);
   const directory = await mkdtemp(join(tmpdir(), 'unaltered-browser-memory-'));
   const file = join(directory, 'two-gibibytes.bin');
@@ -25,6 +33,7 @@ test('hashes a real 2 GiB file in the browser with less than 200 MiB extra rende
     const handle = await open(file, 'w');
     try { await handle.truncate(size); } finally { await handle.close(); }
     phase('file-created');
+    await page.addInitScript(installHashWorkerEvidence);
     await page.goto('/index.html#stamp');
     phase('page-ready');
     const rss = async (): Promise<number> => {
@@ -72,7 +81,7 @@ test('hashes a real 2 GiB file in the browser with less than 200 MiB extra rende
       phase('input-start');
       await page.setInputFiles('#stamp-file', file);
       phase('input-selected');
-      hashWorker = await worker; // A silently substituted main-thread implementation does not satisfy FR-1.
+      hashWorker = await worker; // Creation is diagnostic only; successful completion is checked separately below.
       hashWorker.on('close', () => phase('worker-closed'));
       // WebKit does not implement Playwright Worker.evaluate; completion/digest remain mandatory.
       if (browserName !== 'webkit') await hashWorker.evaluate(installHashIoDiagnostics);
@@ -95,8 +104,11 @@ test('hashes a real 2 GiB file in the browser with less than 200 MiB extra rende
     const expected = createHash('sha256');
     const chunk = Buffer.alloc(4 * 1024 ** 2);
     for (let offset = 0; offset < size; offset += chunk.length) expected.update(chunk);
+    const expectedHex = expected.digest('hex');
+    const workerEvidence = await requireHashWorkerCompletion(page, { bytes: size, hex: expectedHex });
+    await test.info().attach('hash-worker-completion', { body: JSON.stringify(workerEvidence), contentType: 'application/json' });
     const digest = await page.locator('.item .digest').textContent();
-    expect(digest?.replace(/ /g, '')).toBe(expected.digest('hex'));
+    expect(digest?.replace(/ /g, '')).toBe(expectedHex);
     if (cdp) {
       expect(peak - before).toBeLessThan(200 * 1024 ** 2);
       test.info().annotations.push({ type: 'peak-extra-renderer-rss-bytes', description: String(peak - before) });
