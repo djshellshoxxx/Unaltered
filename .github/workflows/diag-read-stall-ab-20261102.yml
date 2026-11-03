@@ -1,0 +1,308 @@
+# DIAGNOSTIC ONLY. Keep on the named branch; never merge this workflow into production.
+# Publishing this branch starts 16 bounded jobs. Each plans 3 attempts, stopping after its first failure.
+name: DIAGNOSTIC native read-stall A/B 20261102
+
+on:
+  push:
+    branches: [diag/read-stall-ab-20261102]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: diagnostic-read-stall-ab-20261102
+  cancel-in-progress: false
+
+env:
+  npm_config_ignore_scripts: "true"
+  CANDIDATE_SHA: 03f3ac80cfe6f3014162967b5e05bff95ec350b6
+  BASELINE_SHA: 0b448d887df89fab22f701810197e51285590e2b
+  NODE_VERSION: "22.23.4"
+  NPM_VERSION: "10.9.9"
+  MANIFEST: docs/diagnostics/read-stall-ab-20261102/manifest.json
+
+jobs:
+  scope:
+    name: Verify frozen scope and diagnostic hygiene
+    if: github.repository == 'djshellshoxxx/Unaltered' && github.ref == 'refs/heads/diag/read-stall-ab-20261102'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - name: Require only the three diagnostic additions above the frozen candidate
+        shell: bash
+        run: |
+          git merge-base --is-ancestor "$CANDIDATE_SHA" HEAD
+          git diff --check "$CANDIDATE_SHA" HEAD
+          node - <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const { execFileSync } = require('node:child_process');
+          const { createHash } = require('node:crypto');
+          const m = JSON.parse(fs.readFileSync(process.env.MANIFEST, 'utf8'));
+          const allowed = [
+            '.github/workflows/diag-read-stall-ab-20261102.yml',
+            'docs/diagnostics/read-stall-ab-20261102/README.md',
+            'docs/diagnostics/read-stall-ab-20261102/manifest.json',
+          ].map((path) => 'A\t' + path).sort();
+          const changed = execFileSync('git', ['diff', '--name-status', process.env.CANDIDATE_SHA, 'HEAD'], { encoding: 'utf8' }).trim().split('\n').sort();
+          assert.deepEqual(changed, allowed);
+          assert.equal(m.candidate.commit, process.env.CANDIDATE_SHA);
+          assert.equal(m.baseline.commit, process.env.BASELINE_SHA);
+          assert.equal(process.version, 'v' + m.toolchain.node);
+          assert.equal(execFileSync('npm', ['--version'], { encoding: 'utf8' }).trim(), m.toolchain.npm);
+          assert.equal(execFileSync('git', ['rev-parse', m.candidate.commit + '^{tree}'], { encoding: 'utf8' }).trim(), m.candidate.tree);
+          for (const [ref, hashes] of [
+            [m.candidate.commit, { ...m.candidate.hash_modules_sha256, ...m.shared_candidate_files_sha256 }],
+            [m.baseline.commit, m.baseline.hash_modules_sha256],
+          ]) {
+            for (const [path, expected] of Object.entries(hashes)) {
+              const bytes = execFileSync('git', ['show', ref + ':' + path]);
+              assert.equal(createHash('sha256').update(bytes).digest('hex'), expected, path);
+            }
+          }
+          console.log('BEGIN READ_STALL_SCOPE_JSON');
+          console.log(JSON.stringify({ workflowCommit: process.env.GITHUB_SHA, runId: process.env.GITHUB_RUN_ID, runAttempt: process.env.GITHUB_RUN_ATTEMPT, manifest: m }, null, 2));
+          console.log('END READ_STALL_SCOPE_JSON');
+          NODE
+      - name: Check repository metadata
+        run: bash scripts/opsec-check.sh
+      - name: Verify and run the current pinned Gitleaks release
+        shell: bash
+        run: |
+          archive="$RUNNER_TEMP/gitleaks_8.30.1_linux_x64.tar.gz"
+          curl --fail --location --silent --show-error --max-time 120 https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz --output "$archive"
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  $archive" | sha256sum --check -
+          tar -xzf "$archive" -C "$RUNNER_TEMP" gitleaks
+          "$RUNNER_TEMP/gitleaks" git --redact --no-banner .
+
+  memory:
+    name: ${{ matrix.arm }} / shard ${{ matrix.shard }}
+    needs: scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        arm: [baseline, candidate]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    env:
+      ARM: ${{ matrix.arm }}
+      SHARD: ${{ matrix.shard }}
+      CI: "true"
+      UNALTERED_BIG_BROWSER: "1"
+      UNALTERED_BROWSER: chromium
+      # An explicit empty value bypasses the optional /opt browser fallback in the unchanged config.
+      # Playwright therefore selects its installed, lockfile-pinned default headless Chromium.
+      CHROMIUM_PATH: ""
+      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/unaltered-read-stall-browsers
+      PLAYWRIGHT_JSON_OUTPUT_FILE: evidence/memory-results.json
+    steps:
+      - name: Start the job admission clock
+        run: date +%s > "$RUNNER_TEMP/read-stall-start-epoch"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - name: Assemble a coherent arm and record effective input hashes
+        id: source
+        shell: bash
+        run: |
+          mkdir -p evidence
+          cp "$MANIFEST" evidence/manifest.json
+          node - <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const { execFileSync } = require('node:child_process');
+          const { createHash } = require('node:crypto');
+          const os = require('node:os');
+          const m = JSON.parse(fs.readFileSync(process.env.MANIFEST, 'utf8'));
+          assert.equal(process.version, 'v' + m.toolchain.node);
+          const npm = execFileSync('npm', ['--version'], { encoding: 'utf8' }).trim();
+          assert.equal(npm, m.toolchain.npm);
+          assert(['baseline', 'candidate'].includes(process.env.ARM));
+          if (process.env.ARM === 'baseline') {
+            for (const path of Object.keys(m.baseline.hash_modules_sha256)) {
+              fs.writeFileSync(path, execFileSync('git', ['show', m.baseline.commit + ':' + path]));
+            }
+          }
+          const expected = { ...m.shared_candidate_files_sha256, ...m[process.env.ARM].hash_modules_sha256 };
+          for (const [path, hash] of Object.entries(expected)) {
+            assert.equal(createHash('sha256').update(fs.readFileSync(path)).digest('hex'), hash, path);
+          }
+          fs.writeFileSync('evidence/source-and-runtime.json', JSON.stringify({
+            workflowCommit: process.env.GITHUB_SHA, runId: process.env.GITHUB_RUN_ID,
+            runAttempt: process.env.GITHUB_RUN_ATTEMPT, arm: process.env.ARM, shard: process.env.SHARD,
+            candidate: m.candidate, baseline: m.baseline, effectiveFilesSha256: expected,
+            node: process.version, npm, os: os.platform(), kernel: os.release(), arch: os.arch(),
+            runnerImage: process.env.ImageOS ?? null, runnerImageVersion: process.env.ImageVersion ?? null,
+          }, null, 2) + '\n');
+          fs.writeFileSync('evidence/tsconfig.json', JSON.stringify({
+            extends: '../tsconfig.json',
+            include: ['../src/**/*.ts', '../tests/e2e/memory.spec.ts', '../tests/e2e/hash-worker-evidence.ts', '../tests/e2e/hash-io-diagnostics.ts', '../playwright.config.ts'],
+            exclude: ['../node_modules', '../dist'],
+          }, null, 2) + '\n');
+          NODE
+          git diff --no-ext-diff "$CANDIDATE_SHA" -- src/core/hash > evidence/effective-hash-diff.patch
+          git ls-files -z src tests scripts package.json package-lock.json .npmrc tsconfig.json playwright.config.ts | xargs -0 sha256sum > evidence/effective-inputs.sha256
+          echo 'BEGIN READ_STALL_SOURCE_AND_RUNTIME_JSON'
+          cat evidence/source-and-runtime.json
+          echo 'END READ_STALL_SOURCE_AND_RUNTIME_JSON'
+          echo 'BEGIN READ_STALL_EFFECTIVE_INPUTS_SHA256'
+          cat evidence/effective-inputs.sha256
+          echo 'END READ_STALL_EFFECTIVE_INPUTS_SHA256'
+      - name: Install the unchanged dependency tree without lifecycle scripts
+        id: install
+        shell: bash
+        run: npm ci --ignore-scripts 2>&1 | tee evidence/install.log
+      - name: Verify the locked browser descriptor
+        shell: bash
+        run: |
+          node - <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const m = JSON.parse(fs.readFileSync(process.env.MANIFEST, 'utf8'));
+          assert.equal(JSON.parse(fs.readFileSync('node_modules/@playwright/test/package.json', 'utf8')).version, m.toolchain.playwright);
+          const browsers = JSON.parse(fs.readFileSync('node_modules/playwright-core/browsers.json', 'utf8'));
+          for (const name of ['chromium', 'chromium-headless-shell']) {
+            const b = browsers.browsers.find((entry) => entry.name === name);
+            assert.equal(b?.revision, m.toolchain.chromium_revision);
+            assert.equal(b?.browserVersion, m.toolchain.chromium_version);
+          }
+          fs.writeFileSync('evidence/browsers.json', JSON.stringify(browsers, null, 2) + '\n');
+          console.log('BEGIN READ_STALL_BROWSER_DESCRIPTOR_JSON');
+          console.log(JSON.stringify(browsers, null, 2));
+          console.log('END READ_STALL_BROWSER_DESCRIPTOR_JSON');
+          NODE
+      - name: Install only the pinned Chromium and its system dependencies
+        id: browser
+        shell: bash
+        run: |
+          node node_modules/@playwright/test/cli.js install --with-deps chromium 2>&1 | tee evidence/browser-install.log
+          node --input-type=module - <<'NODE'
+          import assert from 'node:assert/strict';
+          import { readFileSync, writeFileSync } from 'node:fs';
+          import { chromium } from '@playwright/test';
+          const m = JSON.parse(readFileSync(process.env.MANIFEST, 'utf8'));
+          const browser = await chromium.launch({ args: ['--no-sandbox'] });
+          try {
+            const version = browser.version();
+            assert.equal(version, m.toolchain.chromium_version);
+            const session = await browser.newBrowserCDPSession();
+            const detail = await session.send('Browser.getVersion');
+            await session.detach();
+            const record = { version, detail, pinnedRevision: m.toolchain.chromium_revision };
+            writeFileSync('evidence/browser-version.json', JSON.stringify(record, null, 2) + '\n');
+            console.log('BEGIN READ_STALL_ACTUAL_BROWSER_JSON');
+            console.log(JSON.stringify(record, null, 2));
+            console.log('END READ_STALL_ACTUAL_BROWSER_JSON');
+          } finally { await browser.close(); }
+          NODE
+      - name: Check production modules and the unchanged diagnostic harness
+        id: types
+        shell: bash
+        run: node node_modules/typescript/bin/tsc --project evidence/tsconfig.json --pretty false 2>&1 | tee evidence/typecheck.log
+      - name: Build this arm and record every output hash
+        id: build
+        shell: bash
+        run: |
+          npm run build 2>&1 | tee evidence/build.log
+          find dist -type f -print0 | sort -z | xargs -0 sha256sum > evidence/build.sha256
+          echo 'BEGIN READ_STALL_BUILD_SHA256'
+          cat evidence/build.sha256
+          echo 'END READ_STALL_BUILD_SHA256'
+      - name: Run three planned attempts with no retries and first-failure stop
+        id: memory
+        timeout-minutes: 32
+        shell: bash
+        env:
+          DEBUG: pw:browser
+        run: |
+          elapsed=$(( $(date +%s) - $(cat "$RUNNER_TEMP/read-stall-start-epoch") ))
+          printf '%s\n' "$elapsed" > evidence/pretest-elapsed-seconds.txt
+          if (( elapsed > 300 )); then
+            echo 'SETUP_BUDGET_EXCEEDED: no browser attempts started; this is incomplete environmental evidence.'
+            exit 1
+          fi
+          echo 'BEGIN READ_STALL_RAW_TEST_LOG'
+          set +e
+          timeout --signal=TERM --kill-after=15s 31m node node_modules/@playwright/test/cli.js test tests/e2e/memory.spec.ts --workers=1 --repeat-each=3 --retries=0 --max-failures=1 --reporter=list,json 2>&1 | tee evidence/memory.log
+          codes=("${PIPESTATUS[@]}")
+          set -e
+          printf 'test_process=%s\nlog_capture=%s\n' "${codes[0]}" "${codes[1]}" > evidence/command-exit-codes.txt
+          cat evidence/command-exit-codes.txt
+          echo 'END READ_STALL_RAW_TEST_LOG'
+          if (( codes[0] != 0 )); then exit "${codes[0]}"; fi
+          exit "${codes[1]}"
+      - name: Preserve bounded raw JSON and classify missing evidence in job logs
+        if: always()
+        timeout-minutes: 2
+        shell: bash
+        env:
+          SOURCE_OUTCOME: ${{ steps.source.outcome }}
+          INSTALL_OUTCOME: ${{ steps.install.outcome }}
+          BROWSER_OUTCOME: ${{ steps.browser.outcome }}
+          TYPES_OUTCOME: ${{ steps.types.outcome }}
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+          MEMORY_OUTCOME: ${{ steps.memory.outcome }}
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const { createHash, randomUUID } = require('node:crypto');
+          const token = 'read-stall-' + randomUUID();
+          console.log('::stop-commands::' + token);
+          const summary = {
+            runId: process.env.GITHUB_RUN_ID, runAttempt: process.env.GITHUB_RUN_ATTEMPT,
+            arm: process.env.ARM, shard: process.env.SHARD, plannedAttempts: 3, retries: 0,
+            firstFailureStop: true, reportPresent: fs.existsSync('evidence/memory-results.json'),
+            outcomes: Object.fromEntries(['SOURCE', 'INSTALL', 'BROWSER', 'TYPES', 'BUILD', 'MEMORY'].map((name) => [name.toLowerCase(), process.env[name + '_OUTCOME']])),
+            observedResultStatuses: [], unreportedAttempts: 3,
+          };
+          if (summary.reportPresent) {
+            try {
+              const report = JSON.parse(fs.readFileSync('evidence/memory-results.json', 'utf8'));
+              const visit = (suite) => {
+                for (const spec of suite.specs ?? []) for (const test of spec.tests ?? []) {
+                  for (const result of test.results ?? []) summary.observedResultStatuses.push({ status: result.status, retry: result.retry, durationMs: result.duration });
+                }
+                for (const child of suite.suites ?? []) visit(child);
+              };
+              for (const suite of report.suites ?? []) visit(suite);
+              summary.unreportedAttempts = Math.max(0, 3 - summary.observedResultStatuses.length);
+            } catch (error) { summary.reportParseError = String(error); }
+          }
+          console.log('BEGIN READ_STALL_OUTCOME_JSON');
+          console.log(JSON.stringify(summary, null, 2));
+          console.log('END READ_STALL_OUTCOME_JSON');
+          let incomplete = !summary.reportPresent || Boolean(summary.reportParseError)
+            || summary.observedResultStatuses.length === 0 || summary.observedResultStatuses.length > 3
+            || summary.observedResultStatuses.some((result) => result.retry !== 0);
+          for (const path of ['evidence/manifest.json', 'evidence/source-and-runtime.json', 'evidence/browser-version.json', 'evidence/tsconfig.json', 'evidence/effective-hash-diff.patch', 'evidence/command-exit-codes.txt', 'evidence/memory-results.json']) {
+            if (!fs.existsSync(path)) { incomplete = true; console.log('MISSING READ_STALL_FILE ' + path); continue; }
+            const bytes = fs.readFileSync(path);
+            const hash = createHash('sha256').update(bytes).digest('hex');
+            console.log('BEGIN READ_STALL_FILE ' + JSON.stringify({ path, bytes: bytes.length, sha256: hash }));
+            if (bytes.length <= 2 * 1024 * 1024) process.stdout.write(bytes);
+            else { incomplete = true; console.log('OMITTED_OVERSIZE: raw file exceeds the 2 MiB log budget; evidence is incomplete.'); }
+            console.log('\nEND READ_STALL_FILE ' + path);
+          }
+          if (fs.existsSync('evidence')) for (const name of fs.readdirSync('evidence').filter((name) => name.endsWith('.log'))) {
+            const bytes = fs.readFileSync('evidence/' + name);
+            console.log('READ_STALL_STREAMED_LOG ' + JSON.stringify({ name, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') }));
+          }
+          console.log('::' + token + '::');
+          if (incomplete) process.exitCode = 1;
+          NODE
