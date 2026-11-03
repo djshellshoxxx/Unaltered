@@ -11,8 +11,12 @@ covers that gap (SPEC FR-14, SPEC section 11, UX.md "Open (UT-1)"). It needs no 
 - Screen readers, at least two: NVDA + Firefox on Windows; VoiceOver + Safari on macOS or iOS. TalkBack + Chrome on Android
   if available. Record names and versions.
 - Test files (synthetic, nothing private): one small `.txt`, one generated JPEG with synthetic EXIF and rotation,
-  one PNG. A second `.txt` that differs by one character. For Verify: use `tests/fixtures/ots/confirmed.ots` with its file
-  if the maintainer supplies the pair, or a receipt made in step A.
+  one PNG. A second `.txt` that differs by one character. Use the original `.txt` and its receipt from step A for C.1–C.3.
+- C.4 also requires a matching file and a genuinely Bitcoin-confirmed receipt supplied by the maintainer. Check that pair
+  independently before the session using the procedure in [R1_ACCEPTANCE.md](../R1_ACCEPTANCE.md); record its source,
+  file/receipt SHA-256 values, confirmed block height and verification result. The synthetic unit fixture named
+  `tests/fixtures/ots/confirmed.ots` is not evidence of live Bitcoin confirmation, and a newly stamped receipt may be pending.
+  If a confirmed pair is unavailable, mark C.4 **Blocked** and continue the other tasks.
 - Stamping contacts the public calendars. Use throwaway files only. For sensitive use the app recommends Tor Browser.
 
 ## Record for every step
@@ -43,7 +47,11 @@ covers that gap (SPEC FR-14, SPEC section 11, UX.md "Open (UT-1)"). It needs no 
 1. Go to Verify. Choose the original `.txt` and its receipt; activate **Check**.
 2. Is the result state announced with its title (e.g. "Not yet confirmed", "Verified") and not by colour or icon alone?
 3. Repeat with the one-character-different `.txt`. Is "No match: this file is different" announced and understood?
-4. For a confirmed receipt: are block height, "no later than about …" time, agreeing explorers and **Trust level L1**
+4. Load the independently checked confirmed file/receipt pair from Setup and activate **Check**. If that pair is unavailable
+   or an independently established external outage prevents checking it, record **Blocked** with the reason. If the app
+   rejects the valid pair or shows it as unconfirmed while those prerequisites are available, record **Problem** with the
+   actual result. Do not substitute the potentially pending receipt from A.
+   With a **Verified** result, are block height, "no later than about …" time, agreeing explorers and **Trust level L1**
    announced? Can the collapsible independent-check (L2) instructions be opened and read?
 5. Ask: does the tester understand the receipt shows the file existed unchanged by a time, and does **not** prove who made
    it, when exactly it was created, or that its content is true?

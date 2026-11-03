@@ -10,7 +10,9 @@ async function cross(blob: Blob, digest: Uint8Array): Promise<'ok' | 'mismatch' 
   try {
     const other = new Uint8Array(await subtle.digest('SHA-256', await readCrossCheckInput(blob)));
     return equalBytes(other, digest) ? 'ok' : 'mismatch';
-  } catch {
+  } catch (error) {
+    // A typed read failure is definitive, not a missing WebCrypto capability that should be retried on the main thread.
+    if (error instanceof UnalteredError) throw error;
     return 'skipped';
   }
 }

@@ -1,10 +1,11 @@
 import { createHash } from 'node:crypto';
+import { getEventListeners } from 'node:events';
 import { readFileSync } from 'node:fs';
 import fc from 'fast-check';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { groupHex } from '../../src/core/bytes';
 import { hashBlob } from '../../src/core/hash/hasher';
-import { hashSource } from '../../src/core/hash/stream';
+import { CANCEL_SETTLE_MS, hashSource } from '../../src/core/hash/stream';
 
 interface Vec {
   name: string;
@@ -192,6 +193,10 @@ describe('FR-1 hashing', () => {
     });
     it('does not treat a slow but steadily delivering slice as a stall (progress-based timeout)', async () => {
       // One byte per pull, each well under stallMs, but a whole 3-byte region takes longer than stallMs.
+      // Drive this synthetic backend with fake time so host scheduling cannot turn progress into a false stall.
+      vi.useFakeTimers();
+      const started = Date.now();
+      const deliveredAt: number[] = [];
       const blob = new Blob([bytes as BlobPart]);
       const slice = blob.slice.bind(blob);
       const ranges: number[][] = [];
@@ -209,15 +214,24 @@ describe('FR-1 hashing', () => {
           await new Promise((r) => setTimeout(r, 15));
           new Uint8Array(request.view!.buffer, request.view!.byteOffset, 1)[0] = bytes[offset]!;
           offset += 1;
+          deliveredAt.push(Date.now() - started);
           request.respond(1);
         } });
         return part;
       };
       const progress: number[] = [];
-      const result = await hashSource(blob, { chunkSize: 3, stallMs: 30, onProgress: (n) => progress.push(n) });
-      expect(result!.hex).toBe(expected);
-      expect(ranges).toEqual([[0, 3], [3, 6], [6, 7]]);
-      expect(progress).toEqual([3, 6, 7]);
+      try {
+        const pending = hashSource(blob, { chunkSize: 3, stallMs: 30, onProgress: (n) => progress.push(n) });
+        await vi.advanceTimersByTimeAsync(15 * bytes.length);
+        const result = await pending;
+        expect(result!.hex).toBe(expected);
+        expect(ranges).toEqual([[0, 3], [3, 6], [6, 7]]);
+        expect(progress).toEqual([3, 6, 7]);
+        expect(deliveredAt).toEqual([15, 30, 45, 60, 75, 90, 105]);
+        expect(deliveredAt[2]).toBeGreaterThan(30); // First 3-byte slice takes 45 ms without 30 ms of silence.
+        expect(deliveredAt[5]! - deliveredAt[2]!).toBeGreaterThan(30);
+        expect(vi.getTimerCount()).toBe(0);
+      } finally { vi.useRealTimers(); }
     });
     it('fails with a typed error, instead of hanging, when a slice keeps stalling', async () => {
       const f = stallingBlob(bytes, (start, _attempt, phase) => start === 3 && phase === 'data');
@@ -356,6 +370,148 @@ describe('FR-1 hashing', () => {
       await expect(hashBlob(new Blob(['abc']), { noWorker: true, signal: ac.signal })).rejects.toMatchObject({ code: 'ABORTED' });
     } finally { mocked.mockRestore(); }
   });
+  describe('cancellation while file I/O is pending', () => {
+    function deferred<T>() {
+      let resolve!: (value: T) => void;
+      let reject!: (reason: unknown) => void;
+      const promise = new Promise<T>((yes, no) => { resolve = yes; reject = no; });
+      return { promise, resolve, reject };
+    }
+    function observe(pending: Promise<unknown>): { value: unknown } {
+      const outcome: { value: unknown } = { value: 'PENDING' };
+      void pending.then((value) => { outcome.value = value; }, (error: unknown) => { outcome.value = error; });
+      return outcome;
+    }
+    function pendingArrayBuffer(phase: 'fallback' | 'cross-check') {
+      const blob = new Blob(['abc']);
+      const slice = blob.slice.bind(blob);
+      const input = deferred<ArrayBuffer>();
+      let reads = 0;
+      blob.slice = (start = 0, end = blob.size): Blob => {
+        const part = slice(start, end);
+        if (phase === 'fallback') part.stream = (): never => { throw new Error('BYOB unavailable'); };
+        part.arrayBuffer = () => { reads++; return input.promise; };
+        return part;
+      };
+      return { blob, input, reads: () => reads };
+    }
+    afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
+
+    it.each(['data', 'eof'] as const)('cancels a never-settling BYOB %s read within the existing cleanup bound', async (phase) => {
+      vi.useFakeTimers();
+      const ac = new AbortController();
+      const blob = new Blob(['abc']);
+      const slice = blob.slice.bind(blob);
+      const progress: number[] = [];
+      let pending = false;
+      let cancellations = 0;
+      blob.slice = (start = 0, end = blob.size): Blob => {
+        const part = slice(start, end);
+        let delivered = false;
+        part.stream = () => new ReadableStream({ type: 'bytes', pull(controller) {
+          if (phase === 'data' || delivered) {
+            pending = true;
+            return new Promise<void>(() => {});
+          }
+          const request = controller.byobRequest!;
+          new Uint8Array(request.view!.buffer, request.view!.byteOffset, 3).set([97, 98, 99]);
+          delivered = true;
+          request.respond(3);
+        }, cancel() {
+          cancellations++;
+          return new Promise<void>(() => {});
+        } });
+        return part;
+      };
+      const outcome = observe(hashBlob(blob, { noWorker: true, signal: ac.signal, onProgress: (n) => progress.push(n) }));
+      await vi.advanceTimersByTimeAsync(0);
+      expect(pending).toBe(true);
+      const beforeAbort = [...progress];
+      ac.abort();
+      await vi.advanceTimersByTimeAsync(CANCEL_SETTLE_MS + 1);
+      expect(outcome.value).toMatchObject({ code: 'ABORTED' });
+      expect(cancellations).toBe(1);
+      expect(progress).toEqual(beforeAbort);
+      expect(getEventListeners(ac.signal, 'abort')).toHaveLength(0);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it.each([
+      ['fallback', 'resolve'], ['fallback', 'reject'], ['cross-check', 'resolve'], ['cross-check', 'reject'],
+    ] as const)('cancels a pending %s arrayBuffer read and ignores its late %s', async (phase, late) => {
+      vi.useFakeTimers();
+      const ac = new AbortController();
+      const f = pendingArrayBuffer(phase);
+      const progress: number[] = [];
+      const digest = vi.spyOn(globalThis.crypto.subtle, 'digest');
+      const outcome = observe(hashBlob(f.blob, { noWorker: true, signal: ac.signal, onProgress: (n) => progress.push(n) }));
+      await vi.advanceTimersByTimeAsync(0);
+      expect(f.reads()).toBe(1);
+      const beforeAbort = [...progress];
+      ac.abort();
+      await vi.advanceTimersByTimeAsync(CANCEL_SETTLE_MS + 1);
+      expect(outcome.value).toMatchObject({ code: 'ABORTED' });
+      if (late === 'resolve') f.input.resolve(Uint8Array.of(97, 98, 99).buffer);
+      else f.input.reject(new Error('late backend failure'));
+      await vi.advanceTimersByTimeAsync(0);
+      expect(outcome.value).toMatchObject({ code: 'ABORTED' });
+      expect(progress).toEqual(beforeAbort);
+      expect(digest).not.toHaveBeenCalled();
+      expect(f.reads()).toBe(1);
+      expect(getEventListeners(ac.signal, 'abort')).toHaveLength(0);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('cancels a never-settling WebCrypto digest and ignores its later completion', async () => {
+      vi.useFakeTimers();
+      const ac = new AbortController();
+      const digest = deferred<ArrayBuffer>();
+      const mock = vi.spyOn(globalThis.crypto.subtle, 'digest').mockReturnValue(digest.promise);
+      const outcome = observe(hashBlob(new Blob(['abc']), { noWorker: true, signal: ac.signal }));
+      await vi.advanceTimersByTimeAsync(0);
+      expect(mock).toHaveBeenCalledOnce();
+      ac.abort();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(outcome.value).toMatchObject({ code: 'ABORTED' });
+      digest.resolve(Uint8Array.from(createHash('sha256').update('abc').digest()).buffer);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(outcome.value).toMatchObject({ code: 'ABORTED' });
+      expect(getEventListeners(ac.signal, 'abort')).toHaveLength(0);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('reports a short worker cross-check read as a typed failure instead of a skipped cross-check', async () => {
+      vi.useFakeTimers();
+      const f = pendingArrayBuffer('cross-check');
+      const replies: unknown[] = [];
+      const workerScope = {
+        onmessage: null as ((event: MessageEvent) => void) | null,
+        postMessage: (message: unknown): void => { replies.push(message); },
+      };
+      vi.stubGlobal('self', workerScope);
+      try {
+        await import('../../src/core/hash/hasher.worker');
+        workerScope.onmessage!(new MessageEvent('message', { data: { type: 'start', blob: f.blob } }));
+        await vi.waitFor(() => expect({ reads: f.reads(), replies }).toMatchObject({ reads: 1 }));
+        f.input.resolve(new ArrayBuffer(2)); // The requested region contains three bytes.
+        await vi.advanceTimersByTimeAsync(0);
+        expect(replies.at(-1)).toMatchObject({ type: 'failed', code: 'INPUT_INVALID' });
+        expect(f.reads()).toBe(1);
+        expect(vi.getTimerCount()).toBe(0);
+      } finally { vi.unstubAllGlobals(); }
+    });
+
+    it('releases abort listeners after successful hashing and still rejects a cross-check mismatch', async () => {
+      const ac = new AbortController();
+      expect((await hashBlob(new Blob(['abc']), { noWorker: true, signal: ac.signal })).hex)
+        .toBe(createHash('sha256').update('abc').digest('hex'));
+      expect(getEventListeners(ac.signal, 'abort')).toHaveLength(0);
+      vi.spyOn(globalThis.crypto.subtle, 'digest').mockResolvedValue(new ArrayBuffer(32));
+      await expect(hashBlob(new Blob(['abc']), { noWorker: true, signal: ac.signal }))
+        .rejects.toMatchObject({ code: 'INTERNAL_HASH_MISMATCH' });
+      expect(getEventListeners(ac.signal, 'abort')).toHaveLength(0);
+    });
+  });
   it('keeps progress and yield cadence across partial reads and a reopened slice', async () => {
     const bytes = Uint8Array.from({ length: 11 }, (_, index) => index);
     const blob = new Blob([bytes]);
@@ -462,6 +618,39 @@ describe('FR-1 hashing', () => {
       return { blob, slices: () => slices };
     }
     afterEach(() => { vi.unstubAllGlobals(); });
+
+    it('ignores worker messages already queued when cancellation terminates the worker', async () => {
+      let deliver!: (data: Record<string, unknown>) => void;
+      class FakeWorker {
+        onmessage: ((ev: { data: unknown }) => void) | null = null;
+        onerror: (() => void) | null = null;
+        postMessage(): void {
+          const queuedHandler = this.onmessage;
+          deliver = (data) => queuedHandler?.({ data });
+        }
+        terminate(): void {}
+      }
+      vi.stubGlobal('Worker', FakeWorker);
+      vi.stubGlobal('__WORKER_URL__', 'worker.js');
+      const ac = new AbortController();
+      const progress: number[] = [];
+      const result = hashBlob(new Blob(['abc']), { signal: ac.signal, onProgress: (n) => progress.push(n) });
+      const cancelled = expect(result).rejects.toMatchObject({ code: 'ABORTED' });
+      ac.abort();
+      await cancelled;
+      deliver({ type: 'progress', done: 3 });
+      deliver({ type: 'done', digest: new Uint8Array(32), bytes: 3, cross: 'ok' });
+      expect(progress).toEqual([]);
+      expect(getEventListeners(ac.signal, 'abort')).toHaveLength(0);
+    });
+
+    it('removes the failed worker abort listener before falling back', async () => {
+      fakeWorker({ type: 'error' });
+      const ac = new AbortController();
+      expect((await hashBlob(new Blob(['abc']), { signal: ac.signal })).hex)
+        .toBe(createHash('sha256').update('abc').digest('hex'));
+      expect(getEventListeners(ac.signal, 'abort')).toHaveLength(0);
+    });
 
     it.each(['INPUT_UNREADABLE', 'INPUT_INVALID'])('reports a worker %s without re-hashing the file on the main thread', async (code) => {
       const worker = fakeWorker({ type: 'failed', code, message: 'typed failure' });

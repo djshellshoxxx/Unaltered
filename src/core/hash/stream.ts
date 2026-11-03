@@ -18,10 +18,23 @@ export const CANCEL_SETTLE_MS = 1_000;
 
 const STALLED = Symbol('stalled');
 
-function within<T>(pending: Promise<T>, ms: number): Promise<T | typeof STALLED> {
+/** Stops waiting on abort; it does not claim to cancel native operations such as Blob.arrayBuffer or WebCrypto. */
+export function awaitAbortable<T>(pending: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return pending;
+  let abort!: () => void;
+  const cancelled = new Promise<never>((_resolve, reject) => {
+    abort = () => reject(new UnalteredError('ABORTED', 'Cancelled.'));
+    if (signal.aborted) abort();
+    else signal.addEventListener('abort', abort, { once: true });
+  });
+  // Attach both outcomes even after abort so a late native rejection is always consumed.
+  return Promise.race([cancelled, pending]).finally(() => signal.removeEventListener('abort', abort));
+}
+
+function within<T>(pending: Promise<T>, ms: number, signal?: AbortSignal): Promise<T | typeof STALLED> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const stall = new Promise<typeof STALLED>((resolve) => { timer = setTimeout(() => resolve(STALLED), ms); });
-  return Promise.race([pending, stall]).finally(() => clearTimeout(timer));
+  return awaitAbortable(Promise.race([pending, stall]), signal).finally(() => clearTimeout(timer));
 }
 
 /** Drops a reader whose read is stuck. Its cancellation is not awaited: a stuck backend may never settle it. */
@@ -32,12 +45,16 @@ function abandon(reader: ReadableStreamBYOBReader): Promise<void> {
 }
 
 /** WebCrypto needs one input buffer; fill it with bounded backend reads on every engine. */
-export async function readCrossCheckInput(blob: Blob): Promise<ArrayBuffer> {
+export async function readCrossCheckInput(blob: Blob, signal?: AbortSignal): Promise<ArrayBuffer> {
+  if (signal?.aborted) throw new UnalteredError('ABORTED', 'Cancelled.');
   if (blob.size > CROSS_CHECK_MAX) throw new UnalteredError('INPUT_INVALID', 'The cross-check input is too large.');
   const input = new Uint8Array(blob.size);
   for (let start = 0; start < blob.size; start += CHUNK_SIZE) {
     const end = Math.min(start + CHUNK_SIZE, blob.size);
-    const bytes = new Uint8Array(await blob.slice(start, end).arrayBuffer());
+    // Opaque reads expose no intermediate progress; abort can stop our wait without imposing a chunk-fill deadline.
+    const read = await awaitAbortable(blob.slice(start, end).arrayBuffer(), signal);
+    if (signal?.aborted) throw new UnalteredError('ABORTED', 'Cancelled.');
+    const bytes = new Uint8Array(read);
     if (bytes.length !== end - start) throw new UnalteredError('INPUT_INVALID', 'The file ended before its declared size.');
     input.set(bytes, start);
   }
@@ -52,6 +69,7 @@ export interface ChunkSource {
 
 export interface StreamOptions {
   chunkSize?: number;
+  signal?: AbortSignal | undefined;
   isCancelled?: () => boolean;
   onProgress?: (bytesDone: number) => void;
   /** Called between chunks so a main-thread fallback can yield to the event loop. */
@@ -76,7 +94,8 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
   if (!Number.isSafeInteger(chunk) || chunk <= 0 || !Number.isSafeInteger(src.size) || src.size < 0) {
     throw new UnalteredError('INPUT_INVALID', 'Invalid file or hashing chunk size.');
   }
-  if (opts.isCancelled?.()) return null;
+  const isCancelled = (): boolean => opts.signal?.aborted === true || opts.isCancelled?.() === true;
+  if (isCancelled()) return null;
   const stallMs = opts.stallMs ?? STALL_MS;
   const h = sha256.create();
   let done = 0;
@@ -96,16 +115,16 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
   let buffer = reader ? new ArrayBuffer(chunk) : null;
   try {
     while (done < src.size) {
-      if (opts.isCancelled?.()) return null;
+      if (isCancelled()) return null;
       const end = Math.min(done + chunk, reader ? streamEnd : src.size);
       let buf: Uint8Array;
       if (reader && buffer) {
         // Blob reads take whatever the backend has ready, so the stall timer measures time without any
         // bytes, not time to fill a whole chunk: a slow device that keeps delivering is never abandoned.
         const read = blob
-          ? await within(reader.read(new Uint8Array(buffer, 0, end - done)), stallMs)
-          : await reader.read(new Uint8Array(buffer, 0, end - done), { min: end - done });
-        if (opts.isCancelled?.()) return null;
+          ? await within(reader.read(new Uint8Array(buffer, 0, end - done)), stallMs, opts.signal)
+          : await awaitAbortable(reader.read(new Uint8Array(buffer, 0, end - done), { min: end - done }), opts.signal);
+        if (isCancelled()) return null;
         if (read === STALLED) {
           // Nothing from this read reached the hash, so reopening [done, streamEnd) neither skips nor repeats bytes
           // (bytes from earlier partial reads were already hashed and counted in `done`).
@@ -128,8 +147,9 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
         buf = read.value;
         buffer = read.value.buffer;
       } else {
-        buf = new Uint8Array(await src.slice(done, end).arrayBuffer());
-        if (opts.isCancelled?.()) return null;
+        const read = await awaitAbortable(src.slice(done, end).arrayBuffer(), opts.signal);
+        if (isCancelled()) return null;
+        buf = new Uint8Array(read);
         if (buf.byteLength !== end - done) throw new UnalteredError('INPUT_INVALID', 'The file ended before its declared size.');
       }
       h.update(buf);
@@ -139,14 +159,14 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
       if (done - reported >= chunk || done === src.size) {
         reported = done;
         opts.onProgress?.(done);
-        if (opts.yieldFn) await opts.yieldFn();
+        if (opts.yieldFn) await awaitAbortable(opts.yieldFn(), opts.signal);
       }
-      if (opts.isCancelled?.()) return null;
+      if (isCancelled()) return null;
       if (blob && reader && done === streamEnd) {
         // Let the file backend finish the slice before reopening it. A separate tiny view
         // observes EOF without transferring/detaching the reusable hashing buffer.
-        const eof = await within(reader.read(new Uint8Array(1)), stallMs);
-        if (opts.isCancelled?.()) return null;
+        const eof = await within(reader.read(new Uint8Array(1)), stallMs, opts.signal);
+        if (isCancelled()) return null;
         if (eof === STALLED) {
           // This read owns only the separate one-byte EOF view, not a transferred full hashing buffer.
           // The slice's bytes were all delivered and hashed; only the end-of-slice confirmation is missing.
@@ -164,6 +184,9 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
         }
       }
     }
+  } catch (error) {
+    if (opts.signal?.aborted) return null;
+    throw error;
   } finally {
     if (reader) {
       const cancelling = reader.cancel().catch(() => {});
@@ -171,7 +194,7 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
       await within(cancelling, CANCEL_SETTLE_MS);
     }
   }
-  if (opts.isCancelled?.()) return null;
+  if (isCancelled()) return null;
   const digest = h.digest();
   return { digest, hex: toHex(digest), bytes: src.size };
 }

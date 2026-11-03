@@ -2,7 +2,7 @@
 // chunked code on the main thread (yielding between chunks) where workers are unavailable, e.g. file:// in Chrome.
 import { toHex, equalBytes } from '../bytes';
 import { UnalteredError, type ErrorCode } from '../errors';
-import { CHUNK_SIZE, CROSS_CHECK_MAX, hashSource, readCrossCheckInput } from './stream';
+import { CHUNK_SIZE, CROSS_CHECK_MAX, awaitAbortable, hashSource, readCrossCheckInput } from './stream';
 
 export interface HashResult {
   digest: Uint8Array;
@@ -77,45 +77,54 @@ function makeWorker(): Worker | null {
 
 function hashInWorker(w: Worker, blob: Blob, opts: HashOptions): Promise<{ digest: Uint8Array; bytes: number; cross: string } | 'unavailable'> {
   return new Promise((resolve, reject) => {
-    const abort = (): void => {
+    let settled = false;
+    const finish = (): void => {
+      settled = true;
+      opts.signal?.removeEventListener('abort', abort);
+      w.onmessage = null;
+      w.onerror = null;
       w.terminate();
+    };
+    const abort = (): void => {
+      if (settled) return;
+      finish();
       reject(new UnalteredError('ABORTED', 'Cancelled.'));
+    };
+    const unavailable = (): void => {
+      if (settled) return;
+      finish();
+      resolve('unavailable');
     };
     if (opts.signal?.aborted) return abort();
     opts.signal?.addEventListener('abort', abort, { once: true });
     w.onmessage = (ev: MessageEvent<{ type: string; done?: number; digest?: Uint8Array; bytes?: number; cross?: string; code?: string; message?: string }>) => {
+      if (settled) return;
+      if (opts.signal?.aborted) return abort();
       const m = ev.data;
       if (m.type === 'progress') opts.onProgress?.(m.done ?? 0);
       else if (m.type === 'done') {
-        opts.signal?.removeEventListener('abort', abort);
-        w.terminate();
+        finish();
         resolve({ digest: m.digest as Uint8Array, bytes: m.bytes as number, cross: m.cross ?? 'skipped' });
       } else if (m.type === 'failed' && WORKER_FAILURES.includes(m.code as ErrorCode) && typeof m.message === 'string') {
-        opts.signal?.removeEventListener('abort', abort);
-        w.terminate();
+        finish();
         reject(new UnalteredError(m.code as ErrorCode, m.message));
-      } else {
-        w.terminate();
-        resolve('unavailable');
-      }
+      } else unavailable();
     };
-    w.onerror = () => {
-      w.terminate();
-      resolve('unavailable');
-    };
+    w.onerror = unavailable;
     try {
       w.postMessage({ type: 'start', blob, chunkSize: CHUNK_SIZE });
     } catch {
-      w.terminate();
-      resolve('unavailable');
+      unavailable();
     }
   });
 }
 
-async function crossCheck(blob: Blob, digest: Uint8Array): Promise<void> {
+async function crossCheck(blob: Blob, digest: Uint8Array, signal?: AbortSignal): Promise<void> {
   const subtle = globalThis.crypto?.subtle;
   if (!subtle || blob.size > CROSS_CHECK_MAX) return;
-  const other = new Uint8Array(await subtle.digest('SHA-256', await readCrossCheckInput(blob)));
+  const input = await readCrossCheckInput(blob, signal);
+  const other = new Uint8Array(await awaitAbortable(subtle.digest('SHA-256', input), signal));
+  if (signal?.aborted) throw new UnalteredError('ABORTED', 'Cancelled.');
   if (!equalBytes(other, digest)) {
     throw new UnalteredError('INTERNAL_HASH_MISMATCH', MISMATCH);
   }
@@ -138,7 +147,7 @@ export async function hashBlob(blob: Blob, opts: HashOptions = {}): Promise<Hash
   }
   if (!result) {
     const r = await hashSource(blob, {
-      isCancelled: () => opts.signal?.aborted === true,
+      signal: opts.signal,
       ...(opts.onProgress ? { onProgress: opts.onProgress } : {}),
       yieldFn: nextTick,
     });
@@ -146,7 +155,7 @@ export async function hashBlob(blob: Blob, opts: HashOptions = {}): Promise<Hash
     result = r;
   }
   if (opts.signal?.aborted) throw new UnalteredError('ABORTED', 'Cancelled.');
-  if (!crossDone) await crossCheck(blob, result.digest);
+  if (!crossDone) await crossCheck(blob, result.digest, opts.signal);
   if (opts.signal?.aborted) throw new UnalteredError('ABORTED', 'Cancelled.');
   return { digest: result.digest, hex: toHex(result.digest), bytes: result.bytes };
 }

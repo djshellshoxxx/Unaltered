@@ -10,6 +10,13 @@ import { bytesOf, cspViolations, installNetwork, sha256hex, watchViolations } fr
 
 const NOTE = bytesOf('hello e2e');
 const NOTE_HEX = sha256hex(NOTE);
+// Pin the accepted trust wording independently of the string table. An unreadable calendar reply cannot
+// distinguish pending-response CORS from a network problem, or establish that a changed proof is unchanged.
+const PENDING_UPGRADE_NOTICE = 'Not confirmed yet. Try again in a few hours.';
+const UNREADABLE_UPGRADE_NOTICE = 'This browser could not read the answer from one or more calendar servers. '
+  + 'This may be a pending reply that the browser is not allowed to read, or a network problem. '
+  + 'Your receipt is still pending. Check again later.';
+const CONFIRMED_UPGRADE_NOTICE = 'Bitcoin timestamp data was added. Download the upgraded receipt, then use Verify with the original file to check it.';
 
 async function stampNote(page: Page, name = 'note.txt', content: Buffer = NOTE): Promise<Buffer> {
   await page.goto('/index.html#stamp');
@@ -48,8 +55,8 @@ test.describe('stamp, upgrade, verify (network mocked)', () => {
     // upgrade while calendars still answer 404
     await page.setInputFiles('#upgrade-receipt', { name: 'note.txt.ots', mimeType: 'application/octet-stream', buffer: pending });
     await page.getByRole('button', { name: 'Check for confirmation' }).click();
-    await expect(page.getByText('Not confirmed yet')).toBeVisible();
-    await expect(page.getByText('This browser could not read the answer')).toBeVisible();
+    await expect(page.locator('.upgrade-result .notice')).toHaveText([PENDING_UPGRADE_NOTICE, UNREADABLE_UPGRADE_NOTICE]);
+    await expect(page.locator('.upgrade-result [role=alert]')).toHaveCount(0);
     await expect(page.getByRole('link', { name: /Download upgraded receipt/ })).toHaveCount(0);
 
     // Bitcoin confirms
@@ -57,7 +64,8 @@ test.describe('stamp, upgrade, verify (network mocked)', () => {
     await page.getByRole('button', { name: 'Check for confirmation' }).click();
     const dlLink = page.getByRole('link', { name: /Download upgraded receipt/ });
     await expect(dlLink).toBeVisible();
-    await expect(page.getByText('Your original receipt was not changed')).toBeVisible();
+    await expect(page.locator('.upgrade-result .notice')).toHaveText([CONFIRMED_UPGRADE_NOTICE]);
+    await expect(page.locator('.upgrade-result .muted')).toHaveText('This is a new file. Your original receipt was not changed. Keep both.');
     const [dl] = await Promise.all([page.waitForEvent('download'), dlLink.click()]);
     const upgraded = readFileSync((await dl.path())!);
     expect(upgraded.length).toBeGreaterThan(pending.length - 200);
@@ -103,9 +111,53 @@ test.describe('stamp, upgrade, verify (network mocked)', () => {
     await page.goto('/index.html#verify');
     await page.setInputFiles('#upgrade-receipt', { name: 'n.ots', mimeType: 'application/octet-stream', buffer: pending });
     await page.getByRole('button', { name: 'Check for confirmation' }).click();
-    await expect(page.getByText('Not confirmed yet')).toBeVisible();
-    await expect(page.getByText('This browser could not read the answer')).toHaveCount(0);
+    await expect(page.locator('.upgrade-result .notice')).toHaveText([PENDING_UPGRADE_NOTICE]);
+    await expect(page.locator('.upgrade-result [role=alert]')).toHaveCount(0);
     await expect(page.locator('.upgrade-result ul.calendars')).toHaveCount(0);
+    await expect(page.locator('.upgrade-result a')).toHaveCount(0);
+  });
+
+  for (const scenario of [
+    { name: 'transport failure keeps the ambiguity notice', transport: true, notices: [PENDING_UPGRADE_NOTICE, UNREADABLE_UPGRADE_NOTICE], error: 'Could not reach a server.' },
+    { name: 'readable HTTP failure reports the server error without an unreadable notice', transport: false, notices: [PENDING_UPGRADE_NOTICE], error: 'The server answered with status 500.' },
+  ]) {
+    test(`a pending receipt after ${scenario.name}`, async ({ page, context }) => {
+      await installNetwork(context);
+      const pending = await stampNote(page);
+      await context.route('https://*/timestamp/**', (route) => scenario.transport
+        ? route.abort('failed')
+        : route.fulfill({ status: 500, headers: { 'access-control-allow-origin': '*' }, body: 'Unavailable' }));
+      await page.goto('/index.html#verify');
+      await page.setInputFiles('#upgrade-receipt', { name: 'pending.ots', mimeType: 'application/octet-stream', buffer: pending });
+      await page.getByRole('button', { name: 'Check for confirmation' }).click();
+      await expect(page.locator('.upgrade-result .notice')).toHaveText(scenario.notices);
+      await expect(page.locator('.upgrade-result [role=alert]')).toHaveCount(0);
+      const failures = page.locator('.upgrade-result ul.calendars li');
+      const hosts = ['alice.btc.calendar.opentimestamps.org', 'bob.btc.calendar.opentimestamps.org', 'finney.calendar.eternitywall.com'];
+      await expect.poll(async () => (await failures.allTextContents()).sort())
+        .toEqual(hosts.map((host) => `✖ ${host} – ${scenario.error}`).sort());
+      await expect(page.locator('.upgrade-result a')).toHaveCount(0);
+      await expect(page.locator('.result-VERIFIED')).toHaveCount(0);
+    });
+  }
+
+  test('an invalid receipt replaces pending and unreadable notices with a receipt error', async ({ page, context }) => {
+    const chain = await installNetwork(context);
+    const pending = await stampNote(page);
+    await page.goto('/index.html#verify');
+    await page.setInputFiles('#upgrade-receipt', { name: 'pending.ots', mimeType: 'application/octet-stream', buffer: pending });
+    await page.getByRole('button', { name: 'Check for confirmation' }).click();
+    await expect(page.locator('.upgrade-result .notice')).toHaveText([PENDING_UPGRADE_NOTICE, UNREADABLE_UPGRADE_NOTICE]);
+    const lookups = chain.timestampGets.length;
+    expect(lookups).toBe(3);
+
+    await page.setInputFiles('#upgrade-receipt', { name: 'invalid.ots', mimeType: 'application/octet-stream', buffer: bytesOf('invalid') });
+    await page.getByRole('button', { name: 'Check for confirmation' }).click();
+    await expect(page.locator('.upgrade-result [role=alert]')).toHaveText('The receipt ends unexpectedly.');
+    await expect(page.locator('.upgrade-result .notice')).toHaveCount(0);
+    await expect(page.locator('.upgrade-result ul.calendars')).toHaveCount(0);
+    await expect(page.locator('.upgrade-result a')).toHaveCount(0);
+    expect(chain.timestampGets).toHaveLength(lookups);
   });
 
   test('a changed pending receipt with an unreadable calendar does not claim its proof is unchanged', async ({ page, context }) => {
@@ -124,8 +176,8 @@ test.describe('stamp, upgrade, verify (network mocked)', () => {
     await page.setInputFiles('#upgrade-receipt', { name: 'pending.ots', mimeType: 'application/octet-stream', buffer: pending });
     await page.getByRole('button', { name: 'Check for confirmation' }).click();
     await expect(page.getByRole('link', { name: /Download upgraded receipt/ })).toBeVisible();
-    await expect(page.getByText('Not confirmed yet')).toBeVisible();
-    await expect(page.getByText('This browser could not read the answer')).toBeVisible();
+    await expect(page.locator('.upgrade-result .notice')).toHaveText([PENDING_UPGRADE_NOTICE, UNREADABLE_UPGRADE_NOTICE]);
+    await expect(page.locator('.upgrade-result .muted')).toHaveText('This is a new file. Your original receipt was not changed. Keep both.');
     await expect(page.locator('.upgrade-result')).not.toContainText('Your receipt is unchanged');
     await expect(page.locator('.result-VERIFIED')).toHaveCount(0);
   });
