@@ -27,7 +27,7 @@ jobs:
       - name: Check key and pending cloud PRs
         id: gate
         env:
-          KEY_EXISTS: ${{ secrets.UNALTERED_OPENAI_API_KEY != '' || secrets.OPENAI_API_KEY != '' || secrets.PATCHTRACE_OPENAI_API_KEY != '' }}
+          KEY_EXISTS: ${{ secrets.A != '' || secrets.UNALTERED_OPENAI_API_KEY != '' || secrets.OPENAI_API_KEY != '' || secrets.PATCHTRACE_OPENAI_API_KEY != '' }}
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
@@ -55,7 +55,7 @@ jobs:
         if: steps.gate.outputs.run_agent == 'true'
         uses: openai/codex-action@bdf19a4a223ec2549a3e2274a0cf61556bc07675 # v1
         with:
-          openai-api-key: ${{ secrets.UNALTERED_OPENAI_API_KEY || secrets.OPENAI_API_KEY || secrets.PATCHTRACE_OPENAI_API_KEY }}
+          openai-api-key: ${{ secrets.A || secrets.UNALTERED_OPENAI_API_KEY || secrets.OPENAI_API_KEY || secrets.PATCHTRACE_OPENAI_API_KEY }}
           permission-profile: ":workspace"
           output-file: unaltered-codex-report.txt
           prompt: |
