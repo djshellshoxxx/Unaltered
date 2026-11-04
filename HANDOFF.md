@@ -90,6 +90,10 @@ Tor/Q7, R1 Bob/Finney, legal/domain) is listed with the smallest unblocking acti
 
 # Current continuation — 2026-11-04 UTC
 
+Latest recovery: [recovery progress and restart handoff](docs/RECOVERY_PROGRESS_20261104.md), branch
+`codex/recover-qualify-20261104`. This retains the candidate below and adds new regression-backed hardening and
+genuine file-backed hashing qualification. Live GitHub, browser and external release gates remain open.
+
 See [the autonomous consolidation handoff](docs/AUTONOMOUS_HANDOFF_20261104.md) for the isolated candidate,
 selected PR47/48/49 integration, new verified fixes, local results, environment blockers and publication recovery.
 No production release or merge occurred. Older sections below are historical evidence.
