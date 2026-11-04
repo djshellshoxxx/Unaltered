@@ -80,7 +80,9 @@ function start(): void {
 
   function route(focus = true): void {
     const { view, h } = parseHash(location.hash);
-    if (h) {
+    // Every hashchange routes here. Back/Forward (or a language switch) to the same #h= is not a new link: applying
+    // it again would replace a file the user chose since, clear its result and abort a running check.
+    if (h && h !== pendingPrefill) {
       pendingPrefill = h;
       verifyView?.setPrefill(h);
     }
