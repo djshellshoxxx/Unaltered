@@ -350,3 +350,33 @@ test('without exiftool, tracked media is a finding (never a PASS) and the crude 
   assertFindings(result, finding('photo.png', 'eXIf'), finding('report.pdf', '/Author'), finding('scan.tif', 'cannot be ruled out without exiftool'));
   assert.match(result.stdout, /\[warn\] exiftool not installed/);
 });
+
+const pngStructure = ['ImageWidth 1', 'ImageHeight 1', 'BitDepth 8', 'ColorType RGB', 'Compression Deflate/Inflate', 'Filter Adaptive', 'Interlace Noninterlaced']
+  .map((line) => tag('PNG', ...line.split(' '))).join('');
+const fileStructure = (type, mime) => tag('File', 'FileType', type) + tag('File', 'FileTypeExtension', type.toLowerCase()) + tag('File', 'MIMEType', mime);
+
+test('exiftool: identity tags in the PDF, PNG and File groups and exiftool errors are findings', { skip }, (t) => {
+  const r = repo(t);
+  const fixtures = {
+    'report.pdf': fileStructure('PDF', 'application/pdf') + tag('PDF', 'PDFVersion', '1.4') + tag('PDF', 'PageCount', '1') + tag('PDF', 'Author', 'Jane Q Real'),
+    'creator.pdf': fileStructure('PDF', 'application/pdf') + tag('PDF', 'Creator', 'Jane Q Real') + tag('PDF', 'Producer', 'Synthetic Writer 1.0'),
+    'author.png': fileStructure('PNG', 'image/png') + pngStructure + tag('PNG', 'Author', 'Jane Q Real'),
+    'comment.png': fileStructure('PNG', 'image/png') + pngStructure + tag('PNG', 'Comment', 'shot by Jane'),
+    'comment.jpg': fileStructure('JPEG', 'image/jpeg') + tag('File', 'Comment', 'Jane camera'),
+    'broken.jpg': `${tag('ExifTool', 'Error', 'File format error')}\nEXIFTOOL-EXIT:1\n`,
+    'warned.jpg': fileStructure('JPEG', 'image/jpeg') + tag('ExifTool', 'Warning', '[minor] Unrecognized trailer'),
+  };
+  for (const [name, lines] of Object.entries(fixtures)) r.write(name, Buffer.concat([JPEG_EXIF, Buffer.from(lines)]));
+  r.commit();
+  assertFindings(r.check(exiftoolStub(r)), ...Object.keys(fixtures).map((name) => finding(name)));
+});
+
+test('exiftool: a file with only structural tags passes', { skip }, (t) => {
+  const r = repo(t);
+  r.write('clean.png', Buffer.from(fileStructure('PNG', 'image/png') + pngStructure + tag('Composite', 'ImageSize', '1x1') + tag('Composite', 'Megapixels', '0.000001')));
+  r.write('clean.jpg', Buffer.from(fileStructure('JPEG', 'image/jpeg') + tag('File', 'ImageWidth', '1') + tag('File', 'EncodingProcess', 'Baseline DCT, Huffman coding')
+    + tag('JFIF', 'JFIFVersion', '1.01') + tag('JFIF', 'ResolutionUnit', 'None')));
+  r.write('clean.pdf', Buffer.from(fileStructure('PDF', 'application/pdf') + tag('PDF', 'PDFVersion', '1.4') + tag('PDF', 'Linearized', 'No') + tag('PDF', 'PageCount', '1')));
+  r.commit();
+  assertPass(r.check(exiftoolStub(r)));
+});

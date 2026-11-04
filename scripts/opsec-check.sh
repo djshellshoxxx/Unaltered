@@ -206,11 +206,27 @@ echo "== 6. embedded metadata in tracked images, documents, audio and video (HEA
 if [ "${#media[@]}" -eq 0 ]; then
   ok "no media files tracked"
 elif command -v exiftool >/dev/null 2>&1; then
+  # Report any tag outside a tiny structural allow-list of exact [group] tag names. Whole groups are never allowed:
+  # [PDF] and [PNG] also hold Author/Creator/Producer/Title/Comment, and [File] holds a JPEG Comment.
+  # Anything unexpected, including [ExifTool] Error/Warning lines and stderr, is a finding (fail closed).
+  ALLOW='^\[System\][[:space:]]'
+  ALLOW="$ALLOW|^\[ExifTool\][[:space:]]+ExifToolVersion[[:space:]]*:"
+  ALLOW="$ALLOW|^\[File\][[:space:]]+(FileType|FileTypeExtension|MIMEType|ImageWidth|ImageHeight|EncodingProcess|BitsPerSample|ColorComponents|YCbCrSubSampling|ExifByteOrder)[[:space:]]*:"
+  ALLOW="$ALLOW|^\[JFIF\][[:space:]]+(JFIFVersion|ResolutionUnit|XResolution|YResolution)[[:space:]]*:"
+  ALLOW="$ALLOW|^\[PNG(-pHYs|-cHRM)?\][[:space:]]+(ImageWidth|ImageHeight|BitDepth|ColorType|Compression|Filter|Interlace|Palette|Transparency|BackgroundColor|SignificantBits|Gamma|SRGBRendering|PixelsPerUnitX|PixelsPerUnitY|PixelUnits|WhitePointX|WhitePointY|RedX|RedY|GreenX|GreenY|BlueX|BlueY|AnimationFrames|AnimationPlays)[[:space:]]*:"
+  ALLOW="$ALLOW|^\[PDF\][[:space:]]+(PDFVersion|Linearized|PageCount)[[:space:]]*:"
+  ALLOW="$ALLOW|^\[Composite\][[:space:]]+(ImageSize|Megapixels)[[:space:]]*:"
   for i in "${media[@]}"; do
-    # Report any tag outside a tiny structural allow-list.
-    extra="$(exiftool -s -G1 -a "${files[i]}" 2>/dev/null \
-      | grep -Evi '^\[(System|File|Composite|JFIF|PNG|PDF)\]|ExifTool|ImageSize|Megapixels' || true)"
-    if [ -n "$extra" ]; then fail "${labels[i]} has embedded metadata:"; echo "$extra" | head -5 | sed 's/^/         /'; fi
+    out="$(exiftool -s -G1 -a "${files[i]}" 2>&1)"; rc=$?
+    extra="$(printf '%s\n' "$out" | grep -Ev "$ALLOW")"
+    if [ "$rc" -ne 0 ] || ! printf '%s\n' "$out" | grep -Eq '^\[ExifTool\][[:space:]]+ExifToolVersion[[:space:]]*:'; then
+      fail "${labels[i]}: exiftool could not read it (exit $rc), so embedded metadata cannot be ruled out:"
+    elif [ -n "$extra" ]; then
+      fail "${labels[i]} has embedded metadata:"
+    else
+      continue
+    fi
+    [ -n "$extra" ] && printf '%s\n' "$extra" | head -n 5 | sed 's/^/         /'
   done
 else
   # Fail closed: a byte scan cannot rule metadata out (a TIFF GPS IFD is numeric, PDF Info can sit in a compressed
