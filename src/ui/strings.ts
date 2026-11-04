@@ -373,7 +373,8 @@ export function detectLang(preferred: readonly string[]): Lang {
 }
 
 export function t(key: StringKey, vars?: Record<string, string | number>): string {
-  let s: string = tables[current][key];
-  if (vars) for (const [k, v] of Object.entries(vars)) s = s.split(`{${k}}`).join(String(v));
-  return s;
+  const s: string = tables[current][key];
+  if (!vars) return s;
+  // One pass: substituted text (a host name, a core error message) is never itself treated as a template.
+  return s.replace(/\{([A-Za-z]+)\}/g, (m, k: string) => (Object.prototype.hasOwnProperty.call(vars, k) ? String(vars[k]) : m));
 }
