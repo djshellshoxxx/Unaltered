@@ -1,7 +1,7 @@
 // Static regressions for what the required CI gates actually check. Offline, no YAML dependency: the readers below
 // understand only the layout this repository's workflows use, and fail closed when a job or step is not found.
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { test } from 'node:test';
 
 const root = new URL('../../', import.meta.url);
@@ -42,6 +42,7 @@ function steps(jobLines) {
 
 /** Case-insensitive PowerShell-style wildcard (`*`, `?`) as an anchored RegExp. */
 const wildcard = (pattern) => new RegExp(`^${pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.')}$`, 'i');
+const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 test('the Windows job checks the Windows zip itself, with the Verify-Checksums.ps1 it ships', () => {
   const build = read('scripts/build.mjs');
@@ -86,4 +87,23 @@ test('the Windows job checks the Windows zip itself, with the Verify-Checksums.p
   if (!/['"]MISMATCH \S/.test(script)) problems.push('does not prove a changed file is reported');
   if (!/['"]MISSING {2}\S/.test(script)) problems.push('does not prove a missing file is reported');
   assert.deepEqual(problems, [], `Windows zip check (${step.name}):\n  ${problems.join('\n  ')}`);
+});
+
+test('the fixture regeneration gate compares every file the reference generator writes, expected.json included', () => {
+  const step = steps(job('.github/workflows/ci.yml', 'differential')).find((s) => /gen_fixtures\.py/.test(s.run ?? ''));
+  assert.ok(step, 'the differential job no longer regenerates fixtures');
+  const out = /gen_fixtures\.py\s+(\S+)/.exec(step.run)?.[1];
+  assert.ok(out, 'no generator output directory');
+  const committed = readdirSync(new URL('tests/fixtures/ots/', root)).sort();
+  assert.ok(committed.includes('expected.json'));
+  const o = escape(out);
+  const wholeTree = new RegExp(`\\bdiff\\s+(?:-\\S+\\s+)*-\\w*r\\w*\\s+(?:-\\S+\\s+)*(?:${o}/?\\s+tests/fixtures/ots/?|tests/fixtures/ots/?\\s+${o}/?)(?:\\s|$)`);
+  const compared = new Set();
+  if (wholeTree.test(step.run)) committed.forEach((f) => compared.add(f));
+  for (const [, list, suffix] of step.run.matchAll(new RegExp(`for f in ([^;]+); do cmp ${o}/\\$f(\\S*) tests/fixtures/ots/\\$f\\2(?:\\s|;)`, 'g'))) {
+    for (const f of list.trim().split(/\s+/)) compared.add(f + suffix);
+  }
+  for (const [, f] of step.run.matchAll(new RegExp(`\\bcmp ${o}/([\\w.-]+) tests/fixtures/ots/\\1(?:\\s|;|$)`, 'gm'))) compared.add(f);
+  const unchecked = committed.filter((f) => !compared.has(f));
+  assert.deepEqual(unchecked, [], `regenerated but never compared against the committed copy: ${unchecked.join(', ')}`);
 });
