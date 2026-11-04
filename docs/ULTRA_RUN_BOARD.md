@@ -69,7 +69,6 @@ the test-level error text of the failed attempts is above that window.
 ## Unreproduced suspects (not changed; candidates for future work)
 
 - **Toolkit:**
-  - `paper-search/scripts/search.sh` does arithmetic on unvalidated arguments.
   - `web-artifacts-builder/scripts/init-artifact.sh` puts an unvalidated name into a `sed` expression and installs pnpm
     before validating.
   - `find-polluter.sh` word-splits test names.
@@ -102,3 +101,11 @@ Agents cannot complete these. Each needs the owner, a named person, or an extern
 | R1 Bob/Finney confirmed paths | Needs live confirmed receipts and real browser network access | Follow `docs/R1_BOB_FINNEY_TEMPLATE.md` with `scripts/r1-bob-finney.mjs` on a networked machine |
 | Pending-receipt CORS (404 without ACAO) | Calendar operators set this header | Ask the calendar operators to send `Access-Control-Allow-Origin` on 404 responses, or approve an ADR for a different approach (no silent proxy) |
 | Q5 / LEGAL-1 | Domain and legal decisions | Decide the domain policy; get legal review of the public wording |
+
+## Suspects reproduced after review
+
+- **Toolkit:** `paper-search/scripts/search.sh` ran commands from its `limit`/`page` arguments: bash arithmetic expands
+  a subscript such as `QUERY[$(cmd)]`. The first regression test used the unset name `a`, which `set -u` aborts on
+  before the subscript is expanded, so it passed without any validation. Fixed on `worker/final-tooling-20261104`:
+  both arguments must be plain positive integers, and the test now covers set names, checks that the payloads are live
+  and checks that the refusal does not come from `set -u`.
