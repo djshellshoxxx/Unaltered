@@ -35,15 +35,19 @@ export function setChildren(node: Node, ...kids: Child[]): void {
 }
 
 let liveRegion: HTMLElement | null = null;
+let announcementGeneration = 0;
 export function setLiveRegion(node: HTMLElement): void {
   liveRegion = node;
+  announcementGeneration++;
 }
-/** Polite screen-reader announcement. */
+/** Polite screen-reader announcement. Only the newest queued status may be spoken. */
 export function announce(message: string): void {
   if (!liveRegion) return;
-  liveRegion.textContent = '';
+  const target = liveRegion;
+  const generation = ++announcementGeneration;
+  target.textContent = '';
   setTimeout(() => {
-    if (liveRegion) liveRegion.textContent = message;
+    if (generation === announcementGeneration && liveRegion === target) target.textContent = message;
   }, 30);
 }
 

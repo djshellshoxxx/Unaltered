@@ -38,6 +38,43 @@ describe('strings (FR-14)', () => {
   });
 });
 
+describe('screen-reader announcement ordering', () => {
+  it('only announces the latest queued message after rapid updates', async () => {
+    const { announce, setLiveRegion } = await import('../../src/ui/dom');
+    const { vi } = await import('vitest');
+    vi.useFakeTimers();
+    const region = { textContent: '' } as HTMLElement;
+    try {
+      setLiveRegion(region);
+      announce('Old status');
+      announce('Current status');
+      await vi.runAllTimersAsync();
+      expect(region.textContent).toBe('Current status');
+    } finally {
+      setLiveRegion(null as unknown as HTMLElement);
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not write an obsolete announcement into a replacement live region', async () => {
+    const { announce, setLiveRegion } = await import('../../src/ui/dom');
+    const { vi } = await import('vitest');
+    vi.useFakeTimers();
+    const oldRegion = { textContent: '' } as HTMLElement;
+    const current = { textContent: '' } as HTMLElement;
+    try {
+      setLiveRegion(oldRegion);
+      announce('Old screen');
+      setLiveRegion(current);
+      await vi.runAllTimersAsync();
+      expect(current.textContent).toBe('');
+    } finally {
+      setLiveRegion(null as unknown as HTMLElement);
+      vi.useRealTimers();
+    }
+  });
+});
+
 describe('router (FR-11)', () => {
   const h = 'a'.repeat(64);
   it('parses views and fingerprint fragments', () => {
