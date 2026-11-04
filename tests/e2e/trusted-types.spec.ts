@@ -1,7 +1,7 @@
 // SR-1 / Q7: the shipped CSP requires Trusted Types for script sinks and allows only the app's own worker policy.
 // These tests check that the policy is delivered with both builds and, in engines that implement Trusted Types, that
-// it is actually enforced. Engines without the API cannot enforce it; the test records that as an annotation rather
-// than a pass, so a run on such an engine is not evidence of enforcement.
+// it is actually enforced. Engines without the API cannot enforce it; the test is reported as skipped rather than
+// passed (the delivery checks still run first), so a run on such an engine is not evidence of enforcement.
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -17,6 +17,7 @@ interface SinkProbe {
 }
 
 const NOTE = bytesOf('trusted types probe\n');
+const NOT_EVIDENCED = 'Trusted Types not implemented by this engine; enforcement not evidenced';
 
 async function cspOf(page: Page): Promise<string> {
   return page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content').then((v) => v ?? '');
@@ -50,6 +51,15 @@ function expectEnforced(probe: SinkProbe): void {
 }
 
 test.describe('Trusted Types (SR-1, Q7)', () => {
+  // The titles claim enforcement, so a test here may end 'passed' only with that evidence. The list reporter does
+  // not print annotations: anything else would show a green check for a probe that never ran.
+  test.afterEach(() => {
+    const info = test.info();
+    if (info.status !== 'passed') return;
+    expect(info.annotations, 'passed without evidencing enforcement')
+      .toContainEqual({ type: 'trusted-types', description: 'enforced' });
+  });
+
   test('multi-file build delivers and enforces the Trusted Types policy', async ({ page }, info) => {
     const viol = await watchViolations(page);
     await page.goto('/index.html');
@@ -63,10 +73,7 @@ test.describe('Trusted Types (SR-1, Q7)', () => {
     expect(viol.list).toEqual([]);
 
     const probe = await probeSinks(page);
-    if (!probe.supported) {
-      info.annotations.push({ type: 'trusted-types', description: 'not implemented by this engine; enforcement not evidenced' });
-      return;
-    }
+    test.skip(!probe.supported, NOT_EVIDENCED);
     expectEnforced(probe);
     // Once the app has created its policy, a second policy with the same name is refused (no 'allow-duplicates').
     const duplicate = await page.evaluate(() => {
@@ -94,12 +101,9 @@ test.describe('Trusted Types (SR-1, Q7)', () => {
     expect(await cspViolations(page)).toEqual([]);
     expect(viol.list).toEqual([]);
     const probe = await probeSinks(page);
-    if (probe.supported) {
-      expectEnforced(probe);
-      info.annotations.push({ type: 'trusted-types', description: 'enforced' });
-    } else {
-      info.annotations.push({ type: 'trusted-types', description: 'not implemented by this engine; enforcement not evidenced' });
-    }
     await ctx.close();
+    test.skip(!probe.supported, NOT_EVIDENCED);
+    expectEnforced(probe);
+    info.annotations.push({ type: 'trusted-types', description: 'enforced' });
   });
 });
