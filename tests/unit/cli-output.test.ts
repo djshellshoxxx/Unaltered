@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -49,5 +50,36 @@ describe.runIf(process.platform !== 'win32')('cli hash output with hostile file 
   it('prints an ordinary name unchanged', async () => {
     const r = await hashOut('plain name.txt');
     expect(r.out).toBe(`${ABC}  ${r.dir}/plain name.txt\n`);
+  });
+
+  // Escaping is only needed when a control character could forge a line or rewrite the terminal. A backslash alone
+  // (a Windows path separator, or a legal POSIX name byte) stays literal, as before; `sha256sum -c` reads an
+  // unescaped line literally, so the output still checks.
+  it('prints a name whose only special character is a backslash unchanged', async () => {
+    const r = await hashOut('back\\slash.txt');
+    expect(r.out).toBe(`${ABC}  ${r.dir}/back\\slash.txt\n`);
+  });
+
+  const sha256sum = spawnSync('sha256sum', ['--version'], { encoding: 'utf8' });
+  it.runIf(sha256sum.status === 0)('produces lines that GNU sha256sum -c accepts (skipped where sha256sum is missing)', async () => {
+    for (const name of ['back\\slash.txt', `nl\nname`, 'cr\rname\\x']) {
+      const r = await hashOut(name);
+      const list = join(r.dir, 'SUMS');
+      writeFileSync(list, r.out);
+      const check = spawnSync('sha256sum', ['-c', list], { encoding: 'utf8', timeout: 5000 });
+      expect({ name, status: check.status, stderr: check.stderr }).toEqual({ name, status: 0, stderr: '' });
+    }
+  });
+});
+
+// Windows paths always contain backslashes and can never contain control characters, so they must print verbatim.
+describe('cli hash output on paths with separators', () => {
+  it('does not escape the backslashes of a Windows-style path', async () => {
+    const dir = tmp();
+    const f = join(dir, 'abc.txt');
+    writeFileSync(f, 'abc');
+    const o = { out: '', err: '' };
+    expect(await run(['hash', f], { out: (s) => void (o.out += s), err: (s) => void (o.err += s) })).toBe(0);
+    expect(o.out).toBe(`${ABC}  ${f}\n`);
   });
 });
