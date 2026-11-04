@@ -122,3 +122,35 @@ test('a git read that fails after start-up (missing commit object) is never repo
   rmSync(join(r.work, '.git', 'objects', head.slice(0, 2), head.slice(2)));
   assertNotChecked(r.check());
 });
+
+test('check 1 reads the effective author and committer identity, not only user.email', { skip }, async (t) => {
+  for (const [name, configure, extra, pattern] of [
+    ['author.email config', (r) => r.git(['config', 'author.email', JANE]), {}, finding('author email ', JANE)],
+    ['committer.email config', (r) => r.git(['config', 'committer.email', mail('jane.commit')]), {}, finding('committer email ', mail('jane.commit'))],
+    ['GIT_AUTHOR_EMAIL', () => {}, { GIT_AUTHOR_EMAIL: mail('jane.env') }, finding('author email ', mail('jane.env'))],
+    ['GIT_COMMITTER_EMAIL', () => {}, { GIT_COMMITTER_EMAIL: mail('jane.env') }, finding('committer email ', mail('jane.env'))],
+  ]) {
+    await t.test(name, (t) => {
+      const r = repo(t);
+      configure(r);
+      assertFindings(r.check(extra), pattern);
+    });
+  }
+  await t.test('EMAIL fallback when user.email is unset', (t) => {
+    const r = repo(t, { email: null });
+    assertFindings(r.check({ EMAIL: JANE }), finding('author email ', JANE), finding('committer email ', JANE));
+  });
+});
+
+test('check 1 passes a no-reply identity and only warns when git has no identity to commit with', { skip }, (t) => {
+  const r = repo(t);
+  const clean = r.check();
+  assertPass(clean);
+  assert.match(clean.stdout, /\[ ok \] author email is a no-reply address/);
+  assert.match(clean.stdout, /\[ ok \] committer email is a no-reply address/);
+  const none = repo(t, { email: null });
+  none.git(['config', 'user.useConfigOnly', 'true']);
+  const refused = none.check();
+  assertPass(refused);
+  assert.match(refused.stdout, /\[warn\] git has no author identity/);
+});

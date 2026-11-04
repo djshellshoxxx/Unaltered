@@ -3,7 +3,7 @@
 # Run locally before every push; CI runs it too. Exit code 1 if any finding; 2 if git cannot be read (never a PASS).
 #
 # Checks:
-#   1. Effective git identity looks like a no-reply address
+#   1. Effective author and committer identity (as `git var` resolves it) is a no-reply address
 #   2. Commit author/committer emails in history are no-reply addresses
 #   3. Tracked text files contain no personal email addresses
 #   4. Tracked text files contain no personal home-directory paths
@@ -44,16 +44,22 @@ SELF="scripts/opsec-check.sh"
 VENDORED_RE='^(skills|shared)/'
 
 echo "== 1. git identity (effective for this repo)"
-name="$(git config user.name || true)"
-email="$(git config user.email || true)"
-if [ -z "$email" ]; then
-  warn "no user.email set"
-elif is_allowed_email "$email"; then
-  ok "user.email is a no-reply address"
-else
-  fail "user.email is not a no-reply address (set it with: git config user.email 'handle@users.noreply.github.com')"
-fi
-[ -n "$name" ] && echo "       user.name = $name  (confirm this is your project handle, not your real name)"
+# `git var` resolves what a commit would record: GIT_AUTHOR_*/GIT_COMMITTER_* and EMAIL, author.*/committer.*
+# and user.* config, else an auto-derived login@hostname. Reading user.email alone misses all of those overrides.
+for role in author committer; do
+  if [ "$role" = author ]; then ident_var=GIT_AUTHOR_IDENT; else ident_var=GIT_COMMITTER_IDENT; fi
+  if ! ident="$(git var "$ident_var" 2>/dev/null)"; then
+    warn "git has no $role identity, so it refuses to commit (set: git config user.email 'handle@users.noreply.github.com')"
+    continue
+  fi
+  name="${ident%% <*}"; email="${ident#*<}"; email="${email%%>*}"
+  if is_allowed_email "$email"; then
+    ok "$role email is a no-reply address"
+  else
+    fail "$role email is not a no-reply address: $email (git takes it from ${ident_var%_IDENT}_EMAIL, EMAIL, $role.email, user.email or login@hostname; set: git config user.email 'handle@users.noreply.github.com')"
+  fi
+  echo "       $role name = $name  (confirm this is your project handle, not your real name)"
+done
 
 echo "== 2. commit history emails"
 git_to "$tmp/history" log --all --format='%ae%n%ce'
