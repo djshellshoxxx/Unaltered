@@ -76,3 +76,19 @@ test('unexpected worker exit fails the pending input', async () => {
   try { await assert.rejects(worker.runCase('exit', new Uint8Array()), /exited \(9\)/); }
   finally { await worker.close(); }
 });
+test('a rejected concurrent request is never dispatched to the parser', async () => {
+  const worker = await createExecutor(targetUrl, { timeoutMs: 200 });
+  try {
+    const first = worker.runCase('accept', new Uint8Array());
+    await assert.rejects(worker.runCase('hang', new Uint8Array()), /busy/);
+    assert.equal((await first).outcome, 'accepted');
+    assert.equal((await worker.runCase('accept', new Uint8Array())).outcome, 'accepted');
+  } finally { await worker.close(); }
+});
+test('a message serialization failure rejects the request and closes the executor', async () => {
+  const worker = await createExecutor(targetUrl);
+  try {
+    await assert.rejects(worker.runCase('accept', () => {}), { name: 'DataCloneError' });
+    await assert.rejects(worker.runCase('accept', new Uint8Array()), /closed/);
+  } finally { await worker.close(); }
+});

@@ -31,7 +31,14 @@ export async function createExecutor(targetUrl, { timeoutMs = 1000, startupMs = 
     if (!(await ready).ready) throw new Error('Fuzz worker initialization failed');
   } catch (error) { fail(error); throw error; }
   return {
-    runCase(target, bytes) { const result = wait(timeoutMs); worker.postMessage({ target, bytes }); return result; },
+    runCase(target, bytes) {
+      // A rejected request must never reach the worker or consume a later request's response.
+      if (closed || pending) return Promise.reject(new Error('Executor is closed or busy'));
+      const result = wait(timeoutMs);
+      try { worker.postMessage({ target, bytes }); }
+      catch (error) { fail(error); }
+      return result;
+    },
     async close() { closed = true; if (pending) fail(new Error('Executor closed')); await worker.terminate(); },
   };
 }
