@@ -8,8 +8,10 @@ const URL_ATTRS = new Set(['href', 'src', 'action', 'formaction']);
 function isScriptUrl(value: string): boolean {
   // Match browser URL preprocessing: remove TAB/LF/CR anywhere, then trim leading C0 controls and spaces.
   // Other embedded controls are not removed by the URL parser and must not be treated as scheme characters.
-  const normalized = value.replace(/[\t\n\r]/g, '').replace(/^[\u0000-\u0020]+/, '');
-  return /^(javascript|data|vbscript):/i.test(normalized);
+  const normalized = value.replace(/[\t\n\r]/g, '');
+  let start = 0;
+  while (start < normalized.length && normalized.charCodeAt(start) <= 0x20) start++;
+  return /^(javascript|data|vbscript):/i.test(normalized.slice(start));
 }
 
 export function el<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<string, AttrValue> = {}, ...kids: Child[]): HTMLElementTagNameMap[K] {
