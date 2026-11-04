@@ -14,7 +14,7 @@ const putTag = (s: string): Uint8Array => Uint8Array.from(s, (c) => c.charCodeAt
 // Chunks needed to play the audio. Musical loop/cue data (smpl, inst, cue) is kept; free-text and identity chunks
 // (LIST/INFO, bext originator, iXML, id3, _PMX XMP, ...) are removed.
 const WAV_KEEP = new Set(['fmt ', 'data', 'fact', 'smpl', 'inst', 'cue ']);
-const WAV_NAMES: Record<string, string> = { LIST: 'text tags (LIST)', bext: 'broadcast info (bext)', iXML: 'iXML metadata', 'id3 ': 'ID3 tag', ID3: 'ID3 tag', _PMX: 'XMP metadata' };
+const WAV_NAMES: Record<string, string> = { LIST: 'text tags (LIST)', bext: 'broadcast info (bext)', iXML: 'iXML metadata', 'id3 ': 'ID3 tag', 'ID3 ': 'ID3 tag', _PMX: 'XMP metadata' };
 const MAX_REMOVAL_SUMMARY_LABELS = 64;
 const REMOVAL_SUMMARY_OVERFLOW = 'Additional metadata chunks';
 
