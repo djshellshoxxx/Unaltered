@@ -102,7 +102,8 @@ git_to "$tmp/index" ls-files -s -z
 if git rev-parse -q --verify HEAD >/dev/null 2>&1; then git_to "$tmp/head" ls-tree -r -z --full-tree HEAD; else : > "$tmp/head"; fi
 git_to "$tmp/changed" diff-files --name-only -z
 mkdir "$tmp/items" || die "cannot create $tmp/items"
-n=0; seen=$'\n'; files=(); labels=(); links=(); exts=(); binary=()
+NL=$'\n'; TAB=$'\t'
+n=0; seen="$NL"; files=(); labels=(); links=(); exts=(); binary=()
 skip_path() { [ "$1" = "$SELF" ] || [[ "$1" =~ $VENDORED_RE ]]; }
 set_ext() { # set_ext <path>: lower-case extension of the file name in $ext ("" if none)
   local base="${1##*/}"; ext=""
@@ -115,20 +116,20 @@ next_item() { # next_item <path> <label> <is_link>: reserve files[n] for the con
   files[n]="$tmp/items/$n${ext:+.$ext}"; labels[n]="$2"; links[n]="$3"; exts[n]="$ext"
 }
 add_blob() { # add_blob <sha> <path> <label> <mode>
-  case "$seen" in *$'\n'"$1 $2"$'\n'*) return 0 ;; esac
-  seen="$seen$1 $2"$'\n'
+  case "$seen" in *"$NL$1 $2$NL"*) return 0 ;; esac
+  seen="$seen$1 $2$NL"
   if [ "$4" = 120000 ]; then next_item "$2" "$3" 1; else next_item "$2" "$3" 0; fi
   git cat-file blob "$1" > "${files[n]}" 2> "$tmp/git.err" || die "'git cat-file blob $1' ($2) failed: $(head -c 300 "$tmp/git.err" | tr '\n' ' ')"
   n=$((n + 1))
 }
 while IFS= read -r -d '' rec; do # <mode> <sha> <stage>\t<path>
-  path="${rec#*$'\t'}"; meta="${rec%%$'\t'*}"; mode="${meta%% *}"; sha="${meta#* }"; sha="${sha%% *}"
+  path="${rec#*$TAB}"; meta="${rec%%$TAB*}"; mode="${meta%% *}"; sha="${meta#* }"; sha="${sha%% *}"
   skip_path "$path" && continue
   [ "$mode" = 160000 ] && continue # submodule commit, not content
   add_blob "$sha" "$path" "$path" "$mode"
 done < "$tmp/index"
 while IFS= read -r -d '' rec; do # <mode> <type> <sha>\t<path>
-  path="${rec#*$'\t'}"; meta="${rec%%$'\t'*}"; mode="${meta%% *}"; type="${meta#* }"; sha="${type#* }"; type="${type%% *}"
+  path="${rec#*$TAB}"; meta="${rec%%$TAB*}"; mode="${meta%% *}"; type="${meta#* }"; sha="${type#* }"; type="${type%% *}"
   skip_path "$path" && continue
   [ "$type" = blob ] || continue
   add_blob "$sha" "$path" "$path (committed in HEAD)" "$mode"
@@ -140,8 +141,8 @@ while IFS= read -r -d '' path; do
     readlink -- "$path" > "${files[n]}" || die "cannot read the symlink $path"
   elif [ -f "$path" ]; then
     sha="$(git hash-object -- "$path" 2>/dev/null)" || die "cannot read $path"
-    case "$seen" in *$'\n'"$sha $path"$'\n'*) continue ;; esac
-    seen="$seen$sha $path"$'\n'
+    case "$seen" in *"$NL$sha $path$NL"*) continue ;; esac
+    seen="$seen$sha $path$NL"
     next_item "$path" "$path (working tree)" 0
     cat -- "$path" > "${files[n]}" || die "cannot read $path"
   else
