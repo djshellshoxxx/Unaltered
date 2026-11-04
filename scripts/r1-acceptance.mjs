@@ -95,18 +95,20 @@ try {
 
   const requests = [...network.values()];
   const upgradeRequests = requests.filter((n) => n.kind === 'upgrade');
-  upgrade.confirmed = state === 'VERIFIED' && (upgrade.downloaded || upgradeRequests.length === 0);
+  // R1 is the upgrade path: only a receipt produced by Upgrade and then shown Verified counts (docs/R1_ACCEPTANCE.md).
+  upgrade.confirmed = state === 'VERIFIED' && upgrade.downloaded;
   // TLS/proxy failures happen before any HTTP reply, so they are about this host's network path, not CORS.
   const tls = requests.filter((n) => /ERR_(CERT|SSL|TUNNEL|PROXY)/.test(n.failure ?? ''));
   const blocked = upgradeRequests.filter((n) => n.failure || (n.status && !n.acao));
   // Order matters: a browser-blocked read says nothing about the receipt, and a pending answer is not a failure.
   const classification = csp.length > 0 ? 'CSP_VIOLATION'
-    : state === 'VERIFIED' && (upgrade.confirmed || upgrade.downloaded || upgradeRequests.length === 0) ? 'PASS'
+    : upgrade.confirmed ? 'PASS'
     : tls.length > 0 ? 'TLS_OR_PROXY'
     : blocked.length > 0 ? 'CORS_OR_TRANSPORT'
     : upgrade.receiptError || state === 'INVALID_PROOF' || state === 'NO_MATCH_FILE' ? 'RECEIPT_OR_PROOF'
     : upgrade.stillPending || state === 'PENDING' ? 'NOT_YET_CONFIRMED'
     : state === 'UNREACHABLE' || state === 'SOURCES_DISAGREE' ? 'EXPLORERS'
+    : state === 'VERIFIED' ? 'NOT_UPGRADED'
     : 'UNCLASSIFIED';
   console.log(JSON.stringify({
     checkedAt: new Date().toISOString(), browser: `chromium ${browser.version()}`, classification,

@@ -48,6 +48,7 @@ It prints JSON with one `classification`:
 | `RECEIPT_OR_PROOF` | the app rejected the receipt, or Verify showed *not valid* / *no match* with all reads succeeding | browser networking |
 | `NOT_YET_CONFIRMED` | calendar answered `404`/pending with no browser failure | anything: try later or use an older receipt |
 | `EXPLORERS` | Verify could not reach two agreeing explorers | the calendar path |
+| `NOT_UPGRADED` | Verify showed **Verified**, but Upgrade produced no new receipt (for example the input was already complete) | the upgrade path: not R1 evidence; use an incomplete receipt |
 | `CSP_VIOLATION` | the page reported a CSP violation | must be fixed before any other conclusion |
 
 ## Step 2: the reference implementation, independently
