@@ -59,6 +59,26 @@ Done (each fix has a regression test that failed on its parent):
   - Placeholders are substituted in one pass.
   - A link with conflicting `h=` fragments yields no fingerprint.
 - [x] **Toolkit:** `start-server.sh` no longer loops forever when an option has no value.
+- [x] **Final review of the combined diff and wave-2 discovery** (multi-agent; each finding needed 2 of 3 skeptic lenses
+  plus an actual reproduction). Fixed, each test-first:
+  - Focus restoration could move focus to another control (Remove → Copy). Back/Forward no longer discards the
+    chosen file.
+  - Kept WAV chunks carried hidden trailing bytes. APEv2 item counts are no longer a hard bound.
+  - CLI hash lines are GNU-readable; names with other control characters are refused.
+  - The multi-file hash worker ran outside the page CSP and SRI. It now starts from an SRI-pinned `blob:` URL
+    (ADR-010 amended).
+  - Package checks claimed genuineness; the multi-file `index.html` was offered for `file://`; the build code was
+    never published; the eval gate covered only one bundle.
+  - The Windows CI zip check verified the macOS zip. E2E gates retried. The fixture gate skipped `expected.json`. The
+    reference client was not hash-pinned.
+  - Fuzz coverage feedback missed branches; fuzz evidence ignored a dirty tree.
+  - `opsec-check.sh` passed when git was unusable and missed several identity and metadata leaks. R1 and
+    `network-check` scripts had unsafe output paths and unbounded fetches.
+  - Calendar stamp minimum: duplicate URLs counted twice; a NaN minimum disabled the check.
+  - Toolkit `search.sh` / `init-artifact.sh` / `find-polluter.sh` input handling.
+  - Rejected findings are listed as residual notes in `ULTRA_RUN_BOARD.md`.
+- [x] **Second fuzz campaign** on the final WAV/APE cleaners (`docs/evidence/fuzz-20261105.json`, 1,000,000
+  mutations, no finding).
 
 Still open:
 

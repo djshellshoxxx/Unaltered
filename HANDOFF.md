@@ -13,20 +13,35 @@
 ## What this run did
 
 1. Merged the open hardening PRs #43–#46 and PR #39 (Bob/Finney attribution tooling).
-2. Ran three review waves, each fix test-first:
-   - Isolated worktree workers per module: OTS, metadata parsers, network/CLI, UI, toolkit.
-   - Wave 2: a discovery workflow over hash, bytes, build, CI/release, the fuzz harness and acceptance scripts.
-   - An independent adversarial review of the combined diff. Every finding needed 2 of 3 skeptic lenses, including
-     an actual reproduction.
-3. Added Trusted Types delivery/enforcement E2E coverage for both builds.
-4. Recorded evidence:
-   - Firefox/WebKit 2 GiB completion: dispatch run 41756413597.
-   - Native stall A/B: run 41561857747, extracted per shard.
-   - Seeded fuzz campaign: `docs/evidence/fuzz-20261104.json`, 1,000,000 mutations, no finding.
-   - Dated dependency decision for the dev-only minimatch advisory.
+2. Ran four review rounds, with every fix test-first:
+   - **Wave 1:** isolated worktree workers per module (OTS, metadata parsers, network/CLI, UI, toolkit).
+   - **Wave 2:** a multi-agent discovery workflow over hash, bytes, build, CI/release, the fuzz harness and the
+     acceptance scripts (124 agents).
+   - **Final review:** an independent adversarial review of the combined diff (57 agents).
+   - **Suspects:** a reproduce-first workflow for leftover suspects (calendar minimum, toolkit scripts).
+   - In wave 2 and the final review, each finding needed 2 of 3 skeptic lenses (reproduce, intent, impact) **and** an
+     actual reproduction. 31 were confirmed and fixed; 23 were rejected and are listed as residual notes in the run
+     board.
+3. Notable fixes:
+   - **Build:** the multi-file hash worker ran outside the page CSP and SRI. It now starts from an SRI-pinned `blob:`
+     URL; ADR-010 is amended.
+   - **OTS:** the explorer quorum floor is two sources. Caller-built proofs are replayed. The calendar minimum counts
+     each host once.
+   - **Metadata:** kept WAV chunks no longer carry hidden bytes, and a forged APEv2 footer cannot drop audio frames.
+   - **UI:** focus could jump to a different control.
+   - **CLI:** hash lines are GNU-readable, and names with other control characters are refused.
+   - **CI:** the Windows zip check verified the macOS package. E2E gates now run without retries, and the reference
+     client is hash-pinned.
+   - **`opsec-check.sh`:** it now fails closed and covers identity, history, committed content and media.
+4. Evidence:
+   - Firefox/WebKit 2 GiB completion: dispatch run 41756413597, plus the final dispatch in the run board.
+   - Native stall A/B: run 41561857747.
+   - Two seeded 1,000,000-mutation fuzz campaigns (`docs/evidence/fuzz-20261104.json`, `fuzz-20261105.json`).
+   - Dated dependency decisions for minimatch and the hash-pinned Python reference set.
 5. Fixed CI regressions this run introduced:
-   - Windows: hash output escaped every backslash.
-   - macOS: a GNU-only interop test ran against a non-GNU `sha256sum`.
+   - Windows backslash escaping.
+   - macOS and uutils `sha256sum` interop tests (now gated on GNU coreutils).
+   - A Windows checksum all-clear mismatch between two merged branches.
 
 ## Environment notes for the next session
 
