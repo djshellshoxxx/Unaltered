@@ -2,9 +2,10 @@
 import { describe, expect, it } from 'vitest';
 import { concat } from '../../src/core/bytes';
 import { cleanMp3 } from '../../src/core/strip/audio';
+import { cleanJpeg } from '../../src/core/strip/jpeg';
 import { cleanPng } from '../../src/core/strip/png';
 import { apeTag, FRAME } from '../helpers/audio';
-import { chunk, contains } from '../helpers/images';
+import { chunk, contains, makeJpeg } from '../helpers/images';
 
 const frame = (fill: number): number[] => {
   const f = [...FRAME];
@@ -75,5 +76,20 @@ describe('PNG: PLTE/tRNS bytes that the colour type cannot use are refused, not 
       png(8, 2, chunk('PLTE', secret(6)), chunk('tRNS', secret(6))), // suggested palette for truecolour is allowed
       png(16, 0, chunk('tRNS', secret(2))),
     ]) expect(cleanPng(input).kind).toBe('cleaned');
+  });
+});
+
+describe('JPEG: removing bytes from the JFIF header is reported', () => {
+  it('lists extra JFIF bytes instead of reporting that nothing was found', () => {
+    const base = Array.from(makeJpeg());
+    const tail = Array.from(new TextEncoder().encode('SECRET-JFIF-TAIL'));
+    // APP0 "JFIF\0" + 9 header bytes with a 0x0 thumbnail, followed by bytes the canonical header does not keep.
+    const app0 = [0xff, 0xe0, 0, 16 + tail.length, ...base.slice(6, 20), ...tail];
+    const r = cleanJpeg(Uint8Array.from([0xff, 0xd8, ...app0, ...base.slice(20)]));
+    if (r.kind !== 'cleaned') throw new Error(JSON.stringify(r));
+    expect(contains(r.output, 'SECRET')).toBe(false);
+    expect(r.removed).not.toEqual([]);
+    const plain = cleanJpeg(makeJpeg());
+    expect(plain.kind === 'cleaned' && plain.removed).toEqual([]);
   });
 });
