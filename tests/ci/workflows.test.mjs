@@ -36,7 +36,11 @@ function steps(jobLines) {
         const body = [];
         while (i + 1 < lines.length && (lines[i + 1].startsWith(' '.repeat(10)) || lines[i + 1].trim() === '')) body.push(lines[++i].slice(10));
         step[m[1]] = body.join('\n').trimEnd();
-      } else step[m[1]] = value.replace(/^"(.*)"$/, '$1');
+      } else {
+        // A plain scalar cannot contain ": " (YAML reads a nested mapping and rejects the file); quote it or use `|`.
+        assert.ok(/^["'[{|>]/.test(value) || !/:(?:\s|$)/.test(value.replace(/\s+#.*$/, '')), `not valid YAML, quote it or use a block: ${lines[i].trim()}`);
+        step[m[1]] = value.replace(/^"(.*)"$/, '$1');
+      }
     }
     return step;
   });
