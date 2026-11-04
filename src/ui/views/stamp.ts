@@ -277,6 +277,7 @@ export function mountStamp(root: HTMLElement): StampView {
   }
 
   function remove(it: Item): void {
+    const hadFocus = it.card.contains(document.activeElement);
     it.abort.abort();
     revokeOwner(it);
     items.splice(items.indexOf(it), 1);
@@ -286,6 +287,8 @@ export function mountStamp(root: HTMLElement): StampView {
       stampError = null;
     }
     refreshActions();
+    // The removed control cannot keep keyboard focus. Use a stable picker rather than another row's Remove.
+    if (hadFocus) root.querySelector<HTMLElement>('#stamp-file')?.focus();
   }
 
   function add(files: File[]): void {
