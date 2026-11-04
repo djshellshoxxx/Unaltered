@@ -156,6 +156,18 @@ test('check 1 passes a no-reply identity and only warns when git has no identity
   assert.match(refused.stdout, /\[warn\] git has no author identity/);
 });
 
+const canSetHostname = process.platform === 'linux' && process.getuid?.() === 0
+  && spawnSync('unshare', ['-u', 'true']).status === 0;
+
+test('check 1 reports an auto-derived login@hostname identity when no email is configured', {
+  skip: skip || (!canSetHostname && 'needs root and unshare to give a private UTS namespace a dotted hostname'),
+}, (t) => {
+  const r = repo(t, { email: null });
+  const script = `hostname janes-laptop.example.test && exec bash ${JSON.stringify(SCRIPT)}`;
+  const result = spawnSync('unshare', ['-u', 'sh', '-c', script], { cwd: r.work, env: r.env, encoding: 'utf8', timeout: 60_000 });
+  assertFindings(result, finding('author email is not a no-reply address: ', '@janes-laptop.example.test'));
+});
+
 test('check 2 reads annotated-tag taggers and commit/tag message bodies', { skip }, async (t) => {
   await t.test('annotated tag tagger', (t) => {
     const r = repo(t);
