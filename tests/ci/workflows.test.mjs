@@ -7,6 +7,8 @@ import { test } from 'node:test';
 const root = new URL('../../', import.meta.url);
 const read = (path) => readFileSync(new URL(path, root), 'utf8').replace(/\r\n/g, '\n');
 const version = JSON.parse(read('package.json')).version;
+const workflows = readdirSync(new URL('.github/workflows/', root)).filter((f) => /\.ya?ml$/.test(f)).map((f) => `.github/workflows/${f}`);
+
 /** The lines of job `name` (two-space indent under `jobs:`), up to the next job or top-level key. */
 function job(workflow, name) {
   const lines = read(workflow).split('\n');
@@ -39,6 +41,13 @@ function steps(jobLines) {
     return step;
   });
 }
+
+const allSteps = () => workflows.flatMap((wf) => {
+  const lines = read(wf).split('\n');
+  const jobNames = lines.slice(lines.indexOf('jobs:') + 1).map((l) => /^ {2}([\w-]+):$/.exec(l)?.[1]).filter(Boolean);
+  assert.ok(lines.includes('jobs:') && jobNames.length > 0, `${wf}: no jobs found`);
+  return jobNames.flatMap((name) => steps(job(wf, name)).map((s) => ({ ...s, where: `${wf} job ${name}` })));
+});
 
 /** Case-insensitive PowerShell-style wildcard (`*`, `?`) as an anchored RegExp. */
 const wildcard = (pattern) => new RegExp(`^${pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.')}$`, 'i');
@@ -106,4 +115,26 @@ test('the fixture regeneration gate compares every file the reference generator 
   for (const [, f] of step.run.matchAll(new RegExp(`\\bcmp ${o}/([\\w.-]+) tests/fixtures/ots/\\1(?:\\s|;|$)`, 'gm'))) compared.add(f);
   const unchecked = committed.filter((f) => !compared.has(f));
   assert.deepEqual(unchecked, [], `regenerated but never compared against the committed copy: ${unchecked.join(', ')}`);
+});
+
+test('no Playwright gate lets a passing retry hide a failed attempt', () => {
+  // GitHub-hosted runners always set CI=true, and the config retries whenever CI is set.
+  const retries = /\bretries:\s*([^,\n]+)/.exec(read('playwright.config.ts'))?.[1]?.trim();
+  assert.ok(retries, 'playwright.config.ts has no retries setting');
+  if (retries === '0') return;
+  const e2eScript = JSON.parse(read('package.json')).scripts['test:e2e'];
+  assert.match(e2eScript, /\bplaywright test$/, 'npm run test:e2e must end in `playwright test` so appended flags reach it');
+  const strict = /(?:^|\s)(?:--retries[= ]0|--fail-on-flaky-tests)(?=\s|$)/;
+  const invocations = [];
+  for (const s of allSteps()) {
+    for (const line of (s.run ?? '').split('\n')) {
+      for (const cmd of line.split(/&&|;/)) {
+        if (/\bnpm run test:e2e\b/.test(cmd)) invocations.push({ where: s.where, cmd, args: cmd.split(/\s--\s/).slice(1).join(' -- ') });
+        else if (/\b(?:playwright|cli\.js)\s+test\b/.test(cmd)) invocations.push({ where: s.where, cmd, args: cmd });
+      }
+    }
+  }
+  assert.ok(invocations.length >= 3, 'expected the e2e, Windows and memory Playwright gates');
+  const lenient = invocations.filter((i) => !strict.test(i.args)).map((i) => `${i.where}: ${i.cmd.trim()}`);
+  assert.deepEqual(lenient, [], `Playwright runs that retry (config: retries ${retries}) without --retries=0 or --fail-on-flaky-tests`);
 });
