@@ -65,7 +65,7 @@ export async function verifyProof(fileDigest: Uint8Array, proof: DetachedProof, 
     if (q.state === 'disagree') {
       rep = { state: 'SOURCES_DISAGREE', detail: 'The block explorers gave different answers. Do not trust this result; verify with your own Bitcoin node.' };
     } else if (q.state === 'unreachable') {
-      rep = { state: 'UNREACHABLE', detail: `Could not reach enough independent block explorers (${q.got} answered, at least ${cfg.minSources} needed). Try again, or verify with your own Bitcoin node.` };
+      rep = { state: 'UNREACHABLE', detail: `Could not reach enough independent block explorers (${q.got} answered, at least ${q.need} needed). Try again, or verify with your own Bitcoin node.` };
     } else if (!equalBytes(q.header.merkleRoot, node.msg)) {
       rep = { state: 'INVALID_PROOF', detail: 'The receipt does not lead to the Bitcoin block it claims.' };
     } else {
