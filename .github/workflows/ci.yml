@@ -108,7 +108,8 @@ jobs:
       - run: npm ci --ignore-scripts
       # The browser version is fixed by the pinned @playwright/test version in package-lock.json.
       - run: npx playwright install --with-deps ${{ matrix.browser }}
-      - run: npm run test:e2e
+      # No retries: a passing retry would hide a failed attempt, including the SPEC "never blocked > 50 ms" check.
+      - run: npm run test:e2e -- --retries=0
         env:
           CI: "true"
           UNALTERED_BROWSER: ${{ matrix.browser }}
@@ -201,7 +202,7 @@ jobs:
       - run: npm run test
       - run: npm run build
       - run: npx playwright install chromium
-      - run: npx playwright test
+      - run: npx playwright test --retries=0
         env:
           CI: "true"
       - name: Windows checksum list for the cross-platform comparison
