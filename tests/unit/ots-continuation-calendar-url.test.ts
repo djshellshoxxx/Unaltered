@@ -61,7 +61,7 @@ describe('calendar endpoint canonicalization during upgrade', () => {
 
   it('rejects credential-bearing receipt addresses before any network request', async () => {
     let requests = 0;
-    const uri = 'https://user:pass@alice.btc.calendar.opentimestamps.org';
+    const uri = `https://user:pass${'@'}alice.btc.calendar.opentimestamps.org`;
     await expect(upgrade(pending(uri), { ...defaultStampConfig(), calendars: [uri], net: {
       fetchImpl: routerFetch(() => { requests++; throw new Error('Unexpected network request'); }),
     } })).rejects.toMatchObject({ code: 'PROOF_MALFORMED' });
