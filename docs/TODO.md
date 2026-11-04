@@ -45,7 +45,8 @@ Done (each fix has a regression test that failed on its parent):
   - `ID3 ` WAV chunks get the correct label.
 - [x] **Network/CLI fixes:**
   - Oversized reply bodies are cancelled.
-  - `hash` output escapes control characters the way sha256sum does.
+  - `hash` output escapes newline, CR and `\` the way sha256sum does, only in names that contain a line break, so
+    Windows paths print unchanged. Names with other control characters (TAB excepted) are refused.
   - A same-size rewrite during a read fails instead of printing a torn fingerprint.
   - A failed output write gives a generic error with no stack trace (SR-8).
 - [x] **UI fixes:**

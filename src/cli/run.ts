@@ -28,26 +28,33 @@ exit codes for verify: 0 verified, 2 pending, 3 file differs, 4 invalid receipt,
 const NOT_REGULAR = 'not a regular file';
 const SIZE_CHANGED = 'the file size changed while reading';
 const CHANGED = 'the file changed while reading';
+const CONTROL_NAME = 'the file name contains control characters';
 const cliError = (code: string): Error => Object.assign(new Error(code), { code });
 
-const isControl = (c: number): boolean => c < 0x20 || (c >= 0x7f && c <= 0x9f);
-
 /**
- * A `hash` output line in GNU sha256sum's format. A name from a shell glob is attacker-controlled: printed raw, a
- * newline would add a forged checksum line and a carriage return or escape sequence could overwrite the fingerprint
- * on the terminal. Only a name containing a control character is escaped. Then, like sha256sum, `\`, newline and CR
- * become `\\`, `\n`, `\r` and the line starts with `\`; other control characters become `\xHH`, which `sha256sum -c`
- * rejects rather than misreads. Any other name, including every Windows path (backslash separators, no control
- * characters possible), prints verbatim as before; `sha256sum -c` reads such an unescaped line literally.
+ * A `hash` output line that GNU `sha256sum -c` reads back as the same name. A name from a shell glob is
+ * attacker-controlled: printed raw, a newline would add a forged checksum line and a carriage return could overwrite
+ * the fingerprint on the terminal. These are escaped as sha256sum does: the line starts with `\`, and `\`, newline and
+ * CR become `\\`, `\n`, `\r`. Any other name is printed as is, because `sha256sum -c` reads a line without the leading
+ * `\` literally: a Windows path keeps its `\` separators and the line starts with the fingerprint.
  */
 function checksumLine(hex: string, name: string): string {
-  if (![...name].some((ch) => isControl(ch.charCodeAt(0)))) return `${hex}  ${name}\n`;
-  let out = '';
+  if (!name.includes('\n') && !name.includes('\r')) return `${hex}  ${name}\n`;
+  return `\\${hex}  ${name.replaceAll('\\', '\\\\').replaceAll('\n', '\\n').replaceAll('\r', '\\r')}\n`;
+}
+
+/**
+ * `sha256sum -c` reads no escape for the other C0 controls, DEL or U+0080–U+009F, and skips a line it cannot read with
+ * only a warning and exit status 0, so a checksum list would leave that file unchecked. Printed raw, a backspace or
+ * escape sequence could rewrite the fingerprint on the terminal. Such a name is refused before the file is read. TAB
+ * is printed as is, like sha256sum does; it cannot move the cursor back over the fingerprint.
+ */
+function printableName(name: string): boolean {
   for (const ch of name) {
     const c = ch.charCodeAt(0);
-    out += ch === '\\' ? '\\\\' : ch === '\n' ? '\\n' : ch === '\r' ? '\\r' : isControl(c) ? `\\x${c.toString(16).padStart(2, '0')}` : ch;
+    if ((c < 0x20 && ch !== '\t' && ch !== '\n' && ch !== '\r') || (c >= 0x7f && c <= 0x9f)) return false;
   }
-  return `\\${hex}  ${out}\n`;
+  return true;
 }
 
 /** An idle FIFO blocks a normal open before fstat can reject it. Check the opened descriptor without waiting for a writer. */
@@ -124,6 +131,7 @@ export async function run(argv: readonly string[], io: CliIO): Promise<number> {
   const [cmd, file, receipt] = argv;
   try {
     if (cmd === 'hash' && file && argv.length === 2) {
+      if (!printableName(file)) throw cliError(CONTROL_NAME);
       const { hex } = await hashFile(file);
       io.out(checksumLine(hex, file));
       return 0;
@@ -141,7 +149,7 @@ export async function run(argv: readonly string[], io: CliIO): Promise<number> {
   } catch (e) {
     // Generic message only (SR-8): never echo paths or stack traces from lower layers.
     const code = e instanceof Error && 'code' in e ? (e as { code?: string }).code : undefined;
-    const known = code === NOT_REGULAR || code === SIZE_CHANGED || code === CHANGED ? code : undefined;
+    const known = code === NOT_REGULAR || code === SIZE_CHANGED || code === CHANGED || code === CONTROL_NAME ? code : undefined;
     io.err(`error: ${code === 'ENOENT' ? 'file not found' : known ?? 'could not complete the operation'}\n`);
     return 1;
   }
