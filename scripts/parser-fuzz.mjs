@@ -23,7 +23,10 @@ for (const [key, max] of [['iterations', 10000000], ['seconds', 86400], ['seed',
 }
 const MAX_BYTES = 65536;
 const MAX_CORPUS = 256;
+const SEED_DIR = 'tests/fixtures/ots';
+const HARNESS = ['parser-fuzz.mjs', 'lib/fuzz-coverage.mjs', 'lib/fuzz-executor.mjs', 'lib/fuzz-worker.mjs'];
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
+const git = (...args) => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
 let randomState = options.seed >>> 0;
 const random = (n) => {
   randomState ^= randomState << 13; randomState ^= randomState >>> 17; randomState ^= randomState << 5;
@@ -67,6 +70,10 @@ function mutate(source, target, crc32) {
 const temp = mkdtempSync(join(tmpdir(), 'unaltered-fuzz-'));
 let executor;
 try {
+  // The report names HEAD, so it also says whether the tree differs from HEAD and hashes the harness and seeds that ran.
+  const sourceCommit = git('rev-parse', 'HEAD').trim();
+  const sourceDirty = git('status', '--porcelain', '--untracked-files=normal').length > 0;
+  const harnessSha256 = Object.fromEntries(HARNESS.map((path) => [`scripts/${path}`, sha256(readFileSync(new URL(`./${path}`, import.meta.url)))]));
   const bundled = await build({ entryPoints: ['tests/fuzz/targets.ts'], bundle: true, platform: 'node', format: 'esm', target: 'node22', write: false });
   const bundle = bundled.outputFiles[0].contents;
   const targetFile = join(temp, 'targets.mjs');
@@ -75,18 +82,21 @@ try {
   const { TARGETS, seedCases, crc32 } = await import(targetUrl);
   executor = await createExecutor(targetUrl);
   const start = performance.now();
-  const proofs = readdirSync('tests/fixtures/ots').filter((name) => name.endsWith('.ots')).sort().map((name) => {
-    const path = join('tests/fixtures/ots', name);
+  // Seeds must be committed synthetic fixtures, so a local receipt left in the folder is never fuzzed or copied to a corpus.
+  const tracked = new Set(git('ls-files', '-z', '--', SEED_DIR).split('\0'));
+  const seedFiles = readdirSync(SEED_DIR).filter((name) => name.endsWith('.ots')).sort().map((name) => {
+    const path = `${SEED_DIR}/${name}`;
+    if (!tracked.has(path)) throw new Error(`Seed ${path} is not tracked by Git; refusing to fuzz it`);
     if (statSync(path).size > MAX_BYTES) throw new Error('Seed exceeds fuzz input bound');
-    return new Uint8Array(readFileSync(path));
+    return { name, bytes: new Uint8Array(readFileSync(path)) };
   });
-  const seeds = seedCases(proofs);
+  const seedFixtures = { count: seedFiles.length, sha256: sha256(seedFiles.map(({ name, bytes }) => `${sha256(bytes)}  ${name}\n`).join('')) };
+  const seeds = seedCases(seedFiles.map(({ bytes }) => bytes));
   mkdirSync(options.out, { recursive: true });
   const output = mkdtempSync(join(resolve(options.out), 'campaign-'));
-  const sourceCommit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
-  const report = { sourceCommit, targetSha256: sha256(bundle), node: process.version, v8: process.versions.v8,
+  const report = { sourceCommit, sourceDirty, targetSha256: sha256(bundle), harnessSha256, seedFixtures, node: process.version, v8: process.versions.v8,
     options, limits: { maxInputBytes: MAX_BYTES, maxCorpusPerTarget: MAX_CORPUS, caseDeadlineMs: 1000, workerOldHeapMiB: 128 },
-    status: 'running', executed: 0, mutations: 0, targets: Object.fromEntries(TARGETS.map((t) => [t, { accepted: 0, rejected: 0, ranges: 0, corpus: 0 }])), output };
+    status: 'running', executed: 0, mutations: 0, targets: Object.fromEntries(TARGETS.map((t) => [t, { accepted: 0, rejected: 0, coveredOffsets: 0, corpus: 0 }])), output };
   const corpus = new Map(TARGETS.map((t) => [t, []]));
   const hashes = new Set();
   let current;
@@ -107,7 +117,7 @@ try {
     report.executed++;
     if (result.finding) throw Object.assign(new Error(result.finding.message), { finding: result.finding });
     const counts = report.targets[item.target];
-    counts[result.outcome]++; counts.ranges = result.ranges;
+    counts[result.outcome]++; counts.coveredOffsets = result.coveredOffsets;
     if (result.novel) retain(item);
   };
   try {
