@@ -160,6 +160,7 @@ export function cleanMp3(input: Uint8Array): AudioResult {
 /**
  * Length of the APEv2 tag whose footer ends at `end`, or null. The footer's size field alone could reach back over complete
  * audio frames, so a flagged header must be where the footer says and the items must fill the space before the footer exactly.
+ * The stored item count is not a bound: writers get it wrong, and mutagen and TagLib stop at the end of the items instead.
  */
 function apeTagLength(input: Uint8Array, start: number, end: number): number | null {
   const dv = new DataView(input.buffer, input.byteOffset, input.byteLength);
@@ -171,7 +172,7 @@ function apeTagLength(input: Uint8Array, start: number, end: number): number | n
   const tagStart = end - size - header;
   if (header && (String.fromCharCode(...input.subarray(tagStart, tagStart + 8)) !== 'APETAGEX' || dv.getUint32(tagStart + 12, true) !== size || dv.getUint32(tagStart + 16, true) !== count)) return null;
   let p = tagStart + header;
-  for (let i = 0; i < count; i++) {
+  while (p < footer) {
     // Item: value size, flags, printable-ASCII key of 2-255 bytes, NUL, value. Each item advances p, so this is bounded.
     if (p + 8 > footer) return null;
     const keyStart = p + 8;
