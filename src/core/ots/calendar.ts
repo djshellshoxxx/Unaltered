@@ -12,7 +12,7 @@ import type { DetachedProof, Op, ProofStatus, TsNode } from './types';
 export interface StampConfig {
   /** Calendar base URLs. Every host must also be on the network allowlist. */
   calendars: readonly string[];
-  /** Minimum number of calendars that must accept (never below 1). */
+  /** Minimum number of calendars that must accept (never below 1; NaN or non-numeric means DEFAULT_MIN_CALENDARS). */
   minAccepted: number;
   net?: Partial<NetPolicy>;
   signal?: AbortSignal | undefined;
@@ -47,6 +47,18 @@ const ACCEPT = { Accept: 'application/vnd.opentimestamps.v1' };
 
 function normBase(u: string): string {
   return u.replace(/\/+$/, '');
+}
+
+/**
+ * Identity for counting accepting calendars (FR-4): the host, as for the explorer quorum, so a trailing slash or a
+ * change of case cannot make one calendar count twice. An unparseable entry keeps its own identity and fails at fetch.
+ */
+function calendarId(u: string): string {
+  try {
+    return new URL(u).host;
+  } catch {
+    return `raw:${normBase(u)}`;
+  }
 }
 
 function nonce16(cfg: StampConfig): Uint8Array {
@@ -89,7 +101,9 @@ export async function stampBatch(digests: Uint8Array[], cfg: StampConfig): Promi
   if (digests.length === 0) throw new UnalteredError('INPUT_INVALID', 'Nothing to stamp.');
   if (digests.some((d) => d.length !== 32)) throw new UnalteredError('INPUT_INVALID', 'A fingerprint has the wrong length.');
   if (cfg.calendars.length === 0) throw new UnalteredError('INPUT_INVALID', 'No calendar servers are selected.');
-  const need = Math.max(1, cfg.minAccepted);
+  // FR-4: never below one, rounded up. NaN would make `accepted < need` always false, so it falls back to the default M.
+  const asked = Math.ceil(Number(cfg.minAccepted));
+  const need = Number.isNaN(asked) ? DEFAULT_MIN_CALENDARS : Math.max(1, asked);
 
   const roots: TsNode[] = digests.map((d) => ({ msg: d, attestations: [], children: [] }));
   const leaves = roots.map((root) => {
@@ -98,9 +112,11 @@ export async function stampBatch(digests: Uint8Array[], cfg: StampConfig): Promi
   });
   const tip = merkleTip(leaves);
 
+  const distinct = new Map<string, string>();
+  for (const c of cfg.calendars) if (!distinct.has(calendarId(c))) distinct.set(calendarId(c), normBase(c));
+
   const results: CalendarResult[] = await Promise.all(
-    cfg.calendars.map(async (base): Promise<CalendarResult> => {
-      const b = normBase(base);
+    [...distinct.values()].map(async (b): Promise<CalendarResult> => {
       try {
         const res = await netFetch(`${b}/digest`, { method: 'POST', body: tip.msg, headers: ACCEPT, signal: cfg.signal }, cfg.net);
         if (res.status !== 200) throw new UnalteredError('NET_HTTP', `The server answered with status ${res.status}.`);
