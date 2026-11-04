@@ -106,3 +106,16 @@ describe('WAV: rewritten pad bytes are reported', () => {
     expect(zero.kind === 'cleaned' && zero.removed).toEqual([]);
   });
 });
+
+describe('WAV: an upper-case "ID3 " chunk is labelled as an ID3 tag', () => {
+  it('names both id3 chunk spellings found in the wild', () => {
+    for (const id of ['id3 ', 'ID3 ']) {
+      const base = makeWav();
+      const extra = Uint8Array.from([...id].map((c) => c.charCodeAt(0)).concat([4, 0, 0, 0, 0x49, 0x44, 0x33, 0x03]));
+      const input = concat(base.subarray(0, 36), extra, base.subarray(36)); // after the RIFF header and fmt chunk
+      new DataView(input.buffer).setUint32(4, input.length - 8, true);
+      const r = cleanWav(input);
+      expect(r.kind === 'cleaned' && r.removed, id).toEqual(['ID3 tag']);
+    }
+  });
+});
