@@ -5,6 +5,7 @@
 //   unaltered-<v>-linux.tar.gz Linux package: site + single file + xdg-open launcher + checksum script
 //   unaltered-<v>-macos.zip    macOS package: site + single file + .command launcher + checksum script
 //   SHA256SUMS                 checksums of the release artefacts
+//   RELEASE-NOTES.md           draft release notes: the footer build code next to the SHA256SUMS lines (SPEC 13)
 // No timestamps, absolute paths or environment data are embedded in any output.
 import { build } from 'esbuild';
 import { createHash } from 'node:crypto';
@@ -80,7 +81,13 @@ const cliName = `unaltered-cli-${version}.mjs`;
 const css = read('src/styles.css');
 const template = read('src/index.html');
 
-const buildHash = hex256(Buffer.from(cliJs + '\0' + mainMulti + '\0' + workerJs + '\0' + css + '\0' + template)).slice(0, 16);
+const b64 = (text) => sha(Buffer.from(text), 'sha256', 'base64');
+const multiCsp = csp({ scriptSrc: "'self'", styleSrc: "'self'", workerSrc: 'blob:' });
+const singleCsp = csp({ scriptSrc: `'sha256-${b64(mainSingle)}'`, styleSrc: `'sha256-${b64(css)}'`, workerSrc: 'blob:' });
+
+// The footer build code covers everything the pages are made of except the code itself, including both CSPs: a build
+// that changes only the policy must not show the same code.
+const buildHash = hex256(Buffer.from(cliJs + '\0' + mainMulti + '\0' + workerJs + '\0' + css + '\0' + template + '\0' + multiCsp + '\0' + singleCsp)).slice(0, 16);
 
 // One pass with a replacer function: string replacements would expand `$&`, `$'` and similar patterns inside the
 // bundle or CSS, and sequential passes would fill a token that an earlier value happened to contain.
@@ -92,7 +99,7 @@ function fill(html, { cspValue, styles, script }) {
 // Multi-file page: SRI on every script/stylesheet (SR-3).
 const sri = (text) => `sha384-${sha(Buffer.from(text), 'sha384', 'base64')}`;
 const multiHtml = fill(template, {
-  cspValue: csp({ scriptSrc: "'self'", styleSrc: "'self'", workerSrc: 'blob:' }),
+  cspValue: multiCsp,
   styles: `<link rel="stylesheet" href="./styles.css" integrity="${sri(css)}">`,
   script: `<script src="./main.js" defer integrity="${sri(mainMulti)}"></script>`,
 });
@@ -101,9 +108,8 @@ const multiHtml = fill(template, {
 for (const [name, text] of [['main', mainSingle], ['css', css]]) {
   if (/<\/script|<\/style|<!--/i.test(text)) throw new Error(`${name} contains a sequence that could break out of an inline block`);
 }
-const b64 = (text) => sha(Buffer.from(text), 'sha256', 'base64');
 const singleHtml = fill(template, {
-  cspValue: csp({ scriptSrc: `'sha256-${b64(mainSingle)}'`, styleSrc: `'sha256-${b64(css)}'`, workerSrc: 'blob:' }),
+  cspValue: singleCsp,
   styles: `<style>${css}</style>`,
   script: `<script>${mainSingle}</script>`,
 });
@@ -262,5 +268,17 @@ const artefacts = [
 for (const [name, data] of artefacts) writeFileSync(join(dist, name), data);
 const outer = [[singleName, Buffer.from(singleHtml)], [cliName, Buffer.from(cliJs)], ...artefacts].map(([n, d]) => `${hex256(d)}  ${n}`).sort().join('\n') + '\n';
 writeFileSync(join(dist, 'SHA256SUMS'), outer);
+// The app's footer and About page ask users to compare the build code with the published checksums; the release workflow
+// uses this file as the draft release notes, so the code is published next to them (SPEC 13). Not an artefact itself.
+const notes = `# Unaltered ${version}
+
+Build code shown in the app footer: \`${buildHash}\`
+
+Check every file you download against \`SHA256SUMS\` (signature: \`SHA256SUMS.sig\`) before use. A page can copy the build code, so the checksums, not the code, show that a copy is genuine.
+
+\`\`\`
+${outer}\`\`\`
+`;
+writeFileSync(join(dist, 'RELEASE-NOTES.md'), notes);
 
 process.stdout.write(`built ${prefix} (build ${buildHash}); gzip ${(gz / 1024).toFixed(1)} KiB; single-file ${(singleHtml.length / 1024).toFixed(0)} KiB\n`);
