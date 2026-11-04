@@ -11,6 +11,17 @@ SORT_KEY="${3:-relevance}"
 PAGE="${4:-1}"
 MAILTO="paper-search@example.com"
 
+# LIMIT and PAGE reach $(( )) and the URL. Bash arithmetic expands array subscripts such as `QUERY[$(cmd)]`, which
+# runs cmd, so accept only plain decimal digits (no sign, no leading zero, at most 9 digits so the product fits).
+require_positive_int() {
+  if ! [[ "$2" =~ ^[1-9][0-9]{0,8}$ ]]; then
+    echo "search.sh: $1 must be a positive integer (at most 9 digits)" >&2
+    exit 1
+  fi
+}
+require_positive_int limit "$LIMIT"
+require_positive_int page "$PAGE"
+
 case "$SORT_KEY" in
   relevance) SORT="relevance_score:desc" ;;
   cites)     SORT="cited_by_count:desc" ;;

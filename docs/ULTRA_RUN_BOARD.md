@@ -69,7 +69,6 @@ the test-level error text of the failed attempts is above that window.
 ## Unreproduced suspects (not changed; candidates for future work)
 
 - **Toolkit:**
-  - `paper-search/scripts/search.sh` does arithmetic on unvalidated arguments.
   - `web-artifacts-builder/scripts/init-artifact.sh` puts an unvalidated name into a `sed` expression and installs pnpm
     before validating.
   - `find-polluter.sh` word-splits test names.
@@ -81,3 +80,11 @@ the test-level error text of the failed attempts is above that window.
     screen-reader pass.
   - `safeFileName` keeps U+2028/2029 and zero-width characters.
   - Core error text stays English in the Spanish UI (already documented).
+
+## Suspects reproduced after review
+
+- **Toolkit:** `paper-search/scripts/search.sh` ran commands from its `limit`/`page` arguments: bash arithmetic expands
+  a subscript such as `QUERY[$(cmd)]`. The first regression test used the unset name `a`, which `set -u` aborts on
+  before the subscript is expanded, so it passed without any validation. Fixed on `worker/final-tooling-20261104`:
+  both arguments must be plain positive integers, and the test now covers set names, checks that the payloads are live
+  and checks that the refusal does not come from `set -u`.
