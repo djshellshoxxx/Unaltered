@@ -1,7 +1,7 @@
 // REL-2 / SPEC12: bounded, seeded V8 block-feedback fuzzing, using installed dev dependencies only.
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
@@ -67,7 +67,9 @@ function mutate(source, target, crc32) {
   return bytes;
 }
 
-const temp = mkdtempSync(join(tmpdir(), 'unaltered-fuzz-'));
+// Real path: V8 reports coverage under the module's resolved URL, so a symlinked temp directory (macOS /var ->
+// /private/var) would make the worker's URL filter see no coverage at all.
+const temp = realpathSync(mkdtempSync(join(tmpdir(), 'unaltered-fuzz-')));
 let executor;
 try {
   // The report names HEAD, so it also says whether the tree differs from HEAD and hashes the harness and seeds that ran.

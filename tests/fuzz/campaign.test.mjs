@@ -38,8 +38,8 @@ function fixtureRepo(t) {
   git('add', '-A');
   git('commit', '-q', '-m', 'fixture');
   const out = join(base, 'out');
-  const run = () => spawnSync(process.execPath, ['scripts/parser-fuzz.mjs', '--iterations', '30', '--seconds', '60', '--seed', '7', '--out', out],
-    { cwd: repo, env, encoding: 'utf8', timeout: 60000 });
+  const run = (extraEnv = {}) => spawnSync(process.execPath, ['scripts/parser-fuzz.mjs', '--iterations', '30', '--seconds', '60', '--seed', '7', '--out', out],
+    { cwd: repo, env: { ...env, ...extraEnv }, encoding: 'utf8', timeout: 60000 });
   return { repo, out, git, write, run };
 }
 
@@ -51,6 +51,21 @@ test('campaign report counts covered source offsets per target', (t) => {
   assert.equal(report.status, 'budget-complete');
   assert.ok(report.targets.sample.coveredOffsets > 0);
   assert.equal(Object.hasOwn(report.targets.sample, 'ranges'), false);
+});
+
+// macOS's temp directory (/var/folders/...) is a symlink to /private/var/...: V8 reports coverage under the module's
+// real path, so a driver that filters coverage by the symlinked URL sees none and stops with a false finding.
+test('campaign works when the temp directory is reached through a symlink (macOS /var -> /private/var)', { skip: process.platform === 'win32' && 'TMPDIR is POSIX-only' }, (t) => {
+  const { run } = fixtureRepo(t);
+  const real = mkdtempSync(join(tmpdir(), 'unaltered-fuzz-realtmp-'));
+  const link = `${real}-link`;
+  symlinkSync(real, link);
+  t.after(() => { rmSync(link, { force: true }); rmSync(real, { recursive: true, force: true }); });
+  const result = run({ TMPDIR: link });
+  assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.status, 'budget-complete');
+  assert.ok(report.targets.sample.coveredOffsets > 0);
 });
 
 test('campaign refuses seed fixtures that Git does not track', (t) => {
