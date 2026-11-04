@@ -86,7 +86,7 @@ try {
   const sourceCommit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
   const report = { sourceCommit, targetSha256: sha256(bundle), node: process.version, v8: process.versions.v8,
     options, limits: { maxInputBytes: MAX_BYTES, maxCorpusPerTarget: MAX_CORPUS, caseDeadlineMs: 1000, workerOldHeapMiB: 128 },
-    status: 'running', executed: 0, mutations: 0, targets: Object.fromEntries(TARGETS.map((t) => [t, { accepted: 0, rejected: 0, ranges: 0, corpus: 0 }])), output };
+    status: 'running', executed: 0, mutations: 0, targets: Object.fromEntries(TARGETS.map((t) => [t, { accepted: 0, rejected: 0, coveredOffsets: 0, corpus: 0 }])), output };
   const corpus = new Map(TARGETS.map((t) => [t, []]));
   const hashes = new Set();
   let current;
@@ -107,7 +107,7 @@ try {
     report.executed++;
     if (result.finding) throw Object.assign(new Error(result.finding.message), { finding: result.finding });
     const counts = report.targets[item.target];
-    counts[result.outcome]++; counts.ranges = result.ranges;
+    counts[result.outcome]++; counts.coveredOffsets = result.coveredOffsets;
     if (result.novel) retain(item);
   };
   try {
