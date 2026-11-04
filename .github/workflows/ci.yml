@@ -207,21 +207,37 @@ jobs:
       - name: Windows checksum list for the cross-platform comparison
         shell: bash
         run: cp dist/SHA256SUMS windows-SHA256SUMS
-      - name: Verify the shipped Verify-Checksums.ps1 logic on the real zip
+      # The Windows package is opened by its exact name: dist/ also holds the macOS zip, which a wildcard lists first.
+      # The check is the Verify-Checksums.ps1 shipped inside it. That script always exits 0 and ends with a Read-Host
+      # prompt, so the prompt is stubbed and its printed verdict is judged: every entry OK, then a changed and a missing
+      # file reported.
+      - name: Verify the Windows zip with the Verify-Checksums.ps1 it ships
         shell: pwsh
         run: |
-          $zip = Get-ChildItem dist/unaltered-*.zip | Select-Object -First 1
-          Expand-Archive -Path $zip.FullName -DestinationPath $env:RUNNER_TEMP/unz
-          $dir = Get-ChildItem $env:RUNNER_TEMP/unz | Select-Object -First 1
-          $bad = 0
-          foreach ($line in Get-Content (Join-Path $dir.FullName 'SHA256SUMS')) {
-            if ($line -match '^([0-9a-f]{64})\s+(.+)$') {
-              $actual = (Get-FileHash -Algorithm SHA256 -Path (Join-Path $dir.FullName $Matches[2])).Hash.ToLower()
-              if ($actual -ne $Matches[1]) { Write-Host "MISMATCH $($Matches[2])"; $bad++ }
-            }
+          $ErrorActionPreference = 'Stop'
+          $version = (Get-Content -Raw package.json | ConvertFrom-Json).version
+          $zip = Get-Item -LiteralPath "dist/unaltered-$version.zip"
+          $unz = Join-Path $env:RUNNER_TEMP 'unz'
+          Expand-Archive -LiteralPath $zip.FullName -DestinationPath $unz
+          $dir = Join-Path $unz "unaltered-$version"
+          $shipped = Join-Path $dir 'Verify-Checksums.ps1'
+          $entries = @(Get-Content -LiteralPath (Join-Path $dir 'SHA256SUMS') | Where-Object { $_ -ne '' })
+          function Read-Host { }
+          function Invoke-Shipped { @(& $shipped 6>&1 | ForEach-Object { "$_" }) }
+          $out = Invoke-Shipped
+          $out | Write-Host
+          $ok = @($out | Where-Object { $_ -like 'OK *' }).Count
+          if ($entries.Count -lt 1 -or $ok -ne $entries.Count -or $out -notcontains 'All files match.') {
+            throw "Verify-Checksums.ps1 confirmed $ok of $($entries.Count) files in $($zip.Name)."
           }
-          if ($bad -ne 0) { exit 1 }
-          Write-Host 'All files in the Windows zip match its SHA256SUMS.'
+          Add-Content -LiteralPath (Join-Path $dir 'README.txt') -Value 'changed'
+          Remove-Item -LiteralPath (Join-Path $dir 'LICENSE')
+          $out = Invoke-Shipped
+          $out | Write-Host
+          if ($out -notcontains 'MISMATCH README.txt' -or $out -notcontains 'MISSING  LICENSE' -or $out -contains 'All files match.') {
+            throw 'Verify-Checksums.ps1 did not report a changed and a missing file.'
+          }
+          Write-Host "All $($entries.Count) files in $($zip.Name) match its SHA256SUMS, checked by its own Verify-Checksums.ps1."
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: unaltered-windows-build
