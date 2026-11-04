@@ -43,32 +43,45 @@ export function setChildren(node: Node, ...kids: Child[]): void {
 }
 
 // Re-rendering rebuilds controls; without this a keyboard user's focus falls back to the page (WCAG 2.4.3).
-function focusPath(root: Node): { tag: string; id: string | null; at: number[] }[] | null {
+// Each step is one ancestor at its own position. A row that can be removed or reordered carries `data-key`, so focus
+// never lands on a different row's control that happens to sit at the same position (Enter would then act on it).
+interface FocusStep { tag: string; id: string | null; key: string | null; at: number }
+
+function attr(n: Node | undefined, name: string): string | null {
+  const e = n as Element | undefined;
+  return e && typeof e.getAttribute === 'function' ? e.getAttribute(name) : null;
+}
+
+function focusPath(root: Node): FocusStep[] | null {
   const active = typeof document === 'undefined' ? null : document.activeElement;
   if (!active || active === root || !root.contains(active)) return null;
-  const steps: { tag: string; id: string | null; at: number[] }[] = [];
-  const at: number[] = [];
+  const steps: FocusStep[] = [];
   for (let n: Node | null = active; n && n !== root; n = n.parentNode) {
     const parent: Node | null = n.parentNode;
     if (!parent) return null;
-    at.unshift(Array.prototype.indexOf.call(parent.childNodes, n));
-    const e = n as Element;
-    steps.unshift({ tag: e.tagName, id: e.getAttribute ? e.getAttribute('id') : null, at: [...at] });
+    steps.unshift({ tag: (n as Element).tagName, id: attr(n, 'id'), key: attr(n, 'data-key'), at: Array.prototype.indexOf.call(parent.childNodes, n) });
   }
   return steps.length > 0 ? steps : null;
 }
 
-function restoreFocus(root: Node, steps: { tag: string; id: string | null; at: number[] }[]): void {
-  let cur: Node = root;
-  for (const step of steps) {
-    const idx = step.at[step.at.length - 1]!;
-    const next: Node | undefined = cur.childNodes[idx];
-    const e = next as Element | undefined;
-    if (!e || e.tagName !== step.tag || (e.getAttribute ? e.getAttribute('id') : null) !== step.id) return;
-    cur = e;
+function restoreFocus(root: Node, steps: FocusStep[]): void {
+  const own = steps[steps.length - 1]!;
+  let target: Node | null = null;
+  if (own.id) {
+    // An id names one control; find it even if siblings before it were added or removed.
+    const byId = document.getElementById(own.id);
+    if (byId && byId !== root && root.contains(byId) && byId.tagName === own.tag) target = byId;
+  } else {
+    let cur: Node = root;
+    for (const step of steps) {
+      const next: Node | undefined = cur.childNodes[step.at];
+      if (!next || (next as Element).tagName !== step.tag || attr(next, 'id') !== step.id || attr(next, 'data-key') !== step.key) return;
+      cur = next;
+    }
+    target = cur;
   }
-  const target = cur as HTMLElement;
-  if (typeof target.focus === 'function' && !(target as { disabled?: boolean }).disabled) target.focus();
+  const control = target as HTMLElement | null;
+  if (control && typeof control.focus === 'function' && !(control as { disabled?: boolean }).disabled) control.focus();
 }
 
 let liveRegion: HTMLElement | null = null;

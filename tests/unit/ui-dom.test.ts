@@ -49,3 +49,81 @@ describe('focus survives a re-render of its container (WCAG 2.4.3)', () => {
     expect(doc.activeElement).toBe(other);
   });
 });
+
+describe('focus restoration follows each ancestor at its own position', () => {
+  const mount = (): FElement => {
+    const root = el('div') as unknown as FElement;
+    doc.body.appendChild(root);
+    return root;
+  };
+  const render = (root: FElement, kids: unknown[]): void => setChildren(root as unknown as Node, ...(kids as never[]));
+
+  it('restores a control nested below a container that is not the first child (settings receipt toggle)', () => {
+    const build = (): unknown[] => [el('h3', {}, 'Receipts'), el('p', {}, 'Body'), el('label', { class: 'check' }, el('input', { type: 'checkbox' }), el('span', {}, 'Remember'))];
+    const root = mount();
+    render(root, build());
+    const box = root.querySelector('input')!;
+    box.focus();
+    render(root, build());
+    const fresh = root.querySelector('input')!;
+    expect(fresh).not.toBe(box);
+    expect(doc.activeElement).toBe(fresh);
+  });
+
+  it('restores a file input at [1,0] (verify step 1)', () => {
+    const build = (): unknown[] => [el('h3', {}, 'Step 1'), el('div', { class: 'drop-wrap' }, el('input', { type: 'file', class: 'file-input' }), el('label', { class: 'drop' }, 'Choose'))];
+    const root = mount();
+    render(root, build());
+    root.querySelector('input')!.focus();
+    render(root, build());
+    expect(doc.activeElement).toBe(root.querySelector('input'));
+  });
+
+  it('never moves focus to a different control that shares the innermost index (stamp Remove -> Copy)', () => {
+    const head = (): unknown => el('div', { class: 'item-head' }, el('strong', {}, 'big.bin'), el('span', {}, ' · 1 GiB'), el('button', { type: 'button' }, 'Remove'));
+    const card = mount();
+    render(card, [head(), el('label', { class: 'progress-label' }, 'Working', el('progress')), el('button', { type: 'button' }, 'Cancel')]);
+    card.querySelector('button')!.focus();
+    expect(doc.activeElement!.textContent).toBe('Remove');
+    render(card, [
+      head(),
+      el('div', { class: 'notice warn' }, el('p', {}, 'Hidden data'), el('label', { class: 'check' }, el('input', { type: 'checkbox' }), el('span', {}, 'I understand'))),
+      el('div', { class: 'fingerprint' }, el('span', {}, 'Fingerprint'), el('code', {}, 'ab'), el('button', { type: 'button' }, 'Copy')),
+    ]);
+    expect(doc.activeElement!.textContent).toBe('Remove');
+    expect(doc.activeElement).toBe(card.querySelector('.item-head')!.querySelector('button'));
+  });
+
+  it('finds a control by its id when the siblings before it changed (share-link notice removed)', () => {
+    const build = (notice: boolean): unknown[] => [
+      el('h3', {}, 'Step 1'),
+      notice ? el('div', { class: 'notice' }, el('p', {}, 'From a link')) : null,
+      el('div', { class: 'drop-wrap' }, el('input', { type: 'file', id: 'verify-file' }), el('label', { for: 'verify-file' }, 'Choose')),
+    ];
+    const root = mount();
+    render(root, build(true));
+    root.querySelector('#verify-file')!.focus();
+    render(root, build(false));
+    expect(doc.activeElement).toBe(root.querySelector('#verify-file'));
+  });
+
+  it('does not move focus onto another list row after the focused row is removed', () => {
+    const rows = (keys: string[]): unknown => el('ul', {}, ...keys.map((k) => el('li', { 'data-key': k }, el('span', {}, k), el('button', { type: 'button' }, 'Remove'))));
+    const root = mount();
+    render(root, [rows(['a', 'b', 'c'])]);
+    const first = root.querySelector('button')!;
+    first.focus();
+    render(root, [rows(['b', 'c'])]);
+    for (const b of root.all().filter((e) => e.tagName === 'BUTTON')) expect(doc.activeElement).not.toBe(b);
+  });
+
+  it('keeps focus on the same list row when that row is still there', () => {
+    const rows = (keys: string[]): unknown => el('ul', {}, ...keys.map((k) => el('li', { 'data-key': k }, el('span', {}, k), el('button', { type: 'button' }, `Remove ${k}`))));
+    const root = mount();
+    render(root, [rows(['a', 'b', 'c'])]);
+    root.all().find((e) => e.textContent === 'Remove b')!.focus();
+    render(root, [rows(['a', 'b', 'c'])]);
+    expect(doc.activeElement!.textContent).toBe('Remove b');
+    expect(root.all()).toContain(doc.activeElement);
+  });
+});
