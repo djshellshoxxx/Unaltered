@@ -14,7 +14,7 @@ const putTag = (s: string): Uint8Array => Uint8Array.from(s, (c) => c.charCodeAt
 // Chunks needed to play the audio. Musical loop/cue data (smpl, inst, cue) is kept; free-text and identity chunks
 // (LIST/INFO, bext originator, iXML, id3, _PMX XMP, ...) are removed.
 const WAV_KEEP = new Set(['fmt ', 'data', 'fact', 'smpl', 'inst', 'cue ']);
-const WAV_NAMES: Record<string, string> = { LIST: 'text tags (LIST)', bext: 'broadcast info (bext)', iXML: 'iXML metadata', 'id3 ': 'ID3 tag', ID3: 'ID3 tag', _PMX: 'XMP metadata' };
+const WAV_NAMES: Record<string, string> = { LIST: 'text tags (LIST)', bext: 'broadcast info (bext)', iXML: 'iXML metadata', 'id3 ': 'ID3 tag', 'ID3 ': 'ID3 tag', _PMX: 'XMP metadata' };
 const MAX_REMOVAL_SUMMARY_LABELS = 64;
 const REMOVAL_SUMMARY_OVERFLOW = 'Additional metadata chunks';
 
@@ -60,7 +60,10 @@ export function cleanWav(input: Uint8Array): AudioResult {
     if (WAV_KEEP.has(id)) {
       // Pad bytes are re-emitted as zero so content cannot ride in them.
       parts.push(input.subarray(pos, end));
-      if (len & 1) parts.push(Uint8Array.of(0));
+      if (len & 1) {
+        parts.push(Uint8Array.of(0));
+        if (input[end] !== 0) note('non-zero chunk padding');
+      }
     } else {
       note(WAV_NAMES[id] ?? `unknown chunk (${/^[\x20-\x7e]{4}$/.test(id) ? id.trim() : '?'})`);
     }
@@ -141,9 +144,8 @@ export function cleanMp3(input: Uint8Array): AudioResult {
     removed.push('ID3v1 tag');
   }
   if (!framesReachEnd() && end - start >= 32 && String.fromCharCode(...input.subarray(end - 32, end - 24)) === 'APETAGEX') {
-    const dv = new DataView(input.buffer, input.byteOffset, input.byteLength);
-    const size = dv.getUint32(end - 20, true) + (dv.getUint32(end - 12, true) & 0x80000000 ? 32 : 0);
-    if (size < 32 || size > end - start) return rej('The APE tag is malformed.');
+    const size = apeTagLength(input, start, end);
+    if (size === null) return rej('The APE tag is malformed.');
     end -= size;
     removed.push('APEv2 tag');
   }
@@ -153,6 +155,33 @@ export function cleanMp3(input: Uint8Array): AudioResult {
   const bad = validateMp3Frames(input, start, end);
   if (bad) return bad;
   return { kind: 'cleaned', output: input.slice(start, end), removed };
+}
+
+/**
+ * Length of the APEv2 tag whose footer ends at `end`, or null. The footer's size field alone could reach back over complete
+ * audio frames, so a flagged header must be where the footer says and the items must fill the space before the footer exactly.
+ */
+function apeTagLength(input: Uint8Array, start: number, end: number): number | null {
+  const dv = new DataView(input.buffer, input.byteOffset, input.byteLength);
+  const footer = end - 32;
+  const size = dv.getUint32(footer + 12, true); // items + footer, excluding any header
+  const count = dv.getUint32(footer + 16, true);
+  const header = dv.getUint32(footer + 20, true) & 0x80000000 ? 32 : 0;
+  if (size < 32 || header + size > end - start) return null;
+  const tagStart = end - size - header;
+  if (header && (String.fromCharCode(...input.subarray(tagStart, tagStart + 8)) !== 'APETAGEX' || dv.getUint32(tagStart + 12, true) !== size || dv.getUint32(tagStart + 16, true) !== count)) return null;
+  let p = tagStart + header;
+  for (let i = 0; i < count; i++) {
+    // Item: value size, flags, printable-ASCII key of 2-255 bytes, NUL, value. Each item advances p, so this is bounded.
+    if (p + 8 > footer) return null;
+    const keyStart = p + 8;
+    let k = keyStart;
+    while (k < footer && k - keyStart <= 255 && input[k]! >= 0x20 && input[k]! <= 0x7e) k++;
+    if (k >= footer || input[k] !== 0 || k - keyStart < 2 || k - keyStart > 255) return null;
+    p = k + 1 + dv.getUint32(p, true);
+    if (p > footer) return null;
+  }
+  return p === footer ? header + size : null;
 }
 
 function endsWithTagLikeBytes(input: Uint8Array, start: number, end: number): boolean {

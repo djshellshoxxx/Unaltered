@@ -1,0 +1,121 @@
+// Adversarial parser review 2026-11-04: each block reproduces a defect on 583aca4 and guards its fix.
+import { describe, expect, it } from 'vitest';
+import { concat } from '../../src/core/bytes';
+import { cleanMp3, cleanWav } from '../../src/core/strip/audio';
+import { cleanJpeg } from '../../src/core/strip/jpeg';
+import { cleanPng } from '../../src/core/strip/png';
+import { apeTag, FRAME, makeWav } from '../helpers/audio';
+import { chunk, contains, makeJpeg } from '../helpers/images';
+
+const frame = (fill: number): number[] => {
+  const f = [...FRAME];
+  f.fill(fill, 4);
+  return f;
+};
+
+describe('MP3: an APEv2 footer cannot claim complete audio frames as tag bytes', () => {
+  const [a, b] = [frame(0x11), frame(0x22)];
+
+  it('rejects a footer size that reaches back over the last audio frame', () => {
+    const tag = apeTag([['Artist', 'SECRET-APE']], false);
+    const input = Uint8Array.from([...a, ...b, ...tag]);
+    const dv = new DataView(input.buffer);
+    // Without a header the inflated "items" region would begin exactly at frame b.
+    dv.setUint32(input.length - 20, dv.getUint32(input.length - 20, true) + b.length, true);
+    const r = cleanMp3(input);
+    expect(r.kind === 'cleaned' ? [...r.output] : r.kind).toBe('rejected');
+  });
+
+  it('rejects a header flag when no APE header is where the footer says', () => {
+    const tag = apeTag([['Artist', 'SECRET-APE']], false);
+    const input = Uint8Array.from([...a, ...b, ...tag]);
+    const dv = new DataView(input.buffer);
+    // The flag adds 32 header bytes; together with the adjusted size the tag would start at frame b.
+    dv.setUint32(input.length - 20, dv.getUint32(input.length - 20, true) + b.length - 32, true);
+    dv.setUint32(input.length - 12, 0x80000000, true);
+    const r = cleanMp3(input);
+    expect(r.kind === 'cleaned' ? [...r.output] : r.kind).toBe('rejected');
+  });
+
+  it('still removes well-formed APE tags with and without a header', () => {
+    for (const header of [true, false]) {
+      const r = cleanMp3(Uint8Array.from([...a, ...b, ...apeTag([['Artist', 'SECRET-APE'], ['Cover Art (Front)', '\x01\x02']], header)]));
+      if (r.kind !== 'cleaned') throw new Error(`header=${header}: ${JSON.stringify(r)}`);
+      expect([...r.output]).toEqual([...a, ...b]);
+      expect(r.removed).toEqual(['APEv2 tag']);
+    }
+  });
+});
+
+describe('PNG: PLTE/tRNS bytes that the colour type cannot use are refused, not kept', () => {
+  const be32 = (n: number): Uint8Array => Uint8Array.of(n >>> 24, (n >>> 16) & 255, (n >>> 8) & 255, n & 255);
+  const sig = Uint8Array.of(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a);
+  const idat = Uint8Array.of(0x78, 0x9c, 0x63, 0x60, 0x00, 0x00, 0x00, 0x02, 0x00, 0x01);
+  const png = (bitDepth: number, colorType: number, ...beforeIdat: Uint8Array[]): Uint8Array =>
+    concat(sig, chunk('IHDR', concat(be32(1), be32(1), Uint8Array.of(bitDepth, colorType, 0, 0, 0))), ...beforeIdat, chunk('IDAT', idat), chunk('IEND'));
+  const secret = (n: number): Uint8Array => new TextEncoder().encode('SECRET-'.repeat(40)).subarray(0, n);
+
+  it('rejects ignored palette or transparency bytes', () => {
+    for (const [label, input] of [
+      ['PLTE in a greyscale image', png(8, 0, chunk('PLTE', secret(45)))],
+      ['PLTE in a greyscale+alpha image', png(8, 4, chunk('PLTE', secret(45)))],
+      ['more palette entries than a 1-bit index addresses', png(1, 3, chunk('PLTE', secret(45)))],
+      ['indexed tRNS before PLTE', png(8, 3, chunk('tRNS', secret(20)), chunk('PLTE', secret(6)))],
+      ['indexed tRNS longer than the palette', png(8, 3, chunk('PLTE', secret(6)), chunk('tRNS', secret(20)))],
+      ['greyscale tRNS of the wrong size', png(8, 0, chunk('tRNS', secret(1)))],
+    ] as const) {
+      const r = cleanPng(input);
+      expect(r.kind === 'cleaned' ? `cleaned, secret kept: ${contains(r.output, 'SECRET')}` : r.kind, label).toBe('rejected');
+    }
+  });
+
+  it('keeps valid palettes and transparency', () => {
+    for (const input of [
+      png(8, 3, chunk('PLTE', secret(6)), chunk('tRNS', secret(2))),
+      png(1, 3, chunk('PLTE', secret(6))),
+      png(8, 2, chunk('PLTE', secret(6)), chunk('tRNS', secret(6))), // suggested palette for truecolour is allowed
+      png(16, 0, chunk('tRNS', secret(2))),
+    ]) expect(cleanPng(input).kind).toBe('cleaned');
+  });
+});
+
+describe('JPEG: removing bytes from the JFIF header is reported', () => {
+  it('lists extra JFIF bytes instead of reporting that nothing was found', () => {
+    const base = Array.from(makeJpeg());
+    const tail = Array.from(new TextEncoder().encode('SECRET-JFIF-TAIL'));
+    // APP0 "JFIF\0" + 9 header bytes with a 0x0 thumbnail, followed by bytes the canonical header does not keep.
+    const app0 = [0xff, 0xe0, 0, 16 + tail.length, ...base.slice(6, 20), ...tail];
+    const r = cleanJpeg(Uint8Array.from([0xff, 0xd8, ...app0, ...base.slice(20)]));
+    if (r.kind !== 'cleaned') throw new Error(JSON.stringify(r));
+    expect(contains(r.output, 'SECRET')).toBe(false);
+    expect(r.removed).not.toEqual([]);
+    const plain = cleanJpeg(makeJpeg());
+    expect(plain.kind === 'cleaned' && plain.removed).toEqual([]);
+  });
+});
+
+describe('WAV: rewritten pad bytes are reported', () => {
+  it('lists non-zero chunk padding that cleaning replaced with zero', () => {
+    const input = makeWav({ oddPad: 5 });
+    input[input.length - 1] = 0x7f;
+    const r = cleanWav(input);
+    if (r.kind !== 'cleaned') throw new Error(JSON.stringify(r));
+    expect(r.output.at(-1)).toBe(0);
+    expect(r.removed).not.toEqual([]);
+    const zero = cleanWav(makeWav({ oddPad: 5 }));
+    expect(zero.kind === 'cleaned' && zero.removed).toEqual([]);
+  });
+});
+
+describe('WAV: an upper-case "ID3 " chunk is labelled as an ID3 tag', () => {
+  it('names both id3 chunk spellings found in the wild', () => {
+    for (const id of ['id3 ', 'ID3 ']) {
+      const base = makeWav();
+      const extra = Uint8Array.from([...id].map((c) => c.charCodeAt(0)).concat([4, 0, 0, 0, 0x49, 0x44, 0x33, 0x03]));
+      const input = concat(base.subarray(0, 36), extra, base.subarray(36)); // after the RIFF header and fmt chunk
+      new DataView(input.buffer).setUint32(4, input.length - 8, true);
+      const r = cleanWav(input);
+      expect(r.kind === 'cleaned' && r.removed, id).toEqual(['ID3 tag']);
+    }
+  });
+});
