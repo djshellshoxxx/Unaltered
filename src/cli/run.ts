@@ -29,6 +29,24 @@ const NOT_REGULAR = 'not a regular file';
 const SIZE_CHANGED = 'the file size changed while reading';
 const cliError = (code: string): Error => Object.assign(new Error(code), { code });
 
+/**
+ * A `hash` output line in GNU sha256sum's format. A name from a shell glob is attacker-controlled: printed raw, a
+ * newline would add a forged checksum line and a carriage return or escape sequence could overwrite the fingerprint
+ * on the terminal. Like sha256sum, `\`, newline and CR become `\\`, `\n`, `\r` and the line starts with `\`; other
+ * control characters become `\xHH`, which `sha256sum -c` rejects rather than misreads.
+ */
+function checksumLine(hex: string, name: string): string {
+  let escaped = false;
+  let out = '';
+  for (const ch of name) {
+    const c = ch.charCodeAt(0);
+    const esc = ch === '\\' ? '\\\\' : ch === '\n' ? '\\n' : ch === '\r' ? '\\r' : c < 0x20 || (c >= 0x7f && c <= 0x9f) ? `\\x${c.toString(16).padStart(2, '0')}` : null;
+    if (esc !== null) escaped = true;
+    out += esc ?? ch;
+  }
+  return `${escaped ? '\\' : ''}${hex}  ${out}\n`;
+}
+
 /** An idle FIFO blocks a normal open before fstat can reject it. Check the opened descriptor without waiting for a writer. */
 async function openRegular(path: string): Promise<FileHandle> {
   const fh = await open(path, constants.O_RDONLY | (constants.O_NONBLOCK ?? 0));
@@ -100,7 +118,7 @@ export async function run(argv: readonly string[], io: CliIO): Promise<number> {
   try {
     if (cmd === 'hash' && file && argv.length === 2) {
       const { hex } = await hashFile(file);
-      io.out(`${hex}  ${file}\n`);
+      io.out(checksumLine(hex, file));
       return 0;
     }
     if (cmd === 'verify' && file && argv.length <= 3) {
