@@ -637,13 +637,13 @@ describe('FR-1 hashing', () => {
     afterEach(() => { vi.unstubAllGlobals(); });
 
     it('falls back after a worker message cannot be deserialized and removes its handlers', async () => {
-      let worker!: DeserializationWorker;
+      const workers: DeserializationWorker[] = [];
       class DeserializationWorker {
         onmessage: ((ev: { data: unknown }) => void) | null = null;
         onmessageerror: (() => void) | null = null;
         onerror: (() => void) | null = null;
         terminated = 0;
-        constructor() { worker = this; }
+        constructor() { workers.push(this); }
         postMessage(): void {}
         terminate(): void { this.terminated++; }
       }
@@ -651,6 +651,7 @@ describe('FR-1 hashing', () => {
       vi.stubGlobal('__WORKER_URL__', 'worker.js');
       const ac = new AbortController();
       const result = hashBlob(new Blob(['abc']), { signal: ac.signal });
+      const worker = workers[0]!;
       try {
         expect(worker.onmessageerror).toBeTypeOf('function');
         worker.onmessageerror!();
