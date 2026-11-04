@@ -9,7 +9,7 @@ import { join, resolve, sep } from 'node:path';
 // (real-path) scratch directory, so anything outside it is refused before any file is created.
 const base = realpathSync(tmpdir());
 const outDir = resolve(process.argv[4] ?? '');
-if (!outDir.startsWith(base + sep)) throw new Error(`browser-step stub: refusing an output directory outside ${base}`);
+if (!outDir.startsWith(base + sep)) throw new Error('browser-step stub: refusing an output directory outside TMPDIR');
 mkdirSync(outDir, { recursive: true });
 const upgradedReceiptPath = join(outDir, 'incomplete.txt.ots');
 writeFileSync(upgradedReceiptPath, 'synthetic upgraded receipt\n');
