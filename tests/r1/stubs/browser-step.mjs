@@ -5,14 +5,11 @@ import { mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
 
-// The output directory comes from the command line. The test runs this stub with TMPDIR set to its scratch directory,
-// and r1-acceptance.sh creates every work directory under TMPDIR, so anything else is refused before a file is made.
-// TMPDIR is accepted as given and as its real path, since a temp root reached through a symlink (macOS /var ->
-// /private/var) can be reported either way.
-const temp = resolve(tmpdir());
-const bases = [temp, realpathSync(temp)].map((b) => b + sep);
+// The work directory comes from the command line. The test always runs this stub with TMPDIR set to its own
+// (real-path) scratch directory, so anything outside it is refused before any file is created.
+const base = realpathSync(tmpdir());
 const outDir = resolve(process.argv[4] ?? '');
-if (!bases.some((b) => outDir.startsWith(b))) throw new Error('browser-step stub: refusing an output directory outside TMPDIR');
+if (!outDir.startsWith(base + sep)) throw new Error('browser-step stub: refusing an output directory outside TMPDIR');
 mkdirSync(outDir, { recursive: true });
 const upgradedReceiptPath = join(outDir, 'incomplete.txt.ots');
 writeFileSync(upgradedReceiptPath, 'synthetic upgraded receipt\n');
