@@ -3,7 +3,7 @@
 // byte is synthetic and none of it is a real receipt or block header.
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, copyFileSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import test from 'node:test';
@@ -80,4 +80,81 @@ test('r1-acceptance.mjs: an explicit output directory is created private and can
   assertPrivateReceipt(r, r.run(out));
   assert.equal(statSync(out).mode & 0o777, 0o700);
   assertPrivateReceipt(r, r.run(out));
+});
+
+// r1-acceptance.sh runs in a scratch copy of the layout it expects (scripts/, tests/differential/) with test doubles for
+// everything outside it: the browser step, curl, sha256sum and python3 (venv, pip and the reference oracle). Every
+// double appends its argv to R1_CALLS as \x1f-separated fields ending in \x1e.
+const HASH = `${'0'.repeat(63)}1`;
+const HEADER = 'ab'.repeat(100);
+const LOGGER = `#!/bin/sh
+{ printf '%s\\037' "$(basename "$0")" "$@"; printf '\\036'; } >> "$R1_CALLS"
+`;
+const CURL = `${LOGGER}out=; url=
+while [ $# -gt 0 ]; do
+  case "$1" in -o) out="$2"; shift 2 ;; https://*) url="$1"; shift ;; *) shift ;; esac
+done
+emit() { if [ -n "$out" ]; then printf '%s' "$1" > "$out"; else printf '%s' "$1"; fi; }
+case "$url" in
+  https://raw.githubusercontent.com/*/examples/incomplete.txt) emit 'synthetic file' ;;
+  https://raw.githubusercontent.com/*/examples/incomplete.txt.ots) emit 'synthetic receipt' ;;
+  'https://blockchain.info/block-height/428648?format=json') emit '{"blocks":[{"hash":"${HASH}"}]}' ;;
+  'https://blockchain.info/rawblock/${HASH}?format=hex') emit '${HEADER}' ;;
+  *) echo 'curl: (22) The requested URL returned error: 404' >&2; exit 22 ;;
+esac
+`;
+const PYTHON = `${LOGGER}if [ "$1" = -m ] && [ "$2" = venv ]; then
+  mkdir -p "$3/bin" && cp "$R1_LOGGER" "$3/bin/pip" && cp "$R1_LOGGER" "$3/bin/python"
+elif [ "$1" = -c ]; then
+  sed -n 's/.*"hash":"\\([0-9a-f]*\\)".*/\\1/p'
+else
+  exit 2
+fi
+`;
+
+function shellRun(t) {
+  const dir = scratch(t, 'unaltered-r1-shell-test-');
+  const root = join(dir, 'root');
+  mkdirSync(join(root, 'scripts'), { recursive: true });
+  mkdirSync(join(root, 'tests', 'differential'), { recursive: true });
+  copyFileSync(join(ROOT, 'scripts/r1-acceptance.sh'), join(root, 'scripts/r1-acceptance.sh'));
+  copyFileSync(join(ROOT, 'tests/r1/stubs/browser-step.mjs'), join(root, 'scripts/r1-acceptance.mjs'));
+  writeFileSync(join(root, 'tests/differential/verify_reference.py'), '# placeholder: the python test double never runs it\n');
+  const bin = join(dir, 'bin');
+  mkdirSync(bin);
+  for (const [name, body] of [['curl', CURL], ['python3', PYTHON], ['sha256sum', `${LOGGER}cat >/dev/null\n`], ['logger', LOGGER]]) {
+    writeFileSync(join(bin, name), body);
+    chmodSync(join(bin, name), 0o755);
+  }
+  const log = join(dir, 'calls.log');
+  writeFileSync(log, '');
+  const run = (...work) => spawnSync('bash', ['scripts/r1-acceptance.sh', ...work], {
+    cwd: root, encoding: 'utf8', timeout: 30_000,
+    env: { ...process.env, PATH: `${bin}:${dirname(process.execPath)}:${process.env.PATH}`, TMPDIR: dir, R1_CALLS: log, R1_LOGGER: join(bin, 'logger') },
+  });
+  const calls = () => readFileSync(log, 'utf8').split('\x1e').filter(Boolean).map((record) => record.split('\x1f').slice(0, -1));
+  return { dir, root, run, calls };
+}
+
+function assertReferenceRan(r, result, work) {
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  const oracle = r.calls().filter(([name]) => name === 'python');
+  assert.equal(oracle.length, 1, JSON.stringify(r.calls()));
+  const [, script, file, receipt, header] = oracle[0];
+  assert.equal(script, 'tests/differential/verify_reference.py');
+  assert.equal(file, join(work, 'incomplete.txt'));
+  assert.equal(receipt, join(work, 'out', 'incomplete.txt.ots'));
+  assert.equal(readFileSync(receipt, 'utf8'), 'synthetic upgraded receipt\n');
+  assert.equal(header, HEADER.slice(0, 160));
+}
+
+test('r1-acceptance.sh: a relative work directory reaches the reference step with absolute paths', { skip: !posix && 'POSIX shell' }, (t) => {
+  const r = shellRun(t);
+  assertReferenceRan(r, r.run('r1-out'), join(r.root, 'r1-out'));
+});
+
+test('r1-acceptance.sh: a work directory containing a space reaches the reference step intact', { skip: !posix && 'POSIX shell' }, (t) => {
+  const r = shellRun(t);
+  const work = join(r.dir, 'with space');
+  assertReferenceRan(r, r.run(work), work);
 });

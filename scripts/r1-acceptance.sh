@@ -5,6 +5,7 @@
 set -euo pipefail
 work="${1:-$(mktemp -d)}"
 mkdir -p "$work"
+work="$(cd "$work" && pwd)" # absolute: node and the reference step get exact paths, wherever the caller stood
 base=https://raw.githubusercontent.com/opentimestamps/opentimestamps-client/master/examples
 curl -fsS -o "$work/incomplete.txt" "$base/incomplete.txt"
 curl -fsS -o "$work/incomplete.txt.ots" "$base/incomplete.txt.ots"
@@ -20,7 +21,13 @@ if [ "$status" -ne 0 ]; then
   echo "R1 browser step did not pass; reference step skipped." >&2
   exit "$status"
 fi
-read -r upgraded block < <(node -e 'const r=require(process.argv[1]);console.log(r.verify.upgradedReceiptPath, r.verify.block)' "$work/browser.json")
+# One value per line, so a path with spaces stays whole (and a JSON file read, not require()d as a module name).
+report="$(node -e 'const r=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));console.log(r.verify.upgradedReceiptPath ?? "");console.log(r.verify.block ?? "")' "$work/browser.json")"
+upgraded="${report%%$'\n'*}"; block="${report#*$'\n'}"
+if [ -z "$upgraded" ] || ! [[ "$block" =~ ^[0-9]+$ ]]; then
+  echo "R1 browser report names no downloaded receipt or block height; reference step skipped." >&2
+  exit 1
+fi
 python3 -m venv "$work/venv" && "$work/venv/bin/pip" install -q opentimestamps==0.4.5
 # Third source, independent of the app's explorers (mempool.space, blockstream.info). An own node is better.
 hash=$(curl -fsS "https://blockchain.info/block-height/$block?format=json" | python3 -c 'import json,sys;print(json.load(sys.stdin)["blocks"][0]["hash"])')
