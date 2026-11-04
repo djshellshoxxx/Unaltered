@@ -30,22 +30,24 @@ const SIZE_CHANGED = 'the file size changed while reading';
 const CHANGED = 'the file changed while reading';
 const cliError = (code: string): Error => Object.assign(new Error(code), { code });
 
+const isControl = (c: number): boolean => c < 0x20 || (c >= 0x7f && c <= 0x9f);
+
 /**
  * A `hash` output line in GNU sha256sum's format. A name from a shell glob is attacker-controlled: printed raw, a
  * newline would add a forged checksum line and a carriage return or escape sequence could overwrite the fingerprint
- * on the terminal. Like sha256sum, `\`, newline and CR become `\\`, `\n`, `\r` and the line starts with `\`; other
- * control characters become `\xHH`, which `sha256sum -c` rejects rather than misreads.
+ * on the terminal. Only a name containing a control character is escaped. Then, like sha256sum, `\`, newline and CR
+ * become `\\`, `\n`, `\r` and the line starts with `\`; other control characters become `\xHH`, which `sha256sum -c`
+ * rejects rather than misreads. Any other name, including every Windows path (backslash separators, no control
+ * characters possible), prints verbatim as before; `sha256sum -c` reads such an unescaped line literally.
  */
 function checksumLine(hex: string, name: string): string {
-  let escaped = false;
+  if (![...name].some((ch) => isControl(ch.charCodeAt(0)))) return `${hex}  ${name}\n`;
   let out = '';
   for (const ch of name) {
     const c = ch.charCodeAt(0);
-    const esc = ch === '\\' ? '\\\\' : ch === '\n' ? '\\n' : ch === '\r' ? '\\r' : c < 0x20 || (c >= 0x7f && c <= 0x9f) ? `\\x${c.toString(16).padStart(2, '0')}` : null;
-    if (esc !== null) escaped = true;
-    out += esc ?? ch;
+    out += ch === '\\' ? '\\\\' : ch === '\n' ? '\\n' : ch === '\r' ? '\\r' : isControl(c) ? `\\x${c.toString(16).padStart(2, '0')}` : ch;
   }
-  return `${escaped ? '\\' : ''}${hex}  ${out}\n`;
+  return `\\${hex}  ${out}\n`;
 }
 
 /** An idle FIFO blocks a normal open before fstat can reject it. Check the opened descriptor without waiting for a writer. */
