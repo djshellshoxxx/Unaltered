@@ -27,7 +27,26 @@ exit codes for verify: 0 verified, 2 pending, 3 file differs, 4 invalid receipt,
 
 const NOT_REGULAR = 'not a regular file';
 const SIZE_CHANGED = 'the file size changed while reading';
+const CHANGED = 'the file changed while reading';
 const cliError = (code: string): Error => Object.assign(new Error(code), { code });
+
+/**
+ * A `hash` output line in GNU sha256sum's format. A name from a shell glob is attacker-controlled: printed raw, a
+ * newline would add a forged checksum line and a carriage return or escape sequence could overwrite the fingerprint
+ * on the terminal. Like sha256sum, `\`, newline and CR become `\\`, `\n`, `\r` and the line starts with `\`; other
+ * control characters become `\xHH`, which `sha256sum -c` rejects rather than misreads.
+ */
+function checksumLine(hex: string, name: string): string {
+  let escaped = false;
+  let out = '';
+  for (const ch of name) {
+    const c = ch.charCodeAt(0);
+    const esc = ch === '\\' ? '\\\\' : ch === '\n' ? '\\n' : ch === '\r' ? '\\r' : c < 0x20 || (c >= 0x7f && c <= 0x9f) ? `\\x${c.toString(16).padStart(2, '0')}` : null;
+    if (esc !== null) escaped = true;
+    out += esc ?? ch;
+  }
+  return `${escaped ? '\\' : ''}${hex}  ${out}\n`;
+}
 
 /** An idle FIFO blocks a normal open before fstat can reject it. Check the opened descriptor without waiting for a writer. */
 async function openRegular(path: string): Promise<FileHandle> {
@@ -45,12 +64,12 @@ async function openRegular(path: string): Promise<FileHandle> {
 async function hashFile(path: string): Promise<{ hex: string; digest: Uint8Array }> {
   const fh = await openRegular(path);
   try {
-    const info = await fh.stat();
+    const info = await fh.stat({ bigint: true });
     // Pipes and devices report a size that is not their content length; hashing that many bytes would print the
     // fingerprint of empty or partial input as if it were the file's. Procfs files and files that grow while
     // being read pass this check and are caught by the end-of-file probe below.
     if (!info.isFile()) throw cliError(NOT_REGULAR);
-    const size = info.size;
+    const size = Number(info.size);
     const src: ChunkSource = {
       size,
       slice: (start, end) => ({
@@ -69,6 +88,10 @@ async function hashFile(path: string): Promise<{ hex: string; digest: Uint8Array
     const r = await hashSource(src);
     if (!r) throw new Error('cancelled');
     if ((await fh.read(new Uint8Array(1), 0, 1, size)).bytesRead !== 0) throw cliError(SIZE_CHANGED);
+    // A same-size rewrite during the read passes both checks above and would yield the fingerprint of a mix of old and
+    // new bytes that never existed as one file. Its write changes mtime/ctime (browsers' File reads fail the same way).
+    const now = await fh.stat({ bigint: true });
+    if (now.mtimeNs !== info.mtimeNs || now.ctimeNs !== info.ctimeNs || now.size !== info.size) throw cliError(CHANGED);
     return { hex: r.hex, digest: r.digest };
   } finally {
     await fh.close();
@@ -100,7 +123,7 @@ export async function run(argv: readonly string[], io: CliIO): Promise<number> {
   try {
     if (cmd === 'hash' && file && argv.length === 2) {
       const { hex } = await hashFile(file);
-      io.out(`${hex}  ${file}\n`);
+      io.out(checksumLine(hex, file));
       return 0;
     }
     if (cmd === 'verify' && file && argv.length <= 3) {
@@ -116,7 +139,7 @@ export async function run(argv: readonly string[], io: CliIO): Promise<number> {
   } catch (e) {
     // Generic message only (SR-8): never echo paths or stack traces from lower layers.
     const code = e instanceof Error && 'code' in e ? (e as { code?: string }).code : undefined;
-    const known = code === NOT_REGULAR || code === SIZE_CHANGED ? code : undefined;
+    const known = code === NOT_REGULAR || code === SIZE_CHANGED || code === CHANGED ? code : undefined;
     io.err(`error: ${code === 'ENOENT' ? 'file not found' : known ?? 'could not complete the operation'}\n`);
     return 1;
   }
