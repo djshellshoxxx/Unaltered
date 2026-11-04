@@ -111,7 +111,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
             el('button', { type: 'button', class: 'button small', onclick: () => ((prefill = null), resetVerification(), renderInputs(), renderActions()) }, t('common.remove')),
           )
         : null,
-      dropZone({ id: 'verify-file', label: t('verify.dropFile'), hint: t('verify.dropFileHint'), onFiles: (f) => ((file = f[0] ?? null), resetVerification(), renderInputs(), renderActions()) }),
+      dropZone({ id: 'verify-file', label: t('verify.dropFile'), hint: t('verify.dropFileHint'), onFiles: (f) => ((file = f[0] ?? null), (prefill = file ? null : prefill), resetVerification(), renderInputs(), renderActions()) }),
       file ? el('p', { class: 'picked' }, `${file.name} · ${formatBytes(file.size)}`) : null,
       el('h3', {}, t('verify.step2')),
       dropZone({ id: 'verify-receipt', label: t('verify.dropReceipt'), hint: t('verify.dropReceiptHint'), accept: '.ots', onFiles: (f) => ((receipt = f[0] ?? null), resetVerification(), renderInputs(), renderActions()) }),
@@ -251,6 +251,8 @@ export function mountVerify(root: HTMLElement): VerifyView {
       const next = hex && HEX64.test(hex) ? hex : null;
       if (next !== prefill) resetVerification();
       prefill = next;
+      // A link and a chosen file are alternatives: Check uses the file when there is one, so showing both would mislead.
+      if (next) file = null;
       renderInputs();
       renderActions();
     },
@@ -269,7 +271,7 @@ function reportTitleKey(state: VerifyState, fromLink: boolean): StringKey {
   return (fromLink ? LINK_TITLE[state] : undefined) ?? TITLE[state];
 }
 
-function renderReport(r: VerifyReport, hex: string, fromLink: boolean): HTMLElement {
+export function renderReport(r: VerifyReport, hex: string, fromLink: boolean): HTMLElement {
   const title = reportTitleKey(r.state, fromLink);
   const linkBody = fromLink ? LINK_BODY[r.state] : undefined;
   const detailRows: Node[] = [
@@ -281,7 +283,7 @@ function renderReport(r: VerifyReport, hex: string, fromLink: boolean): HTMLElem
       el('dt', {}, t('verify.d.block')),
       el('dd', {}, String(r.bitcoin.height)),
       el('dt', {}, t('verify.d.time')),
-      el('dd', {}, t('verify.d.noLater', { time: r.bitcoin.blockTimeUtc })),
+      el('dd', {}, t(fromLink ? 'verify.d.noLater.link' : 'verify.d.noLater', { time: r.bitcoin.blockTimeUtc })),
       el('dt', {}, t('verify.d.sources')),
       el('dd', {}, r.bitcoin.sourcesAgreeing.join(', ')),
     );

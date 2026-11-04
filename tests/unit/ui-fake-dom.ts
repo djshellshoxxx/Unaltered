@@ -4,9 +4,8 @@ type Listener = (ev: unknown) => void;
 export class FNode {
   parentNode: FElement | null = null;
   get isConnected(): boolean {
-    let n: FNode | null = this;
-    while (n.parentNode) n = n.parentNode;
-    return n === doc.body;
+    for (let n: FNode | null = this as FNode; n; n = n.parentNode) if (n === doc.body) return true;
+    return false;
   }
 }
 export class FText extends FNode {
@@ -24,13 +23,15 @@ export class FElement extends FNode {
   files: unknown[] | null = null;
   constructor(public tagName: string) { super(); }
   get firstChild(): FNode | null { return this.childNodes[0] ?? null; }
-  appendChild<T extends FNode>(c: T): T {
+
+
+  appendChild(c: FNode): FNode {
     if (c.parentNode) c.parentNode.removeChild(c);
     c.parentNode = this;
     this.childNodes.push(c);
     return c;
   }
-  removeChild<T extends FNode>(c: T): T {
+  removeChild(c: FNode): FNode {
     this.childNodes = this.childNodes.filter((x) => x !== c);
     c.parentNode = null;
     return c;

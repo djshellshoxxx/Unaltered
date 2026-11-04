@@ -28,11 +28,11 @@ describe('focus survives a re-render of its container (WCAG 2.4.3)', () => {
   it('keeps focus on the equivalent control after setChildren', () => {
     const root = el('div') as unknown as FElement;
     doc.body.appendChild(root);
-    setChildren(root, ...(build() as never[]));
+    setChildren(root as unknown as Node, ...(build() as never[]));
     const box = root.querySelector('#c')!;
     box.focus();
     expect(doc.activeElement).toBe(box);
-    setChildren(root, ...(build() as never[]));
+    setChildren(root as unknown as Node, ...(build() as never[]));
     const fresh = root.querySelector('#c')!;
     expect(fresh).not.toBe(box);
     expect(doc.activeElement).toBe(fresh);
@@ -43,9 +43,9 @@ describe('focus survives a re-render of its container (WCAG 2.4.3)', () => {
     const other = el('button', { id: 'o' }) as unknown as FElement;
     doc.body.appendChild(root);
     doc.body.appendChild(other);
-    setChildren(root, ...(build() as never[]));
+    setChildren(root as unknown as Node, ...(build() as never[]));
     other.focus();
-    setChildren(root, ...(build() as never[]));
+    setChildren(root as unknown as Node, ...(build() as never[]));
     expect(doc.activeElement).toBe(other);
   });
 });

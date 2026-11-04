@@ -97,6 +97,7 @@ export const en = {
   'verify.d.block': 'Bitcoin block',
   'verify.d.time': 'Block time',
   'verify.d.noLater': 'This file existed no later than about {time} (UTC)',
+  'verify.d.noLater.link': 'This fingerprint existed no later than about {time} (UTC)',
   'verify.d.sources': 'Confirmed by',
   'verify.d.calendars': 'Waiting on',
   'verify.trust.title': 'Trust level L1: explorer check.',
@@ -273,6 +274,8 @@ const es: Table = {
   'verify.d.block': 'Bloque de Bitcoin',
   'verify.d.time': 'Hora del bloque',
   'verify.d.noLater': 'Este archivo existía a más tardar hacia {time} (UTC)',
+  // TODO(human review): Spanish copy not final (DRAFT).
+  'verify.d.noLater.link': 'Esta huella digital existía a más tardar hacia {time} (UTC)',
   'verify.d.sources': 'Confirmado por',
   'verify.d.calendars': 'Esperando a',
   'verify.trust.title': 'Nivel de confianza L1: comprobación con exploradores.',
