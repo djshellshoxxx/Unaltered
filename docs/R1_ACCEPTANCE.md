@@ -57,7 +57,7 @@ Use the receipt the app downloaded, and a block header from a source you choose 
 file digest and verifies the Bitcoin attestation against that header itself.
 
 ```sh
-python3 -m venv /tmp/otsvenv && /tmp/otsvenv/bin/pip install opentimestamps==0.4.5
+python3 -m venv /tmp/otsvenv && /tmp/otsvenv/bin/pip install --require-hashes --only-binary :all: -r tests/differential/requirements.txt
 # Own node: bitcoin-cli getblockheader <hash> false
 # Or, as a third-party source: the first 160 hex characters of https://blockchain.info/rawblock/<hash>?format=hex
 /tmp/otsvenv/bin/python tests/differential/verify_reference.py /tmp/r1/incomplete.txt /tmp/r1/out/<downloaded>.ots <header-hex>
