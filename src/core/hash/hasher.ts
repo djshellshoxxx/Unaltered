@@ -62,13 +62,13 @@ function releaseScript(w: Worker): void {
 
 function makeWorker(): Worker | null {
   if (typeof Worker === 'undefined') return null;
+  let blobUrl: string | null = null;
   try {
     const inline = typeof __WORKER_INLINE__ === 'string' ? __WORKER_INLINE__ : null;
     const url = typeof __WORKER_URL__ === 'string' ? __WORKER_URL__ : null;
     if (inline === null && url === null) return null;
     const tt = (globalThis as { trustedTypes?: TrustedTypesApi }).trustedTypes;
     let src: string;
-    let blobUrl: string | null = null;
     if (inline !== null) {
       blobUrl = URL.createObjectURL(new Blob([inline], { type: 'text/javascript' }));
       src = blobUrl;
@@ -86,6 +86,7 @@ function makeWorker(): Worker | null {
     }
     return w;
   } catch {
+    if (blobUrl !== null) URL.revokeObjectURL(blobUrl);
     return null;
   }
 }
@@ -119,8 +120,11 @@ function hashInWorker(w: Worker, blob: Blob, opts: HashOptions): Promise<{ diges
       const m = ev.data;
       if (m.type === 'progress') opts.onProgress?.(m.done ?? 0);
       else if (m.type === 'done') {
+        // A completion must describe the whole input and a SHA-256 digest before its cross-check is trusted.
+        if (!(m.digest instanceof Uint8Array) || m.digest.length !== 32 || m.bytes !== blob.size
+          || !['ok', 'mismatch', 'skipped'].includes(m.cross ?? '')) return unavailable();
         finish();
-        resolve({ digest: m.digest as Uint8Array, bytes: m.bytes as number, cross: m.cross ?? 'skipped' });
+        resolve({ digest: m.digest, bytes: m.bytes, cross: m.cross as string });
       } else if (m.type === 'failed' && WORKER_FAILURES.includes(m.code as ErrorCode) && typeof m.message === 'string') {
         finish();
         reject(new UnalteredError(m.code as ErrorCode, m.message));

@@ -661,6 +661,55 @@ describe('FR-1 hashing', () => {
       expect(getEventListeners(ac.signal, 'abort')).toHaveLength(0);
     });
 
+    it.each([
+      { digest: new Uint8Array([1]), bytes: 3, cross: 'ok' },
+      { digest: new Uint8Array(32), bytes: 999, cross: 'ok' },
+      { digest: new Uint8Array(32), bytes: 3, cross: 'unexpected' },
+      { digest: new Array(32).fill(0), bytes: 3, cross: 'ok' },
+      { digest: new Uint8Array(32), bytes: 3 },
+    ])('falls back when a worker completion is malformed: %j', async (completion) => {
+      const worker = fakeWorker({ type: 'done', ...completion });
+      const { blob, slices } = countingBlob();
+      const ac = new AbortController();
+      const result = await hashBlob(blob, { signal: ac.signal });
+      expect(getEventListeners(ac.signal, 'abort')).toHaveLength(0);
+      expect(result.hex).toBe(createHash('sha256').update('abc').digest('hex'));
+      expect(result.bytes).toBe(blob.size);
+      expect(slices()).toBeGreaterThan(0);
+      expect(worker.terminated()).toBe(1);
+    });
+
+    it.each(['ok', 'skipped'])('accepts a complete worker digest with cross-check %s', async (cross) => {
+      const digest = new Uint8Array(createHash('sha256').update('abc').digest());
+      const worker = fakeWorker({ type: 'done', digest, bytes: 3, cross });
+      expect((await hashBlob(new Blob(['abc']))).hex).toBe(createHash('sha256').update('abc').digest('hex'));
+      expect(worker.terminated()).toBe(1);
+    });
+
+    it('preserves a valid worker cross-check mismatch as a hard failure', async () => {
+      fakeWorker({ type: 'done', digest: new Uint8Array(32), bytes: 3, cross: 'mismatch' });
+      const { blob, slices } = countingBlob();
+      await expect(hashBlob(blob)).rejects.toMatchObject({ code: 'INTERNAL_HASH_MISMATCH' });
+      expect(slices()).toBe(0);
+    });
+
+    it('releases an inline script URL when worker construction fails', async () => {
+      class ThrowingWorker { constructor() { throw new Error('worker blocked'); } }
+      vi.stubGlobal('Worker', ThrowingWorker);
+      vi.stubGlobal('__WORKER_INLINE__', 'void 0');
+      const create = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:blocked-worker');
+      const revoke = vi.spyOn(URL, 'revokeObjectURL');
+      try {
+        expect((await hashBlob(new Blob(['abc']))).hex)
+          .toBe(createHash('sha256').update('abc').digest('hex'));
+        expect(create).toHaveBeenCalledTimes(1);
+        expect(revoke).toHaveBeenCalledExactlyOnceWith('blob:blocked-worker');
+      } finally {
+        create.mockRestore();
+        revoke.mockRestore();
+      }
+    });
+
     it('removes the failed worker abort listener before falling back', async () => {
       fakeWorker({ type: 'error' });
       const ac = new AbortController();
