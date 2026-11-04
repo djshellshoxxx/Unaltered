@@ -158,3 +158,23 @@ test('r1-acceptance.sh: a work directory containing a space reaches the referenc
   const work = join(r.dir, 'with space');
   assertReferenceRan(r, r.run(work), work);
 });
+
+test('r1-acceptance.sh: every third-party fetch is bounded in time and size', { skip: !posix && 'POSIX shell' }, (t) => {
+  const r = shellRun(t);
+  const result = r.run();
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  const fetches = r.calls().filter(([name]) => name === 'curl');
+  assert.equal(fetches.length, 4);
+  const value = (args, option) => {
+    const at = args.indexOf(option);
+    return at < 0 ? NaN : Number(args[at + 1]);
+  };
+  for (const args of fetches) {
+    const url = args.find((arg) => arg.startsWith('https://'));
+    const seconds = value(args, '--max-time');
+    const bytes = value(args, '--max-filesize');
+    assert.ok(seconds > 0 && seconds <= 300, `${url}: --max-time ${seconds}`);
+    assert.ok(bytes > 0 && bytes <= 64 * 1024 * 1024, `${url}: --max-filesize ${bytes}`);
+    assert.ok(value(args, '--connect-timeout') > 0, `${url}: --connect-timeout`);
+  }
+});
