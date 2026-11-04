@@ -1,5 +1,5 @@
 // Deterministic build (NFR-7, SR-1, SR-3, FR-9). Produces in dist/:
-//   web/                       multi-file site (external script/style with SRI)
+//   web/                       multi-file site (external script/style with SRI; the hash worker is inside main.js)
 //   unaltered-<v>.html         single self-contained offline file (inline script/style allowed by CSP hash)
 //   unaltered-<v>.zip          Windows package: site + single file + .cmd launcher + PowerShell checksum helper (stored zip)
 //   unaltered-<v>-linux.tar.gz Linux package: site + single file + xdg-open launcher + checksum script
@@ -66,9 +66,13 @@ async function bundle(entry, define) {
   return res.outputFiles[0].text;
 }
 
+// Both pages start the hash worker from a blob: URL of this source, inlined in the page script. A blob: worker inherits
+// the page's CSP and Trusted Types, and its code is pinned by main.js's SRI hash or the single file's CSP hash. A worker
+// loaded from its own URL would take its CSP only from HTTP headers, which static hosts do not send, and
+// `new Worker(url)` has no integrity check (SR-1, SR-3).
 const workerJs = await bundle('src/core/hash/hasher.worker.ts', {});
-const mainMulti = await bundle('src/main.ts', { __WORKER_URL__: JSON.stringify('./hasher.worker.js'), __WORKER_INLINE__: 'null' });
 const mainSingle = await bundle('src/main.ts', { __WORKER_URL__: 'null', __WORKER_INLINE__: JSON.stringify(workerJs) });
+const mainMulti = mainSingle;
 const cliJs = (
   await build({ absWorkingDir: root, entryPoints: ['src/cli/main.ts'], bundle: true, write: false, format: 'esm', target: 'node22', platform: 'node', minify: true, legalComments: 'none', charset: 'ascii', logLevel: 'error', banner: { js: '#!/usr/bin/env node' } })
 ).outputFiles[0].text;
@@ -88,7 +92,7 @@ function fill(html, { cspValue, styles, script }) {
 // Multi-file page: SRI on every script/stylesheet (SR-3).
 const sri = (text) => `sha384-${sha(Buffer.from(text), 'sha384', 'base64')}`;
 const multiHtml = fill(template, {
-  cspValue: csp({ scriptSrc: "'self'", styleSrc: "'self'", workerSrc: "'self'" }),
+  cspValue: csp({ scriptSrc: "'self'", styleSrc: "'self'", workerSrc: 'blob:' }),
   styles: `<link rel="stylesheet" href="./styles.css" integrity="${sri(css)}">`,
   script: `<script src="./main.js" defer integrity="${sri(mainMulti)}"></script>`,
 });
@@ -119,7 +123,7 @@ if (JSON.stringify(inlined('style')) !== JSON.stringify([css])) throw new Error(
 if (/\beval\s*\(|new Function\s*\(/.test(mainMulti.replace(/"(?:[^"\\]|\\.)*"/g, '""'))) throw new Error('eval found in bundle');
 
 // ---- sizes (NFR-3) --------------------------------------------------------------------------------------------
-const gz = gzipSync(Buffer.from(mainMulti + workerJs + css), { level: 9 }).length;
+const gz = gzipSync(Buffer.from(mainMulti + css), { level: 9 }).length;
 if (gz > 150 * 1024) throw new Error(`bundle is ${gz} bytes gzip, above the 150 KiB budget`);
 
 const crlf = (s) => Buffer.from(s.replace(/\r?\n/g, '\r\n'), 'utf8');
@@ -188,7 +192,6 @@ if ${sumCmd}; then echo "All files match."; else echo "Problem(s) found. Do not 
 const common = [
   { name: 'index.html', data: Buffer.from(multiHtml) },
   { name: 'main.js', data: Buffer.from(mainMulti) },
-  { name: 'hasher.worker.js', data: Buffer.from(workerJs) },
   { name: 'styles.css', data: Buffer.from(css) },
   { name: singleName, data: Buffer.from(singleHtml) },
   { name: 'LICENSE', data: Buffer.from(read('LICENSE')) },
