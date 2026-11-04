@@ -4,7 +4,7 @@
 #
 # Checks:
 #   1. Effective author and committer identity (as `git var` resolves it) is a no-reply address
-#   2. Commit author/committer emails in history are no-reply addresses
+#   2. History emails are no-reply addresses: commit authors/committers, annotated-tag taggers, commit/tag messages
 #   3. Tracked text files contain no personal email addresses
 #   4. Tracked text files contain no personal home-directory paths
 #   5. package.json has no "author" field
@@ -61,15 +61,28 @@ for role in author committer; do
   echo "       $role name = $name  (confirm this is your project handle, not your real name)"
 done
 
-echo "== 2. commit history emails"
+echo "== 2. history emails (commit authors/committers, tag taggers, commit and tag messages)"
 git_to "$tmp/history" log --all --format='%ae%n%ce'
-if [ -s "$tmp/history" ]; then
+git_to "$tmp/taggers" for-each-ref --format='%(taggeremail)'
+git_to "$tmp/messages" log --all --format='%B'
+git_to "$tmp/tag-messages" for-each-ref --format='%(contents)' refs/tags
+if [ -s "$tmp/history" ] || [ -s "$tmp/taggers" ]; then
   bad=0
   while IFS= read -r e; do
     [ -z "$e" ] && continue
     if ! is_allowed_email "$e"; then fail "history contains non-no-reply email: $e"; bad=1; fi
   done < <(sort -u "$tmp/history")
-  [ "$bad" -eq 0 ] && ok "all author/committer emails are no-reply"
+  while IFS= read -r e; do
+    e="${e#<}"; e="${e%>}"
+    [ -z "$e" ] && continue
+    if ! is_allowed_email "$e"; then fail "annotated tag tagger email is not a no-reply address: $e"; bad=1; fi
+  done < <(sort -u "$tmp/taggers")
+  # Messages are pushed too (Co-authored-by:/Signed-off-by: trailers, prose). GitHub App bots sign off as
+  # "name[bot] <address>"; that address is the service's, not a person's.
+  while IFS= read -r e; do
+    if ! is_allowed_email "$e"; then fail "a commit or tag message contains email: $e (find it: git log --all -F --grep='$e'; git tag -n99)"; bad=1; fi
+  done < <(cat "$tmp/messages" "$tmp/tag-messages" | sed -E 's/\[bot\] <[^>]*>/[bot]/g' | grep -aEoh "$EMAIL_RE" | sort -u)
+  [ "$bad" -eq 0 ] && ok "all author/committer/tagger emails and emails in messages are no-reply"
 else
   ok "no commits yet"
 fi

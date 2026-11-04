@@ -154,3 +154,37 @@ test('check 1 passes a no-reply identity and only warns when git has no identity
   assertPass(refused);
   assert.match(refused.stdout, /\[warn\] git has no author identity/);
 });
+
+test('check 2 reads annotated-tag taggers and commit/tag message bodies', { skip }, async (t) => {
+  await t.test('annotated tag tagger', (t) => {
+    const r = repo(t);
+    r.write('a.txt', 'nothing personal here\n');
+    r.commit();
+    r.git(['tag', '-a', 'v0', '-m', 'v0'], { GIT_COMMITTER_EMAIL: JANE });
+    assert.ok(r.git(['for-each-ref', '--format=%(taggeremail)', 'refs/tags']).includes(JANE));
+    assertFindings(r.check(), finding('tagger', JANE));
+  });
+  await t.test('Co-authored-by trailer in a commit message', (t) => {
+    const r = repo(t);
+    r.write('a.txt', 'nothing personal here\n');
+    r.commit(['add', `Co-authored-by: Jane Real <${mail('jane.co')}>`]);
+    assertFindings(r.check(), finding('message', mail('jane.co')));
+  });
+  await t.test('annotated tag message', (t) => {
+    const r = repo(t);
+    r.write('a.txt', 'nothing personal here\n');
+    r.commit();
+    r.git(['tag', '-a', 'v1', '-m', `Release signed off by ${JANE}`]);
+    assertFindings(r.check(), finding('message', JANE));
+  });
+});
+
+test('no-reply and GitHub App bot trailers in messages are not findings', { skip }, (t) => {
+  const r = repo(t);
+  r.write('a.txt', 'nothing personal here\n');
+  const bot = ['support', 'bot-service.test'].join('@');
+  const agent = ['noreply', 'example.org'].join('@');
+  r.commit(['Bump x', `Signed-off-by: dependabot[bot] <${bot}>\nCo-Authored-By: Example Agent <${agent}>`]);
+  r.git(['tag', '-a', 'v0', '-m', 'v0']);
+  assertPass(r.check());
+});
