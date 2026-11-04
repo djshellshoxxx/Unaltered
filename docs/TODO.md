@@ -77,6 +77,15 @@ Done (each fix has a regression test that failed on its parent):
   - Calendar stamp minimum: duplicate URLs counted twice; a NaN minimum disabled the check.
   - Toolkit `search.sh` / `init-artifact.sh` / `find-polluter.sh` input handling.
   - Rejected findings are listed as residual notes in `ULTRA_RUN_BOARD.md`.
+- [x] **CI portability fixes** found by the final runs:
+  - The fuzz driver's temp-directory realpath (macOS `/var` → `/private/var`).
+  - The R1 default work directory under `TMPDIR`.
+  - The R1 test-double logger race.
+  - GNU-only `sha256sum` interop tests gated on GNU coreutils.
+  - Full dispatch run 41783868297 is green: Firefox/WebKit 2 GiB 3/3 each, Windows native zip check, macOS.
+- [x] **R1 runner honesty:** PASS now requires the upgraded receipt; a Verified result without one is `NOT_UPGRADED`.
+- [ ] **SonarCloud gate:** B security rating on new code. One minor finding is left that cannot be read from the agent
+  environment (sonarcloud.io is blocked); owner action is in `ULTRA_RUN_BOARD.md`.
 - [x] **Second fuzz campaign** on the final WAV/APE cleaners (`docs/evidence/fuzz-20261105.json`, 1,000,000
   mutations, no finding).
 

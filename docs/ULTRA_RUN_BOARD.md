@@ -95,8 +95,7 @@ behaviour usually reproduced. Each is low severity unless marked.
   - Executor edge cases on busy/closed workers.
   - `seedExecutions` is the planned count.
   - A replay with a bad manifest is recorded as a finding.
-- **Acceptance** (medium): `r1-acceptance.mjs` can report R1 PASS when no upgrade request was made. 1 of 3 lenses
-  agreed. Treat the R1 runner's PASS as needing a log review.
+- **Acceptance:** *(fixed in `76bfb01`)* `r1-acceptance.mjs` reported R1 PASS when no upgrade had produced a receipt.
 - **UI:**
   - A conflicting `h=` leaves an earlier link's fingerprint on screen.
   - The `el()` script-URL guard can be bypassed by tabs, newlines or C0 characters (no caller passes such URLs).
@@ -141,12 +140,19 @@ Agents cannot complete these. Each needs the owner, a named person, or an extern
 
 ## Final state
 
-Final source SHA: `0e7cf12` (branch head). After the validation below, `30690fc` → `0e7cf12` added only:
+Final source SHA: `3144a44`. After the validation below, `30690fc` → `3144a44` added only:
 - `d4d765e`: macOS CI fix. The fuzz driver's temp directory is now realpath'd, because on macOS `/var` → `/private/var`
   hid all coverage. Reproduced on Linux with a symlinked `TMPDIR`; covered by a regression test.
 - `57f8561`, `e251361`: a containment guard and a constant error message in the test stub
   `tests/r1/stubs/browser-step.mjs`, for SonarCloud's path-traversal findings there.
 - `b60fee6` and its revert `0e7cf12`: a SonarCloud test-scope file, reverted because it had no observed effect.
+- `853a620`, `57f2472`: `r1-acceptance.sh` creates its default work directory with an explicit `mktemp` template under
+  `TMPDIR` (BSD/macOS `mktemp -d` did not use the test's `TMPDIR`). The stub guard is restored to the form SonarCloud
+  accepts.
+- `76bfb01`: the R1 runner reports PASS only when Upgrade produced the receipt that Verify confirmed. A Verified result
+  without one is the new classification `NOT_UPGRADED`. This was a residual note; it is now reproduced and fixed.
+- `3144a44`: the R1 test doubles write each call record in one append. Concurrent pipeline stages interleaved records
+  (seen on macOS CI); reproduced locally with 400 concurrent pairs; covered by a regression test.
 
 Product code (`src/`) and the build are unchanged since `30690fc`.
 
@@ -169,9 +175,17 @@ CI:
 
 - `c7dc77b`: Windows, macOS, Linux build, Chromium 2 GiB memory, Chromium/Firefox E2E, differential and secret scan
   all passed before the run was cancelled by the next push.
-- Full matrix by `workflow_dispatch` at `d4d765e`, including the Firefox/WebKit 2 GiB completion jobs that pull-request
-  runs skip: [run 41783868297](https://github.com/djshellshoxxx/Unaltered/actions/runs/41783868297). It was still
-  queued when this was written; check its result.
+- Full matrix by `workflow_dispatch` at `d4d765e`: [run 41783868297](https://github.com/djshellshoxxx/Unaltered/actions/runs/41783868297),
+  conclusion **success**. `d4d765e` has the final product code and the new `blob:` worker.
+  - Firefox 2 GiB 3/3, digest visible at about 44 s.
+  - WebKit 2 GiB 3/3, about 17 s, worker observed.
+  - Chromium 2 GiB memory: passed.
+  - E2E (Chromium, Firefox and WebKit, `--retries=0`): passed.
+  - Windows: passed, including the first execution of the native Windows zip check with its shipped
+    `Verify-Checksums.ps1`.
+  - macOS, Linux build/test/reproducibility, the cross-platform byte-identical comparison, the differential job and
+    the secret scan: passed.
+  - Only the informational live check failed, as it does on main (see above).
 - Local 2 GiB ×3 at `30690fc`, the source with the new `blob:` worker: 3/3, worker observed in all three attempts.
   Digest visible at 33.6/35.3/35.3 s; max sampled extra renderer RSS 61,231,104 bytes.
 - The 300 s check of the new fuzz harness at `30690fc`: 222,092 mutations, no finding, `coveredOffsets` recorded per
