@@ -5,7 +5,7 @@ import { UnalteredError } from '../errors';
 import { DEFAULT_EXPLORERS, DEFAULT_MIN_EXPLORERS } from '../net/allowlist';
 import type { NetPolicy } from '../net/fetch';
 import { esploraSource, headerQuorum, type HeaderSource } from './bitcoin';
-import { collectAttestations, parseProof } from './codec';
+import { collectAttestations, parseProof, serializeProof } from './codec';
 import { LIMITS, type DetachedProof } from './types';
 
 export type VerifyState = 'VERIFIED' | 'PENDING' | 'NO_MATCH_FILE' | 'INVALID_PROOF' | 'SOURCES_DISAGREE' | 'UNREACHABLE';
@@ -37,7 +37,22 @@ function classify(e: unknown): VerifyReport {
   return { state: 'INVALID_PROOF', detail: msg };
 }
 
+/**
+ * Verify an in-memory proof. Its stored commitments are not trusted: the proof is re-encoded and parsed again, so
+ * every commitment is replayed from the file digest (FR-7 step 4) and the usual parser caps apply.
+ */
 export async function verifyProof(fileDigest: Uint8Array, proof: DetachedProof, cfg: VerifyConfig): Promise<VerifyReport> {
+  let replayed: DetachedProof;
+  try {
+    replayed = parseProof(serializeProof(proof));
+  } catch (e) {
+    return classify(e);
+  }
+  return verifyParsed(fileDigest, replayed, cfg);
+}
+
+/** `proof` must come straight from parseProof, whose commitments are computed while parsing. */
+async function verifyParsed(fileDigest: Uint8Array, proof: DetachedProof, cfg: VerifyConfig): Promise<VerifyReport> {
   if (!equalBytes(fileDigest, proof.digest)) {
     return { state: 'NO_MATCH_FILE', detail: 'The receipt is valid but was made for a different file. This file differs from the one that was stamped.' };
   }
@@ -87,6 +102,6 @@ export async function verify(fileDigest: Uint8Array, ots: Uint8Array, cfg: Verif
   } catch (e) {
     return classify(e);
   }
-  return verifyProof(fileDigest, proof, cfg);
+  return verifyParsed(fileDigest, proof, cfg);
 }
 
