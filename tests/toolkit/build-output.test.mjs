@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { appendFileSync, chmodSync, cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { appendFileSync, chmodSync, cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, test } from 'node:test';
@@ -15,7 +15,10 @@ const repo = fileURLToPath(new URL('../..', import.meta.url));
 const { version } = JSON.parse(readFileSync(join(repo, 'package.json'), 'utf8'));
 const prefix = `unaltered-${version}`;
 const scratch = [];
+const links = [];
 after(() => {
+  // Remove the links to the shared node_modules first, so cleanup can never reach into it.
+  for (const link of links) unlinkSync(link);
   for (const dir of scratch) rmSync(dir, { recursive: true, force: true });
 });
 
@@ -30,6 +33,7 @@ function build(edit) {
   const dir = tempDir();
   for (const p of ['src', 'scripts', 'package.json', 'LICENSE', 'tsconfig.json']) cpSync(join(repo, p), join(dir, p), { recursive: true });
   symlinkSync(join(repo, 'node_modules'), join(dir, 'node_modules'), 'junction');
+  links.push(join(dir, 'node_modules'));
   edit?.(dir);
   const run = spawnSync(process.execPath, [join('scripts', 'build.mjs')], { cwd: dir, encoding: 'utf8' });
   return { status: run.status, output: `${run.stdout}${run.stderr}`, dist: join(dir, 'dist') };
@@ -146,8 +150,7 @@ test('Verify-Checksums.ps1 describes what it does and says that a match is not p
 });
 
 test('verify-checksums.sh on a changed copy with a regenerated SHA256SUMS does not report it as genuine', (t) => {
-  const tool = spawnSync('sha256sum', ['--version']);
-  if (process.platform === 'win32' || tool.error) return t.skip('needs sh and sha256sum');
+  if (process.platform === 'win32' || spawnSync('sha256sum', ['--version']).error) return t.skip('needs sh and sha256sum');
   const linux = packages[1];
   const dir = tempDir();
   for (const [name, data] of linux.files) writeFileSync(join(dir, name), data);
