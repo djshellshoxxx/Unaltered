@@ -19,6 +19,11 @@ path or the machine: two Linux builds and builds from Linux, Windows and macOS m
 `macos`, `reproducible-across-platforms`). Normal PR CI retains all five distributable artefacts plus `SHA256SUMS` from each OS;
 the comparison job checks the three checksum lists. A workflow definition is not evidence that its native runner checks passed.
 
+The build normalizes text inputs to LF before hashing and packaging. This keeps an offline page's inline stylesheet
+consistent with HTML newline preprocessing and its CSP hash, including source copies with CRLF or lone-CR endings.
+Package tests compare all generated files across those input forms and allow only the declared runtime and distribution
+files; the bundled research/agent toolkit is excluded.
+
 ## Linux and macOS
 
 Same model as Windows (ADR-009, extended by ADR-011): no installer, no executable shipped. Linux: `tar xzf unaltered-<v>-linux.tar.gz && sh unaltered-<v>/open-unaltered.sh`.

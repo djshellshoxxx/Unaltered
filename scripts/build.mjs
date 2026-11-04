@@ -17,7 +17,9 @@ import { makeTarGz, makeZip } from './lib/archive.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
-const read = (p) => readFileSync(join(root, p), 'utf8');
+// HTML preprocessing normalizes CRLF and lone CR before CSP hashes are checked. Canonicalize text inputs before
+// hashing and packaging, including copies obtained without Git's eol=lf checkout rules (NFR-7 / SR-3).
+const read = (p) => readFileSync(join(root, p), 'utf8').replace(/\r\n?/g, '\n');
 const pkg = JSON.parse(read('package.json'));
 const version = pkg.version;
 

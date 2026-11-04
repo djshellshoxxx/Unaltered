@@ -118,6 +118,39 @@ test('workers may start only from blob: URLs, which inherit the page CSP and Tru
   }
 });
 
+// HTML preprocessing replaces CRLF and lone CR with LF before tokenization. CSP checks inline content after that
+// preprocessing, so hashing the raw stylesheet would block the offline build from a Windows-line-ending checkout.
+// https://html.spec.whatwg.org/multipage/parsing.html#preprocessing-the-input-stream
+for (const [label, newline] of [['CRLF', '\r\n'], ['CR', '\r']]) {
+  test(`${label} build inputs keep browser-valid CSP hashes and byte-identical distributions`, () => {
+    const edited = build((dir) => {
+      for (const path of ['src/styles.css', 'src/index.html', 'LICENSE', 'package.json']) {
+        const target = join(dir, path);
+        writeFileSync(target, readFileSync(target, 'utf8').replace(/\r\n?|\n/g, newline));
+      }
+    });
+    assert.equal(edited.status, 0, edited.output);
+    const parsed = readFileSync(join(edited.dist, `${prefix}.html`), 'utf8').replace(/\r\n?/g, '\n');
+    const style = /<style>([\s\S]*?)<\/style>/.exec(parsed)?.[1];
+    assert.notEqual(style, undefined, 'the offline page has an inline stylesheet');
+    const hash = `'sha256-${createHash('sha256').update(style).digest('base64')}'`;
+    assert.ok(cspOf(parsed)['style-src'].includes(hash), 'CSP must authorize the stylesheet the HTML parser exposes');
+    const paths = [...readdirSync(base.dist).filter((p) => p !== 'web'), ...[...web.keys()].map((p) => `web/${p}`)];
+    for (const path of paths) {
+      assert.deepEqual(readFileSync(join(edited.dist, path)), readFileSync(join(base.dist, path)), `${path} differs from LF build`);
+    }
+  });
+}
+
+test('web and portable artifacts contain only declared runtime and distribution files', () => {
+  assert.deepEqual([...web.keys()].sort(), ['index.html', 'main.js', 'styles.css']);
+  const common = ['index.html', 'main.js', 'styles.css', `${prefix}.html`, `unaltered-cli-${version}.mjs`, 'LICENSE', 'README.txt', 'SHA256SUMS'];
+  for (const [i, launcher] of ['Open-Unaltered.cmd', 'open-unaltered.sh', 'Open-Unaltered.command'].entries()) {
+    const p = packages[i];
+    assert.deepEqual([...p.files.keys()].sort(), [...common, p.helper, launcher].sort(), p.archive);
+  }
+});
+
 // ---- 2. package checksum helpers and the genuineness check ------------------------------------------------------
 
 test('each package README checks genuineness on the downloaded archive against the published SHA256SUMS', () => {
