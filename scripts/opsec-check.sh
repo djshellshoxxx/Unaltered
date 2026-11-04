@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # opsec-check.sh: flag identity and metadata leaks before they are committed or pushed.
-# Run locally before every push; CI runs it too. Exit code 1 if any finding.
+# Run locally before every push; CI runs it too. Exit code 1 if any finding; 2 if git cannot be read (never a PASS).
 #
 # Checks:
 #   1. Effective git identity looks like a no-reply address
@@ -12,7 +12,18 @@
 #
 # Allow-listed emails: *@users.noreply.github.com, noreply@*, *@example.com, *@example.org, *@*.invalid
 set -u
-cd "$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "not inside a git repository"; exit 2; }
+
+# Exit 2 (never PASS) whenever git cannot answer: every check below reads git, and an empty answer looks clean.
+die() { echo "opsec-check: $*" >&2; echo "opsec-check: INCOMPLETE, not a pass (exit 2)." >&2; exit 2; }
+top="$(git rev-parse --show-toplevel 2>/dev/null)" || top=""
+{ [ -n "$top" ] && cd "$top"; } || die "not inside a usable git repository (not a repository, dubious ownership or a broken worktree)"
+tmp="$(mktemp -d "${TMPDIR:-/tmp}/opsec-check.XXXXXX")" || die "cannot create a private temporary directory"
+trap 'rm -rf "$tmp"' EXIT
+# git_to <file> <git args...>: run git into <file>; any failure stops the run with exit 2.
+git_to() {
+  local out="$1"; shift
+  git "$@" > "$out" 2> "$tmp/git.err" || die "'git $*' failed: $(head -c 300 "$tmp/git.err" | tr '\n' ' ')"
+}
 
 findings=0
 fail() { echo "  [FAIL] $*"; findings=$((findings + 1)); }
@@ -45,16 +56,20 @@ fi
 [ -n "$name" ] && echo "       user.name = $name  (confirm this is your project handle, not your real name)"
 
 echo "== 2. commit history emails"
-if git rev-parse --verify HEAD >/dev/null 2>&1; then
+git_to "$tmp/history" log --all --format='%ae%n%ce'
+if [ -s "$tmp/history" ]; then
   bad=0
   while IFS= read -r e; do
     [ -z "$e" ] && continue
     if ! is_allowed_email "$e"; then fail "history contains non-no-reply email: $e"; bad=1; fi
-  done < <(git log --all --format='%ae%n%ce' | sort -u)
+  done < <(sort -u "$tmp/history")
   [ "$bad" -eq 0 ] && ok "all author/committer emails are no-reply"
 else
   ok "no commits yet"
 fi
+
+git_to "$tmp/tracked" ls-files -z
+git_to "$tmp/media" ls-files -z -- '*.jpg' '*.jpeg' '*.png' '*.tif' '*.tiff' '*.heic' '*.webp' '*.gif' '*.pdf' '*.mp4' '*.mov'
 
 echo "== 3. emails in tracked text files"
 bad=0
@@ -66,7 +81,7 @@ while IFS= read -r -d '' f; do
     [ -z "$e" ] && continue
     if ! is_allowed_email "$e"; then fail "$f contains email: $e"; bad=1; fi
   done < <(grep -Eoh "$EMAIL_RE" "$f" 2>/dev/null | sort -u)
-done < <(git ls-files -z)
+done < "$tmp/tracked"
 [ "$bad" -eq 0 ] && ok "no personal emails found"
 
 echo "== 4. personal paths in tracked text files"
@@ -78,7 +93,7 @@ while IFS= read -r -d '' f; do
   if grep -Eqn '(/home/[A-Za-z0-9._-]+/|/Users/[A-Za-z0-9._-]+/|[A-Za-z]:\\Users\\[A-Za-z0-9._-]+)' "$f" 2>/dev/null; then
     fail "$f contains a home-directory path"; bad=1
   fi
-done < <(git ls-files -z)
+done < "$tmp/tracked"
 [ "$bad" -eq 0 ] && ok "no home-directory paths found"
 
 echo "== 5. package.json author"
@@ -90,7 +105,7 @@ fi
 
 echo "== 6. embedded metadata in tracked images/PDFs"
 media=()
-while IFS= read -r -d '' f; do [[ "$f" =~ $VENDORED_RE ]] && continue; media+=("$f"); done < <(git ls-files -z -- '*.jpg' '*.jpeg' '*.png' '*.tif' '*.tiff' '*.heic' '*.webp' '*.gif' '*.pdf' '*.mp4' '*.mov')
+while IFS= read -r -d '' f; do [[ "$f" =~ $VENDORED_RE ]] && continue; media+=("$f"); done < "$tmp/media"
 if [ "${#media[@]}" -eq 0 ]; then
   ok "no media files tracked"
 elif command -v exiftool >/dev/null 2>&1; then
