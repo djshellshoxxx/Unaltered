@@ -152,6 +152,20 @@ describe('codec rejects hostile input (SR-9, SR-10)', () => {
   });
 });
 
+describe('serializer input integrity', () => {
+  it('refuses a file fingerprint that is not exactly SHA-256 length', () => {
+    const root = { msg: new Uint8Array(32), children: [], attestations: [{ kind: 'bitcoin' as const, height: 1 }] };
+    for (const length of [0, 20, 31, 33, 64]) {
+      expect(() => serializeProof({ digest: new Uint8Array(length), root })).toThrowError(/32-byte SHA-256/);
+    }
+  });
+  it('refuses a timestamp tree root that does not match its file fingerprint', () => {
+    const digest = new Uint8Array(32);
+    const root = { msg: Uint8Array.from({ length: 32 }, () => 1), children: [], attestations: [{ kind: 'bitcoin' as const, height: 1 }] };
+    expect(() => serializeProof({ digest, root })).toThrowError(/root commitment/);
+  });
+});
+
 describe('codec exact parser boundaries (SPEC 6)', () => {
   const digest = new Uint8Array(32);
   const head = concat(HEADER_MAGIC, Uint8Array.of(1, 8), digest);

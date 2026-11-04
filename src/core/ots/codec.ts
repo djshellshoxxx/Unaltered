@@ -199,6 +199,12 @@ export function serializeTree(root: TsNode): Uint8Array {
 }
 
 export function serializeProof(p: DetachedProof): Uint8Array {
+  if (p.digest.length !== 32) {
+    throw new UnalteredError('PROOF_MALFORMED', 'A detached receipt requires a 32-byte SHA-256 fingerprint.');
+  }
+  if (!equalBytes(p.digest, p.root.msg)) {
+    throw new UnalteredError('PROOF_MALFORMED', 'The receipt root commitment differs from its file fingerprint.');
+  }
   const version = Uint8Array.from(writeVaruint(MAJOR_VERSION));
   const tree = serializeTree(p.root);
   if (HEADER_MAGIC.length + version.length + 1 + p.digest.length + tree.length > LIMITS.maxInputBytes) {
