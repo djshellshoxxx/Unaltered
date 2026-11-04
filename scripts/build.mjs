@@ -126,7 +126,15 @@ for (const html of [multiHtml, singleHtml]) {
 const inlined = (tag) => [...singleHtml.matchAll(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, 'g'))].map((m) => m[1]);
 if (JSON.stringify(inlined('script')) !== JSON.stringify([mainSingle])) throw new Error('single-file inline script differs from its CSP-hashed bundle');
 if (JSON.stringify(inlined('style')) !== JSON.stringify([css])) throw new Error('single-file inline style differs from its CSP-hashed stylesheet');
-if (/\beval\s*\(|new Function\s*\(/.test(mainMulti.replace(/"(?:[^"\\]|\\.)*"/g, '""'))) throw new Error('eval found in bundle');
+// SR-4 for all shipped code, dependencies included (ESLint does not see node_modules). Any reference to eval (direct or
+// indirect, e.g. `(0,eval)(...)`) and any use of the Function constructor, with or without `new`, fails the build. Every
+// bundle is scanned whole: skipping "string literals" by quote matching loses track at quotes inside other literals
+// (e.g. '"') and then skips real code. Text that merely mentions these words fails too; rephrase it. This is a text check
+// on minified output; the CSP (no 'unsafe-eval') is the runtime control.
+const codeGen = /\beval\b|\bFunction\b(?!\s*\.\s*prototype\b)/;
+for (const [name, code] of [['hash worker', workerJs], ['multi-file page', mainMulti], ['single-file page', mainSingle], ['CLI', cliJs]]) {
+  if (codeGen.test(code)) throw new Error(`eval found in bundle: ${name}`);
+}
 
 // ---- sizes (NFR-3) --------------------------------------------------------------------------------------------
 const gz = gzipSync(Buffer.from(mainMulti + css), { level: 9 }).length;

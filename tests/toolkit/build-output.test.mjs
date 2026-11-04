@@ -210,6 +210,9 @@ for (const [label, file, line] of [
   ['Function() called without new in the hashing worker', 'src/core/hash/hasher.worker.ts', "(globalThis as Record<string, unknown>).probe = Function('return this')();"],
   ['an indirect eval in the hashing worker', 'src/core/hash/hasher.worker.ts', "(globalThis as Record<string, unknown>).probe = (0, eval)('6*7');"],
   ['an indirect eval in the page script', 'src/main.ts', "(globalThis as Record<string, unknown>).probe = (0, eval)('6*7');"],
+  // The old gate skipped "string literals" by quote matching, lost track at a quote inside another literal, and missed
+  // even this at the end of the page script.
+  ['new Function in the page script', 'src/main.ts', "(globalThis as Record<string, unknown>).probe = new Function('return 1');"],
   ['Function() called without new in the CLI', 'src/cli/main.ts', "(globalThis as Record<string, unknown>).probe = Function('return this')();"],
 ]) {
   test(`the build refuses ${label} (SR-4)`, () => {
