@@ -73,6 +73,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
   const upOut = el('div', { class: 'upgrade-result', 'aria-live': 'polite' });
   let upFile: File | null = null;
   let upGeneration = 0;
+  let upAbort: AbortController | null = null;
   let shown: Shown = null;
   let upShown: Shown = null;
 
@@ -169,31 +170,49 @@ export function mountVerify(root: HTMLElement): VerifyView {
     }
   }
 
+  function resetUpgrade(): void {
+    upGeneration++;
+    upAbort?.abort();
+    upAbort = null;
+    showUpgrade(null);
+  }
+
   function renderUpgrade(): void {
     setChildren(
       upInputs,
-      dropZone({ id: 'upgrade-receipt', label: t('upgrade.drop'), hint: t('verify.dropReceiptHint'), accept: '.ots', onFiles: (f) => { upFile = f[0] ?? null; upGeneration++; showUpgrade(null); renderUpgrade(); } }),
+      dropZone({ id: 'upgrade-receipt', label: t('upgrade.drop'), hint: t('verify.dropReceiptHint'), accept: '.ots', onFiles: (f) => { resetUpgrade(); upFile = f[0] ?? null; renderUpgrade(); } }),
       upFile ? el('p', { class: 'picked' }, `${upFile.name} · ${formatBytes(upFile.size)}`) : null,
     );
-    setChildren(upActions, el('button', { type: 'button', class: 'button primary', disabled: !upFile, onclick: () => void runUpgrade() }, t('upgrade.run')));
+    setChildren(upActions,
+      el('button', { type: 'button', class: 'button primary', disabled: !upFile || upAbort !== null, onclick: () => void runUpgrade() }, t('upgrade.run')),
+      upAbort ? el('button', { type: 'button', class: 'button', onclick: () => { resetUpgrade(); renderUpgrade(); } }, t('common.cancel')) : null,
+    );
   }
 
   async function runUpgrade(): Promise<void> {
-    if (!upFile) return;
+    if (!upFile || upAbort) return;
     const f = upFile;
+    const controller = new AbortController();
+    upAbort = controller;
     const operation = ++upGeneration;
-    const current = (): boolean => operation === upGeneration && upOut.isConnected;
+    const current = (): boolean => operation === upGeneration && !controller.signal.aborted && upOut.isConnected;
     showUpgrade({ kind: 'working' });
+    renderUpgrade();
     try {
       checkReceiptSize(f);
       const bytes = new Uint8Array(await f.arrayBuffer());
       if (!current()) return;
       parseProof(bytes);
-      const result = await upgrade(bytes, stampConfigFromSettings());
+      const result = await upgrade(bytes, { ...stampConfigFromSettings(), signal: controller.signal });
       if (!current()) return;
       showUpgrade({ kind: 'upgraded', result, fileName: f.name });
     } catch (e) {
-      if (current()) showUpgrade({ kind: 'error', message: safeMessage(e) });
+      if (current()) showUpgrade(isAbort(e) ? null : { kind: 'error', message: safeMessage(e) });
+    } finally {
+      if (current()) {
+        upAbort = null;
+        renderUpgrade();
+      }
     }
   }
 
