@@ -198,6 +198,48 @@ test('verify-checksums.sh on a changed copy with a regenerated SHA256SUMS does n
   assert.ok(run.stdout.includes(linux.archive), run.stdout);
 });
 
+for (const p of packages.filter((p) => p.os !== 'windows')) {
+  test(`${p.os} checksum helper refuses malformed entries even when another entry matches`, (t) => {
+    const command = p.os === 'linux' ? 'sha256sum' : 'shasum';
+    const probe = spawnSync(command, ['--version'], { encoding: 'utf8' });
+    if (process.platform === 'win32' || probe.status !== 0 || !probe.stdout?.trim()) return t.skip(`needs sh and ${command}`);
+    const dir = tempDir();
+    for (const [name, data] of p.files) writeFileSync(join(dir, name), data);
+    const clean = spawnSync('sh', [join(dir, p.helper)], { encoding: 'utf8' });
+    assert.equal(clean.status, 0, `${clean.stdout}${clean.stderr}`);
+    assert.match(clean.stdout, /All files match/);
+    const valid = `${sha256(p.files.get('main.js'))}  main.js\n`;
+    for (const manifest of ['', 'not a checksum\n', `${valid}not a checksum\n`, null]) {
+      if (manifest === null) unlinkSync(join(dir, 'SHA256SUMS'));
+      else writeFileSync(join(dir, 'SHA256SUMS'), manifest);
+      const run = spawnSync('sh', [join(dir, p.helper)], { encoding: 'utf8' });
+      assert.notEqual(run.status, 0, `${p.os} accepted ${JSON.stringify(manifest)}: ${run.stdout}${run.stderr}`);
+      assert.doesNotMatch(run.stdout, /All files match/);
+    }
+  });
+}
+
+test('Windows checksum helper refuses empty, malformed, duplicate and unsafe checksum lists', (t) => {
+  if (spawnSync('pwsh', ['-NoProfile', '-Command', 'exit 0']).error) return t.skip('needs PowerShell; executed by Windows CI');
+  const p = packages[0];
+  const dir = tempDir();
+  for (const [name, data] of p.files) writeFileSync(join(dir, name), data);
+  const invoke = () => spawnSync('pwsh', ['-NoProfile', '-NonInteractive', '-Command', 'function Read-Host { }; & $env:UNALTERED_CHECKSUM_HELPER'], {
+    encoding: 'utf8', env: { ...process.env, UNALTERED_CHECKSUM_HELPER: join(dir, p.helper) },
+  });
+  const clean = invoke();
+  assert.equal(clean.status, 0, `${clean.stdout}${clean.stderr}`);
+  assert.match(clean.stdout, /All files match/);
+  const valid = `${sha256(p.files.get('main.js'))}  main.js\n`;
+  for (const manifest of ['', 'not a checksum\n', `${valid}not a checksum\n`, valid + valid, `${sha256(Buffer.alloc(0))}  ../outside.txt\n`, null]) {
+    if (manifest === null) unlinkSync(join(dir, 'SHA256SUMS'));
+    else writeFileSync(join(dir, 'SHA256SUMS'), manifest);
+    const run = invoke();
+    assert.doesNotMatch(run.stdout, /All files match/, `accepted ${JSON.stringify(manifest)}`);
+    assert.match(run.stdout, /problem\(s\)/, `${JSON.stringify(manifest)}: ${run.stdout}${run.stderr}`);
+  }
+});
+
 // ---- 3. index.html is not offered for opening from disk ----------------------------------------------------------
 
 test('package READMEs say the multi-file index.html needs a web server (SRI blocks it from disk)', () => {

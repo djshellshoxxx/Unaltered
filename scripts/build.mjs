@@ -191,17 +191,28 @@ const psVerify = `# Compares every file listed in this folder's SHA256SUMS with 
 # This finds damaged or incomplete copies. It cannot show that the copy is genuine, because a changed copy can come with
 # a matching SHA256SUMS: for that, compare the downloaded zip with the SHA256SUMS published with the release.
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
-$sums = Get-Content -Path (Join-Path $here 'SHA256SUMS')
 $bad = 0
+$checked = 0
+$seen = @{}
+try { $sums = @(Get-Content -LiteralPath (Join-Path $here 'SHA256SUMS') -ErrorAction Stop) }
+catch { Write-Host 'Could not read SHA256SUMS.'; $bad++; $sums = @() }
 foreach ($line in $sums) {
   if ($line -match '^([0-9a-f]{64})\\s+\\*?(.+)$') {
     $expected = $Matches[1]; $name = $Matches[2]
+    # Packages contain flat, uniquely named files; never let an edited list escape this folder or expand wildcards.
+    if ($name -match '[\\\\/:]' -or $name -eq '.' -or $name -eq '..' -or $seen.ContainsKey($name)) {
+      Write-Host 'INVALID checksum entry'; $bad++; continue
+    }
+    $seen[$name] = $true
+    $checked++
     $path = Join-Path $here $name
-    if (-not (Test-Path $path)) { Write-Host "MISSING  $name"; $bad++; continue }
-    $actual = (Get-FileHash -Algorithm SHA256 -Path $path).Hash.ToLower()
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { Write-Host "MISSING  $name"; $bad++; continue }
+    try { $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $path -ErrorAction Stop).Hash.ToLowerInvariant() }
+    catch { Write-Host "MISSING  $name"; $bad++; continue }
     if ($actual -eq $expected) { Write-Host "OK       $name" } else { Write-Host "MISMATCH $name"; $bad++ }
-  }
+  } else { Write-Host 'INVALID checksum entry'; $bad++ }
 }
+if ($checked -eq 0) { Write-Host 'No checksum entries were checked.'; $bad++ }
 if ($bad -eq 0) {
   Write-Host "All files match this folder's SHA256SUMS."
   Write-Host 'This does not show that the copy is genuine: compare ${archive.windows} with the SHA256SUMS published with the release.'
@@ -257,12 +268,12 @@ const windowsFiles = withSums([
 const linuxFiles = withSums([
   { name: 'README.txt', data: lf(readme) },
   { name: 'open-unaltered.sh', data: lf(linuxLauncher), mode: 0o755 },
-  { name: 'verify-checksums.sh', data: lf(shVerify('sha256sum -c SHA256SUMS', archive.linux)), mode: 0o755 },
+  { name: 'verify-checksums.sh', data: lf(shVerify('sha256sum --strict -c SHA256SUMS', archive.linux)), mode: 0o755 },
 ]);
 const macFiles = withSums([
   { name: 'README.txt', data: lf(readme) },
   { name: 'Open-Unaltered.command', data: lf(macLauncher), mode: 0o755 },
-  { name: 'verify-checksums.sh', data: lf(shVerify('shasum -a 256 -c SHA256SUMS', archive.macos)), mode: 0o755 },
+  { name: 'verify-checksums.sh', data: lf(shVerify('shasum -a 256 --strict -c SHA256SUMS', archive.macos)), mode: 0o755 },
 ]);
 
 rmSync(dist, { recursive: true, force: true });

@@ -36,6 +36,12 @@ that list. A copy is shown to be genuine only by checking the downloaded archive
 published `SHA256SUMS` and its signature. Each package `README.txt` says so and names the archive to check, and the
 helpers print the same reminder after a match.
 
+Checksum helpers fail closed when `SHA256SUMS` is missing, empty or malformed. Linux and macOS helpers use the checksum
+tool's strict parsing mode; a valid entry alongside a malformed line is still an error. The Windows helper also rejects
+duplicate entries and names that point outside the flat package directory, uses literal paths and requires at least one
+checked entry. Its interactive verdict remains printed text, so native CI checks that verdict rather than assuming that
+the PowerShell process exit code certifies success. A self-consistent list still establishes integrity only, not authenticity.
+
 ## Windows
 
 There is no installer and nothing to install; the Windows deliverable is the zip (or the single `.html`). Unzip, double-click
