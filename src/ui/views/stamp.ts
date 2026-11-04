@@ -131,6 +131,7 @@ export function mountStamp(root: HTMLElement): StampView {
   }
 
   function refreshItem(it: Item): void {
+    const hadFocus = it.card.contains(document.activeElement);
     const c = cleanedOf(it);
     const kids: (Node | string | false | null)[] = [];
     kids.push(
@@ -228,6 +229,9 @@ export function mountStamp(root: HTMLElement): StampView {
       );
     }
     setChildren(it.card, ...kids);
+    // Cancel/cleaning controls may disappear during a transition. Never leave focus on a detached control or move it
+    // to an unrelated row action that happens to occupy the same position.
+    if (hadFocus && !it.card.contains(document.activeElement)) root.querySelector<HTMLElement>('#stamp-file')?.focus();
   }
 
   function shareRow(it: Item): Node | null {

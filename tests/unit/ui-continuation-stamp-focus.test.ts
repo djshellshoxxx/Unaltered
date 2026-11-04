@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { hashBlob } from '../../src/core/hash/hasher';
+import { UnalteredError } from '../../src/core/errors';
 import { mountStamp } from '../../src/ui/views/stamp';
 import { t } from '../../src/ui/strings';
 import { doc, type FElement, installFakeDom } from './ui-fake-dom';
@@ -44,6 +45,21 @@ describe('Stamp removal keyboard focus', () => {
     const picker = root.querySelector('#stamp-file')!;
     picker.focus();
     removeOf(card).dispatch('click');
+    expect(doc.activeElement).toBe(picker);
+  });
+  it('returns focus to the picker when cancellation removes the focused hash control', async () => {
+    vi.mocked(hashBlob).mockImplementationOnce((_blob, opts = {}) => new Promise((_resolve, reject) => {
+      opts.signal?.addEventListener('abort', () => reject(new UnalteredError('ABORTED', 'Cancelled.')), { once: true });
+    }));
+    const picker = root.querySelector('#stamp-file')!;
+    picker.files = [new File(['abc'], 'sample.txt')];
+    picker.dispatch('change');
+    const card = root.querySelector('.item')!;
+    await vi.waitFor(() => expect(hashBlob).toHaveBeenCalledOnce());
+    const cancel = card.all().find((node) => node.tagName === 'BUTTON' && node.textContent === t('common.cancel'))!;
+    cancel.focus();
+    cancel.dispatch('click');
+    await vi.waitFor(() => expect(card.querySelector('.error')?.textContent).toBe(t('stamp.cancelled')));
     expect(doc.activeElement).toBe(picker);
   });
 });
