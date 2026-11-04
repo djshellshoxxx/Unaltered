@@ -46,179 +46,225 @@ jobs:
     if: github.repository == 'djshellshoxxx/Unaltered'
     runs-on: ubuntu-24.04
     timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        lane: [hash, proof, metadata, accessibility]
     permissions:
       contents: read
       pull-requests: read
-    outputs:
-      changed: ${{ steps.package.outputs.changed }}
-      validation: ${{ steps.validate.outcome }}
-      base_sha: ${{ steps.base.outputs.sha }}
     steps:
-      - name: Checkout latest main
+      - name: Checkout latest main without persisted credentials
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           persist-credentials: false
-      - name: Capture validated source base
-        id: base
-        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-      - name: Check key and pending cloud PRs
+
+      - name: Capture trusted base and lane
+        run: |
+          git rev-parse HEAD > base-sha.txt
+          echo "$LANE" > lane.txt
+        env:
+          LANE: ${{ matrix.lane }}
+
+      - name: Check API key and per-lane PR queue
         id: gate
         env:
           KEY_EXISTS: ${{ secrets.A != '' || secrets.UNALTERED_OPENAI_API_KEY != '' || secrets.OPENAI_API_KEY != '' || secrets.PATCHTRACE_OPENAI_API_KEY != '' }}
           GH_TOKEN: ${{ github.token }}
+          LANE: ${{ matrix.lane }}
+        shell: bash
         run: |
           set -euo pipefail
           if [ "$KEY_EXISTS" != true ]; then
-            echo "::error::Repository Actions secret A, UNALTERED_OPENAI_API_KEY, OPENAI_API_KEY or PATCHTRACE_OPENAI_API_KEY is missing"
+            echo "::error::Actions API key secret unavailable (A, UNALTERED_OPENAI_API_KEY, OPENAI_API_KEY, PATCHTRACE_OPENAI_API_KEY)"
             exit 1
           fi
           count="$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls?state=open&per_page=100" --jq \
-            '.[] | select(.head.ref | startswith("codex/unaltered-cloud-")) | select(.head.repo.full_name == "djshellshoxxx/Unaltered") | select(.user.login == "github-actions[bot]" or .user.login == "djshellshoxxx") | .number' | wc -l)"
-          if [ "$count" -ge 1 ]; then
+            '.[] | select(.head.ref | startswith("codex/unaltered-cloud-")) | select(.head.repo.full_name == "djshellshoxxx/Unaltered") | select(.user.login == "github-actions[bot]" or .user.login == "djshellshoxxx") | .head.ref' |
+            awk -v lane="$LANE" '$0 ~ ("-" lane "$")' | wc -l)"
+          # Any earlier single-agent cloud PR also pauses parallel work to avoid overlap.
+          legacy="$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls?state=open&per_page=100" --jq \
+            '.[] | select(.head.ref | startswith("codex/unaltered-cloud-")) | select(.head.repo.full_name == "djshellshoxxx/Unaltered") | select(.user.login == "github-actions[bot]" or .user.login == "djshellshoxxx") | .head.ref' |
+            grep -E '^codex/unaltered-cloud-[0-9]+$' | wc -l || true)"
+          if [ "$count" -ge 1 ] || [ "$legacy" -ge 1 ]; then
+            echo "Pending owned cloud PR for $LANE or legacy run; skipping paid execution."
             echo 'run_agent=false' >> "$GITHUB_OUTPUT"
-            echo 'Existing cloud PR; skipping new API spend.'
           else
             echo 'run_agent=true' >> "$GITHUB_OUTPUT"
           fi
+
       - name: Set up Node 22
         if: steps.gate.outputs.run_agent == 'true'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
           cache: npm
-      - name: Install pinned dependencies
+
+      - name: Install locked dependencies without scripts
         if: steps.gate.outputs.run_agent == 'true'
         run: npm ci --ignore-scripts
-      - name: Run API-funded Codex
+
+      - name: Run isolated, API-funded Codex agent
         if: steps.gate.outputs.run_agent == 'true'
         uses: openai/codex-action@bdf19a4a223ec2549a3e2274a0cf61556bc07675 # v1
+        env:
+          AGENT_LANE: ${{ matrix.lane }}
         with:
           openai-api-key: ${{ secrets.A || secrets.UNALTERED_OPENAI_API_KEY || secrets.OPENAI_API_KEY || secrets.PATCHTRACE_OPENAI_API_KEY }}
           permission-profile: ":workspace"
           safety-strategy: drop-sudo
           output-file: unaltered-codex-report.txt
           prompt: |
-            Work only on djshellshoxxx/Unaltered, a client-side OpenTimestamps
-            file-stamping/verifying app. Inspect current main, active GitHub PRs
-            (especially #39 if still pending), README, CONTRIBUTING.md,
-            docs/TODO.md, docs/COMPLETION_STATUS.md, docs/OPSEC.md and specs.
-            Continue unfinished backlog features through ONE unowned accepted
-            gap per run with test-first regression
-            evidence and focused validation. Don't redo another branch's work.
-            Human-only testing must not stop independently testable tasks.
-            Only modify src/, tests/, docs/ and scripts/, excluding
-            scripts/build.mjs, docs/OPSEC.md, docs/SPEC.md, docs/RELEASE.md,
-            trust and host policies. No changes to .github/, dependencies,
-            third-party assets, release metadata or signing keys.
-            Run npm run check after changes; preserve real failure evidence.
-            Do not push, merge, sign, release, deploy, download user files,
-            add external hosts, collect analytics, or make privacy claims
-            beyond verified behavior. Produce exact test and handoff results.
-      - name: Validate modified paths
+            Continue djshellshoxxx/Unaltered ONLY. Your workstream is
+            '${{ matrix.lane }}'. There are four concurrent agents with
+            EXCLUSIVE source/test ownership; avoid overlapping PR #39 and
+            other current contributor work. Read repository specs and backlog.
+            Complete ONE unowned, independently testable accepted defect or
+            feature gap with test-first evidence. Do not stop at planning.
+
+            hash: ONLY src/core/hash/**, tests/unit/hash.test.ts,
+            tests/unit/chunk-summary.test.ts. Prioritize abort, fallback
+            reads, cancellation and bounded resource correctness.
+            proof: ONLY src/core/ots/{codec,ops,verify,types}.ts,
+            tests/unit/{codec,proof-budget,ots-flow}.test.ts.
+            Prioritize offline malformed proof, budget, verification tests;
+            DO NOT modify calendar code or PR #39's live R1 evidence.
+            metadata: ONLY src/core/strip/**,
+            tests/unit/{audio,strip,fuzz-targets}.test.ts,
+            tests/fuzz/**, scripts/parser-fuzz.mjs.
+            Prioritize format validation, truncation and deterministic fuzz.
+            accessibility: ONLY src/ui/**, tests/unit/ui.test.ts,
+            tests/e2e/**. Prioritize UI accessibility, keyboard controls
+            and regression coverage; do not touch src/main.ts.
+
+            These are literal allowlists, not suggestions. Never modify
+            files outside your lane; in particular NEVER edit .github/,
+            package manifests, build scripts, trust/host policy, release
+            or signing files. Do not add dependencies or new network hosts.
+            Do not execute untrusted files, push, merge, deploy or release.
+            Preserve real test output and report any human-only blockers.
+            Test-focused implementation only, no speculative claims.
+
+      - name: Enforce exact lane ownership and protected paths
         if: steps.gate.outputs.run_agent == 'true'
         id: scope
+        env:
+          LANE: ${{ matrix.lane }}
+        shell: bash
         run: |
           set -euo pipefail
+          base="$(cat base-sha.txt)"
+          bad=0
           while IFS= read -r file; do
             [ -n "$file" ] || continue
             case "$file" in
-              src/*|tests/*|docs/*|scripts/*|unaltered-codex-report.txt) ;;
-              *) echo "::error::Disallowed path: $file"; exit 1 ;;
+              unaltered-codex-report.txt|base-sha.txt|lane.txt) continue ;;
+              *secret*|*credential*|*.env*|*/.github/*) bad=1; echo "::error::Protected path $file"; continue ;;
             esac
-            case "$file" in
-              scripts/build.mjs|docs/OPSEC.md|docs/SPEC.md|docs/RELEASE.md|docs/DECISIONS.md|*secret*|*credential*|*.env*)
-                echo "::error::Protected path: $file"; exit 1 ;;
+            case "$LANE:$file" in
+              hash:src/core/hash/*|hash:tests/unit/hash.test.ts|hash:tests/unit/chunk-summary.test.ts) ;;
+              proof:src/core/ots/codec.ts|proof:src/core/ots/ops.ts|proof:src/core/ots/verify.ts|proof:src/core/ots/types.ts|proof:tests/unit/codec.test.ts|proof:tests/unit/proof-budget.test.ts|proof:tests/unit/ots-flow.test.ts) ;;
+              metadata:src/core/strip/*|metadata:tests/unit/audio.test.ts|metadata:tests/unit/strip.test.ts|metadata:tests/unit/fuzz-targets.test.ts|metadata:tests/fuzz/*|metadata:scripts/parser-fuzz.mjs) ;;
+              accessibility:src/ui/*|accessibility:tests/unit/ui.test.ts|accessibility:tests/e2e/*) ;;
+              *) bad=1; echo "::error::Outside $LANE ownership: $file" ;;
             esac
-          done < <({ git diff --name-only "${{ steps.base.outputs.sha }}" --; git ls-files -o --exclude-standard; } | sort -u)
-      - name: Run OPSEC, typecheck, lint and tests
+          done < <({ git diff --name-only "$base" --; git ls-files -o --exclude-standard; } | sort -u)
+          exit "$bad"
+
+      - name: Validate complete project test gate
         if: steps.gate.outputs.run_agent == 'true' && steps.scope.outcome == 'success'
         id: validate
         continue-on-error: true
         run: npm run check
-      - name: Upload coding report
-        if: always() && steps.gate.outputs.run_agent == 'true'
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: unaltered-report-${{ github.run_id }}
-          path: unaltered-codex-report.txt
-          if-no-files-found: ignore
-      - name: Package patch
-        if: steps.gate.outputs.run_agent == 'true' && steps.scope.outcome == 'success'
+
+      - name: Package changes only after validation
+        if: steps.gate.outputs.run_agent == 'true' && steps.scope.outcome == 'success' && steps.validate.outcome == 'success'
         id: package
+        shell: bash
         run: |
           set -euo pipefail
-          git reset --soft "${{ steps.base.outputs.sha }}"
-          git add -A -- src tests docs scripts
-          if git diff --cached --quiet; then
-            echo 'changed=false' >> "$GITHUB_OUTPUT"
-          else
-            git diff --cached --binary > unaltered-changes.patch
-            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          git reset --soft "$(cat base-sha.txt)"
+          git add -A -- src/core/hash src/core/ots src/core/strip src/ui tests/unit tests/e2e tests/fuzz scripts/parser-fuzz.mjs
+          if ! git diff --cached --quiet; then
+            git diff --cached --binary > code.patch
           fi
-      - name: Upload patch
-        if: steps.package.outputs.changed == 'true'
+
+      - name: Upload lane report and validated patch, if any
+        if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: unaltered-patch-${{ github.run_id }}
-          path: unaltered-changes.patch
+          name: unaltered-lane-${{ matrix.lane }}-${{ github.run_id }}
+          path: |
+            base-sha.txt
+            lane.txt
+            code.patch
+            unaltered-codex-report.txt
           if-no-files-found: error
+          retention-days: 30
+
   publish:
-    needs: develop
-    if: needs.develop.result == 'success' && needs.develop.outputs.changed == 'true'
+    needs: [develop]
+    if: always() && needs.develop.result != 'cancelled' && github.repository == 'djshellshoxxx/Unaltered'
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     permissions:
       contents: write
       pull-requests: write
-      actions: write
     steps:
-      - name: Checkout main
+      - name: Checkout trusted main for publication
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
-          persist-credentials: false
-      - name: Refuse publication on a different main commit
-        env:
-          BASE_SHA: ${{ needs.develop.outputs.base_sha }}
-        run: |
-          set -euo pipefail
-          test "$(git rev-parse HEAD)" = "$BASE_SHA" || {
-            echo "::error::Main advanced after validation; refusing stale publication"
-            exit 1
-          }
-      - name: Download patch
+
+      - name: Download every isolated lane result
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: unaltered-patch-${{ github.run_id }}
-          path: unaltered-staging
-      - name: Apply patch as data
-        run: |
-          git apply --check --binary unaltered-staging/unaltered-changes.patch
-          git apply --binary unaltered-staging/unaltered-changes.patch
-      - name: Open review PR
-        id: pr
-        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
-        with:
-          token: ${{ secrets.UNALTERED_GITHUB_TOKEN || github.token }}
-          branch: codex/unaltered-cloud-${{ github.run_id }}
-          base: main
-          add-paths: |
-            src
-            tests
-            docs
-            scripts
-          title: 'codex: Unaltered cloud checkpoint ${{ github.run_id }}'
-          commit-message: 'fix: Unaltered cloud checkpoint'
-          body: |
-            API-funded development run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-            Local validation: ${{ needs.develop.outputs.validation }}.
-            Require review and exact-head CI; no release or deployment.
-          draft: ${{ needs.develop.outputs.validation != 'success' }}
-          delete-branch: true
-      - name: Dispatch full CI
-        if: steps.pr.outputs.pull-request-branch != ''
+          pattern: unaltered-lane-*-${{ github.run_id }}
+          path: lane-artifacts
+          merge-multiple: false
+
+      - name: Publish validated patches as distinct PRs
         env:
           GH_TOKEN: ${{ secrets.UNALTERED_GITHUB_TOKEN || github.token }}
-          REF: ${{ steps.pr.outputs.pull-request-branch }}
-        run: gh workflow run ci.yml --ref "$REF"
+          RUN_ID: ${{ github.run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="$(git rev-parse HEAD)"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for lane in hash proof metadata accessibility; do
+            folder="lane-artifacts/unaltered-lane-$lane-$RUN_ID"
+            if [ ! -s "$folder/code.patch" ]; then
+              echo "$lane: no validated patch; review report artifact."
+              continue
+            fi
+            if [ "$(cat "$folder/base-sha.txt")" != "$base" ]; then
+              echo "::warning::$lane base SHA mismatch; skip publication."
+              continue
+            fi
+            if [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$base" ]; then
+              echo "::warning::main changed; refusing stale patch publication."
+              break
+            fi
+            branch="codex/unaltered-cloud-$RUN_ID-$lane"
+            git checkout -B "$branch" "$base"
+            if ! git apply --check --binary "$GITHUB_WORKSPACE/$folder/code.patch"; then
+              echo "::warning::$lane patch no longer applies; skip publication."
+              continue
+            fi
+            git apply --binary "$GITHUB_WORKSPACE/$folder/code.patch"
+            git add -A -- src tests scripts
+            if git diff --cached --quiet; then
+              git reset --hard "$base"
+              continue
+            fi
+            git commit -m "fix: Unaltered $lane API-funded engineering checkpoint"
+            git push origin "HEAD:refs/heads/$branch"
+            gh pr create --base main --head "$branch" \
+              --title "codex: Unaltered $lane checkpoint $RUN_ID" \
+              --body "API-funded lane: $lane. Workflow run: https://github.com/$GITHUB_REPOSITORY/actions/runs/$RUN_ID . Full repository check passed on original main $base. This branch requires independent exact-head CI before guarded integration. No signing or release."
+            git checkout --detach "$base"
+          done
