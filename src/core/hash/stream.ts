@@ -97,6 +97,9 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
   const isCancelled = (): boolean => opts.signal?.aborted === true || opts.isCancelled?.() === true;
   if (isCancelled()) return null;
   const stallMs = opts.stallMs ?? STALL_MS;
+  if (!Number.isSafeInteger(stallMs) || stallMs <= 0) {
+    throw new UnalteredError('INPUT_INVALID', 'Invalid hashing stall timeout.');
+  }
   const h = sha256.create();
   let done = 0;
   let stalls = 0;
