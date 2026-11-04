@@ -56,6 +56,8 @@ export function cleanPng(input: Uint8Array): PngResult {
   let sawTrns = false;
   let sawSrgb = false;
   let colorType = -1;
+  let bitDepth = 0;
+  let paletteEntries = 0;
   while (pos < n && !sawEnd) {
     if (pos + 12 > n) return rej('The PNG ends unexpectedly.');
     const len = dv.getUint32(pos);
@@ -70,6 +72,7 @@ export function cleanPng(input: Uint8Array): PngResult {
     if (KEEP.has(type)) {
       if (type === 'IHDR') {
         if (!first || len !== 13) return rej('Invalid PNG header chunk.');
+        bitDepth = input[pos + 8 + 8]!;
         colorType = input[pos + 8 + 9]!;
       } else if (first) {
         return rej('Invalid PNG chunk order.');
@@ -78,13 +81,17 @@ export function cleanPng(input: Uint8Array): PngResult {
         if (len !== 1 || sawSrgb) return rej('Invalid sRGB chunk.');
         sawSrgb = true;
       }
+      // Kept bytes a decoder ignores would survive cleaning unseen, so PLTE/tRNS must fit the IHDR colour type exactly.
       if (type === 'PLTE') {
         if (sawIdat || sawPlte || len % 3 !== 0 || len === 0 || len > 768) return rej('Invalid PNG palette.');
+        if (colorType === 0 || colorType === 4 || (colorType === 3 && len / 3 > 2 ** bitDepth)) return rej('Invalid PNG palette.');
         sawPlte = true;
+        paletteEntries = len / 3;
       }
       if (type === 'tRNS') {
-        const max = colorType === 0 ? 2 : colorType === 2 ? 6 : colorType === 3 ? 256 : 0;
-        if (sawIdat || sawTrns || len === 0 || len > max) return rej('Invalid PNG transparency chunk.');
+        // Greyscale/truecolour tRNS has one fixed size; indexed tRNS follows PLTE and covers no more entries than it.
+        const ok = colorType === 3 ? len > 0 && len <= paletteEntries : len === (colorType === 0 ? 2 : colorType === 2 ? 6 : -1);
+        if (sawIdat || sawTrns || !ok) return rej('Invalid PNG transparency chunk.');
         sawTrns = true;
       }
       if (type === 'sRGB' && (sawIdat || sawPlte)) return rej('Invalid PNG chunk order.');

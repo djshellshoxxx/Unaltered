@@ -147,8 +147,14 @@ function attestationBytes(a: Attestation): Uint8Array {
   return concat(ATT_PENDING, Uint8Array.from(writeVaruint(inner.length)), inner);
 }
 
+const attTag = (a: Attestation): Uint8Array => (a.kind === 'bitcoin' ? ATT_BITCOIN : ATT_PENDING);
+const utf8 = (s: string): Uint8Array => new TextEncoder().encode(s);
+
+/** Reference order (python notary.py __lt__, javascript notary.js compareTo): by tag, then by height or by URI. */
 function compareAtt(a: Attestation, b: Attestation): number {
-  return compareBytes(attestationBytes(a), attestationBytes(b));
+  if (a.kind !== b.kind) return compareBytes(attTag(a), attTag(b));
+  if (a.kind === 'bitcoin') return a.height - (b as { height: number }).height;
+  return compareBytes(utf8(a.uri), utf8((b as { uri: string }).uri));
 }
 
 function opBytes(op: Op): Uint8Array {
@@ -199,6 +205,12 @@ export function serializeTree(root: TsNode): Uint8Array {
 }
 
 export function serializeProof(p: DetachedProof): Uint8Array {
+  if (p.digest.length !== 32) {
+    throw new UnalteredError('PROOF_MALFORMED', 'A detached receipt requires a 32-byte SHA-256 fingerprint.');
+  }
+  if (!equalBytes(p.digest, p.root.msg)) {
+    throw new UnalteredError('PROOF_MALFORMED', 'The receipt root commitment differs from its file fingerprint.');
+  }
   const version = Uint8Array.from(writeVaruint(MAJOR_VERSION));
   const tree = serializeTree(p.root);
   if (HEADER_MAGIC.length + version.length + 1 + p.digest.length + tree.length > LIMITS.maxInputBytes) {

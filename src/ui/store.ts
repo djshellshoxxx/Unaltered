@@ -43,8 +43,9 @@ export function setEnabled(on: boolean): boolean {
   try {
     if (on) s.setItem(FLAG, '1');
     else {
-      s.removeItem(FLAG);
+      // Delete the data first: if that fails the flag stays on, so the UI never claims the list is off and cleared while it is still stored.
       s.removeItem(KEY);
+      s.removeItem(FLAG);
     }
     return true;
   } catch {

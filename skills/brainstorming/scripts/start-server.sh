@@ -19,6 +19,14 @@
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# Option values must be present; otherwise `shift 2` fails and the loop never ends.
+require_value() {
+  if [[ $# -lt 2 || -z "$2" ]]; then
+    echo "{\"error\": \"$1 requires a value\"}"
+    exit 1
+  fi
+}
+
 # Parse arguments
 PROJECT_DIR=""
 FOREGROUND="false"
@@ -29,18 +37,22 @@ IDLE_TIMEOUT_MINUTES=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --project-dir)
+      require_value "$1" "${2:-}"
       PROJECT_DIR="$2"
       shift 2
       ;;
     --host)
+      require_value "$1" "${2:-}"
       BIND_HOST="$2"
       shift 2
       ;;
     --url-host)
+      require_value "$1" "${2:-}"
       URL_HOST="$2"
       shift 2
       ;;
     --idle-timeout-minutes)
+      require_value "$1" "${2:-}"
       IDLE_TIMEOUT_MINUTES="$2"
       shift 2
       ;;

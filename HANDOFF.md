@@ -1,3 +1,132 @@
+# Consolidation run — 2026-11-04, second pass (UTC)
+
+- **Candidate:** draft [PR48](https://github.com/djshellshoxxx/Unaltered/pull/48), branch `claude/quirky-meitner-0jr3pz`.
+  It contains all of draft [PR47](https://github.com/djshellshoxxx/Unaltered/pull/47) (head `d9b4fdc`, merged with
+  `--no-ff`) and supersedes it in its description. PR47 is still open and was not changed.
+- **Base:** main `1b6dd91`. Nothing is merged to main. No release, tag, signing, deployment, secret, setting or paid API
+  call. No branch was deleted, rebased or force-pushed; no PR was closed.
+- **Branch dispositions:** [docs/BRANCH_LEDGER_20261104.md](docs/BRANCH_LEDGER_20261104.md) covers all 43 `origin/*` refs.
+  26 are ancestors of the candidate. The other 17 hold no unique valid work beyond one diagnostic design record, which
+  is summarized in [docs/diagnostics/read-stall-ab-20261102.md](docs/diagnostics/read-stall-ab-20261102.md) and not
+  copied, because its README keeps it on the diagnostic branch.
+- **Automation (PR41, PR42, api-funded branch):** reviewed read-only, not integrated. Two high findings need an owner
+  decision first. F1 is an autonomous squash-merge to main with no human review. F2 is PR42's path allowlist missing new
+  files. There are also medium and low findings on the workflow already on main. See the ledger.
+
+## What this pass did
+
+1. Merged the PR47 head twice: `04a9c1f`, then `d9b4fdc` (a GNU-coreutils gate for a sha256sum interop test).
+2. Ran triage, automation-review and four development lanes in parallel, each in its own worktree:
+   - **Cancellation:** every abortable await in `src/core/hash/` now maps to a test.
+     `tests/unit/hash-cancel-residual.test.ts` covers the two paths that had none. Both tests fail when their guard is
+     removed. No source change was needed.
+   - **Dependencies:** the 11 moderate dev-only minimatch advisories were re-verified. No lint-chain release accepts
+     `minimatch >= 11`. Runtime audit is 0. The lockfile is unchanged.
+   - **CI:** measured first. With free runners a run takes about 3.5 minutes; waiting for runners dominates.
+     - `ci.yml` now cancels superseded runs only for `push` and `pull_request`.
+     - Manual dispatches get their own concurrency group.
+     - Every job has `timeout-minutes`.
+     - No job, step or test was removed.
+   - **Fuzz:** seed 20261105, 1,500,000 mutations, 1638 s, no finding
+     ([report](docs/evidence/fuzz-20261104-ext-20261105.json)). The fuzz worker returned no result, so the coordinator
+     ran it.
+3. An independent final review (3 lenses, each finding checked by 2 skeptics) found no code defects. It confirmed four
+   documentation inaccuracies, all fixed in `05c9038`.
+
+## Verification at the final head
+
+- `npm run check`: opsec PASS, typecheck and lint clean, vitest 29 files, 290 passed and 2 skipped, Node tests 45/45.
+- `npm run test:e2e -- --retries=0` (Chromium, local): 79 passed, 1 skipped.
+- CI on PR48: see the PR. The informational live calendar check is red for a known external reason: the calendars
+  return their pending 404 without CORS headers.
+
+## Incidents
+
+- A triage worker ran `git reset --hard 459cded` in the main checkout by mistake. Its `cd` into a scratch directory had
+  failed. The tree was clean and already pushed, so the coordinator restored the branch with a fast-forward to
+  `origin/claude/quirky-meitner-0jr3pz`. Nothing was lost.
+
+## Still open (owner or human gates)
+
+R1 Bob/Finney residuals; Q7 Trusted Types decision and Tor Browser testing; screen-reader, Spanish-copy and usability
+passes; independent audit and second-person rebuild; signing (REL-5) and OPS-1..6; domain (Q5) and legal review
+(LEGAL-1); decision on PR41/PR42 automation; merge of PR48 to main.
+
+# Current integration run — 2026-11-04 (UTC)
+
+- **Candidate:** draft [PR47](https://github.com/djshellshoxxx/Unaltered/pull/47), branch `claude/funny-lamport-2jfc0e`,
+  base main `1b6dd91`.
+- **Authoritative ledgers:** [docs/ULTRA_RUN_BOARD.md](docs/ULTRA_RUN_BOARD.md) (task states, run IDs, unreproduced suspects,
+  owner checklist, final SHA) and the 2026-11-04 section of [docs/TODO.md](docs/TODO.md). Both supersede older dated
+  sections where they disagree.
+- **Status:** unaudited and unsigned development candidate. Nothing is merged to main. No release, tag, signing,
+  deployment, account or settings change.
+- **Source PRs #39 and #43–#46:** merged into the candidate with `--no-ff`; not closed or rewritten.
+- **PRs #41/#42** (API-funded Codex automation): not modified.
+
+## What this run did
+
+1. Merged the open hardening PRs #43–#46 and PR #39 (Bob/Finney attribution tooling).
+2. Ran three review waves, each fix test-first:
+   - Isolated worktree workers per module: OTS, metadata parsers, network/CLI, UI, toolkit.
+   - Wave 2: a discovery workflow over hash, bytes, build, CI/release, the fuzz harness and acceptance scripts.
+   - An independent adversarial review of the combined diff. Every finding needed 2 of 3 skeptic lenses, including
+     an actual reproduction.
+3. Added Trusted Types delivery/enforcement E2E coverage for both builds.
+4. Recorded evidence:
+   - Firefox/WebKit 2 GiB completion: dispatch run 41756413597.
+   - Native stall A/B: run 41561857747, extracted per shard.
+   - Seeded fuzz campaign: `docs/evidence/fuzz-20261104.json`, 1,000,000 mutations, no finding.
+   - Dated dependency decision for the dev-only minimatch advisory.
+5. Fixed CI regressions this run introduced:
+   - Windows: hash output escaped every backslash.
+   - macOS: a GNU-only interop test ran against a non-GNU `sha256sum`.
+
+## Environment notes for the next session
+
+- **Git identity.** The repo-local identity is now `Claude <noreply@anthropic.com>`, which this environment signs with
+  its SSH key, so GitHub verifies the commits. It is non-personal and passes `scripts/opsec-check.sh`. Earlier commits
+  in this run use the neutral `Unaltered contributors` identity.
+- **Lint.** Agent worktrees live under `.claude/worktrees/`, which is gitignored and ESLint-ignored. Without that
+  ignore, typescript-eslint fails every file with "multiple candidate TSConfigRootDirs".
+- **Pinned reference.** Create a scratch venv with `opentimestamps==0.4.5` and export `UNALTERED_PYTHON`, or the
+  reference differential tests skip.
+- **Browsers.** Only Chromium exists locally. Firefox and WebKit evidence comes from CI (`workflow_dispatch` on the
+  branch runs the non-PR 2 GiB jobs).
+
+## Exact next commands
+
+Run these from a clean checkout of the candidate head.
+
+```bash
+npm ci --ignore-scripts
+```
+
+```bash
+python3 -m venv /tmp/venv && /tmp/venv/bin/pip install opentimestamps==0.4.5
+```
+
+```bash
+UNALTERED_PYTHON=/tmp/venv/bin/python npm run check
+```
+
+```bash
+npm run build && cp dist/SHA256SUMS /tmp/sums1 && npm run build && cmp /tmp/sums1 dist/SHA256SUMS
+```
+
+```bash
+npx playwright test --retries=0
+```
+
+```bash
+UNALTERED_BIG_BROWSER=1 npx playwright test tests/e2e/memory.spec.ts --repeat-each=3 --retries=0 --max-failures=1
+```
+
+The owner-gated work (merge decision, OPS, signing, audit, second-person rebuild, human accessibility/Spanish/usability,
+Tor/Q7, R1 Bob/Finney, legal/domain) is listed with the smallest unblocking action in the run board's owner checklist.
+
+---
+
 # Current consolidation — 2026-10-30 (America/Los_Angeles)
 
 Current publication addendum: [final handoff and raw evidence](docs/FINAL_HANDOFF_20261030.md).

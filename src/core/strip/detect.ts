@@ -14,7 +14,7 @@ export function detectKind(head: Uint8Array): FileKind {
   if (ascii(head, 0, 'ID3')) return 'mp3';
   if (head[0] === 0xff && ((head[1] ?? 0) & 0xe6) === 0xe2) return 'mp3'; // MPEG-1/2/2.5 Layer III frame sync
   if (ascii(head, 0, '%PDF-')) return 'pdf';
-  if (ascii(head, 4, 'ftyp')) {
+  if (head.length >= 12 && ascii(head, 4, 'ftyp')) {
     const brand = String.fromCharCode(head[8] ?? 0, head[9] ?? 0, head[10] ?? 0, head[11] ?? 0);
     if (['heic', 'heix', 'hevc', 'hevx', 'mif1', 'msf1', 'heim', 'heis'].includes(brand)) return 'heic';
     return 'video';

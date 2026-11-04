@@ -169,6 +169,14 @@ describe('PNG stripping (SPEC 8.2)', () => {
   });
 });
 
+describe('truncated container signature detection', () => {
+  it('does not identify incomplete ISO BMFF headers as a supported video format', () => {
+    const shortHeader = Uint8Array.of(0, 0, 0, 12, 0x66, 0x74, 0x79, 0x70);
+    expect(detectKind(shortHeader)).toBe('other');
+    expect(detectKind(Uint8Array.of(...shortHeader, 0x68, 0x65, 0x69))).toBe('other');
+  });
+});
+
 describe('detect + stripMetadata', () => {
   it('detects by magic bytes, ignoring names', () => {
     expect(detectKind(makeJpeg())).toBe('jpeg');
