@@ -20,6 +20,20 @@ describe('el() sinks', () => {
     b.dispatch('click');
     expect(n).toBe(1);
   });
+  it('blocks script URLs after browser whitespace normalization and attribute case folding', () => {
+    for (const attr of ['href', 'HREF', 'src', 'SRC', 'action', 'Action', 'formaction', 'formAction']) {
+      for (const value of ['java\nscript:alert(1)', 'java\tscript:alert(1)', '\u0001javascript:alert(1)', 'da\rta:text/html,hi', 'VBScript:msgbox(1)']) {
+        const node = el('a', { [attr]: value }) as unknown as FElement;
+        expect(node.getAttribute(attr), `${attr}: ${JSON.stringify(value)}`).toBeNull();
+      }
+    }
+  });
+  it('keeps ordinary relative, HTTPS, fragment and blob URLs', () => {
+    for (const value of ['./main.js', '/Unaltered/', '#verify', 'https://example.org/', 'blob:https://example.org/id']) {
+      const node = el('a', { href: value }) as unknown as FElement;
+      expect(node.getAttribute('href')).toBe(value);
+    }
+  });
 });
 
 describe('focus survives a re-render of its container (WCAG 2.4.3)', () => {

@@ -3,6 +3,14 @@ export type Child = Node | string | null | undefined | false;
 export type AttrValue = string | number | boolean | undefined | null | ((ev: Event) => void);
 
 const PROPS = new Set(['checked', 'disabled', 'hidden', 'value', 'indeterminate']);
+const URL_ATTRS = new Set(['href', 'src', 'action', 'formaction']);
+
+function isScriptUrl(value: string): boolean {
+  // Match browser URL preprocessing: remove TAB/LF/CR anywhere, then trim leading C0 controls and spaces.
+  // Other embedded controls are not removed by the URL parser and must not be treated as scheme characters.
+  const normalized = value.replace(/[\t\n\r]/g, '').replace(/^[\u0000-\u0020]+/, '');
+  return /^(javascript|data|vbscript):/i.test(normalized);
+}
 
 export function el<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<string, AttrValue> = {}, ...kids: Child[]): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
@@ -14,7 +22,7 @@ export function el<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<
       if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v as EventListener);
       continue;
     }
-    if (typeof v === 'string' && /^\s*(javascript|data|vbscript):/i.test(v) && (k === 'href' || k === 'src' || k === 'action' || k === 'formaction')) continue;
+    if (typeof v === 'string' && URL_ATTRS.has(k.toLowerCase()) && isScriptUrl(v)) continue;
     if (k === 'class') node.className = String(v);
     else if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v as EventListener);
     else if (PROPS.has(k)) (node as unknown as Record<string, unknown>)[k] = v === true ? true : v;
