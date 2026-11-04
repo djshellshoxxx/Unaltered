@@ -10,7 +10,8 @@
 #      (3 and 4 read HEAD, the index and changed working-tree files as git stores them; symlinks by their target)
 #   5. package.json has no "author" field
 #   6. Tracked images, documents, audio and video (any extension case) carry no embedded metadata
-#      (needs exiftool; falls back to a crude scan). Other binary files are listed as not inspected.
+#      (needs exiftool: without it every tracked media file is a finding; a crude scan names obvious markers).
+#      Other binary files are listed as not inspected.
 #
 # Allow-listed emails: *@users.noreply.github.com, noreply@*, *@example.com, *@example.org, *@*.invalid
 set -u
@@ -212,10 +213,15 @@ elif command -v exiftool >/dev/null 2>&1; then
     if [ -n "$extra" ]; then fail "${labels[i]} has embedded metadata:"; echo "$extra" | head -5 | sed 's/^/         /'; fi
   done
 else
-  warn "exiftool not installed; doing a crude scan only (install exiftool for a real check)"
+  # Fail closed: a byte scan cannot rule metadata out (a TIFF GPS IFD is numeric, PDF Info can sit in a compressed
+  # object stream), so without exiftool every tracked media file is a finding. The scan only names obvious markers.
+  warn "exiftool not installed: each tracked media file counts as a finding until exiftool checks it (apt install libimage-exiftool-perl, brew install exiftool)"
+  CRUDE_RE='[Ee][Xx][Ii][Ff]|GPS|xmpmeta|ns\.adobe\.com/xap|Photoshop 3\.0|tEXt|iTXt|zTXt|/(Author|Creator|Producer|Title|Subject|Keywords)|ID3|INFOI[A-Z]{3}'
   for i in "${media[@]}"; do
-    if scan 'Exif|GPS|<x:xmpmeta|Photoshop 3\.0' "${files[i]}"; then
-      fail "${labels[i]} appears to contain EXIF/GPS/XMP data"
+    if scan "$CRUDE_RE" "${files[i]}"; then
+      fail "${labels[i]}: embedded metadata found (marker '$(head -n 1 "$tmp/found")'); exiftool is needed for a full check"
+    else
+      fail "${labels[i]}: embedded metadata cannot be ruled out without exiftool"
     fi
   done
 fi

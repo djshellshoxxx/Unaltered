@@ -9,6 +9,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { crc32 } from 'node:zlib';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const SCRIPT = join(ROOT, 'scripts/opsec-check.sh');
@@ -317,4 +318,35 @@ test('binary files no check can read are listed, not silently passed', { skip },
   assert.ok(warning, result.stdout);
   assert.ok(warning.includes('logs.zip') && warning.includes('blob.bin'), warning);
   assert.ok(!warning.includes('fixture.ots'), 'OpenTimestamps receipts carry no metadata fields');
+});
+
+// Synthetic fixtures whose metadata carries none of the old fallback's ASCII markers (Exif, GPS, <x:xmpmeta).
+const be16 = (v) => Buffer.from([v >> 8, v & 0xff]);
+const be32 = (v) => Buffer.from([v >>> 24, (v >> 16) & 0xff, (v >> 8) & 0xff, v & 0xff]);
+function tiffWithGps() { // big-endian TIFF: IFD0 -> GPS IFD (tag 0x8825) -> GPSLatitude (0x0002) as three RATIONALs
+  const entry = (tagId, type, count, value) => Buffer.concat([be16(tagId), be16(type), be32(count), be32(value)]);
+  const ifd0 = Buffer.concat([be16(1), entry(0x8825, 4, 1, 26), be32(0)]);
+  const gps = Buffer.concat([be16(1), entry(0x0002, 5, 3, 44), be32(0)]);
+  const rationals = Buffer.concat([51, 1, 30, 1, 0, 1].map(be32));
+  return Buffer.concat([Buffer.from('MM\0*', 'latin1'), be32(8), ifd0, gps, rationals]);
+}
+function png(chunks) {
+  const chunk = ([type, data]) => Buffer.concat([be32(data.length), Buffer.from(type, 'latin1'), data, be32(crc32(Buffer.concat([Buffer.from(type, 'latin1'), data])))]);
+  const ihdr = Buffer.concat([be32(1), be32(1), Buffer.from([8, 2, 0, 0, 0])]);
+  return Buffer.concat([Buffer.from('\x89PNG\r\n\x1a\n', 'latin1'), ...[['IHDR', ihdr], ...chunks, ['IEND', Buffer.alloc(0)]].map(chunk)]);
+}
+const pdf = (info) => Buffer.from(`%PDF-1.4\n1 0 obj\n<< ${info} >>\nendobj\ntrailer\n<< /Info 1 0 R >>\n%%EOF\n`, 'latin1');
+const hasExiftool = spawnSync('sh', ['-c', 'command -v exiftool'], { encoding: 'utf8' }).status === 0;
+
+test('without exiftool, tracked media is a finding (never a PASS) and the crude scan names what it sees', {
+  skip: skip || (hasExiftool && 'a real exiftool is installed; this covers the fallback'),
+}, (t) => {
+  const r = repo(t);
+  r.write('photo.png', png([['eXIf', tiffWithGps()], ['tEXt', Buffer.from('Author\0Jane Q Real', 'latin1')]]));
+  r.write('scan.tif', tiffWithGps());
+  r.write('report.pdf', pdf('/Author (Jane Q Real)'));
+  r.commit();
+  const result = r.check();
+  assertFindings(result, finding('photo.png', 'eXIf'), finding('report.pdf', '/Author'), finding('scan.tif', 'cannot be ruled out without exiftool'));
+  assert.match(result.stdout, /\[warn\] exiftool not installed/);
 });
