@@ -1,10 +1,10 @@
 // Adversarial parser review 2026-11-04: each block reproduces a defect on 583aca4 and guards its fix.
 import { describe, expect, it } from 'vitest';
 import { concat } from '../../src/core/bytes';
-import { cleanMp3 } from '../../src/core/strip/audio';
+import { cleanMp3, cleanWav } from '../../src/core/strip/audio';
 import { cleanJpeg } from '../../src/core/strip/jpeg';
 import { cleanPng } from '../../src/core/strip/png';
-import { apeTag, FRAME } from '../helpers/audio';
+import { apeTag, FRAME, makeWav } from '../helpers/audio';
 import { chunk, contains, makeJpeg } from '../helpers/images';
 
 const frame = (fill: number): number[] => {
@@ -91,5 +91,18 @@ describe('JPEG: removing bytes from the JFIF header is reported', () => {
     expect(r.removed).not.toEqual([]);
     const plain = cleanJpeg(makeJpeg());
     expect(plain.kind === 'cleaned' && plain.removed).toEqual([]);
+  });
+});
+
+describe('WAV: rewritten pad bytes are reported', () => {
+  it('lists non-zero chunk padding that cleaning replaced with zero', () => {
+    const input = makeWav({ oddPad: 5 });
+    input[input.length - 1] = 0x7f;
+    const r = cleanWav(input);
+    if (r.kind !== 'cleaned') throw new Error(JSON.stringify(r));
+    expect(r.output.at(-1)).toBe(0);
+    expect(r.removed).not.toEqual([]);
+    const zero = cleanWav(makeWav({ oddPad: 5 }));
+    expect(zero.kind === 'cleaned' && zero.removed).toEqual([]);
   });
 });
