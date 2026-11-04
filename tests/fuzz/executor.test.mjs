@@ -13,6 +13,39 @@ test('coverage feedback distinguishes new paths from repeated inputs', async () 
     assert.equal((await worker.runCase('reject', new Uint8Array())).outcome, 'rejected');
   } finally { await worker.close(); }
 });
+test('coverage feedback sees a new branch that runs as often as its function', async () => {
+  const worker = await createExecutor(targetUrl);
+  try {
+    const then = await worker.runCase('branch', Uint8Array.of(1));
+    assert.ok(then.novel > 0);
+    const otherwise = await worker.runCase('branch', Uint8Array.of(0));
+    assert.ok(otherwise.novel > 0, 'first run of the else branch must count as new coverage');
+    assert.ok(otherwise.coveredOffsets > then.coveredOffsets);
+    assert.equal((await worker.runCase('branch', Uint8Array.of(0))).novel, 0);
+    assert.equal((await worker.runCase('branch', Uint8Array.of(1))).novel, 0);
+  } finally { await worker.close(); }
+});
+test('coverage feedback counts a nested function body only once it runs', async () => {
+  const worker = await createExecutor(targetUrl);
+  try {
+    assert.ok((await worker.runCase('nested', Uint8Array.of(0))).novel > 0);
+    assert.ok((await worker.runCase('nested', Uint8Array.of(1))).novel > 0, 'first call of the inner function must count as new coverage');
+    assert.equal((await worker.runCase('nested', Uint8Array.of(0))).novel, 0);
+  } finally { await worker.close(); }
+});
+test('coverage feedback ignores count-only changes over the same blocks', async () => {
+  const worker = await createExecutor(targetUrl);
+  try {
+    const first = await worker.runCase('loop', Uint8Array.of(1, 0));
+    assert.ok(first.novel > 0);
+    for (const bytes of [Uint8Array.of(1, 0, 0), Uint8Array.of(0, 1, 1, 1), Uint8Array.of(0, 1)]) {
+      const again = await worker.runCase('loop', bytes);
+      assert.equal(again.novel, 0, `same blocks with other counts (${bytes.join(',')}) are not new coverage`);
+      assert.equal(again.coveredOffsets, first.coveredOffsets);
+    }
+    assert.ok(first.coveredOffsets > 0);
+  } finally { await worker.close(); }
+});
 test('unexpected parser exceptions remain findings', async () => {
   const worker = await createExecutor(targetUrl);
   try {
