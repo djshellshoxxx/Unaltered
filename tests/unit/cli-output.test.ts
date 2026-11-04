@@ -60,8 +60,10 @@ describe.runIf(process.platform !== 'win32')('cli hash output with hostile file 
     expect(r.out).toBe(`${ABC}  ${r.dir}/back\\slash.txt\n`);
   });
 
+  // The leading-backslash escape form is GNU coreutils syntax; other sha256sum tools (e.g. on macOS) do not read it.
   const sha256sum = spawnSync('sha256sum', ['--version'], { encoding: 'utf8' });
-  it.runIf(sha256sum.status === 0)('produces lines that GNU sha256sum -c accepts (skipped where sha256sum is missing)', async () => {
+  const gnu = sha256sum.status === 0 && /GNU coreutils/.test(sha256sum.stdout ?? '');
+  it.runIf(gnu)('produces lines that GNU sha256sum -c accepts (skipped where GNU sha256sum is missing)', async () => {
     for (const name of ['back\\slash.txt', `nl\nname`, 'cr\rname\\x']) {
       const r = await hashOut(name);
       const list = join(r.dir, 'SUMS');
