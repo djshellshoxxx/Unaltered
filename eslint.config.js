@@ -15,7 +15,7 @@ const bannedSyntax = [
 ];
 
 export default tseslint.config(
-  { ignores: ['skills/**', 'shared/**', '.github/**', 'dist/**', 'node_modules/**', 'playwright-report/**', 'test-results/**', 'tests/fixtures/**'] },
+  { ignores: ['skills/**', 'shared/**', '.github/**', 'dist/**', 'node_modules/**', 'playwright-report/**', 'test-results/**', 'tests/fixtures/**', '.claude/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
