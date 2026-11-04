@@ -81,3 +81,24 @@ the test-level error text of the failed attempts is above that window.
     screen-reader pass.
   - `safeFileName` keeps U+2028/2029 and zero-width characters.
   - Core error text stays English in the Spanish UI (already documented).
+
+## Owner-action checklist (smallest action that unblocks each gate)
+
+Agents cannot complete these. Each needs the owner, a named person, or an external party.
+
+| Gate | Why agents cannot close it | Smallest owner action |
+|---|---|---|
+| Merge decision for this candidate | Merging to main needs separate owner authorization | Review draft PR47; when satisfied, mark it ready and merge. Afterwards, decide whether to close source PRs #39 and #43–#46, which this PR contains |
+| PR #41 / #42 (API-funded Codex automation) | Another provider's workflow and secrets; the first scheduled run (09:53 UTC) has not happened yet | After the first scheduled run, check its run log and cost, then decide whether to merge #41, then #42 |
+| OPS-2 / OPS-3 | Repository settings | Settings → Branches: protect `main` (PRs, required checks, signed commits, no force-push). Settings → Security: enable secret scanning, push protection, Dependabot alerts and private vulnerability reporting |
+| OPS-1 / OPS-5 | Personal identity and account security | Record the pseudonymity decision in `docs/OPSEC.md` §1. Enable hardware-key 2FA on GitHub and any hosting or registrar account |
+| OPS-4 / REL-5 | Signing keys must be created offline by the owner | Generate the offline release key and publish its public key in the repo and in two other places. Only then sign `SHA256SUMS` for a release |
+| REL-3 / Q6 | Needs an independent auditor | Choose an auditor and give them this candidate SHA plus `docs/AUDIT.md` |
+| REL-4 | Needs a second person | A second person follows `docs/RELEASE.md` on their own machine and compares `dist/SHA256SUMS` with CI's |
+| A11Y-1 | Needs a human screen-reader user | Run `docs/gates/SCREEN_READER_SCRIPT.md` in NVDA or VoiceOver. Also check whether results are announced up to three times (see unreproduced suspects above) |
+| Spanish copy | Needs a native speaker | Review `docs/gates/SPANISH_STRINGS_20261030.md` plus the new key `verify.d.noLater.link` ("Esta huella digital existía a más tardar hacia {time} (UTC)") |
+| UT-1 | Needs 3–5 people | Run the usability test with non-technical participants |
+| Q7 Trusted Types / Tor | Owner decision; no Tor Browser here | Run `tests/e2e/trusted-types.spec.ts` manually in Tor Browser, or record that Tor is unsupported, then decide Q7 |
+| R1 Bob/Finney confirmed paths | Needs live confirmed receipts and real browser network access | Follow `docs/R1_BOB_FINNEY_TEMPLATE.md` with `scripts/r1-bob-finney.mjs` on a networked machine |
+| Pending-receipt CORS (404 without ACAO) | Calendar operators set this header | Ask the calendar operators to send `Access-Control-Allow-Origin` on 404 responses, or approve an ADR for a different approach (no silent proxy) |
+| Q5 / LEGAL-1 | Domain and legal decisions | Decide the domain policy; get legal review of the public wording |
