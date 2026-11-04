@@ -1,0 +1,65 @@
+{
+  "sourceCommit": "459cdedd4e87f03e077e1567e735307e1a3ce756",
+  "targetSha256": "7bc06e18d0bde4909dc2b088e6dacfedc476617b25fe2103c608ca0ad901d4ae",
+  "node": "v22.23.4",
+  "v8": "12.4.254.21-node.57",
+  "options": {
+    "iterations": 1500000,
+    "seconds": 1800,
+    "seed": 20261105,
+    "out": "scratch/fuzz"
+  },
+  "limits": {
+    "maxInputBytes": 65536,
+    "maxCorpusPerTarget": 256,
+    "caseDeadlineMs": 1000,
+    "workerOldHeapMiB": 128
+  },
+  "status": "budget-complete",
+  "executed": 1500036,
+  "mutations": 1500000,
+  "targets": {
+    "proof": {
+      "accepted": 4098,
+      "rejected": 245914,
+      "ranges": 162,
+      "corpus": 36
+    },
+    "timestamp": {
+      "accepted": 5787,
+      "rejected": 244223,
+      "ranges": 163,
+      "corpus": 33
+    },
+    "jpeg": {
+      "accepted": 1835,
+      "rejected": 248168,
+      "ranges": 185,
+      "corpus": 58
+    },
+    "png": {
+      "accepted": 4298,
+      "rejected": 245705,
+      "ranges": 72,
+      "corpus": 16
+    },
+    "wav": {
+      "accepted": 4287,
+      "rejected": 245717,
+      "ranges": 66,
+      "corpus": 19
+    },
+    "mp3": {
+      "accepted": 6434,
+      "rejected": 243570,
+      "ranges": 66,
+      "corpus": 14
+    }
+  },
+  "output": "scratch/fuzz/(local campaign directory, not committed)",
+  "seedExecutions": 36,
+  "retainedSeeds": 32,
+  "elapsedMs": 1638226,
+  "stopReason": "iterations",
+  "note": "Seeded bounded campaign on the 2026-11-04 consolidation candidate (PR48). Parser sources are unchanged from sourceCommit to the PR48 head; later commits touch only tests, CI and docs. Seed 20261105, different from the earlier 1,000,000-mutation run with seed 20261104 at 0b5f18f. Six targets, no finding, stopped on the iteration budget. Run on a shared executor while other agents were active. A clean bounded run is not exhaustive coverage or an independent audit."
+}
