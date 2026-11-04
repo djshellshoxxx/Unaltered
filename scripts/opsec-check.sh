@@ -33,6 +33,9 @@ warn() { echo "  [warn] $*"; }
 ok()   { echo "  [ ok ] $*"; }
 
 EMAIL_RE='[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'
+# A home directory with a user name: /home/name, /Users/name (trailing slash optional), and C:\Users\name with
+# single, escaped (JSON/JS "C:\\Users\\name") or forward slashes.
+HOME_RE='(/home/[A-Za-z0-9._-]+|/Users/[A-Za-z0-9._-]+|[A-Za-z]:(\\+|/)Users(\\+|/)[A-Za-z0-9._-]+)'
 is_allowed_email() {
   case "$1" in
     *@users.noreply.github.com|noreply@*|*@example.com|*@example.org|*@*.invalid) return 0 ;;
@@ -154,7 +157,7 @@ done
 echo "== 4. personal paths in tracked text files (HEAD, index and working tree)"
 bad=0; i=0
 while [ "$i" -lt "$n" ]; do
-  if [ "${binary[i]}" -eq 0 ] && grep -aEq '(/home/[A-Za-z0-9._-]+/|/Users/[A-Za-z0-9._-]+/|[A-Za-z]:\\Users\\[A-Za-z0-9._-]+)' "$tmp/items/$i"; then
+  if [ "${binary[i]}" -eq 0 ] && grep -aEq "$HOME_RE" "$tmp/items/$i"; then
     fail "${labels[i]} contains a home-directory path"; bad=1
   fi
   i=$((i + 1))

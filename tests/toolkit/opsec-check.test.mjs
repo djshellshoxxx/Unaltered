@@ -4,7 +4,7 @@
 // Leak values are assembled at run time on reserved .test domains, so this file never matches what it tests for.
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import test from 'node:test';
@@ -233,4 +233,37 @@ test('checks 3 and 4 read the committed and staged content that is pushed, not o
     r.write('b.txt', `contact ${JANE}\n`);
     assertFindings(r.check(), finding('b.txt (working tree) contains email: ', JANE));
   });
+});
+
+test('check 4 finds home paths without a trailing slash, escaped or forward-slash Windows paths and symlink targets', { skip }, async (t) => {
+  const bs = '\\';
+  for (const [name, content] of [
+    ['a.txt', `cd ${home('janedoe')}\n`],
+    ['cwd.json', `{"cwd":"${home('janedoe')}"}\n`],
+    ['mac.txt', `cd ${['', 'Users', 'jane'].join('/')}\n`],
+    ['win.txt', `${['C:', 'Users', 'jane.doe', 'proj'].join(bs)}\n`],
+    ['win.json', `{"cwd": "${['C:', 'Users', 'jane.doe', 'proj'].join(bs + bs)}"}\n`],
+    ['fwd.txt', `${['C:', 'Users', 'jane'].join('/')}\n`],
+  ]) {
+    await t.test(name, (t) => {
+      const r = repo(t);
+      r.write(name, content);
+      r.commit();
+      assertFindings(r.check(), finding(`${name} contains a home-directory path`));
+    });
+  }
+  await t.test('tracked symlink whose stored target is a home path', (t) => {
+    const r = repo(t);
+    symlinkSync(home('janedoe', 'secret.txt'), join(r.work, 'link.txt'));
+    r.commit();
+    assert.equal(r.git(['cat-file', '-p', 'HEAD:link.txt']), home('janedoe', 'secret.txt'));
+    assertFindings(r.check(), finding('link.txt contains a home-directory path'));
+  });
+});
+
+test('check 4 does not flag bare mentions of the home roots', { skip }, (t) => {
+  const r = repo(t);
+  r.write('doc.txt', 'Directories such as /home/ and /Users/ hold user data; so does C:\\Users\\ on Windows.\n');
+  r.commit();
+  assertPass(r.check());
 });
