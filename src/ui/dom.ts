@@ -9,6 +9,12 @@ export function el<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<
   for (const [k, v] of Object.entries(attrs)) {
     if (v === undefined || v === null || v === false) continue;
     if (k === 'style') continue; // inline styles are blocked by CSP; use classes
+    // Never create inline handlers, srcdoc or script URLs from strings (SR-4); only function listeners are wired.
+    if (/^on/i.test(k) || k.toLowerCase() === 'srcdoc') {
+      if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v as EventListener);
+      continue;
+    }
+    if (typeof v === 'string' && /^\s*(javascript|data|vbscript):/i.test(v) && (k === 'href' || k === 'src' || k === 'action' || k === 'formaction')) continue;
     if (k === 'class') node.className = String(v);
     else if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v as EventListener);
     else if (PROPS.has(k)) (node as unknown as Record<string, unknown>)[k] = v === true ? true : v;
@@ -30,8 +36,39 @@ export function clear(node: Node): void {
 }
 
 export function setChildren(node: Node, ...kids: Child[]): void {
+  const path = focusPath(node);
   clear(node);
   append(node, kids);
+  if (path) restoreFocus(node, path);
+}
+
+// Re-rendering rebuilds controls; without this a keyboard user's focus falls back to the page (WCAG 2.4.3).
+function focusPath(root: Node): { tag: string; id: string | null; at: number[] }[] | null {
+  const active = typeof document === 'undefined' ? null : document.activeElement;
+  if (!active || active === root || !root.contains(active)) return null;
+  const steps: { tag: string; id: string | null; at: number[] }[] = [];
+  const at: number[] = [];
+  for (let n: Node | null = active; n && n !== root; n = n.parentNode) {
+    const parent: Node | null = n.parentNode;
+    if (!parent) return null;
+    at.unshift(Array.prototype.indexOf.call(parent.childNodes, n));
+    const e = n as Element;
+    steps.unshift({ tag: e.tagName, id: e.getAttribute ? e.getAttribute('id') : null, at: [...at] });
+  }
+  return steps.length > 0 ? steps : null;
+}
+
+function restoreFocus(root: Node, steps: { tag: string; id: string | null; at: number[] }[]): void {
+  let cur: Node = root;
+  for (const step of steps) {
+    const idx = step.at[step.at.length - 1]!;
+    const next: Node | undefined = cur.childNodes[idx];
+    const e = next as Element | undefined;
+    if (!e || e.tagName !== step.tag || (e.getAttribute ? e.getAttribute('id') : null) !== step.id) return;
+    cur = e;
+  }
+  const target = cur as HTMLElement;
+  if (typeof target.focus === 'function' && !(target as { disabled?: boolean }).disabled) target.focus();
 }
 
 let liveRegion: HTMLElement | null = null;
