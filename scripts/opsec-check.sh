@@ -106,7 +106,8 @@ n=0; seen=$'\n'; files=(); labels=(); links=(); exts=(); binary=()
 skip_path() { [ "$1" = "$SELF" ] || [[ "$1" =~ $VENDORED_RE ]]; }
 set_ext() { # set_ext <path>: lower-case extension of the file name in $ext ("" if none)
   local base="${1##*/}"; ext=""
-  case "$base" in ?*.*) ext="$(printf '%s' "${base##*.}" | tr 'A-Z' 'a-z')" ;; esac
+  case "$base" in ?*.*) ext="${base##*.}" ;; esac
+  case "$ext" in *[A-Z]*) ext="$(printf '%s' "$ext" | tr 'A-Z' 'a-z')" ;; esac
   case "$ext" in *[!a-z0-9]*) ext="" ;; esac
 }
 next_item() { # next_item <path> <label> <is_link>: reserve files[n] for the content about to be written
@@ -116,7 +117,7 @@ next_item() { # next_item <path> <label> <is_link>: reserve files[n] for the con
 add_blob() { # add_blob <sha> <path> <label> <mode>
   case "$seen" in *$'\n'"$1 $2"$'\n'*) return 0 ;; esac
   seen="$seen$1 $2"$'\n'
-  next_item "$2" "$3" "$([ "$4" = 120000 ] && echo 1 || echo 0)"
+  if [ "$4" = 120000 ]; then next_item "$2" "$3" 1; else next_item "$2" "$3" 0; fi
   git cat-file blob "$1" > "${files[n]}" 2> "$tmp/git.err" || die "'git cat-file blob $1' ($2) failed: $(head -c 300 "$tmp/git.err" | tr '\n' ' ')"
   n=$((n + 1))
 }
