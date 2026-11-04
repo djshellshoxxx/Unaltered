@@ -331,10 +331,12 @@ jobs:
       - name: Offline bundled toolkit regressions (no SDK or services)
         run: python -m unittest discover -s tests/toolkit -p 'test_*.py' -v
       - run: python -m venv /tmp/venv && /tmp/venv/bin/pip install opentimestamps==0.4.5
+      # The whole directory, so expected.json (the oracle tests/unit/codec.test.ts trusts) cannot be hand-edited, and
+      # a fixture missing on either side fails too.
       - name: Fixtures regenerate byte-identically from the reference implementation
         run: |
           /tmp/venv/bin/python tests/differential/gen_fixtures.py /tmp/fixtures
-          for f in pending confirmed batch0 batch1 batch2 litecoin; do cmp /tmp/fixtures/$f.ots tests/fixtures/ots/$f.ots; done
+          diff -r /tmp/fixtures tests/fixtures/ots
       - name: Our parser and serializer against the reference
         run: npx vitest run tests/unit/codec.test.ts
         env:
