@@ -60,7 +60,10 @@ export function cleanWav(input: Uint8Array): AudioResult {
     if (WAV_KEEP.has(id)) {
       // Pad bytes are re-emitted as zero so content cannot ride in them.
       parts.push(input.subarray(pos, end));
-      if (len & 1) parts.push(Uint8Array.of(0));
+      if (len & 1) {
+        parts.push(Uint8Array.of(0));
+        if (input[end] !== 0) note('non-zero chunk padding');
+      }
     } else {
       note(WAV_NAMES[id] ?? `unknown chunk (${/^[\x20-\x7e]{4}$/.test(id) ? id.trim() : '?'})`);
     }
