@@ -32,6 +32,11 @@ async function hashOut(name: string): Promise<{ dir: string; code: number; out: 
 // fingerprint on the terminal. GNU sha256sum escapes `\`, `\n` and `\r` and prefixes the line with `\`; its `-c`
 // reads back only those three escapes and prints every other character as is. A line it cannot read is only a
 // warning, so `sha256sum -c` would skip that file, even a tampered one, and still exit 0.
+// The leading-backslash escape form is GNU coreutils syntax. Other sha256sum implementations (macOS, and the uutils
+// coreutils some Linux images now ship) do not read it, so the interop checks run only against GNU sha256sum.
+const sha256sumVersion = spawnSync('sha256sum', ['--version'], { encoding: 'utf8' });
+const gnu = sha256sumVersion.status === 0 && /GNU coreutils/.test(sha256sumVersion.stdout ?? '');
+
 describe.runIf(process.platform !== 'win32')('cli hash output with hostile file names', () => {
   it('escapes a newline so the name cannot add a forged checksum line', async () => {
     const r = await hashOut(`a\n${'0'.repeat(64)}  forged`);
@@ -70,7 +75,7 @@ describe.runIf(process.platform !== 'win32')('cli hash output with hostile file 
     expect({ code: r.code, out: r.out, err: r.err }).toEqual({ code: 0, out: `${ABC}  ${r.dir}/tab\there\n`, err: '' });
   });
 
-  it.runIf(process.platform === 'linux')('prints only lines GNU sha256sum -c checks, so a tampered file fails the check', async () => {
+  it.runIf(gnu)('prints only lines GNU sha256sum -c checks, so a tampered file fails the check (skipped where GNU sha256sum is missing)', async () => {
     const dir = tmp();
     const names = ['plain.txt', 'tab\there', `a\n${'0'.repeat(64)}  forged`, 'cr\rhere', 'back\\slash', 'back\\slash\nand break'];
     let list = '';
@@ -104,9 +109,6 @@ describe.runIf(process.platform !== 'win32')('cli hash output with hostile file 
     expect(r.out).toBe(`${ABC}  ${r.dir}/back\\slash.txt\n`);
   });
 
-  // The leading-backslash escape form is GNU coreutils syntax; other sha256sum tools (e.g. on macOS) do not read it.
-  const sha256sum = spawnSync('sha256sum', ['--version'], { encoding: 'utf8' });
-  const gnu = sha256sum.status === 0 && /GNU coreutils/.test(sha256sum.stdout ?? '');
   it.runIf(gnu)('produces lines that GNU sha256sum -c accepts (skipped where GNU sha256sum is missing)', async () => {
     for (const name of ['back\\slash.txt', `nl\nname`, 'cr\rname\\x']) {
       const r = await hashOut(name);
