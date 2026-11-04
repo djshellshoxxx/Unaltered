@@ -34,6 +34,23 @@ describe('FR-1 hashing', () => {
     );
   });
 
+  it.each([0, -1, Number.NaN, Number.POSITIVE_INFINITY, 0.5])(
+    'rejects invalid stall timeout %s before opening a stream',
+    async (stallMs) => {
+      let opened = false;
+      const src = {
+        size: 3,
+        slice: (): never => { throw new Error('unexpected fallback read'); },
+        stream: (): ReadableStream<Uint8Array> => {
+          opened = true;
+          return new Blob(['abc']).stream();
+        },
+      };
+      await expect(hashSource(src, { stallMs })).rejects.toMatchObject({ code: 'INPUT_INVALID' });
+      expect(opened).toBe(false);
+    },
+  );
+
   it('reports progress and supports cancel', async () => {
     const seen: number[] = [];
     await hashSource(new Blob([new Uint8Array(100)]), { chunkSize: 30, onProgress: (n) => seen.push(n) });

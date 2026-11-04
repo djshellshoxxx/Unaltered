@@ -5,6 +5,35 @@ Goal: **as few as possible**, and only audited or independently verifiable ones.
 
 Historical research tables below were reviewed on 2026-10-09, with adoption records dated separately. Current audit-preparation review: 2026-10-30; see the new snapshot before the historical REL-1 record. The dated snapshot supersedes planning statuses such as “candidate pin” and “decision pending” without rewriting the historical research or claiming that its external sources were rechecked.
 
+## Integration snapshot — 2026-11-04 (minimatch advisory decision)
+
+Lockfile unchanged: SHA-256 `836f4e61ef6339339bbbf6f07692a31dadd141cbe3755ef5610f7980dff262df` (same as 2026-10-30).
+Node 22.23.4 / npm 10.9.9: `npm audit --omit=dev` reports 0. Full `npm audit` still reports the same 11 moderate dev-only
+entries, all from `minimatch@10.2.6` ([GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249), CWE-405,
+fixed in `>=11.0.1`).
+
+Upstream check, from npm registry metadata on 2026-11-04:
+
+- `eslint@10.14.0` (latest) declares `minimatch ^10.2.6`.
+- `@eslint/config-array@0.23.5` (latest) declares `^10.2.4`.
+- `@typescript-eslint/typescript-estree@8.72.1` (latest) declares `^10.2.2`.
+
+No upstream release of the lint chain accepts a fixed version yet. `minimatch@11.0.4` also adds a new transitive
+package (`@isaacs/nonrecursive-glob-match`, BlueOak-1.0.0).
+
+**Decision: accepted risk; no override applied.** An `overrides` entry forcing `minimatch@11` would violate the declared
+semver ranges of three packages and add an unreviewed transitive dependency. The fix it would buy is small:
+
+- The advisory needs attacker-controlled glob patterns.
+- In this repository, glob patterns reach minimatch only from repository-controlled ESLint configuration and command lines.
+- No product, CLI or build code path uses minimatch. Shipped artifacts contain none of the lint chain.
+
+Revisit when ESLint or typescript-eslint publish a release whose declared range includes `>=11.0.1`. Then do a normal
+exact-pin bump, a lockfile diff review, `npm ci --ignore-scripts` and `npm run check`.
+
+`npm audit signatures` is still blocked in this executor ("Failed to download" fetching TUF metadata). No local
+provenance claim is made; the native CI `build-test` job remains the signature evidence.
+
 ## Audit-preparation snapshot — 2026-10-30
 
 Candidate based on main `da9b0a3626e702381f2ad1d1b1d4cd3128fde2dd`; the consolidation changes no dependency or lockfile pin.
@@ -102,3 +131,4 @@ Pin exact versions at M0-1 via `npm install --save-exact --save-dev <pkg>`; revi
 | 2026-10-14 | opentimestamps (PyPI, python) | 0.4.5 | build session | sdist read for protocol constants | Dev/CI only: fixture generation and differential tests |
 | 2026-10-22 | Gitleaks | 8.30.1 | development validation | official GitHub release asset digest checked before extraction | Dev/CI only. Linux artifact SHA-256 `551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb`; local full-history scan passed. No PR comments or third-party reporting configured |
 | 2026-10-24 | Current direct dependencies and lockfile | exact versions in current snapshot above | internal resume review | local manifest/lockfile agreement; no diff from resume baseline | REL-1 record refresh only. No dependencies changed; current CI signature/provenance results recorded above. No new upstream audit/advisory research or independently audited-version diff claimed |
+| 2026-11-04 | minimatch (transitive, dev-only via eslint/typescript-eslint) | 10.2.6 | integration session | npm registry metadata of eslint 10.14.0, @eslint/config-array 0.23.5, typescript-estree 8.72.1, minimatch 11.0.4 | GHSA-g3hv-75wg-m249 accepted as dev-only risk (repository-controlled patterns); no override, lockfile unchanged. See 2026-11-04 snapshot |

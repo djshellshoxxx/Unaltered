@@ -1,0 +1,65 @@
+{
+  "sourceCommit": "0b5f18fb93501fde8a380e09154c3cfafd214bb4",
+  "targetSha256": "1b48b3a74e753021946e879df4954b72b5ff8fd51149961bb04bf0559881363c",
+  "node": "v22.23.4",
+  "v8": "12.4.254.21-node.57",
+  "options": {
+    "iterations": 1000000,
+    "seconds": 1800,
+    "seed": 20261104,
+    "out": "scratch/fuzz"
+  },
+  "limits": {
+    "maxInputBytes": 65536,
+    "maxCorpusPerTarget": 256,
+    "caseDeadlineMs": 1000,
+    "workerOldHeapMiB": 128
+  },
+  "status": "budget-complete",
+  "executed": 1000036,
+  "mutations": 1000000,
+  "targets": {
+    "proof": {
+      "accepted": 3115,
+      "rejected": 163564,
+      "ranges": 159,
+      "corpus": 33
+    },
+    "timestamp": {
+      "accepted": 4124,
+      "rejected": 162553,
+      "ranges": 157,
+      "corpus": 26
+    },
+    "jpeg": {
+      "accepted": 2177,
+      "rejected": 164493,
+      "ranges": 182,
+      "corpus": 57
+    },
+    "png": {
+      "accepted": 1266,
+      "rejected": 165404,
+      "ranges": 71,
+      "corpus": 16
+    },
+    "wav": {
+      "accepted": 2465,
+      "rejected": 164205,
+      "ranges": 43,
+      "corpus": 14
+    },
+    "mp3": {
+      "accepted": 4025,
+      "rejected": 162645,
+      "ranges": 58,
+      "corpus": 14
+    }
+  },
+  "output": "scratch/fuzz/(local campaign directory, not committed)",
+  "seedExecutions": 36,
+  "retainedSeeds": 32,
+  "elapsedMs": 1170960,
+  "stopReason": "iterations",
+  "note": "Seeded bounded campaign on the 2026-11-04 integration candidate after the OTS and metadata-parser fixes (source 0b5f18f). Six targets, no finding, stopped on the iteration budget. Run on a shared 4-vCPU executor while other agents were active. A clean bounded run is not exhaustive coverage or an independent audit."
+}

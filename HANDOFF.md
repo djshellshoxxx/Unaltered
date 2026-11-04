@@ -1,3 +1,78 @@
+# Current integration run — 2026-11-04 (UTC)
+
+- **Candidate:** draft [PR47](https://github.com/djshellshoxxx/Unaltered/pull/47), branch `claude/funny-lamport-2jfc0e`,
+  base main `1b6dd91`.
+- **Authoritative ledgers:** [docs/ULTRA_RUN_BOARD.md](docs/ULTRA_RUN_BOARD.md) (task states, run IDs, unreproduced suspects,
+  owner checklist, final SHA) and the 2026-11-04 section of [docs/TODO.md](docs/TODO.md). Both supersede older dated
+  sections where they disagree.
+- **Status:** unaudited and unsigned development candidate. Nothing is merged to main. No release, tag, signing,
+  deployment, account or settings change.
+- **Source PRs #39 and #43–#46:** merged into the candidate with `--no-ff`; not closed or rewritten.
+- **PRs #41/#42** (API-funded Codex automation): not modified.
+
+## What this run did
+
+1. Merged the open hardening PRs #43–#46 and PR #39 (Bob/Finney attribution tooling).
+2. Ran three review waves, each fix test-first:
+   - Isolated worktree workers per module: OTS, metadata parsers, network/CLI, UI, toolkit.
+   - Wave 2: a discovery workflow over hash, bytes, build, CI/release, the fuzz harness and acceptance scripts.
+   - An independent adversarial review of the combined diff. Every finding needed 2 of 3 skeptic lenses, including
+     an actual reproduction.
+3. Added Trusted Types delivery/enforcement E2E coverage for both builds.
+4. Recorded evidence:
+   - Firefox/WebKit 2 GiB completion: dispatch run 41756413597.
+   - Native stall A/B: run 41561857747, extracted per shard.
+   - Seeded fuzz campaign: `docs/evidence/fuzz-20261104.json`, 1,000,000 mutations, no finding.
+   - Dated dependency decision for the dev-only minimatch advisory.
+5. Fixed CI regressions this run introduced:
+   - Windows: hash output escaped every backslash.
+   - macOS: a GNU-only interop test ran against a non-GNU `sha256sum`.
+
+## Environment notes for the next session
+
+- **Git identity.** The repo-local identity is now `Claude <noreply@anthropic.com>`, which this environment signs with
+  its SSH key, so GitHub verifies the commits. It is non-personal and passes `scripts/opsec-check.sh`. Earlier commits
+  in this run use the neutral `Unaltered contributors` identity.
+- **Lint.** Agent worktrees live under `.claude/worktrees/`, which is gitignored and ESLint-ignored. Without that
+  ignore, typescript-eslint fails every file with "multiple candidate TSConfigRootDirs".
+- **Pinned reference.** Create a scratch venv with `opentimestamps==0.4.5` and export `UNALTERED_PYTHON`, or the
+  reference differential tests skip.
+- **Browsers.** Only Chromium exists locally. Firefox and WebKit evidence comes from CI (`workflow_dispatch` on the
+  branch runs the non-PR 2 GiB jobs).
+
+## Exact next commands
+
+Run these from a clean checkout of the candidate head.
+
+```bash
+npm ci --ignore-scripts
+```
+
+```bash
+python3 -m venv /tmp/venv && /tmp/venv/bin/pip install opentimestamps==0.4.5
+```
+
+```bash
+UNALTERED_PYTHON=/tmp/venv/bin/python npm run check
+```
+
+```bash
+npm run build && cp dist/SHA256SUMS /tmp/sums1 && npm run build && cmp /tmp/sums1 dist/SHA256SUMS
+```
+
+```bash
+npx playwright test --retries=0
+```
+
+```bash
+UNALTERED_BIG_BROWSER=1 npx playwright test tests/e2e/memory.spec.ts --repeat-each=3 --retries=0 --max-failures=1
+```
+
+The owner-gated work (merge decision, OPS, signing, audit, second-person rebuild, human accessibility/Spanish/usability,
+Tor/Q7, R1 Bob/Finney, legal/domain) is listed with the smallest unblocking action in the run board's owner checklist.
+
+---
+
 # Current consolidation — 2026-10-30 (America/Los_Angeles)
 
 Current publication addendum: [final handoff and raw evidence](docs/FINAL_HANDOFF_20261030.md).

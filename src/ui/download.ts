@@ -41,12 +41,25 @@ export function downloadLink(label: string, fileName: string, data: Blob | Uint8
   return el('a', { class: 'button primary', href: entry.url, download: safeFileName(fileName), onclick: () => onClick?.() }, label);
 }
 
+const MAX_NAME = 200;
+
+/** Sanitises a stem and appends a suffix, shortening the stem (never the suffix) to stay within MAX_NAME code points. */
+function withSuffix(stem: string, suffix: string, max = MAX_NAME): string {
+  const room = Math.max(1, max - Array.from(suffix).length);
+  return Array.from(safeFileName(stem)).slice(0, room).join('') + suffix;
+}
+
 export function receiptName(fileName: string): string {
-  return `${safeFileName(fileName)}.ots`;
+  return withSuffix(fileName, '.ots');
+}
+
+export function upgradedName(receiptFileName: string): string {
+  return withSuffix(receiptFileName.replace(/\.ots$/i, ''), '.upgraded.ots');
 }
 
 export function cleanedName(fileName: string, format: 'jpeg' | 'png' | 'wav' | 'mp3'): string {
   const ext = format === 'jpeg' ? 'jpg' : format;
   const stem = safeFileName(fileName).replace(/\.[A-Za-z0-9]{1,5}$/, '');
-  return `${stem}-cleaned.${ext}`;
+  // Leave room for the ".ots" a receipt for this copy will add, so its name still ends with the full cleaned name.
+  return withSuffix(stem, `-cleaned.${ext}`, MAX_NAME - 4);
 }

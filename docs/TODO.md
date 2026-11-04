@@ -5,7 +5,78 @@ Current publication addendum: [final handoff and raw evidence](FINAL_HANDOFF_202
 Legend: `[ ]` open, `[x]` done. IDs map to milestones in `BUILD_PLAN.md` and requirements in `SPEC.md`.
 Do tasks in order within a milestone unless marked parallel.
 
-## Authoritative consolidation status — 2026-10-30
+## Authoritative integration status — 2026-11-04
+
+- Candidate: draft [PR47](https://github.com/djshellshoxxx/Unaltered/pull/47), branch `claude/funny-lamport-2jfc0e`.
+- Base: main `1b6dd91`. PR34 is already merged into main.
+- Task states, CI run IDs and unreproduced suspects: [ULTRA_RUN_BOARD.md](ULTRA_RUN_BOARD.md).
+- The 2026-10-30 section below is historical. Where the two disagree, this section supersedes it.
+
+Done (each fix has a regression test that failed on its parent):
+
+- [x] **Hardening PRs.** Merged #43 (stall-timeout validation), #44 (proof serialization guard), #45 (truncated
+  `ftyp`) and #46 (stale live-region announcements). Also merged #39, the Bob/Finney attribution tooling; its offline
+  tests pass with the pinned reference.
+- [x] **Fallback/cross-check cancellation.** Resolved on main by #38: waits on pending BYOB, fallback, cross-check
+  and WebCrypto reads stop on abort, covered by unit tests.
+  - Native reads are not themselves cancelled. `awaitAbortable` documents this, so no "native read cancelled" claim
+    is made.
+- [x] **Firefox/WebKit 2 GiB completion dispatch** on the candidate's hash code (run 41756413597): Firefox 3/3,
+  WebKit 3/3, Chromium memory 3/3.
+  - Completion only: there is no RSS probe on Firefox or WebKit, so no memory-ceiling claim is made for them.
+- [x] **Native stall A/B diagnostic** (run 41561857747):
+  - Candidate hashing family: 24/24 attempts passed.
+  - Historical family: failed 6 of 8 shards at 540 s with a stuck pending read.
+  - Diagnostic only; it does not establish Chromium's root cause.
+- [x] **Local Chromium full E2E**, `--retries=0`: 69 passed, 1 optional skip. The 50 ms responsiveness test passed,
+  as did the offline single-file test.
+- [x] **Dev-only minimatch advisory** (11 moderate entries): accepted risk with a dated rationale in
+  `DEPENDENCIES.md`. No upstream lint-chain release accepts the fix yet; runtime audit is 0.
+- [x] **Trusted Types.** Delivery and enforcement are now tested for both builds. Chromium enforces; Firefox and
+  WebKit are covered by the CI E2E matrix.
+- [x] **OTS fixes:**
+  - The explorer quorum can never fall below two sources (FR-7 step 5).
+  - `verifyProof` replays caller-built proofs before trusting them.
+  - Attestations are ordered like the reference serializer.
+- [x] **Metadata parser fixes:**
+  - A forged APEv2 footer can no longer drop a real MP3 frame.
+  - PNG PLTE/tRNS must fit the colour type.
+  - Dropped JFIF header bytes and zeroed WAV pad bytes are now listed.
+  - `ID3 ` WAV chunks get the correct label.
+- [x] **Network/CLI fixes:**
+  - Oversized reply bodies are cancelled.
+  - `hash` output escapes newline, CR and `\` the way sha256sum does, only in names that contain a line break, so
+    Windows paths print unchanged. Names with other control characters (TAB excepted) are refused.
+  - A same-size rewrite during a read fails instead of printing a torn fingerprint.
+  - A failed output write gives a generic error with no stack trace (SR-8).
+- [x] **UI fixes:**
+  - The share-link result says "fingerprint", not "file".
+  - A share link and a picked file are mutually exclusive.
+  - Download names keep their suffixes.
+  - Turning the receipt list off deletes the data before the flag.
+  - Focus is kept across re-renders.
+  - String-valued inline handlers and script URLs are refused.
+  - Placeholders are substituted in one pass.
+  - A link with conflicting `h=` fragments yields no fingerprint.
+- [x] **Toolkit:** `start-server.sh` no longer loops forever when an option has no value.
+
+Still open:
+
+- [ ] **R1 residuals:**
+  - Bob/Finney confirmed browser paths.
+  - The pending-receipt `GET /timestamp` returns 404 without CORS on all three calendars; the live check re-confirmed
+    this on 2026-11-04.
+- [ ] **Q7 Trusted Types decision** (owner) and Tor Browser testing (no Tor Browser available to agents).
+- [ ] **Human gates:**
+  - Screen-reader pass, including whether results are announced up to three times.
+  - Native review of all Spanish copy, including the new `verify.d.noLater.link`.
+  - Usability test with 3–5 people.
+- [ ] **External and owner gates:**
+  - Independent audit (REL-3) and a second-person rebuild (REL-4).
+  - Signing (REL-5) and OPS-1..6.
+  - Domain (Q5) and legal review (LEGAL-1).
+
+## Authoritative consolidation status — 2026-10-30 (historical)
 
 Candidate [PR34](https://github.com/djshellshoxxx/Unaltered/pull/34), final source/workflow `f2e7d24017171475be23f9e069a91ae195fea2c3` (product/tests `d09c2401839ea5a06fd794c9666d439b17e500e4`),
 from main `da9b0a3`. Main already contains PR28/29/32; selected continuation25/30/31/33 is consolidated without closing them.

@@ -30,19 +30,28 @@ else
   SED_INPLACE="sed -i"
 fi
 
-# Check if pnpm is installed
-if ! command -v pnpm &> /dev/null; then
-  echo "📦 pnpm not found. Installing pnpm..."
-  npm install -g pnpm
-fi
-
-# Check if project name is provided
+# Check if project name is provided (before anything is installed)
 if [ -z "$1" ]; then
   echo "❌ Usage: ./create-react-shadcn-complete.sh <project-name>"
   exit 1
 fi
 
 PROJECT_NAME="$1"
+
+# The name becomes a directory, a pnpm argument and part of a sed script below,
+# so allow only characters that are literal in all three (no '/', '&', '\',
+# whitespace, newlines or a leading '-' or '.').
+if [[ ! "$PROJECT_NAME" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+  echo "❌ Error: project name must start with a letter or digit and contain only letters, digits, '.', '_' or '-'"
+  exit 1
+fi
+
+# Check if pnpm is installed
+if ! command -v pnpm &> /dev/null; then
+  echo "📦 pnpm not found. Installing pnpm..."
+  npm install -g pnpm
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMPONENTS_TARBALL="$SCRIPT_DIR/shadcn-components.tar.gz"
 
