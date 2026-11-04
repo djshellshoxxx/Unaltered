@@ -135,7 +135,8 @@ jobs:
   browser-memory:
     name: Browser 2 GiB memory acceptance (Chromium)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Three attempts may each use the full 600 s test timeout; leave room for install/build as well.
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -166,7 +167,8 @@ jobs:
     name: Browser 2 GiB completion (${{ matrix.browser }})
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # Match Chromium's budget: three 600 s tests plus browser install/build.
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
