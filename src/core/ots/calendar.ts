@@ -46,7 +46,13 @@ export interface BatchStampResult {
 const ACCEPT = { Accept: 'application/vnd.opentimestamps.v1' };
 
 function normBase(u: string): string {
-  return u.replace(/\/+$/, '');
+  try {
+    // URL identity folds host/scheme case and the default HTTPS port, while retaining the selected path.
+    // Network policy still rejects credentials, insecure schemes and non-default ports before any request.
+    return new URL(u).href.replace(/\/+$/, '');
+  } catch {
+    return u.replace(/\/+$/, '');
+  }
 }
 
 /**
