@@ -29,12 +29,13 @@ function browserRun(t) {
   writeFileSync(join(dir, 'file.txt'), 'synthetic file\n');
   writeFileSync(join(dir, 'receipt.ots'), 'synthetic pending receipt\n');
   const log = join(dir, 'verify.log');
-  const run = (...out) => spawnSync(process.execPath, [`--import=${REGISTER}`, RUNNER, join(dir, 'file.txt'), join(dir, 'receipt.ots'), ...out], {
+  const runWith = (extraEnv, ...out) => spawnSync(process.execPath, [`--import=${REGISTER}`, RUNNER, join(dir, 'file.txt'), join(dir, 'receipt.ots'), ...out], {
     cwd: ROOT, encoding: 'utf8', timeout: 30_000,
-    env: { ...process.env, TMPDIR: tmp, R1_STUB_DOWNLOAD: join(dir, 'download.bin'), R1_STUB_LOG: log },
+    env: { ...process.env, TMPDIR: tmp, R1_STUB_DOWNLOAD: join(dir, 'download.bin'), R1_STUB_LOG: log, ...extraEnv },
   });
+  const run = (...out) => runWith({}, ...out);
   const verified = () => readFileSync(log, 'utf8').trim().split('\n').map((line) => JSON.parse(line));
-  return { dir, tmp, bytes, run, verified };
+  return { dir, tmp, bytes, run, runWith, verified };
 }
 
 function assertPrivateReceipt(r, result) {
@@ -60,6 +61,21 @@ test('r1-acceptance.mjs: the default output is a fresh private directory, not a 
   assert.equal(statSync(dirname(first)).mode & 0o777, 0o700);
   const second = assertPrivateReceipt(r, r.run());
   assert.notEqual(dirname(second), dirname(first), 'each run gets its own directory');
+});
+
+// R1 PASS means the app's Upgrade produced a confirmed receipt that Verify then showed as Verified
+// (docs/R1_ACCEPTANCE.md). A receipt that verifies without any upgrade (e.g. one that was already complete) is no
+// evidence of the upgrade path and must not be reported as PASS.
+test('r1-acceptance.mjs: Verified without an upgraded receipt is not an R1 PASS', (t) => {
+  const r = browserRun(t);
+  const result = r.runWith({ R1_STUB_NO_DOWNLOAD: '1' });
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.verify.state, 'VERIFIED');
+  assert.notEqual(report.classification, 'PASS');
+  assert.equal(report.classification, 'NOT_UPGRADED');
+  assert.equal(report.upgrade.confirmed, false);
+  assert.equal(report.verify.upgradedReceiptPath, null);
+  assert.equal(result.status, 1);
 });
 
 test('r1-acceptance.mjs: a symlink planted at the receipt path is replaced, never written through', { skip: !posix && 'POSIX symlinks' }, (t) => {

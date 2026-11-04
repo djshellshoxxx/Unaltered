@@ -14,7 +14,8 @@ class Locator {
   locator(child) { return new Locator(`${this.selector} ${child}`); }
   first() { return this; }
   async waitFor() {}
-  async count() { return this.selector.endsWith('a[download]') ? 1 : 0; }
+  // R1_STUB_NO_DOWNLOAD: the Upgrade step offers no upgraded receipt (e.g. the input was already complete).
+  async count() { return this.selector.endsWith('a[download]') && !process.env.R1_STUB_NO_DOWNLOAD ? 1 : 0; }
   async allTextContents() { return []; }
   async click() {}
   async getAttribute() { return 'result result-VERIFIED'; }
