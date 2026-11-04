@@ -221,6 +221,17 @@ describe('WAV: kept chunks keep only the fields a decoder reads', () => {
     expect(r.kind === 'cleaned' && { removed: r.removed, output: toHex(r.output) }).toEqual({ removed: [], output: toHex(expected) });
   });
 
+  it('refuses XMA, whose format chunk has no cbSize to bound its fields', () => {
+    const r = cleanWav(wav(riff('fmt ', [0x65, 0x01, 16, 0, ...u16(0), ...u16(0), 0, 1, 0, 0, ...new Array<number>(32).fill(7), ...SECRET]), DATA));
+    expect(r.kind).toBe('unsupported');
+  });
+
+  it('keeps a valid chunk that follows a malformed one of the same kind', () => {
+    const r = cleanWav(wav(FMT, riff('smpl', [1, 2, 3]), riff('smpl', [...smplHead(1, 0), ...LOOP]), DATA));
+    const expected = wav(FMT, riff('smpl', [...smplHead(1, 0), ...LOOP]), DATA);
+    expect(r.kind === 'cleaned' && { removed: r.removed, output: toHex(r.output) }).toEqual({ removed: ['malformed chunk (smpl)'], output: toHex(expected) });
+  });
+
   it('keeps well-formed chunks byte for byte', () => {
     for (const [label, input] of [
       ['PCM fmt with an empty extension', wav(riff('fmt ', [...PCM_FIELDS, 0, 0]), DATA)],
