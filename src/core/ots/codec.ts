@@ -147,8 +147,14 @@ function attestationBytes(a: Attestation): Uint8Array {
   return concat(ATT_PENDING, Uint8Array.from(writeVaruint(inner.length)), inner);
 }
 
+const attTag = (a: Attestation): Uint8Array => (a.kind === 'bitcoin' ? ATT_BITCOIN : ATT_PENDING);
+const utf8 = (s: string): Uint8Array => new TextEncoder().encode(s);
+
+/** Reference order (python notary.py __lt__, javascript notary.js compareTo): by tag, then by height or by URI. */
 function compareAtt(a: Attestation, b: Attestation): number {
-  return compareBytes(attestationBytes(a), attestationBytes(b));
+  if (a.kind !== b.kind) return compareBytes(attTag(a), attTag(b));
+  if (a.kind === 'bitcoin') return a.height - (b as { height: number }).height;
+  return compareBytes(utf8(a.uri), utf8((b as { uri: string }).uri));
 }
 
 function opBytes(op: Op): Uint8Array {
