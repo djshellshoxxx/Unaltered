@@ -29,8 +29,10 @@ case "$SORT_KEY" in
 esac
 
 ENCODED=$(jq -rn --arg q "$QUERY" '$q | @uri')
+# Encode custom sort expressions as data, not additional OpenAlex query parameters.
+ENCODED_SORT=$(jq -rn --arg sort "$SORT" '$sort | @uri')
 
-URL="https://api.openalex.org/works?search=${ENCODED}&per_page=${LIMIT}&page=${PAGE}&sort=${SORT}&mailto=${MAILTO}"
+URL="https://api.openalex.org/works?search=${ENCODED}&per_page=${LIMIT}&page=${PAGE}&sort=${ENCODED_SORT}&mailto=${MAILTO}"
 
 OFFSET=$(( (PAGE - 1) * LIMIT ))
 
