@@ -136,11 +136,19 @@ Agents cannot complete these. Each needs the owner, a named person, or an extern
 | R1 Bob/Finney confirmed paths | Needs live confirmed receipts and real browser network access | Follow `docs/R1_BOB_FINNEY_TEMPLATE.md` with `scripts/r1-bob-finney.mjs` on a networked machine |
 | Pending-receipt CORS (404 without ACAO) | Calendar operators set this header | Ask the calendar operators to send `Access-Control-Allow-Origin` on 404 responses, or approve an ADR for a different approach (no silent proxy) |
 | Q5 / LEGAL-1 | Domain and legal decisions | Decide the domain policy; get legal review of the public wording |
+| SonarCloud gate (B security rating on new code) | The issue cannot be read here (sonarcloud.io blocked) | Open https://sonarcloud.io/project/issues?id=djshellshoxxx_Unaltered&pullRequest=47&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true and fix or mark the remaining vulnerability; or allow `sonarcloud.io` in this environment's network settings and ask the agent to fix it |
 | exiftool in CI | `opsec-check.sh` now treats tracked media as a finding without exiftool | If media files are ever tracked, install a pinned exiftool in the `opsec` job first |
 
 ## Final state
 
-Final source SHA: `30690fc6df26a491d282772b7fc27d0e5f0e9332`. Later commits change only docs and evidence.
+Final source SHA: `0e7cf12` (branch head). After the validation below, `30690fc` → `0e7cf12` added only:
+- `d4d765e`: macOS CI fix. The fuzz driver's temp directory is now realpath'd, because on macOS `/var` → `/private/var`
+  hid all coverage. Reproduced on Linux with a symlinked `TMPDIR`; covered by a regression test.
+- `57f8561`, `e251361`: a containment guard and a constant error message in the test stub
+  `tests/r1/stubs/browser-step.mjs`, for SonarCloud's path-traversal findings there.
+- `b60fee6` and its revert `0e7cf12`: a SonarCloud test-scope file, reverted because it had no observed effect.
+
+Product code (`src/`) and the build are unchanged since `30690fc`.
 
 Local results at the final source (Linux, 4 vCPU, Node 22.23.4, pinned Chromium; reference `opentimestamps==0.4.5`):
 
@@ -161,7 +169,19 @@ CI:
 
 - `c7dc77b`: Windows, macOS, Linux build, Chromium 2 GiB memory, Chromium/Firefox E2E, differential and secret scan
   all passed before the run was cancelled by the next push.
-- The full matrix on the final source runs by `workflow_dispatch`, including the Firefox/WebKit 2 GiB completion jobs
-  that pull-request runs skip. Its run ID is recorded below once it reports.
+- Full matrix by `workflow_dispatch` at `d4d765e`, including the Firefox/WebKit 2 GiB completion jobs that pull-request
+  runs skip: [run 41783868297](https://github.com/djshellshoxxx/Unaltered/actions/runs/41783868297). It was still
+  queued when this was written; check its result.
+- Local 2 GiB ×3 at `30690fc`, the source with the new `blob:` worker: 3/3, worker observed in all three attempts.
+  Digest visible at 33.6/35.3/35.3 s; max sampled extra renderer RSS 61,231,104 bytes.
+- The 300 s check of the new fuzz harness at `30690fc`: 222,092 mutations, no finding, `coveredOffsets` recorded per
+  target. It also correctly reported `sourceDirty: true`, because uncommitted doc edits were in the tree.
+- **SonarCloud quality gate: FAILED, open.**
+  - It passed through `d9b4fdc`. At `30f2625` it reported "C Security Rating on New Code"; after the stub guard it
+    reports B, meaning one minor vulnerability is left.
+  - sonarcloud.io is blocked by this environment's network policy, so the issue text could not be read and was not
+    guessed further.
+  - Owner action: open the PR's SonarCloud issues and fix or triage the remaining vulnerability, or allow
+    `sonarcloud.io` for the session.
 - The informational live check fails on every head, main included: calendars answer a pending
   `GET /timestamp` with 404 and no CORS header.
