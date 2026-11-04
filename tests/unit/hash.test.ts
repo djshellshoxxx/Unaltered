@@ -636,6 +636,55 @@ describe('FR-1 hashing', () => {
     }
     afterEach(() => { vi.unstubAllGlobals(); });
 
+    it('falls back after a worker message cannot be deserialized and removes its handlers', async () => {
+      let worker!: DeserializationWorker;
+      class DeserializationWorker {
+        onmessage: ((ev: { data: unknown }) => void) | null = null;
+        onmessageerror: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        terminated = 0;
+        constructor() { worker = this; }
+        postMessage(): void {}
+        terminate(): void { this.terminated++; }
+      }
+      vi.stubGlobal('Worker', DeserializationWorker);
+      vi.stubGlobal('__WORKER_URL__', 'worker.js');
+      const ac = new AbortController();
+      const result = hashBlob(new Blob(['abc']), { signal: ac.signal });
+      try {
+        expect(worker.onmessageerror).toBeTypeOf('function');
+        worker.onmessageerror!();
+        expect((await result).hex).toBe(createHash('sha256').update('abc').digest('hex'));
+        expect(worker.terminated).toBe(1);
+        expect(worker.onmessageerror).toBeNull();
+        expect(worker.onmessage).toBeNull();
+        expect(worker.onerror).toBeNull();
+        expect(getEventListeners(ac.signal, 'abort')).toHaveLength(0);
+      } finally {
+        ac.abort();
+        await result.catch(() => {});
+      }
+    });
+
+    it('clears the inline worker URL timer when hashing finishes', async () => {
+      vi.useFakeTimers();
+      fakeWorker({ type: 'done', digest: new Uint8Array(createHash('sha256').update('abc').digest()), bytes: 3, cross: 'ok' });
+      vi.stubGlobal('__WORKER_INLINE__', 'void 0');
+      const create = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:finished-worker');
+      const revoke = vi.spyOn(URL, 'revokeObjectURL');
+      try {
+        const result = hashBlob(new Blob(['abc']));
+        await vi.advanceTimersByTimeAsync(0);
+        await result;
+        expect(revoke).toHaveBeenCalledExactlyOnceWith('blob:finished-worker');
+        expect(vi.getTimerCount()).toBe(0);
+      } finally {
+        create.mockRestore();
+        revoke.mockRestore();
+        vi.useRealTimers();
+      }
+    });
+
     it('ignores worker messages already queued when cancellation terminates the worker', async () => {
       let deliver!: (data: Record<string, unknown>) => void;
       class FakeWorker {

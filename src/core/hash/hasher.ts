@@ -53,7 +53,13 @@ function workerPolicy(tt: TrustedTypesApi): { createScriptURL(s: string): string
 
 /** The blob: URL each inline worker was started from; released once that worker has answered or been stopped. */
 const scriptUrls = new WeakMap<Worker, string>();
+const scriptTimers = new WeakMap<Worker, ReturnType<typeof setTimeout>>();
 function releaseScript(w: Worker): void {
+  const timer = scriptTimers.get(w);
+  if (timer !== undefined) {
+    clearTimeout(timer);
+    scriptTimers.delete(w);
+  }
   const url = scriptUrls.get(w);
   if (url === undefined) return;
   scriptUrls.delete(w);
@@ -82,7 +88,7 @@ function makeWorker(): Worker | null {
     const w = new Worker(src);
     if (blobUrl) {
       scriptUrls.set(w, blobUrl);
-      setTimeout(() => releaseScript(w), 10_000);
+      scriptTimers.set(w, setTimeout(() => releaseScript(w), 10_000));
     }
     return w;
   } catch {
@@ -98,6 +104,7 @@ function hashInWorker(w: Worker, blob: Blob, opts: HashOptions): Promise<{ diges
       settled = true;
       opts.signal?.removeEventListener('abort', abort);
       w.onmessage = null;
+      w.onmessageerror = null;
       w.onerror = null;
       w.terminate();
       releaseScript(w);
@@ -135,6 +142,7 @@ function hashInWorker(w: Worker, blob: Blob, opts: HashOptions): Promise<{ diges
       } else unavailable();
     };
     w.onerror = unavailable;
+    w.onmessageerror = unavailable;
     try {
       w.postMessage({ type: 'start', blob, chunkSize: CHUNK_SIZE });
     } catch {
