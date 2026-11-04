@@ -35,7 +35,10 @@ echo "Found $TOTAL test files"
 echo ""
 
 COUNT=0
-for TEST_FILE in $TEST_FILES; do
+# Read one path per line on fd 3 instead of word-splitting $TEST_FILES, so
+# names with spaces or glob characters stay whole and npm keeps its stdin.
+while IFS= read -r TEST_FILE <&3; do
+  [ -n "$TEST_FILE" ] || continue
   COUNT=$((COUNT + 1))
 
   # Skip if pollution already exists
@@ -65,7 +68,7 @@ for TEST_FILE in $TEST_FILES; do
     echo "  cat $TEST_FILE         # Review test code"
     exit 1
   fi
-done
+done 3<<< "$TEST_FILES"
 
 echo ""
 echo "✅ No polluter found - all tests clean!"
