@@ -9,7 +9,8 @@
 #   4. Tracked text files contain no personal home-directory paths
 #      (3 and 4 read HEAD, the index and changed working-tree files as git stores them; symlinks by their target)
 #   5. package.json has no "author" field
-#   6. Tracked images/PDFs carry no embedded metadata (needs exiftool; falls back to a crude scan)
+#   6. Tracked images, documents, audio and video (any extension case) carry no embedded metadata
+#      (needs exiftool; falls back to a crude scan). Other binary files are listed as not inspected.
 #
 # Allow-listed emails: *@users.noreply.github.com, noreply@*, *@example.com, *@example.org, *@*.invalid
 set -u
@@ -92,63 +93,92 @@ else
   ok "no commits yet"
 fi
 
-git_to "$tmp/media" ls-files -z -- '*.jpg' '*.jpeg' '*.png' '*.tif' '*.tiff' '*.heic' '*.webp' '*.gif' '*.pdf' '*.mp4' '*.mov'
-
-# Content checks 3 and 4 read what can be pushed or committed, as git stores it: every blob in HEAD and in the index
+# Content checks 3, 4 and 6 read what can be pushed or committed, as git stores it: every blob in HEAD and in the index
 # (so a symlink is read as its stored target, never followed), plus working-tree files that differ from the index.
-# Each distinct (content, path) is copied once into $tmp/items/<n>; labels[n] names it in findings.
+# Each distinct (content, path) is copied once to files[n] (keeping a lower-case extension for exiftool); labels[n]
+# names it in findings and links[n]=1 marks a symlink (its content is a target path, never media).
 git_to "$tmp/index" ls-files -s -z
 if git rev-parse -q --verify HEAD >/dev/null 2>&1; then git_to "$tmp/head" ls-tree -r -z --full-tree HEAD; else : > "$tmp/head"; fi
 git_to "$tmp/changed" diff-files --name-only -z
 mkdir "$tmp/items" || die "cannot create $tmp/items"
-n=0; seen=$'\n'; labels=(); binary=()
+n=0; seen=$'\n'; files=(); labels=(); links=(); exts=(); binary=()
 skip_path() { [ "$1" = "$SELF" ] || [[ "$1" =~ $VENDORED_RE ]]; }
-add_blob() { # add_blob <sha> <path> <label>
+set_ext() { # set_ext <path>: lower-case extension of the file name in $ext ("" if none)
+  local base="${1##*/}"; ext=""
+  case "$base" in ?*.*) ext="$(printf '%s' "${base##*.}" | tr 'A-Z' 'a-z')" ;; esac
+  case "$ext" in *[!a-z0-9]*) ext="" ;; esac
+}
+next_item() { # next_item <path> <label> <is_link>: reserve files[n] for the content about to be written
+  set_ext "$1"
+  files[n]="$tmp/items/$n${ext:+.$ext}"; labels[n]="$2"; links[n]="$3"; exts[n]="$ext"
+}
+add_blob() { # add_blob <sha> <path> <label> <mode>
   case "$seen" in *$'\n'"$1 $2"$'\n'*) return 0 ;; esac
   seen="$seen$1 $2"$'\n'
-  git cat-file blob "$1" > "$tmp/items/$n" 2> "$tmp/git.err" || die "'git cat-file blob $1' ($2) failed: $(head -c 300 "$tmp/git.err" | tr '\n' ' ')"
-  labels[n]="$3"; n=$((n + 1))
+  next_item "$2" "$3" "$([ "$4" = 120000 ] && echo 1 || echo 0)"
+  git cat-file blob "$1" > "${files[n]}" 2> "$tmp/git.err" || die "'git cat-file blob $1' ($2) failed: $(head -c 300 "$tmp/git.err" | tr '\n' ' ')"
+  n=$((n + 1))
 }
 while IFS= read -r -d '' rec; do # <mode> <sha> <stage>\t<path>
   path="${rec#*$'\t'}"; meta="${rec%%$'\t'*}"; mode="${meta%% *}"; sha="${meta#* }"; sha="${sha%% *}"
   skip_path "$path" && continue
   [ "$mode" = 160000 ] && continue # submodule commit, not content
-  add_blob "$sha" "$path" "$path"
+  add_blob "$sha" "$path" "$path" "$mode"
 done < "$tmp/index"
 while IFS= read -r -d '' rec; do # <mode> <type> <sha>\t<path>
-  path="${rec#*$'\t'}"; meta="${rec%%$'\t'*}"; type="${meta#* }"; sha="${type#* }"; type="${type%% *}"
+  path="${rec#*$'\t'}"; meta="${rec%%$'\t'*}"; mode="${meta%% *}"; type="${meta#* }"; sha="${type#* }"; type="${type%% *}"
   skip_path "$path" && continue
   [ "$type" = blob ] || continue
-  add_blob "$sha" "$path" "$path (committed in HEAD)"
+  add_blob "$sha" "$path" "$path (committed in HEAD)" "$mode"
 done < "$tmp/head"
 while IFS= read -r -d '' path; do
   skip_path "$path" && continue
   if [ -L "$path" ]; then
-    readlink -- "$path" > "$tmp/items/$n" || die "cannot read the symlink $path"
+    next_item "$path" "$path (working tree)" 1
+    readlink -- "$path" > "${files[n]}" || die "cannot read the symlink $path"
   elif [ -f "$path" ]; then
     sha="$(git hash-object -- "$path" 2>/dev/null)" || die "cannot read $path"
     case "$seen" in *$'\n'"$sha $path"$'\n'*) continue ;; esac
     seen="$seen$sha $path"$'\n'
-    cat -- "$path" > "$tmp/items/$n" || die "cannot read $path"
+    next_item "$path" "$path (working tree)" 0
+    cat -- "$path" > "${files[n]}" || die "cannot read $path"
   else
     continue # deleted in the working tree; its index and HEAD content were read above
   fi
-  labels[n]="$path (working tree)"; n=$((n + 1))
+  n=$((n + 1))
 done < "$tmp/changed"
 i=0
 while [ "$i" -lt "$n" ]; do
-  if file --mime "$tmp/items/$i" 2>/dev/null | grep -q 'charset=binary'; then binary[i]=1; else binary[i]=0; fi
+  if file --mime "${files[i]}" 2>/dev/null | grep -q 'charset=binary'; then binary[i]=1; else binary[i]=0; fi
   i=$((i + 1))
 done
+# Media for check 6, by extension in any case (IMG_0001.JPG, .HEIC, .MOV): images, camera raw, documents, audio, video.
+MEDIA_EXT=' jpg jpeg jpe jfif png apng gif tif tiff webp heic heif avif jxl dng cr2 cr3 nef arw orf rw2 raf psd
+  pdf doc docx xls xlsx ppt pptx odt ods odp rtf epub mp3 m4a aac wav flac ogg oga opus aif aiff wma
+  mp4 m4v mov qt avi mkv webm 3gp wmv '
+OPAQUE_EXT=' ots ' # OpenTimestamps receipts: digests, operations and calendar URLs; no metadata fields
+in_list() { [ -n "$1" ] && case "$2" in *[[:space:]]"$1"[[:space:]]*) true ;; *) false ;; esac; }
+media=(); unread=()
+i=0
+while [ "$i" -lt "$n" ]; do
+  if [ "${links[i]}" -eq 0 ] && in_list "${exts[i]}" "$MEDIA_EXT"; then media+=("$i")
+  elif [ "${binary[i]}" -eq 1 ] && [ -s "${files[i]}" ] && ! in_list "${exts[i]}" "$OPAQUE_EXT"; then unread+=("$i"); fi
+  i=$((i + 1))
+done
+
+# scan <regex> <file>: write the matches to $tmp/found; status 1 if none. A read error stops the run (exit 2).
+scan() {
+  grep -aEoh -- "$1" "$2" > "$tmp/found"
+  case $? in 0) return 0 ;; 1) return 1 ;; *) die "cannot read the copy of a tracked file ($2)" ;; esac
+}
 
 echo "== 3. emails in tracked text files (HEAD, index and working tree)"
 bad=0; i=0
 while [ "$i" -lt "$n" ]; do
-  if [ "${binary[i]}" -eq 0 ]; then
+  if [ "${binary[i]}" -eq 0 ] && scan "$EMAIL_RE" "${files[i]}"; then
     while IFS= read -r e; do
-      [ -z "$e" ] && continue
       if ! is_allowed_email "$e"; then fail "${labels[i]} contains email: $e"; bad=1; fi
-    done < <(grep -aEoh "$EMAIL_RE" "$tmp/items/$i" | sort -u)
+    done < <(sort -u "$tmp/found")
   fi
   i=$((i + 1))
 done
@@ -157,7 +187,7 @@ done
 echo "== 4. personal paths in tracked text files (HEAD, index and working tree)"
 bad=0; i=0
 while [ "$i" -lt "$n" ]; do
-  if [ "${binary[i]}" -eq 0 ] && grep -aEq "$HOME_RE" "$tmp/items/$i"; then
+  if [ "${binary[i]}" -eq 0 ] && scan "$HOME_RE" "${files[i]}"; then
     fail "${labels[i]} contains a home-directory path"; bad=1
   fi
   i=$((i + 1))
@@ -171,25 +201,27 @@ else
   ok "no author fields"
 fi
 
-echo "== 6. embedded metadata in tracked images/PDFs"
-media=()
-while IFS= read -r -d '' f; do [[ "$f" =~ $VENDORED_RE ]] && continue; media+=("$f"); done < "$tmp/media"
+echo "== 6. embedded metadata in tracked images, documents, audio and video (HEAD, index and working tree)"
 if [ "${#media[@]}" -eq 0 ]; then
   ok "no media files tracked"
 elif command -v exiftool >/dev/null 2>&1; then
-  for f in "${media[@]}"; do
+  for i in "${media[@]}"; do
     # Report any tag outside a tiny structural allow-list.
-    extra="$(exiftool -s -G1 -a "$f" 2>/dev/null \
+    extra="$(exiftool -s -G1 -a "${files[i]}" 2>/dev/null \
       | grep -Evi '^\[(System|File|Composite|JFIF|PNG|PDF)\]|ExifTool|ImageSize|Megapixels' || true)"
-    if [ -n "$extra" ]; then fail "$f has embedded metadata:"; echo "$extra" | head -5 | sed 's/^/         /'; fi
+    if [ -n "$extra" ]; then fail "${labels[i]} has embedded metadata:"; echo "$extra" | head -5 | sed 's/^/         /'; fi
   done
 else
   warn "exiftool not installed; doing a crude scan only (install exiftool for a real check)"
-  for f in "${media[@]}"; do
-    if grep -aqE 'Exif|GPS|<x:xmpmeta|Photoshop 3\.0' "$f" 2>/dev/null; then
-      fail "$f appears to contain EXIF/GPS/XMP data"
+  for i in "${media[@]}"; do
+    if scan 'Exif|GPS|<x:xmpmeta|Photoshop 3\.0' "${files[i]}"; then
+      fail "${labels[i]} appears to contain EXIF/GPS/XMP data"
     fi
   done
+fi
+if [ "${#unread[@]}" -gt 0 ]; then
+  list=""; for i in "${unread[@]}"; do list="$list${list:+, }${labels[i]}"; done
+  warn "not inspected by any check (binary, not a known media type; e.g. archives): $list"
 fi
 
 echo

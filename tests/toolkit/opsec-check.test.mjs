@@ -4,7 +4,7 @@
 // Leak values are assembled at run time on reserved .test domains, so this file never matches what it tests for.
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import test from 'node:test';
@@ -266,4 +266,55 @@ test('check 4 does not flag bare mentions of the home roots', { skip }, (t) => {
   r.write('doc.txt', 'Directories such as /home/ and /Users/ hold user data; so does C:\\Users\\ on Windows.\n');
   r.commit();
   assertPass(r.check());
+});
+
+// Synthetic stand-in for `exiftool -s -G1 -a <file>`: real exiftool's structural lines, then every line a fixture
+// marks with "EXIFTOOL:" (what exiftool would report for it); "EXIFTOOL-EXIT:<n>" sets its exit status. It shadows
+// any real exiftool, so these tests mean the same on every machine.
+function exiftoolStub(r) {
+  const bin = join(r.dir, 'stub-bin');
+  mkdirSync(bin, { recursive: true });
+  writeFileSync(join(bin, 'exiftool'), [
+    '#!/bin/sh',
+    'for f in "$@"; do :; done',
+    "printf '[ExifTool]      ExifToolVersion                 : 13.00\\n'",
+    "printf '[System]        FileName                        : %s\\n' \"${f##*/}\"",
+    "printf '[System]        FileSize                        : 1 kB\\n'",
+    "printf '[File]          MIMEType                        : application/octet-stream\\n'",
+    "LC_ALL=C grep -a '^EXIFTOOL:' \"$f\" | sed 's/^EXIFTOOL://'",
+    "code=$(LC_ALL=C grep -a '^EXIFTOOL-EXIT:' \"$f\" | sed 's/^EXIFTOOL-EXIT://')",
+    'exit "${code:-0}"',
+    '',
+  ].join('\n'));
+  chmodSync(join(bin, 'exiftool'), 0o755);
+  return { PATH: `${bin}:${process.env.PATH}` };
+}
+const tag = (group, name, value) => `\nEXIFTOOL:${`[${group}]`.padEnd(16)}${name.padEnd(32)}: ${value}\n`;
+const JPEG_EXIF = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe1, 0x00, 0x30]), Buffer.from('Exif\0\0MM\0*GPSLatitude 51.5 N synthetic')]);
+
+test('check 6 selects media regardless of extension case and covers audio, video and documents', { skip }, (t) => {
+  const r = repo(t);
+  const gps = tag('GPS', 'GPSLatitude', '51 deg 30\' 0.00" N');
+  const names = ['lower.jpg', 'IMG_0001.JPG', 'IMG_0002.HEIC', 'CLIP.MOV', 'Scan.PDF', 'photo.AVIF', 'raw.dng'];
+  for (const name of names) r.write(name, Buffer.concat([JPEG_EXIF, Buffer.from(gps)]));
+  r.write('clip.mp3', Buffer.concat([Buffer.from('ID3\x04\0\0\0\0\0\x20TPE1\0\0\0\x0c\0\0\x03Jane Q Real', 'latin1'), Buffer.from(tag('ID3v2_4', 'Artist', 'Jane Q Real'))]));
+  r.write('take.wav', Buffer.concat([Buffer.from('RIFF\x24\0\0\0WAVELIST\x10\0\0\0INFOIART\x05\0\0\0Jane\0', 'latin1'), Buffer.from(tag('RIFF', 'Artist', 'Jane'))]));
+  r.write('notes.docx', Buffer.concat([Buffer.from('PK\x03\x04\x14\0\0\0\x08\0', 'latin1'), Buffer.from(tag('XML', 'Creator', 'Jane Q Real'))]));
+  r.commit();
+  const result = r.check(exiftoolStub(r));
+  assertFindings(result, ...[...names, 'clip.mp3', 'take.wav', 'notes.docx'].map((name) => finding(`${name} has embedded metadata`)));
+});
+
+test('binary files no check can read are listed, not silently passed', { skip }, (t) => {
+  const r = repo(t);
+  r.write('logs.zip', Buffer.from('PK\x03\x04\x14\0\0\0\x08\0\xff\xfe\x00\x01', 'latin1'));
+  r.write('blob.bin', Buffer.from([0, 1, 2, 0xff, 0xfe, 0, 7]));
+  r.write('fixture.ots', Buffer.from([0x00, 0x4f, 0x70, 0x65, 0x6e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x73, 0x00, 0x00]));
+  r.commit();
+  const result = r.check(exiftoolStub(r));
+  assertPass(result);
+  const warning = result.stdout.split('\n').find((line) => line.includes('[warn]') && line.includes('not inspected'));
+  assert.ok(warning, result.stdout);
+  assert.ok(warning.includes('logs.zip') && warning.includes('blob.bin'), warning);
+  assert.ok(!warning.includes('fixture.ots'), 'OpenTimestamps receipts carry no metadata fields');
 });
