@@ -2,13 +2,15 @@
 // without touching this checkout. Fixture bytes are synthetic; nothing here is product input.
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../..', import.meta.url));
+const sha256 = (data) => createHash('sha256').update(data).digest('hex');
 const HARNESS = ['scripts/parser-fuzz.mjs', ...readdirSync(join(root, 'scripts/lib')).filter((name) => /^fuzz-.+\.mjs$/.test(name)).sort().map((name) => `scripts/lib/${name}`)];
 const TARGETS = `export const TARGETS = ['sample'];
 export const crc32 = () => 0;
@@ -35,9 +37,10 @@ function fixtureRepo(t) {
   git('-c', 'init.defaultBranch=main', 'init', '-q');
   git('add', '-A');
   git('commit', '-q', '-m', 'fixture');
-  const run = () => spawnSync(process.execPath, ['scripts/parser-fuzz.mjs', '--iterations', '30', '--seconds', '60', '--seed', '7', '--out', join(base, 'out')],
+  const out = join(base, 'out');
+  const run = () => spawnSync(process.execPath, ['scripts/parser-fuzz.mjs', '--iterations', '30', '--seconds', '60', '--seed', '7', '--out', out],
     { cwd: repo, env, encoding: 'utf8', timeout: 60000 });
-  return { repo, git, write, run };
+  return { repo, out, git, write, run };
 }
 
 test('campaign report counts covered source offsets per target', (t) => {
@@ -48,4 +51,53 @@ test('campaign report counts covered source offsets per target', (t) => {
   assert.equal(report.status, 'budget-complete');
   assert.ok(report.targets.sample.coveredOffsets > 0);
   assert.equal(Object.hasOwn(report.targets.sample, 'ranges'), false);
+});
+
+test('campaign refuses seed fixtures that Git does not track', (t) => {
+  const { repo, out, git, write, run } = fixtureRepo(t);
+  write('tests/fixtures/ots/zz-untracked-local.ots', 'SYNTHETIC-UNTRACKED');
+  const untracked = run();
+  assert.notEqual(untracked.status, 0, 'an untracked seed must stop the campaign');
+  assert.match(untracked.stderr, /tests\/fixtures\/ots\/zz-untracked-local\.ots is not tracked by Git/);
+  assert.equal(existsSync(out), false, 'nothing is fuzzed or written');
+
+  rmSync(join(repo, 'tests/fixtures/ots/zz-untracked-local.ots'));
+  write('.gitignore', 'node_modules\nlocal-*.ots\n');
+  git('commit', '-q', '-am', 'ignore local receipts');
+  write('tests/fixtures/ots/local-receipt.ots', 'SYNTHETIC-IGNORED');
+  const ignored = run();
+  assert.notEqual(ignored.status, 0, 'an ignored seed must stop the campaign');
+  assert.match(ignored.stderr, /tests\/fixtures\/ots\/local-receipt\.ots is not tracked by Git/);
+  assert.equal(existsSync(out), false, 'nothing is fuzzed or written');
+});
+
+test('campaign report says when the tree differs from the commit and hashes the harness and seeds', (t) => {
+  const { repo, git, write, run } = fixtureRepo(t);
+  const clean = run();
+  assert.equal(clean.status, 0, clean.stderr);
+  const before = JSON.parse(clean.stdout);
+  assert.equal(before.sourceCommit, git('rev-parse', 'HEAD'));
+  assert.equal(before.sourceDirty, false);
+  assert.deepEqual(before.harnessSha256, Object.fromEntries(HARNESS.map((path) => [path, sha256(readFileSync(join(repo, path)))])));
+  assert.deepEqual(before.seedFixtures, { count: 1, sha256: sha256(`${sha256('SYNTHETIC-SEED')}  sample.ots\n`) });
+
+  // A local mutator edit shows up even though HEAD is unchanged.
+  write('scripts/parser-fuzz.mjs', `${readFileSync(join(repo, 'scripts/parser-fuzz.mjs'), 'utf8')}// local edit\n`);
+  const edited = run();
+  assert.equal(edited.status, 0, edited.stderr);
+  const local = JSON.parse(edited.stdout);
+  assert.equal(local.sourceCommit, before.sourceCommit);
+  assert.equal(local.sourceDirty, true);
+  assert.notEqual(local.harnessSha256['scripts/parser-fuzz.mjs'], before.harnessSha256['scripts/parser-fuzz.mjs']);
+  git('checkout', '-q', '--', 'scripts/parser-fuzz.mjs');
+
+  // So do a staged, not yet committed seed and an untracked file anywhere in the tree.
+  write('tests/fixtures/ots/extra.ots', 'SYNTHETIC-EXTRA');
+  git('add', 'tests/fixtures/ots/extra.ots');
+  const staged = JSON.parse(run().stdout);
+  assert.equal(staged.sourceDirty, true);
+  assert.equal(staged.seedFixtures.count, 2);
+  git('commit', '-q', '-m', 'extra seed');
+  write('notes.txt', 'local');
+  assert.equal(JSON.parse(run().stdout).sourceDirty, true);
 });
