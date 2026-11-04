@@ -124,6 +124,7 @@ export function cleanJpeg(input: Uint8Array): JpegResult {
         // Canonical JFIF header: version, units, density; embedded thumbnail removed.
         const hdr = Uint8Array.of(0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, payload[5]!, payload[6]!, payload[7]!, payload[8]!, payload[9]!, payload[10]!, payload[11]!, 0x00, 0x00);
         if (payload[12] !== 0 || payload[13] !== 0) note('Embedded JFIF thumbnail');
+        else if (payload.length > 14) note('Extra JFIF header data');
         // Only one JFIF header, before any frame data, so repeated APP0 segments cannot carry extra bytes.
         if (!sawSos && !sawSof && !sawJfif) out.push(hdr.subarray(0, 18));
         else note('Extra JFIF header');

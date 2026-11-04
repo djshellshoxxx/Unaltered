@@ -47,9 +47,16 @@ export function checkUrl(raw: string, policy: NetPolicy): URL {
   return u;
 }
 
+/** Releases the connection of a reply we stop reading. Not awaited: a stuck server may never settle it. */
+function discard(cancelling: Promise<void>): void {
+  cancelling.catch(() => undefined);
+}
+
 async function readCapped(res: Response, maxBytes: number): Promise<Uint8Array> {
   const declared = res.headers.get('content-length');
   if (declared !== null && Number(declared) > maxBytes) {
+    // Unread, the body would hold the connection open (and keep the CLI alive) until the timeout fires.
+    if (res.body) discard(res.body.cancel());
     throw new UnalteredError('NET_TOO_LARGE', 'A server reply was larger than allowed.');
   }
   if (!res.body) return new Uint8Array(0);
@@ -61,7 +68,7 @@ async function readCapped(res: Response, maxBytes: number): Promise<Uint8Array> 
     if (done) break;
     total += value.length;
     if (total > maxBytes) {
-      void reader.cancel();
+      discard(reader.cancel());
       throw new UnalteredError('NET_TOO_LARGE', 'A server reply was larger than allowed.');
     }
     chunks.push(value);

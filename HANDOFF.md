@@ -1,3 +1,93 @@
+# Current integration run — 2026-11-04 (UTC)
+
+- **Candidate:** draft [PR47](https://github.com/djshellshoxxx/Unaltered/pull/47), branch `claude/funny-lamport-2jfc0e`,
+  base main `1b6dd91`.
+- **Authoritative ledgers:** [docs/ULTRA_RUN_BOARD.md](docs/ULTRA_RUN_BOARD.md) (task states, run IDs, unreproduced suspects,
+  owner checklist, final SHA) and the 2026-11-04 section of [docs/TODO.md](docs/TODO.md). Both supersede older dated
+  sections where they disagree.
+- **Status:** unaudited and unsigned development candidate. Nothing is merged to main. No release, tag, signing,
+  deployment, account or settings change.
+- **Source PRs #39 and #43–#46:** merged into the candidate with `--no-ff`; not closed or rewritten.
+- **PRs #41/#42** (API-funded Codex automation): not modified.
+
+## What this run did
+
+1. Merged the open hardening PRs #43–#46 and PR #39 (Bob/Finney attribution tooling).
+2. Ran four review rounds, with every fix test-first:
+   - **Wave 1:** isolated worktree workers per module (OTS, metadata parsers, network/CLI, UI, toolkit).
+   - **Wave 2:** a multi-agent discovery workflow over hash, bytes, build, CI/release, the fuzz harness and the
+     acceptance scripts (124 agents).
+   - **Final review:** an independent adversarial review of the combined diff (57 agents).
+   - **Suspects:** a reproduce-first workflow for leftover suspects (calendar minimum, toolkit scripts).
+   - In wave 2 and the final review, each finding needed 2 of 3 skeptic lenses (reproduce, intent, impact) **and** an
+     actual reproduction. 31 were confirmed and fixed; 23 were rejected and are listed as residual notes in the run
+     board.
+3. Notable fixes:
+   - **Build:** the multi-file hash worker ran outside the page CSP and SRI. It now starts from an SRI-pinned `blob:`
+     URL; ADR-010 is amended.
+   - **OTS:** the explorer quorum floor is two sources. Caller-built proofs are replayed. The calendar minimum counts
+     each host once.
+   - **Metadata:** kept WAV chunks no longer carry hidden bytes, and a forged APEv2 footer cannot drop audio frames.
+   - **UI:** focus could jump to a different control.
+   - **CLI:** hash lines are GNU-readable, and names with other control characters are refused.
+   - **CI:** the Windows zip check verified the macOS package. E2E gates now run without retries, and the reference
+     client is hash-pinned.
+   - **`opsec-check.sh`:** it now fails closed and covers identity, history, committed content and media.
+4. Evidence:
+   - Firefox/WebKit 2 GiB completion: dispatch run 41756413597, plus the final dispatch in the run board.
+   - Native stall A/B: run 41561857747.
+   - Two seeded 1,000,000-mutation fuzz campaigns (`docs/evidence/fuzz-20261104.json`, `fuzz-20261105.json`).
+   - Dated dependency decisions for minimatch and the hash-pinned Python reference set.
+5. Fixed CI regressions this run introduced:
+   - Windows backslash escaping.
+   - macOS and uutils `sha256sum` interop tests (now gated on GNU coreutils).
+   - A Windows checksum all-clear mismatch between two merged branches.
+
+## Environment notes for the next session
+
+- **Git identity.** The repo-local identity is now `Claude <noreply@anthropic.com>`, which this environment signs with
+  its SSH key, so GitHub verifies the commits. It is non-personal and passes `scripts/opsec-check.sh`. Earlier commits
+  in this run use the neutral `Unaltered contributors` identity.
+- **Lint.** Agent worktrees live under `.claude/worktrees/`, which is gitignored and ESLint-ignored. Without that
+  ignore, typescript-eslint fails every file with "multiple candidate TSConfigRootDirs".
+- **Pinned reference.** Create a scratch venv with `opentimestamps==0.4.5` and export `UNALTERED_PYTHON`, or the
+  reference differential tests skip.
+- **Browsers.** Only Chromium exists locally. Firefox and WebKit evidence comes from CI (`workflow_dispatch` on the
+  branch runs the non-PR 2 GiB jobs).
+
+## Exact next commands
+
+Run these from a clean checkout of the candidate head.
+
+```bash
+npm ci --ignore-scripts
+```
+
+```bash
+python3 -m venv /tmp/venv && /tmp/venv/bin/pip install opentimestamps==0.4.5
+```
+
+```bash
+UNALTERED_PYTHON=/tmp/venv/bin/python npm run check
+```
+
+```bash
+npm run build && cp dist/SHA256SUMS /tmp/sums1 && npm run build && cmp /tmp/sums1 dist/SHA256SUMS
+```
+
+```bash
+npx playwright test --retries=0
+```
+
+```bash
+UNALTERED_BIG_BROWSER=1 npx playwright test tests/e2e/memory.spec.ts --repeat-each=3 --retries=0 --max-failures=1
+```
+
+The owner-gated work (merge decision, OPS, signing, audit, second-person rebuild, human accessibility/Spanish/usability,
+Tor/Q7, R1 Bob/Finney, legal/domain) is listed with the smallest unblocking action in the run board's owner checklist.
+
+---
+
 # Current consolidation — 2026-10-30 (America/Los_Angeles)
 
 Current publication addendum: [final handoff and raw evidence](docs/FINAL_HANDOFF_20261030.md).

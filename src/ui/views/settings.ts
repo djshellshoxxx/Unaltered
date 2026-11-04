@@ -72,7 +72,7 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
   function renderReceipts(): void {
     const on = isEnabled();
     const kids: (Node | null)[] = [
-      el('h3', {}, t('settings.receipts')),
+      el('h3', { tabindex: -1 }, t('settings.receipts')),
       el('p', {}, t('settings.receiptsBody')),
       storageAvailable()
         ? el(
@@ -102,10 +102,16 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
               ...list.map((r) =>
                 el(
                   'li',
-                  {},
+                  // Rows are matched by identity when focus is restored, never by position.
+                  { 'data-key': `${r.digestHex} ${r.createdAtUtc}` },
                   el('span', {}, r.label ? el('strong', {}, `${r.label} · `) : null, r.createdAtUtc),
                   el('code', { class: 'digest' }, groupHex(r.digestHex)),
-                  el('button', { type: 'button', class: 'button small', onclick: () => (removeReceipt(r), renderReceipts()) }, t('common.remove')),
+                  el('button', { type: 'button', class: 'button small', onclick: () => {
+                    removeReceipt(r);
+                    renderReceipts();
+                    // The row is gone; put focus on the section heading, not on the next row's Remove (a held Enter would delete it too).
+                    receipts.querySelector<HTMLElement>('h3')?.focus();
+                  } }, t('common.remove')),
                 ),
               ),
             ),

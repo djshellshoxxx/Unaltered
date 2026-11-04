@@ -12,9 +12,14 @@ const tag4 = (b: Uint8Array, o: number): string => String.fromCharCode(b[o]!, b[
 const putTag = (s: string): Uint8Array => Uint8Array.from(s, (c) => c.charCodeAt(0));
 
 // Chunks needed to play the audio. Musical loop/cue data (smpl, inst, cue) is kept; free-text and identity chunks
-// (LIST/INFO, bext originator, iXML, id3, _PMX XMP, ...) are removed.
+// (LIST/INFO, bext originator, iXML, id3, _PMX XMP, ...) are removed. Kept bytes a decoder ignores would survive cleaning
+// unseen, so one of each kept chunk is copied, reduced to its defined fields (wavFields).
 const WAV_KEEP = new Set(['fmt ', 'data', 'fact', 'smpl', 'inst', 'cue ']);
-const WAV_NAMES: Record<string, string> = { LIST: 'text tags (LIST)', bext: 'broadcast info (bext)', iXML: 'iXML metadata', 'id3 ': 'ID3 tag', ID3: 'ID3 tag', _PMX: 'XMP metadata' };
+// Formats whose decoders read only the 16 PCMWAVEFORMAT bytes: PCM, IEEE float, A-law, mu-law.
+const PLAIN_FORMATS = new Set([1, 3, 6, 7]);
+// Bytes 4-15 of the WAVE_FORMAT_EXTENSIBLE SubFormat GUID shared by those formats.
+const SUBFORMAT_TAIL = [0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71];
+const WAV_NAMES: Record<string, string> = { LIST: 'text tags (LIST)', bext: 'broadcast info (bext)', iXML: 'iXML metadata', 'id3 ': 'ID3 tag', 'ID3 ': 'ID3 tag', _PMX: 'XMP metadata' };
 const MAX_REMOVAL_SUMMARY_LABELS = 64;
 const REMOVAL_SUMMARY_OVERFLOW = 'Additional metadata chunks';
 
@@ -43,6 +48,7 @@ export function cleanWav(input: Uint8Array): AudioResult {
   let pos = 12;
   let sawFmt = false;
   let sawData = false;
+  const kept = new Set<string>();
   while (pos + 8 <= riffEnd) {
     const id = tag4(input, pos);
     const len = dv.getUint32(pos + 4, true);
@@ -52,15 +58,29 @@ export function cleanWav(input: Uint8Array): AudioResult {
     if (padded > riffEnd) return rej('A WAV chunk is missing its pad byte.');
     if (id === 'fmt ') {
       if (sawFmt || sawData || len < 16) return rej('The WAV header is malformed.');
+      // XMA's format chunk has no cbSize, so where its fields end cannot be checked.
+      if (dv.getUint16(pos + 8, true) === 0x0165) return { kind: 'unsupported', reason: 'XMA audio files cannot be cleaned safely.' };
       sawFmt = true;
     } else if (id === 'data') {
       if (!sawFmt || sawData) return rej('The WAV header is malformed.');
       sawData = true;
     }
     if (WAV_KEEP.has(id)) {
-      // Pad bytes are re-emitted as zero so content cannot ride in them.
-      parts.push(input.subarray(pos, end));
-      if (len & 1) parts.push(Uint8Array.of(0));
+      const body = input.subarray(pos + 8, end);
+      const fields = kept.has(id) ? undefined : id === 'data' ? body : wavFields(id, body); // fmt/data repeats were rejected above
+      if (fields === undefined) note(`duplicate chunk (${id.trim()})`);
+      else if (fields === null) note(`malformed chunk (${id.trim()})`);
+      else {
+        kept.add(id);
+        // Dropped or zeroed bytes are reported unless they were all zero.
+        if (fields !== body && body.some((b, i) => b !== (fields[i] ?? 0))) note(id === 'smpl' ? 'sampler ID and private data (smpl)' : `extra data (${id.trim()})`);
+        const head = input.slice(pos, pos + 8);
+        new DataView(head.buffer).setUint32(4, fields.length, true);
+        parts.push(head, fields);
+        // Pad bytes are re-emitted as zero so content cannot ride in them.
+        if (fields.length & 1) parts.push(Uint8Array.of(0));
+        if (len & 1 && input[end] !== 0) note('non-zero chunk padding');
+      }
     } else {
       note(WAV_NAMES[id] ?? `unknown chunk (${/^[\x20-\x7e]{4}$/.test(id) ? id.trim() : '?'})`);
     }
@@ -75,6 +95,42 @@ export function cleanWav(input: Uint8Array): AudioResult {
   new DataView(head.buffer).setUint32(4, 4 + body.length, true);
   head.set(putTag('WAVE'), 8);
   return { kind: 'cleaned', output: concat(head, body), removed };
+}
+
+/**
+ * The defined fields of a kept fmt/fact/smpl/inst/cue chunk body, or null when they do not fit (the chunk is then dropped).
+ * Bytes after the fields are dropped, PLAIN_FORMATS keep no format extension, and smpl loses its sampler-specific data and
+ * its manufacturer/product IDs. The values of the fields that remain are not interpreted.
+ */
+function wavFields(id: string, body: Uint8Array): Uint8Array | null {
+  const dv = new DataView(body.buffer, body.byteOffset, body.byteLength);
+  const n = body.length;
+  if (id === 'fmt ') {
+    if (n < 18) return body.subarray(0, 16); // cleanWav rejects fmt shorter than 16
+    const tag = dv.getUint16(0, true);
+    const cbSize = dv.getUint16(16, true);
+    if (PLAIN_FORMATS.has(tag)) return cbSize === 0 ? body.subarray(0, 18) : concat(body.subarray(0, 16), new Uint8Array(2));
+    if (tag === 0xfffe && cbSize >= 22 && n >= 40 && PLAIN_FORMATS.has(dv.getUint32(24, true)) && SUBFORMAT_TAIL.every((b, i) => body[28 + i] === b)) {
+      if (cbSize === 22) return body.subarray(0, 40);
+      const out = body.slice(0, 40);
+      out.set([22, 0], 16);
+      return out;
+    }
+    // Other codecs read cbSize bytes of extension data, which is kept; a short extension is kept as it is.
+    return 18 + cbSize <= n ? body.subarray(0, 18 + cbSize) : body;
+  }
+  if (id === 'fact') return n >= 4 ? body.subarray(0, 4) : null; // dwSampleLength
+  if (id === 'inst') return n >= 7 ? body.subarray(0, 7) : null; // note, fine tune, gain, note and velocity range
+  // cue: point count, then 24 bytes per point. smpl: 36-byte header with the loop count at 28, then 24 bytes per loop.
+  const [header, countAt] = id === 'cue ' ? [4, 0] : [36, 28];
+  if (n < header) return null;
+  const size = header + 24 * dv.getUint32(countAt, true);
+  if (size > n) return null;
+  if (id === 'cue ') return body.subarray(0, size);
+  const out = body.slice(0, size);
+  out.fill(0, 0, 8); // dwManufacturer, dwProduct: the sampler that wrote the file
+  out.fill(0, 32, 36); // cbSamplerData: its private data is not copied
+  return out;
 }
 
 const syncsafe = (b: Uint8Array, o: number): number => ((b[o]! & 0x7f) << 21) | ((b[o + 1]! & 0x7f) << 14) | ((b[o + 2]! & 0x7f) << 7) | (b[o + 3]! & 0x7f);
@@ -141,9 +197,8 @@ export function cleanMp3(input: Uint8Array): AudioResult {
     removed.push('ID3v1 tag');
   }
   if (!framesReachEnd() && end - start >= 32 && String.fromCharCode(...input.subarray(end - 32, end - 24)) === 'APETAGEX') {
-    const dv = new DataView(input.buffer, input.byteOffset, input.byteLength);
-    const size = dv.getUint32(end - 20, true) + (dv.getUint32(end - 12, true) & 0x80000000 ? 32 : 0);
-    if (size < 32 || size > end - start) return rej('The APE tag is malformed.');
+    const size = apeTagLength(input, start, end);
+    if (size === null) return rej('The APE tag is malformed.');
     end -= size;
     removed.push('APEv2 tag');
   }
@@ -153,6 +208,34 @@ export function cleanMp3(input: Uint8Array): AudioResult {
   const bad = validateMp3Frames(input, start, end);
   if (bad) return bad;
   return { kind: 'cleaned', output: input.slice(start, end), removed };
+}
+
+/**
+ * Length of the APEv2 tag whose footer ends at `end`, or null. The footer's size field alone could reach back over complete
+ * audio frames, so a flagged header must be where the footer says and the items must fill the space before the footer exactly.
+ * The stored item count is not a bound: writers get it wrong, and mutagen and TagLib stop at the end of the items instead.
+ */
+function apeTagLength(input: Uint8Array, start: number, end: number): number | null {
+  const dv = new DataView(input.buffer, input.byteOffset, input.byteLength);
+  const footer = end - 32;
+  const size = dv.getUint32(footer + 12, true); // items + footer, excluding any header
+  const count = dv.getUint32(footer + 16, true);
+  const header = dv.getUint32(footer + 20, true) & 0x80000000 ? 32 : 0;
+  if (size < 32 || header + size > end - start) return null;
+  const tagStart = end - size - header;
+  if (header && (String.fromCharCode(...input.subarray(tagStart, tagStart + 8)) !== 'APETAGEX' || dv.getUint32(tagStart + 12, true) !== size || dv.getUint32(tagStart + 16, true) !== count)) return null;
+  let p = tagStart + header;
+  while (p < footer) {
+    // Item: value size, flags, printable-ASCII key of 2-255 bytes, NUL, value. Each item advances p, so this is bounded.
+    if (p + 8 > footer) return null;
+    const keyStart = p + 8;
+    let k = keyStart;
+    while (k < footer && k - keyStart <= 255 && input[k]! >= 0x20 && input[k]! <= 0x7e) k++;
+    if (k >= footer || input[k] !== 0 || k - keyStart < 2 || k - keyStart > 255) return null;
+    p = k + 1 + dv.getUint32(p, true);
+    if (p > footer) return null;
+  }
+  return p === footer ? header + size : null;
 }
 
 function endsWithTagLikeBytes(input: Uint8Array, start: number, end: number): boolean {

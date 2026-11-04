@@ -17,7 +17,10 @@ export interface HashOptions {
   noWorker?: boolean;
 }
 
-/** Injected by the build: URL of the worker script (multi-file) or inline source (single-file). */
+/**
+ * Injected by the build. Both shipped pages use the inline source, started from a blob: URL so the worker inherits the
+ * page's CSP and Trusted Types (a worker loaded from its own URL would not). The URL form is used by unit tests.
+ */
 declare const __WORKER_URL__: string | null;
 declare const __WORKER_INLINE__: string | null;
 
@@ -48,6 +51,15 @@ function workerPolicy(tt: TrustedTypesApi): { createScriptURL(s: string): string
   return policy;
 }
 
+/** The blob: URL each inline worker was started from; released once that worker has answered or been stopped. */
+const scriptUrls = new WeakMap<Worker, string>();
+function releaseScript(w: Worker): void {
+  const url = scriptUrls.get(w);
+  if (url === undefined) return;
+  scriptUrls.delete(w);
+  URL.revokeObjectURL(url);
+}
+
 function makeWorker(): Worker | null {
   if (typeof Worker === 'undefined') return null;
   try {
@@ -68,7 +80,10 @@ function makeWorker(): Worker | null {
       src = workerPolicy(tt).createScriptURL(src);
     }
     const w = new Worker(src);
-    if (blobUrl) setTimeout(() => URL.revokeObjectURL(blobUrl as string), 10_000);
+    if (blobUrl) {
+      scriptUrls.set(w, blobUrl);
+      setTimeout(() => releaseScript(w), 10_000);
+    }
     return w;
   } catch {
     return null;
@@ -84,6 +99,7 @@ function hashInWorker(w: Worker, blob: Blob, opts: HashOptions): Promise<{ diges
       w.onmessage = null;
       w.onerror = null;
       w.terminate();
+      releaseScript(w);
     };
     const abort = (): void => {
       if (settled) return;
