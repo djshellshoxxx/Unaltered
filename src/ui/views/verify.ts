@@ -7,7 +7,7 @@ import { parseProof } from '../../core/ots/codec';
 import { LIMITS } from '../../core/ots/types';
 import { verify, type VerifyReport, type VerifyState } from '../../core/ots/verify';
 import { announce, dropZone, el, formatBytes, setChildren } from '../dom';
-import { downloadLink, revokeAll, revokeOwner } from '../download';
+import { downloadLink, revokeAll, revokeOwner, upgradedName } from '../download';
 import { stampConfigFromSettings, verifyConfigFromSettings } from '../state';
 import { t, type StringKey } from '../strings';
 import { localNodeInstructions } from './about';
@@ -209,7 +209,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
     if (!next || next.kind !== 'upgraded') return [render(next)];
     const r = next.result;
     const kids: (Node | null)[] = [];
-    const name = next.fileName.replace(/\.ots$/i, '') + '.upgraded.ots';
+    const name = upgradedName(next.fileName);
     const download = (): Node[] => [downloadLink(t('upgrade.download', { name }), name, r.ots, 'application/octet-stream', undefined, { owner: upOut, key: 'receipt' }), el('p', { class: 'muted' }, t('upgrade.newFile'))];
     if (r.status === 'bitcoin-confirmed') {
       kids.push(el('p', { class: 'notice warn', role: 'status' }, r.changed ? t('upgrade.confirmed') : t('upgrade.alreadyConfirmed')));
