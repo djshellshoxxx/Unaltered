@@ -119,3 +119,37 @@ describe('WAV: an upper-case "ID3 " chunk is labelled as an ID3 tag', () => {
     }
   });
 });
+
+describe('MP3: an APEv2 tag with a wrong item count is still removed', () => {
+  // Writers get the count wrong; mutagen and TagLib stop at the end of the items instead of failing.
+  // The bounds come from the items filling the space before the footer, not from the count.
+  const [a, b] = [frame(0x11), frame(0x22)];
+  const tagged = (header: boolean): Uint8Array => Uint8Array.from([...a, ...b, ...apeTag([['Artist', 'SECRET-A'], ['Title', 'SECRET-T']], header)]);
+  const itemsStart = (input: Uint8Array): number => input.length - new DataView(input.buffer).getUint32(input.length - 20, true);
+
+  it('removes the tag when the stored count is one too high or one too low', () => {
+    const outcomes: string[] = [];
+    for (const header of [true, false]) {
+      for (const count of [3, 1]) {
+        const input = tagged(header);
+        const dv = new DataView(input.buffer);
+        dv.setUint32(input.length - 16, count, true); // footer item count
+        if (header) dv.setUint32(itemsStart(input) - 32 + 16, count, true); // header item count
+        const r = cleanMp3(input);
+        const ok = r.kind === 'cleaned' && contains(r.output, 'SECRET') === false && r.output.length === a.length + b.length && r.removed.join() === 'APEv2 tag';
+        outcomes.push(`header=${header} count=${count}: ${ok ? 'removed' : JSON.stringify(r.kind === 'cleaned' ? r.removed : r)}`);
+      }
+    }
+    expect(outcomes).toEqual(['header=true count=3: removed', 'header=true count=1: removed', 'header=false count=3: removed', 'header=false count=1: removed']);
+  });
+
+  it('still rejects items that do not fill the space before the footer, whatever the count', () => {
+    for (const header of [true, false]) {
+      const input = tagged(header);
+      const dv = new DataView(input.buffer);
+      const first = itemsStart(input);
+      dv.setUint32(first, dv.getUint32(first, true) + 1, true); // the first value claims one byte of the next item
+      expect(cleanMp3(input).kind, `header=${header}`).toBe('rejected');
+    }
+  });
+});
