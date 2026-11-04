@@ -130,7 +130,7 @@ describe('cli hash output on paths with separators', () => {
   });
 });
 
-// Windows paths use `\` as the separator (C:\Users\...\photo.jpg). An ordinary path must still print as
+// Windows paths use `\` as the separator (D:\Photos\2026\photo.jpg). An ordinary path must still print as
 // "<fingerprint>  <path>", so a script that reads the first 64 characters gets the fingerprint. Without a leading `\`,
 // `sha256sum -c` reads the name literally, so the separators need no escaping.
 describe('cli hash output for a path with backslashes', () => {
