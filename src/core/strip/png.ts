@@ -28,6 +28,16 @@ const typeName = (b: Uint8Array, o: number): string => String.fromCharCode(b[o]!
 const KEEP = new Set(['IHDR', 'PLTE', 'tRNS', 'IDAT', 'IEND', 'sRGB']);
 const MAX_REMOVAL_SUMMARY_LABELS = 64;
 const REMOVAL_SUMMARY_OVERFLOW = 'Additional metadata chunks';
+const DEPTHS: Readonly<Record<number, readonly number[]>> = { 0: [1, 2, 4, 8, 16], 2: [8, 16], 3: [1, 2, 4, 8], 4: [8, 16], 6: [8, 16] };
+
+// IHDR constraints from PNG 11.2.2. Checking the container never decompresses IDAT or allocates by image dimensions.
+function validHeader(input: Uint8Array, dv: DataView, data: number): boolean {
+  const width = dv.getUint32(data);
+  const height = dv.getUint32(data + 4);
+  return width > 0 && width <= 0x7fffffff && height > 0 && height <= 0x7fffffff
+    && (DEPTHS[input[data + 9]!] ?? []).includes(input[data + 8]!)
+    && input[data + 10] === 0 && input[data + 11] === 0 && input[data + 12]! <= 1;
+}
 
 export function cleanPng(input: Uint8Array): PngResult {
   const n = input.length;
@@ -71,7 +81,7 @@ export function cleanPng(input: Uint8Array): PngResult {
     const chunk = input.subarray(pos, pos + 12 + len);
     if (KEEP.has(type)) {
       if (type === 'IHDR') {
-        if (!first || len !== 13) return rej('Invalid PNG header chunk.');
+        if (!first || len !== 13 || !validHeader(input, dv, pos + 8)) return rej('Invalid PNG header chunk.');
         bitDepth = input[pos + 8 + 8]!;
         colorType = input[pos + 8 + 9]!;
       } else if (first) {
@@ -96,6 +106,7 @@ export function cleanPng(input: Uint8Array): PngResult {
       }
       if (type === 'sRGB' && (sawIdat || sawPlte)) return rej('Invalid PNG chunk order.');
       if (type === 'IDAT') {
+        if (colorType === 3 && !sawPlte) return rej('Indexed PNG image data requires a palette.');
         if (idatEnded) return rej('PNG image data is not contiguous.');
         sawIdat = true;
       } else if (sawIdat) {
@@ -137,6 +148,7 @@ export function selfCheckPng(b: Uint8Array): string | null {
   while (pos < b.length) {
     if (pos + 12 > b.length) return 'truncated';
     const len = dv.getUint32(pos);
+    if (len > 0x7fffffff || len > b.length - pos - 12) return 'invalid chunk length';
     const type = typeName(b, pos + 4);
     if (!KEEP.has(type)) return `forbidden chunk ${type}`;
     if (crc32(b.subarray(pos + 4, pos + 8 + len)) !== dv.getUint32(pos + 8 + len)) return 'bad crc';
