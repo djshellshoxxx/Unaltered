@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "diagnostic_only": true,
+  "branch": "diag/read-stall-ab-20261102",
+  "candidate": {
+    "commit": "03f3ac80cfe6f3014162967b5e05bff95ec350b6",
+    "tree": "67c86f899132e64005cf46e37375f027cfdafd54",
+    "hash_modules_sha256": {
+      "src/core/hash/stream.ts": "03ca966aef3360e5547dff469010a600f7d74342f96c554e544df8e64c9903ab",
+      "src/core/hash/hasher.ts": "1486f329c2dadb4c72bb54bf9b65f9efe9aef96d9de5fe90a8d5ec3612df3f97",
+      "src/core/hash/hasher.worker.ts": "04c98c5a5b53bfd744a86f3db68a69875183dfaec2edd2b092fce1f6151df178"
+    }
+  },
+  "baseline": {
+    "commit": "0b448d887df89fab22f701810197e51285590e2b",
+    "hash_modules_sha256": {
+      "src/core/hash/stream.ts": "90410b22e3a40d1cb9ba35f931c7e838769f2d4a78c0bd1886b277e33accb5fa",
+      "src/core/hash/hasher.ts": "3c7e1ffd66a11424f6a691a16f927cf133136de5ea67609d1f2d3fe6ee059eb4",
+      "src/core/hash/hasher.worker.ts": "237766588105339dd914ddc54756ab456ab706271a4319418e289de3e1fa081b"
+    }
+  },
+  "shared_candidate_files_sha256": {
+    "src/core/errors.ts": "749ade2e802c149f6111efc37de83fee6d5ae893f419a6c5d42f89048bfa844b",
+    "src/core/bytes.ts": "3fc8673d8a59ab65036616eaee496c78f6c56a5dbcd33c0e1e469aa5214298ad",
+    "package.json": "f32a6a3299de9953d334bf9fb6b39190faa36e341fc7dacb13b1b3659b3ff3af",
+    "package-lock.json": "836f4e61ef6339339bbbf6f07692a31dadd141cbe3755ef5610f7980dff262df",
+    ".npmrc": "0fc7836d270da7bd05ae1119861695cca8d04b4e895990fe677555b638341cd0",
+    "tsconfig.json": "3186d403ee7802a97ccae4f7ba3b9c9f81245537bb74f0b20dfa7e8782fd2125",
+    "playwright.config.ts": "c1df73d9b299b822a2c57b4b7441077301494ad8cb08afd06a3dd4ca6b59b5cf",
+    "scripts/build.mjs": "4b406c4591c4ff41e57297d95c497ded37c67784569cd659d86722966584060a",
+    "tests/e2e/memory.spec.ts": "24c4a936550d1dcbd0b2ea8634a7c0d9a2f5fc8a71ba902b3293c3ea335dc6cd",
+    "tests/e2e/hash-worker-evidence.ts": "5577bdcaba84739635d52f857869b6de6eba6a29d379d5a83a78159fec8ece1e",
+    "tests/e2e/hash-io-diagnostics.ts": "d1960ebd51bd6fb1202cb6ba4379cd368d6401a34873d163c7b4e52f83026c84",
+    "tests/e2e/serve.mjs": "f8aea93fe4e46fe26fc6c82dcaae7578e432b5c44ff13d5c2fb784ef8bd9684d"
+  },
+  "toolchain": {
+    "node": "22.23.4",
+    "npm": "10.9.9",
+    "playwright": "1.64.1",
+    "chromium_version": "156.0.8078.4",
+    "chromium_revision": "1248"
+  },
+  "action_pins": {
+    "actions/checkout": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+    "actions/setup-node": "949feb2413d6458794dcd2491c4babbbce0c15c1"
+  },
+  "experiment": {
+    "runner": "ubuntu-latest",
+    "arms": [
+      "baseline",
+      "candidate"
+    ],
+    "shards": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "attempts_per_shard": 3,
+    "retries": 0,
+    "max_failures_per_shard": 1,
+    "workers_per_job": 1,
+    "input_bytes": 2147483648,
+    "chunk_bytes": 4194304,
+    "digest_wait_ms": 540000,
+    "test_timeout_ms": 600000,
+    "extra_renderer_rss_bytes_exclusive": 209715200,
+    "require_successful_worker_bytes_and_digest": true,
+    "matrix_job_timeout_minutes": 40,
+    "pretest_admission_budget_seconds": 300,
+    "test_process_timeout_seconds": 1860,
+    "test_process_kill_grace_seconds": 15,
+    "raw_file_log_limit_bytes": 2097152,
+    "artifact_uploads": false
+  },
+  "interpretation": "Historical hashing-family comparison under a common current scaffold; not a single-patch ablation or a browser-internal root-cause proof. Non-reproduction is inconclusive. Skipped or unreported attempts are not passes."
+}
