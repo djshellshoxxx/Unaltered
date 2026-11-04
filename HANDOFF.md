@@ -1,4 +1,10 @@
-# Current integration run — 2026-11-04 (UTC)
+# Active continuous development — 2026-11-04 UTC
+
+Branch: `codex/recover-qualify-20261104`. See [continuous progress and publication handoff](docs/CONTINUOUS_PROGRESS_20261104.md)
+for current source/remote distinctions, fixes, tests and remaining gates. Preserve earlier bundles and the main
+checkout's lockfile edits. Sections below describe historical integration runs.
+
+# Historical integration run — 2026-11-04 (UTC)
 
 - **Candidate:** draft [PR47](https://github.com/djshellshoxxx/Unaltered/pull/47), branch `claude/funny-lamport-2jfc0e`,
   base main `1b6dd91`.

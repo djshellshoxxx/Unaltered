@@ -1,5 +1,8 @@
 # TODO
 
+Active continuation: [continuous development ledger](CONTINUOUS_PROGRESS_20261104.md), branch
+`codex/recover-qualify-20261104`. Candidate/CI claims below are historical unless requalified in that ledger.
+
 Current publication addendum: [final handoff and raw evidence](FINAL_HANDOFF_20261030.md).
 
 Legend: `[ ]` open, `[x]` done. IDs map to milestones in `BUILD_PLAN.md` and requirements in `SPEC.md`.

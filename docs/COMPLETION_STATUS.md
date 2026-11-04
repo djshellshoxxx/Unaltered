@@ -1,5 +1,8 @@
 # Completion and validation record
 
+Latest continuation: [continuous development ledger](CONTINUOUS_PROGRESS_20261104.md). It distinguishes local
+implementation, published-source evidence and release qualification; older sections below are historical.
+
 Current publication addendum: [final handoff and raw evidence](FINAL_HANDOFF_20261030.md).
 
 ## Authoritative consolidation — 2026-10-30
