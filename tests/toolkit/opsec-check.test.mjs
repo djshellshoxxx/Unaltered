@@ -188,3 +188,49 @@ test('no-reply and GitHub App bot trailers in messages are not findings', { skip
   r.git(['tag', '-a', 'v0', '-m', 'v0']);
   assertPass(r.check());
 });
+
+test('checks 3 and 4 read the committed and staged content that is pushed, not only the working tree', { skip }, async (t) => {
+  const leaky = (r) => {
+    r.write('b.txt', `contact ${JANE}\n`);
+    r.write('c.txt', `see ${home('alice', 'x')}\n`);
+    r.commit();
+  };
+  await t.test('committed leak, clean but unstaged working tree', (t) => {
+    const r = repo(t);
+    leaky(r);
+    r.write('b.txt', 'clean\n');
+    r.write('c.txt', 'clean\n');
+    assertFindings(r.check(), finding('b.txt contains email: ', JANE), finding('c.txt contains a home-directory path'));
+  });
+  await t.test('committed leak, clean version staged', (t) => {
+    const r = repo(t);
+    leaky(r);
+    r.write('b.txt', 'clean\n');
+    r.write('c.txt', 'clean\n');
+    r.git(['add', '-A']);
+    assertFindings(r.check(), finding('b.txt (committed in HEAD) contains email'), finding('c.txt (committed in HEAD) contains a home-directory path'));
+  });
+  await t.test('committed leak deleted from the working tree', (t) => {
+    const r = repo(t);
+    leaky(r);
+    rmSync(join(r.work, 'b.txt'));
+    rmSync(join(r.work, 'c.txt'));
+    assertFindings(r.check(), finding('b.txt contains email'), finding('c.txt contains a home-directory path'));
+  });
+  await t.test('staged leak with a clean working tree', (t) => {
+    const r = repo(t);
+    r.write('b.txt', 'clean\n');
+    r.commit();
+    r.write('b.txt', `contact ${JANE}\n`);
+    r.git(['add', 'b.txt']);
+    r.write('b.txt', 'clean\n');
+    assertFindings(r.check(), finding('b.txt contains email: ', JANE));
+  });
+  await t.test('working-tree leak not yet staged is still reported', (t) => {
+    const r = repo(t);
+    r.write('b.txt', 'clean\n');
+    r.commit();
+    r.write('b.txt', `contact ${JANE}\n`);
+    assertFindings(r.check(), finding('b.txt (working tree) contains email: ', JANE));
+  });
+});

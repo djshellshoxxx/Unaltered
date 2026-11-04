@@ -7,11 +7,13 @@
 #   2. History emails are no-reply addresses: commit authors/committers, annotated-tag taggers, commit/tag messages
 #   3. Tracked text files contain no personal email addresses
 #   4. Tracked text files contain no personal home-directory paths
+#      (3 and 4 read HEAD, the index and changed working-tree files as git stores them; symlinks by their target)
 #   5. package.json has no "author" field
 #   6. Tracked images/PDFs carry no embedded metadata (needs exiftool; falls back to a crude scan)
 #
 # Allow-listed emails: *@users.noreply.github.com, noreply@*, *@example.com, *@example.org, *@*.invalid
 set -u
+export LC_ALL=C # byte-wise matching: grep never skips a non-UTF-8 text file as "binary"
 
 # Exit 2 (never PASS) whenever git cannot answer: every check below reads git, and an empty answer looks clean.
 die() { echo "opsec-check: $*" >&2; echo "opsec-check: INCOMPLETE, not a pass (exit 2)." >&2; exit 2; }
@@ -87,32 +89,76 @@ else
   ok "no commits yet"
 fi
 
-git_to "$tmp/tracked" ls-files -z
 git_to "$tmp/media" ls-files -z -- '*.jpg' '*.jpeg' '*.png' '*.tif' '*.tiff' '*.heic' '*.webp' '*.gif' '*.pdf' '*.mp4' '*.mov'
 
-echo "== 3. emails in tracked text files"
-bad=0
-while IFS= read -r -d '' f; do
-  [ "$f" = "$SELF" ] && continue
-  [[ "$f" =~ $VENDORED_RE ]] && continue
-  file --mime "$f" 2>/dev/null | grep -q 'charset=binary' && continue
-  while IFS= read -r e; do
-    [ -z "$e" ] && continue
-    if ! is_allowed_email "$e"; then fail "$f contains email: $e"; bad=1; fi
-  done < <(grep -Eoh "$EMAIL_RE" "$f" 2>/dev/null | sort -u)
-done < "$tmp/tracked"
+# Content checks 3 and 4 read what can be pushed or committed, as git stores it: every blob in HEAD and in the index
+# (so a symlink is read as its stored target, never followed), plus working-tree files that differ from the index.
+# Each distinct (content, path) is copied once into $tmp/items/<n>; labels[n] names it in findings.
+git_to "$tmp/index" ls-files -s -z
+if git rev-parse -q --verify HEAD >/dev/null 2>&1; then git_to "$tmp/head" ls-tree -r -z --full-tree HEAD; else : > "$tmp/head"; fi
+git_to "$tmp/changed" diff-files --name-only -z
+mkdir "$tmp/items" || die "cannot create $tmp/items"
+n=0; seen=$'\n'; labels=(); binary=()
+skip_path() { [ "$1" = "$SELF" ] || [[ "$1" =~ $VENDORED_RE ]]; }
+add_blob() { # add_blob <sha> <path> <label>
+  case "$seen" in *$'\n'"$1 $2"$'\n'*) return 0 ;; esac
+  seen="$seen$1 $2"$'\n'
+  git cat-file blob "$1" > "$tmp/items/$n" 2> "$tmp/git.err" || die "'git cat-file blob $1' ($2) failed: $(head -c 300 "$tmp/git.err" | tr '\n' ' ')"
+  labels[n]="$3"; n=$((n + 1))
+}
+while IFS= read -r -d '' rec; do # <mode> <sha> <stage>\t<path>
+  path="${rec#*$'\t'}"; meta="${rec%%$'\t'*}"; mode="${meta%% *}"; sha="${meta#* }"; sha="${sha%% *}"
+  skip_path "$path" && continue
+  [ "$mode" = 160000 ] && continue # submodule commit, not content
+  add_blob "$sha" "$path" "$path"
+done < "$tmp/index"
+while IFS= read -r -d '' rec; do # <mode> <type> <sha>\t<path>
+  path="${rec#*$'\t'}"; meta="${rec%%$'\t'*}"; type="${meta#* }"; sha="${type#* }"; type="${type%% *}"
+  skip_path "$path" && continue
+  [ "$type" = blob ] || continue
+  add_blob "$sha" "$path" "$path (committed in HEAD)"
+done < "$tmp/head"
+while IFS= read -r -d '' path; do
+  skip_path "$path" && continue
+  if [ -L "$path" ]; then
+    readlink -- "$path" > "$tmp/items/$n" || die "cannot read the symlink $path"
+  elif [ -f "$path" ]; then
+    sha="$(git hash-object -- "$path" 2>/dev/null)" || die "cannot read $path"
+    case "$seen" in *$'\n'"$sha $path"$'\n'*) continue ;; esac
+    seen="$seen$sha $path"$'\n'
+    cat -- "$path" > "$tmp/items/$n" || die "cannot read $path"
+  else
+    continue # deleted in the working tree; its index and HEAD content were read above
+  fi
+  labels[n]="$path (working tree)"; n=$((n + 1))
+done < "$tmp/changed"
+i=0
+while [ "$i" -lt "$n" ]; do
+  if file --mime "$tmp/items/$i" 2>/dev/null | grep -q 'charset=binary'; then binary[i]=1; else binary[i]=0; fi
+  i=$((i + 1))
+done
+
+echo "== 3. emails in tracked text files (HEAD, index and working tree)"
+bad=0; i=0
+while [ "$i" -lt "$n" ]; do
+  if [ "${binary[i]}" -eq 0 ]; then
+    while IFS= read -r e; do
+      [ -z "$e" ] && continue
+      if ! is_allowed_email "$e"; then fail "${labels[i]} contains email: $e"; bad=1; fi
+    done < <(grep -aEoh "$EMAIL_RE" "$tmp/items/$i" | sort -u)
+  fi
+  i=$((i + 1))
+done
 [ "$bad" -eq 0 ] && ok "no personal emails found"
 
-echo "== 4. personal paths in tracked text files"
-bad=0
-while IFS= read -r -d '' f; do
-  [ "$f" = "$SELF" ] && continue
-  [[ "$f" =~ $VENDORED_RE ]] && continue
-  file --mime "$f" 2>/dev/null | grep -q 'charset=binary' && continue
-  if grep -Eqn '(/home/[A-Za-z0-9._-]+/|/Users/[A-Za-z0-9._-]+/|[A-Za-z]:\\Users\\[A-Za-z0-9._-]+)' "$f" 2>/dev/null; then
-    fail "$f contains a home-directory path"; bad=1
+echo "== 4. personal paths in tracked text files (HEAD, index and working tree)"
+bad=0; i=0
+while [ "$i" -lt "$n" ]; do
+  if [ "${binary[i]}" -eq 0 ] && grep -aEq '(/home/[A-Za-z0-9._-]+/|/Users/[A-Za-z0-9._-]+/|[A-Za-z]:\\Users\\[A-Za-z0-9._-]+)' "$tmp/items/$i"; then
+    fail "${labels[i]} contains a home-directory path"; bad=1
   fi
-done < "$tmp/tracked"
+  i=$((i + 1))
+done
 [ "$bad" -eq 0 ] && ok "no home-directory paths found"
 
 echo "== 5. package.json author"
