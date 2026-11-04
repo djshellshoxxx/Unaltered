@@ -9,7 +9,7 @@
 | `dist/unaltered-<v>-linux.tar.gz` | **Linux package**: same site/single file, `open-unaltered.sh` (xdg-open), `verify-checksums.sh` (`sha256sum -c`). Fixed mtime/owner, gzip OS byte pinned. |
 | `dist/unaltered-<v>-macos.zip` | **macOS package**: same site/single file, `Open-Unaltered.command` (double-click), `verify-checksums.sh` (`shasum -a 256 -c`). Unix modes recorded in the zip. |
 | `dist/unaltered-cli-<v>.mjs` | **CLI verifier** (Node >= 22): `hash <file>`, `verify <file> [receipt.ots]`; also inside every package. Exit code encodes the result state. |
-| `dist/web/` | The multi-file site unpacked, for hosting. |
+| `dist/web/` | The multi-file site unpacked, for hosting. It needs a web server: opened from disk, browsers refuse its SRI-checked script and stylesheet (SR-3), so the packages' `README.txt` points local users to the single file. |
 | `dist/SHA256SUMS` | Checksums of the offline HTML, CLI bundle, Windows and macOS ZIPs, and Linux tarball. |
 
 The zip also contains its own `SHA256SUMS`, `README.txt`, `LICENSE`, `Open-Unaltered.cmd` (double-click launcher for Windows)

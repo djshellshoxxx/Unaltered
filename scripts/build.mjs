@@ -156,7 +156,11 @@ LINUX / MACOS
   Command line (Node 22+): node unaltered-cli-${version}.mjs verify <file> [receipt.ots]
 
 OTHER SYSTEMS
-  Open ${singleName} (single file) or index.html (multi-file site) in any current browser.
+  Open ${singleName} in any current browser.
+
+MULTI-FILE SITE
+  The files index.html, main.js and styles.css are the multi-file site for a web server: browsers refuse to run it when
+  index.html is opened from disk, because its integrity-checked script and style cannot be loaded from file://.
 
 PRIVACY
   Stamping is visible to the servers you contact. For sensitive use, use Tor Browser.
