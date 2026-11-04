@@ -12,21 +12,36 @@ const rows = [];
 let failed = 0;
 
 const sha256d = (b) => createHash('sha256').update(createHash('sha256').update(b).digest()).digest();
+// The app's response cap (SPEC section 9). A reply this large fails, and is never read further: the timeout bounds
+// time, not bytes, so a hostile or intercepting endpoint could otherwise fill this process's memory.
+const MAX_BODY = 256 * 1024;
 
 async function req(url, init = {}) {
   const res = await fetch(url, { ...init, headers: { Origin: ORIGIN, ...(init.headers ?? {}) }, signal: AbortSignal.timeout(20000), redirect: 'manual' });
-  return { res, body: Buffer.from(await res.arrayBuffer()) };
+  const chunks = [];
+  let size = 0;
+  const reader = res.body?.getReader();
+  for (;;) {
+    const { done, value } = reader ? await reader.read() : { done: true };
+    if (done) return { res, body: Buffer.concat(chunks), oversized: false };
+    size += value.byteLength;
+    if (size >= MAX_BODY) {
+      await reader.cancel().catch(() => {});
+      return { res, body: Buffer.concat(chunks), oversized: true };
+    }
+    chunks.push(Buffer.from(value));
+  }
 }
 const acao = (res) => res.headers.get('access-control-allow-origin') ?? '(missing)';
 
 for (const host of calendars) {
   try {
     const digest = randomBytes(32);
-    const { res, body } = await req(`https://${host}/digest`, { method: 'POST', body: digest, headers: { Accept: 'application/vnd.opentimestamps.v1', 'Content-Type': 'application/x-www-form-urlencoded' } });
-    const ok = res.status === 200 && body.length > 0 && body.length < 256 * 1024;
+    const { res, body, oversized } = await req(`https://${host}/digest`, { method: 'POST', body: digest, headers: { Accept: 'application/vnd.opentimestamps.v1', 'Content-Type': 'application/x-www-form-urlencoded' } });
+    const ok = res.status === 200 && body.length > 0 && !oversized;
     const cors = ['*', ORIGIN].includes(acao(res));
     const pre = await req(`https://${host}/digest`, { method: 'OPTIONS', headers: { 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'accept,content-type' } }).catch(() => null);
-    rows.push([host, 'calendar POST /digest', res.status, acao(res), `${body.length} bytes`, pre ? `preflight ${pre.res.status}` : 'preflight failed', ok && cors ? 'PASS' : 'FAIL']);
+    rows.push([host, 'calendar POST /digest', res.status, acao(res), oversized ? `>= ${MAX_BODY} bytes (cut off)` : `${body.length} bytes`, pre ? `preflight ${pre.res.status}` : 'preflight failed', ok && cors ? 'PASS' : 'FAIL']);
     if (!(ok && cors)) failed++;
     const g = await req(`https://${host}/timestamp/${digest.toString('hex')}`, { headers: { Accept: 'application/vnd.opentimestamps.v1' } });
     const gcors = ['*', ORIGIN].includes(acao(g.res));
@@ -44,8 +59,8 @@ for (const host of explorers) {
     const hash = h.body.toString().trim();
     const hdr = await req(`https://${host}/api/block/${GENESIS_HASH}/header`);
     const raw = Buffer.from(hdr.body.toString().trim(), 'hex');
-    const okHash = hash === GENESIS_HASH;
-    const okHeader = raw.length === 80 && Buffer.from(sha256d(raw)).reverse().toString('hex') === GENESIS_HASH;
+    const okHash = !h.oversized && hash === GENESIS_HASH;
+    const okHeader = !hdr.oversized && raw.length === 80 && Buffer.from(sha256d(raw)).reverse().toString('hex') === GENESIS_HASH;
     const cors = ['*', ORIGIN].includes(acao(h.res)) && ['*', ORIGIN].includes(acao(hdr.res));
     rows.push([host, 'explorer /api/block-height + /header', `${h.res.status}/${hdr.res.status}`, `${acao(h.res)}`, okHash && okHeader ? 'genesis header matches' : 'UNEXPECTED BODY', '', okHash && okHeader && cors ? 'PASS' : 'FAIL']);
     if (!(okHash && okHeader && cors)) failed++;
