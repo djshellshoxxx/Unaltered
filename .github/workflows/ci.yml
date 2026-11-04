@@ -323,6 +323,10 @@ jobs:
         run: npx vitest run tests/unit/codec.test.ts
         env:
           UNALTERED_PYTHON: /tmp/venv/bin/python
+      - name: Calendar diagnostic against the pinned reference (offline synthetic inputs)
+        run: node --test tests/r1/r1-calendars.test.mjs
+        env:
+          UNALTERED_PYTHON: /tmp/venv/bin/python
 
   network-check:
     name: Live check of calendars and explorers (CORS and API shape, informational)
