@@ -178,15 +178,17 @@ export function mountVerify(root: HTMLElement): VerifyView {
   }
 
   function renderUpgrade(): void {
+    const hadActionFocus = upActions.contains(document.activeElement);
     setChildren(
       upInputs,
       dropZone({ id: 'upgrade-receipt', label: t('upgrade.drop'), hint: t('verify.dropReceiptHint'), accept: '.ots', onFiles: (f) => { resetUpgrade(); upFile = f[0] ?? null; renderUpgrade(); } }),
       upFile ? el('p', { class: 'picked' }, `${upFile.name} · ${formatBytes(upFile.size)}`) : null,
     );
     setChildren(upActions,
-      el('button', { type: 'button', class: 'button primary', disabled: !upFile || upAbort !== null, onclick: () => void runUpgrade() }, t('upgrade.run')),
-      upAbort ? el('button', { type: 'button', class: 'button', onclick: () => { resetUpgrade(); renderUpgrade(); } }, t('common.cancel')) : null,
+      el('button', { id: 'upgrade-run', type: 'button', class: 'button primary', disabled: !upFile || upAbort !== null, onclick: () => void runUpgrade() }, t('upgrade.run')),
+      upAbort ? el('button', { id: 'upgrade-cancel', type: 'button', class: 'button', onclick: () => { resetUpgrade(); renderUpgrade(); } }, t('common.cancel')) : null,
     );
+    if (hadActionFocus) upActions.querySelector<HTMLElement>(upAbort ? '#upgrade-cancel' : '#upgrade-run')?.focus();
   }
 
   async function runUpgrade(): Promise<void> {

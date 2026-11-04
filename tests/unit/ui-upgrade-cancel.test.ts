@@ -68,4 +68,30 @@ describe('upgrade lifecycle', () => {
     expect(signals[1]!.aborted).toBe(false);
     button(t('common.cancel'))!.dispatch('click');
   });
+  it('keeps keyboard focus on the available action when starting and cancelling', async () => {
+    choose();
+    button(t('upgrade.run'))!.focus();
+    await run();
+    expect(doc.activeElement).toBe(button(t('common.cancel')));
+    button(t('common.cancel'))!.dispatch('click');
+    expect(doc.activeElement).toBe(button(t('upgrade.run')));
+  });
+  it('ignores a late success while the replacement request is running', async () => {
+    let complete!: (result: Awaited<ReturnType<typeof upgrade>>) => void;
+    vi.mocked(upgrade).mockImplementationOnce((_bytes, cfg) => {
+      signals.push(cfg.signal!);
+      return new Promise((resolve) => { complete = resolve; });
+    });
+    choose();
+    await run();
+    button(t('common.cancel'))!.dispatch('click');
+    button(t('upgrade.run'))!.dispatch('click');
+    await vi.waitFor(() => expect(signals).toHaveLength(2));
+    complete({ ots: new Uint8Array(), status: 'pending', changed: false, unknownCalendars: [], calendars: [] });
+    await Promise.resolve();
+    expect(button(t('upgrade.run'))!.disabled).toBe(true);
+    expect(signals[1]!.aborted).toBe(false);
+    expect(root.querySelector('.upgrade-result')!.textContent).toBe(t('verify.working'));
+    button(t('common.cancel'))!.dispatch('click');
+  });
 });
