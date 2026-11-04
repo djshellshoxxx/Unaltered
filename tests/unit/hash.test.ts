@@ -661,6 +661,36 @@ describe('FR-1 hashing', () => {
       expect(getEventListeners(ac.signal, 'abort')).toHaveLength(0);
     });
 
+    it.each([null, undefined, 0, 'done', [], { type: 'progress', done: NaN },
+      { type: 'progress', done: Infinity }, { type: 'progress', done: -1 },
+      { type: 'progress', done: 4 }, { type: 'progress', done: '3' },
+      { type: 'progress' }, { type: 'progress', done: 0.5 },
+    ])('falls back on a malformed worker message: %j', async (message) => {
+      let deliver!: (data: unknown) => void;
+      let terminated = 0;
+      class FakeWorker {
+        onmessage: ((ev: { data: unknown }) => void) | null = null;
+        onerror: (() => void) | null = null;
+        postMessage(): void { deliver = (data) => this.onmessage?.({ data }); }
+        terminate(): void { terminated++; }
+      }
+      vi.stubGlobal('Worker', FakeWorker);
+      vi.stubGlobal('__WORKER_URL__', 'worker.js');
+      const ac = new AbortController();
+      const progress: number[] = [];
+      const result = hashBlob(new Blob(['abc']), { signal: ac.signal, onProgress: (n) => progress.push(n) });
+      try {
+        expect(() => deliver(message)).not.toThrow();
+        expect(progress).toEqual([]);
+        expect(terminated).toBe(1);
+        expect((await result).hex).toBe(createHash('sha256').update('abc').digest('hex'));
+        expect(getEventListeners(ac.signal, 'abort')).toHaveLength(0);
+      } finally {
+        ac.abort();
+        await result.catch(() => {});
+      }
+    });
+
     it.each([
       { digest: new Uint8Array([1]), bytes: 3, cross: 'ok' },
       { digest: new Uint8Array(32), bytes: 999, cross: 'ok' },

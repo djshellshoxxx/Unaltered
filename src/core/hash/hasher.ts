@@ -114,17 +114,21 @@ function hashInWorker(w: Worker, blob: Blob, opts: HashOptions): Promise<{ diges
     };
     if (opts.signal?.aborted) return abort();
     opts.signal?.addEventListener('abort', abort, { once: true });
-    w.onmessage = (ev: MessageEvent<{ type: string; done?: number; digest?: Uint8Array; bytes?: number; cross?: string; code?: string; message?: string }>) => {
+    w.onmessage = (ev: MessageEvent<unknown>) => {
       if (settled) return;
       if (opts.signal?.aborted) return abort();
-      const m = ev.data;
-      if (m.type === 'progress') opts.onProgress?.(m.done ?? 0);
+      if (typeof ev.data !== 'object' || ev.data === null || Array.isArray(ev.data)) return unavailable();
+      const m = ev.data as Record<string, unknown>;
+      if (m.type === 'progress') {
+        if (typeof m.done !== 'number' || !Number.isSafeInteger(m.done) || m.done < 0 || m.done > blob.size) return unavailable();
+        opts.onProgress?.(m.done);
+      }
       else if (m.type === 'done') {
         // A completion must describe the whole input and a SHA-256 digest before its cross-check is trusted.
         if (!(m.digest instanceof Uint8Array) || m.digest.length !== 32 || m.bytes !== blob.size
-          || !['ok', 'mismatch', 'skipped'].includes(m.cross ?? '')) return unavailable();
+          || (m.cross !== 'ok' && m.cross !== 'mismatch' && m.cross !== 'skipped')) return unavailable();
         finish();
-        resolve({ digest: m.digest, bytes: m.bytes, cross: m.cross as string });
+        resolve({ digest: m.digest, bytes: blob.size, cross: m.cross });
       } else if (m.type === 'failed' && WORKER_FAILURES.includes(m.code as ErrorCode) && typeof m.message === 'string') {
         finish();
         reject(new UnalteredError(m.code as ErrorCode, m.message));
