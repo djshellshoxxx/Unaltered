@@ -33,3 +33,7 @@ playwright-report/
 scratch/
 tmp/
 *.bak
+
+# agent worktrees and Python bytecode from local toolkit test runs
+.claude/worktrees/
+__pycache__/
