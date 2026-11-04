@@ -3,7 +3,8 @@
 # against a header from a third source. Uses an upstream receipt anchored in 2016; makes no new calendar submission.
 # Run after `npm run build`. Exit 0 only if both steps pass.
 set -euo pipefail
-work="${1:-$(mktemp -d)}"
+# An explicit template honours TMPDIR on both GNU and BSD/macOS mktemp, so the default work directory is predictable.
+work="${1:-$(mktemp -d "${TMPDIR:-/tmp}/unaltered-r1.XXXXXX")}"
 mkdir -p "$work"
 work="$(cd "$work" && pwd)" # absolute: node and the reference step get exact paths, wherever the caller stood
 # fetch <max-bytes> <curl args...>: every third-party fetch is bounded in time and size (curl has no overall timeout
