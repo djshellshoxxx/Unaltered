@@ -129,6 +129,8 @@ if (gz > 150 * 1024) throw new Error(`bundle is ${gz} bytes gzip, above the 150 
 const crlf = (s) => Buffer.from(s.replace(/\r?\n/g, '\r\n'), 'utf8');
 const prefix = `unaltered-${version}`;
 const singleName = `${prefix}.html`;
+// `<prefix>.zip` is the Windows package (name kept for compatibility); the others carry their OS in the name.
+const archive = { windows: `${prefix}.zip`, linux: `${prefix}-linux.tar.gz`, macos: `${prefix}-macos.zip` };
 
 const readme = `Unaltered ${version} (build ${buildHash})
 =================================
@@ -136,14 +138,21 @@ const readme = `Unaltered ${version} (build ${buildHash})
 Prove a file existed, unchanged, at a point in time. Your file never leaves your computer.
 
 WINDOWS
-  1. Double-click "Open-Unaltered.cmd". It opens ${singleName} in your default browser. No installation, no internet needed for fingerprinting.
-  2. To check that your copy is genuine, right-click "Verify-Checksums.ps1" > Run with PowerShell, and compare the
-     values with the SHA256SUMS published with the release (signature: SHA256SUMS.sig).
+  1. To check that your copy is genuine, check the zip you downloaded, not this folder: in PowerShell run
+     Get-FileHash ${archive.windows} and compare the value with the line for ${archive.windows} in the SHA256SUMS
+     published with the release (signature: SHA256SUMS.sig). Letter case does not matter.
+  2. Double-click "Open-Unaltered.cmd". It opens ${singleName} in your default browser. No installation, no internet needed for fingerprinting.
   3. Stamping and verifying need internet access to the OpenTimestamps calendar servers and two Bitcoin block explorers.
      Fingerprinting and cleaning pictures work completely offline.
+  "Verify-Checksums.ps1" (right-click > Run with PowerShell) only compares this folder with the SHA256SUMS inside the
+  same zip: it finds damaged or incomplete copies, not deliberate changes.
 
 LINUX / MACOS
-  Linux: run "sh open-unaltered.sh". macOS: right-click "Open-Unaltered.command" > Open (first time). Then run verify-checksums.sh to check this copy.
+  To check that your copy is genuine, compare the archive you downloaded with the SHA256SUMS published with the release
+  (signature: SHA256SUMS.sig): run sha256sum ${archive.linux} on Linux or shasum -a 256 ${archive.macos} on macOS.
+  Linux: run "sh open-unaltered.sh". macOS: right-click "Open-Unaltered.command" > Open (first time).
+  "verify-checksums.sh" only compares this folder with the SHA256SUMS inside the same archive: it finds damaged or
+  incomplete copies, not deliberate changes.
   Command line (Node 22+): node unaltered-cli-${version}.mjs verify <file> [receipt.ots]
 
 OTHER SYSTEMS
@@ -158,7 +167,9 @@ const launcher = `@echo off
 rem Opens the offline single-file build in the default browser.
 start "" "%~dp0${singleName}"
 `;
-const psVerify = `# Prints the SHA-256 of every file in this folder next to the value in SHA256SUMS.
+const psVerify = `# Compares every file listed in this folder's SHA256SUMS with that list. Prints OK, MISMATCH or MISSING per file.
+# This finds damaged or incomplete copies. It cannot show that the copy is genuine, because a changed copy can come with
+# a matching SHA256SUMS: for that, compare the downloaded zip with the SHA256SUMS published with the release.
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $sums = Get-Content -Path (Join-Path $here 'SHA256SUMS')
 $bad = 0
@@ -171,7 +182,10 @@ foreach ($line in $sums) {
     if ($actual -eq $expected) { Write-Host "OK       $name" } else { Write-Host "MISMATCH $name"; $bad++ }
   }
 }
-if ($bad -eq 0) { Write-Host 'All files match.' } else { Write-Host "$bad problem(s). Do not use this copy." }
+if ($bad -eq 0) {
+  Write-Host "All files match this folder's SHA256SUMS."
+  Write-Host 'This does not show that the copy is genuine: compare ${archive.windows} with the SHA256SUMS published with the release.'
+} else { Write-Host "$bad problem(s). Do not use this copy." }
 Read-Host 'Press Enter to close'
 `;
 
@@ -183,10 +197,18 @@ ${open}
 `;
 const linuxLauncher = shLauncher(`if command -v xdg-open >/dev/null 2>&1; then xdg-open "$dir/${singleName}"; else echo "Open $dir/${singleName} in a browser."; fi`);
 const macLauncher = shLauncher(`open "$dir/${singleName}"`);
-const shVerify = (sumCmd) => `#!/bin/sh
-# Checks every file in this folder against SHA256SUMS. Prints OK/FAILED per file.
+const shVerify = (sumCmd, name) => `#!/bin/sh
+# Compares every file listed in this folder's SHA256SUMS with that list. Prints OK/FAILED per file.
+# This finds damaged or incomplete copies. It cannot show that the copy is genuine, because a changed copy can come with
+# a matching SHA256SUMS: for that, compare the downloaded archive with the SHA256SUMS published with the release.
 cd "$(dirname "$0")" || exit 1
-if ${sumCmd}; then echo "All files match."; else echo "Problem(s) found. Do not use this copy." >&2; exit 1; fi
+if ${sumCmd}; then
+  echo "All files match this folder's SHA256SUMS."
+  echo "This does not show that the copy is genuine: compare ${name} with the SHA256SUMS published with the release."
+else
+  echo "Problem(s) found. Do not use this copy." >&2
+  exit 1
+fi
 `;
 
 const common = [
@@ -215,12 +237,12 @@ const windowsFiles = withSums([
 const linuxFiles = withSums([
   { name: 'README.txt', data: lf(readme) },
   { name: 'open-unaltered.sh', data: lf(linuxLauncher), mode: 0o755 },
-  { name: 'verify-checksums.sh', data: lf(shVerify('sha256sum -c SHA256SUMS')), mode: 0o755 },
+  { name: 'verify-checksums.sh', data: lf(shVerify('sha256sum -c SHA256SUMS', archive.linux)), mode: 0o755 },
 ]);
 const macFiles = withSums([
   { name: 'README.txt', data: lf(readme) },
   { name: 'Open-Unaltered.command', data: lf(macLauncher), mode: 0o755 },
-  { name: 'verify-checksums.sh', data: lf(shVerify('shasum -a 256 -c SHA256SUMS')), mode: 0o755 },
+  { name: 'verify-checksums.sh', data: lf(shVerify('shasum -a 256 -c SHA256SUMS', archive.macos)), mode: 0o755 },
 ]);
 
 rmSync(dist, { recursive: true, force: true });
@@ -228,11 +250,10 @@ mkdirSync(join(dist, 'web'), { recursive: true });
 for (const f of common) if (f.name !== singleName && f.name !== 'LICENSE' && f.name !== cliName) writeFileSync(join(dist, 'web', f.name), f.data);
 writeFileSync(join(dist, singleName), singleHtml);
 writeFileSync(join(dist, cliName), cliJs);
-// `<prefix>.zip` is the Windows package (name kept for compatibility); the others carry their OS in the name.
 const artefacts = [
-  [`${prefix}.zip`, makeZip(prefixed(windowsFiles))],
-  [`${prefix}-linux.tar.gz`, makeTarGz(prefixed(linuxFiles))],
-  [`${prefix}-macos.zip`, makeZip(prefixed(macFiles))],
+  [archive.windows, makeZip(prefixed(windowsFiles))],
+  [archive.linux, makeTarGz(prefixed(linuxFiles))],
+  [archive.macos, makeZip(prefixed(macFiles))],
 ];
 for (const [name, data] of artefacts) writeFileSync(join(dist, name), data);
 const outer = [[singleName, Buffer.from(singleHtml)], [cliName, Buffer.from(cliJs)], ...artefacts].map(([n, d]) => `${hex256(d)}  ${n}`).sort().join('\n') + '\n';

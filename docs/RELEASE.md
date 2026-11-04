@@ -13,7 +13,7 @@
 | `dist/SHA256SUMS` | Checksums of the offline HTML, CLI bundle, Windows and macOS ZIPs, and Linux tarball. |
 
 The zip also contains its own `SHA256SUMS`, `README.txt`, `LICENSE`, `Open-Unaltered.cmd` (double-click launcher for Windows)
-and `Verify-Checksums.ps1` (prints OK/MISMATCH per file using `Get-FileHash`). Nothing in any artefact depends on the time, the
+and `Verify-Checksums.ps1` (prints OK/MISMATCH per file against the zip's own `SHA256SUMS`, using `Get-FileHash`). Nothing in any artefact depends on the time, the
 path or the machine: two Linux builds and builds from Linux, Windows and macOS must be byte-identical (CI gates `build-test`, `windows`,
 `macos`, `reproducible-across-platforms`). Normal PR CI retains all five distributable artefacts plus `SHA256SUMS` from each OS;
 the comparison job checks the three checksum lists. A workflow definition is not evidence that its native runner checks passed.
@@ -23,6 +23,12 @@ the comparison job checks the three checksum lists. A workflow definition is not
 Same model as Windows (ADR-009, extended by ADR-011): no installer, no executable shipped. Linux: `tar xzf unaltered-<v>-linux.tar.gz && sh unaltered-<v>/open-unaltered.sh`.
 macOS: unzip, then right-click `Open-Unaltered.command` > Open the first time (Gatekeeper quarantines downloaded scripts; the page itself is a plain HTML file and needs no approval).
 Run `verify-checksums.sh` first to compare every file with the folder's `SHA256SUMS`.
+
+The in-package helpers (`Verify-Checksums.ps1`, `verify-checksums.sh`) only check a folder against the `SHA256SUMS` inside
+the same archive. That finds damaged or incomplete copies, not tampering: anyone who changes a package can regenerate
+that list. A copy is shown to be genuine only by checking the downloaded archive (or the single `.html`) against the
+published `SHA256SUMS` and its signature. Each package `README.txt` says so and names the archive to check, and the
+helpers print the same reminder after a match.
 
 ## Windows
 
