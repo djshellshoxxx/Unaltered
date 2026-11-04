@@ -88,12 +88,12 @@ export function cleanPng(input: Uint8Array): PngResult {
         return rej('Invalid PNG chunk order.');
       }
       if (type === 'sRGB') {
-        if (len !== 1 || sawSrgb) return rej('Invalid sRGB chunk.');
+        if (len !== 1 || sawSrgb || input[pos + 8]! > 3) return rej('Invalid sRGB chunk.');
         sawSrgb = true;
       }
       // Kept bytes a decoder ignores would survive cleaning unseen, so PLTE/tRNS must fit the IHDR colour type exactly.
       if (type === 'PLTE') {
-        if (sawIdat || sawPlte || len % 3 !== 0 || len === 0 || len > 768) return rej('Invalid PNG palette.');
+        if (sawIdat || sawPlte || sawTrns || len % 3 !== 0 || len === 0 || len > 768) return rej('Invalid PNG palette.');
         if (colorType === 0 || colorType === 4 || (colorType === 3 && len / 3 > 2 ** bitDepth)) return rej('Invalid PNG palette.');
         sawPlte = true;
         paletteEntries = len / 3;
