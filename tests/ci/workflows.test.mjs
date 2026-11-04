@@ -1,7 +1,7 @@
 // Static regressions for what the required CI gates actually check. Offline, no YAML dependency: the readers below
 // understand only the layout this repository's workflows use, and fail closed when a job or step is not found.
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { test } from 'node:test';
 
 const root = new URL('../../', import.meta.url);
@@ -137,4 +137,36 @@ test('no Playwright gate lets a passing retry hide a failed attempt', () => {
   assert.ok(invocations.length >= 3, 'expected the e2e, Windows and memory Playwright gates');
   const lenient = invocations.filter((i) => !strict.test(i.args)).map((i) => `${i.where}: ${i.cmd.trim()}`);
   assert.deepEqual(lenient, [], `Playwright runs that retry (config: retries ${retries}) without --retries=0 or --fail-on-flaky-tests`);
+});
+
+test('the Python reference oracle is installed only from a hash-pinned requirements file', () => {
+  const sources = [...workflows, ...readdirSync(new URL('scripts/', root)).filter((f) => f.endsWith('.sh')).map((f) => `scripts/${f}`)];
+  const installs = sources.flatMap((file) => read(file).split('\n')
+    .flatMap((line) => line.split(/&&|;/))
+    .filter((cmd) => /\bpip["']?\s+install\b/.test(cmd))
+    .map((cmd) => ({ file, cmd: cmd.trim() })));
+  assert.ok(installs.length >= 2, 'expected the differential job and the R1 script to install the reference client');
+  const problems = [];
+  const files = new Set();
+  for (const { file, cmd } of installs) {
+    if (!/(?:^|\s)--require-hashes(?=\s|$)/.test(cmd)) problems.push(`${file}: ${cmd}: no --require-hashes`);
+    if (!/(?:^|\s)--only-binary[= ]:all:(?=\s|$)/.test(cmd)) problems.push(`${file}: ${cmd}: may build an sdist with unpinned build dependencies`);
+    const req = /(?:^|\s)(?:-r|--requirement)[= ]["']?([^\s"']+)/.exec(cmd)?.[1];
+    if (req && existsSync(new URL(req, root))) files.add(req);
+    else problems.push(`${file}: ${cmd}: names no committed requirements file`);
+  }
+  assert.deepEqual(problems, [], 'unpinned reference installs');
+  const reviewed = read('docs/DEPENDENCIES.md').split('\n').filter((l) => l.startsWith('|'));
+  for (const req of files) {
+    const logical = read(req).replace(/\\\n/g, ' ').split('\n').map((l) => l.replace(/(?:^|\s)#.*$/, '').trim()).filter(Boolean);
+    const pins = logical.map((l) => {
+      const m = /^([A-Za-z0-9][A-Za-z0-9._-]*)==([A-Za-z0-9.]+)((?:\s+--hash=sha256:[0-9a-f]{64})+)$/.exec(l);
+      assert.ok(m, `${req}: not an exact, hash-pinned requirement: ${l}`);
+      return { name: m[1], version: m[2] };
+    });
+    assert.ok(pins.some((p) => p.name === 'opentimestamps' && p.version === '0.4.5'), `${req} does not pin opentimestamps==0.4.5`);
+    for (const { name, version: v } of pins) {
+      assert.ok(reviewed.some((l) => l.includes(name) && l.includes(v) && l.includes(req)), `docs/DEPENDENCIES.md records no review of ${name}==${v} as pinned in ${req}`);
+    }
+  }
 });
