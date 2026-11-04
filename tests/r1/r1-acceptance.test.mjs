@@ -100,11 +100,14 @@ test('r1-acceptance.mjs: an explicit output directory is created private and can
 
 // r1-acceptance.sh runs in a scratch copy of the layout it expects (scripts/, tests/differential/) with test doubles for
 // everything outside it: the browser step, curl, sha256sum and python3 (venv, pip and the reference oracle). Every
-// double appends its argv to R1_CALLS as \x1f-separated fields ending in \x1e.
+// double appends its argv to R1_CALLS as \x1f-separated fields ending in \x1e. Each record is built first and appended
+// with one write: the script pipes curl into python3, and two concurrent doubles writing a record in pieces can
+// interleave (seen on macOS CI as a lost curl record).
 const HASH = `${'0'.repeat(63)}1`;
 const HEADER = 'ab'.repeat(100);
 const LOGGER = `#!/bin/sh
-{ printf '%s\\037' "$(basename "$0")" "$@"; printf '\\036'; } >> "$R1_CALLS"
+rec=$(printf '%s\\037' "$(basename "$0")" "$@"; printf .)
+printf '%s\\036' "\${rec%.}" >> "$R1_CALLS"
 `;
 const CURL = `${LOGGER}out=; url=
 while [ $# -gt 0 ]; do
@@ -127,6 +130,24 @@ else
   exit 2
 fi
 `;
+
+test('the call logger keeps every record whole when pipeline stages log concurrently', { skip: !posix && 'POSIX shell' }, (t) => {
+  const dir = scratch(t, 'unaltered-r1-logger-test-');
+  for (const name of ['curl', 'python3']) {
+    writeFileSync(join(dir, name), LOGGER);
+    chmodSync(join(dir, name), 0o755);
+  }
+  const log = join(dir, 'calls.log');
+  writeFileSync(log, '');
+  const pairs = 200;
+  const script = `for i in $(seq 1 ${pairs}); do ( ./curl -fsS --max-time 120 "https://example.invalid/$i" | ./python3 -c pass ) & done; wait`;
+  const result = spawnSync('sh', ['-c', script], { cwd: dir, encoding: 'utf8', timeout: 60_000, env: { ...process.env, R1_CALLS: log } });
+  assert.equal(result.status, 0, result.stderr);
+  const records = readFileSync(log, 'utf8').split('\x1e').filter(Boolean).map((r) => r.split('\x1f').slice(0, -1));
+  assert.equal(records.length, 2 * pairs);
+  assert.equal(records.filter(([name]) => name === 'curl').length, pairs);
+  assert.ok(records.every(([name, ...args]) => (name === 'curl' && args.length === 4) || (name === 'python3' && args.length === 2)), 'no record is merged with another');
+});
 
 function shellRun(t) {
   const dir = scratch(t, 'unaltered-r1-shell-test-');
