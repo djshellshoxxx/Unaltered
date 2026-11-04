@@ -1,6 +1,6 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { run } from '../../src/cli/run';
 
@@ -49,5 +49,21 @@ describe.runIf(process.platform !== 'win32')('cli hash output with hostile file 
   it('prints an ordinary name unchanged', async () => {
     const r = await hashOut('plain name.txt');
     expect(r.out).toBe(`${ABC}  ${r.dir}/plain name.txt\n`);
+  });
+});
+
+// Windows paths use `\` as the separator (C:\Users\...\photo.jpg). An ordinary path must still print as
+// "<fingerprint>  <path>", so a script that reads the first 64 characters gets the fingerprint. Without a leading `\`,
+// `sha256sum -c` reads the name literally, so the separators need no escaping.
+describe('cli hash output for a path with backslashes', () => {
+  it('prints the path unchanged after the fingerprint, as on Windows', async () => {
+    // On Windows these are directory separators; elsewhere they are part of one file name.
+    const f = join(tmp(), 'win\\like\\a.txt');
+    mkdirSync(dirname(f), { recursive: true });
+    writeFileSync(f, 'abc');
+    const o = { out: '', err: '' };
+    const code = await run(['hash', f], { out: (s) => void (o.out += s), err: (s) => void (o.err += s) });
+    expect({ code, ...o }).toEqual({ code: 0, out: `${ABC}  ${f}\n`, err: '' });
+    expect(o.out.slice(0, 64)).toBe(ABC);
   });
 });
