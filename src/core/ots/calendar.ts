@@ -12,7 +12,7 @@ import type { DetachedProof, Op, ProofStatus, TsNode } from './types';
 export interface StampConfig {
   /** Calendar base URLs. Every host must also be on the network allowlist. */
   calendars: readonly string[];
-  /** Minimum number of calendars that must accept (never below 1). */
+  /** Minimum number of calendars that must accept (never below 1; NaN or non-numeric means DEFAULT_MIN_CALENDARS). */
   minAccepted: number;
   net?: Partial<NetPolicy>;
   signal?: AbortSignal | undefined;
@@ -101,7 +101,9 @@ export async function stampBatch(digests: Uint8Array[], cfg: StampConfig): Promi
   if (digests.length === 0) throw new UnalteredError('INPUT_INVALID', 'Nothing to stamp.');
   if (digests.some((d) => d.length !== 32)) throw new UnalteredError('INPUT_INVALID', 'A fingerprint has the wrong length.');
   if (cfg.calendars.length === 0) throw new UnalteredError('INPUT_INVALID', 'No calendar servers are selected.');
-  const need = Math.max(1, cfg.minAccepted);
+  // FR-4: never below one, rounded up. NaN would make `accepted < need` always false, so it falls back to the default M.
+  const asked = Math.ceil(Number(cfg.minAccepted));
+  const need = Number.isNaN(asked) ? DEFAULT_MIN_CALENDARS : Math.max(1, asked);
 
   const roots: TsNode[] = digests.map((d) => ({ msg: d, attestations: [], children: [] }));
   const leaves = roots.map((root) => {

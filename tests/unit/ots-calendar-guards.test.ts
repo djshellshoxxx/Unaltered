@@ -1,7 +1,8 @@
-// FR-4: a stamp succeeds only when at least M distinct calendars accept.
+// FR-4: a stamp succeeds only when at least M distinct calendars accept (M configurable, never below 1).
 // Synthetic calendars only; no network.
 import { sha256 } from '@noble/hashes/sha2.js';
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_MIN_CALENDARS } from '../../src/core/net/allowlist';
 import { calendarsOf, stampBatch, type StampConfig } from '../../src/core/ots/calendar';
 import { calendar, routerFetch, type Handler } from '../helpers/chain';
 
@@ -59,5 +60,31 @@ describe('stampBatch counts each calendar once (FR-4)', () => {
       [ALICE, true],
       [BOB, false],
     ]);
+  });
+});
+
+describe('stampBatch acceptance minimum cannot be switched off (FR-4)', () => {
+  for (const minAccepted of [Number.NaN, undefined as unknown as number, 'two' as unknown as number]) {
+    it(`fails closed when no calendar accepts and minAccepted is ${String(minAccepted)}`, async () => {
+      const r = stampBatch([digest], cfgWith(calendarsUp([]), { minAccepted }));
+      await expect(r).rejects.toMatchObject({ code: 'NET_FAILED' });
+    });
+
+    it(`falls back to the default of ${DEFAULT_MIN_CALENDARS} when minAccepted is ${String(minAccepted)}`, async () => {
+      await expect(stampBatch([digest], cfgWith(calendarsUp([ALICE]), { minAccepted }))).rejects.toMatchObject({ code: 'NET_FAILED' });
+      await expect(stampBatch([digest], cfgWith(calendarsUp([ALICE, BOB]), { minAccepted }))).resolves.toBeDefined();
+    });
+  }
+
+  for (const minAccepted of [0, -1, Number.NEGATIVE_INFINITY, 0.5]) {
+    it(`never drops below one accepting calendar when minAccepted is ${String(minAccepted)}`, async () => {
+      await expect(stampBatch([digest], cfgWith(calendarsUp([]), { minAccepted }))).rejects.toMatchObject({ code: 'NET_FAILED' });
+      await expect(stampBatch([digest], cfgWith(calendarsUp([ALICE]), { minAccepted }))).resolves.toBeDefined();
+    });
+  }
+
+  it('rounds a fractional minimum up', async () => {
+    await expect(stampBatch([digest], cfgWith(calendarsUp([ALICE]), { minAccepted: 1.5 }))).rejects.toMatchObject({ code: 'NET_FAILED' });
+    await expect(stampBatch([digest], cfgWith(calendarsUp([ALICE, BOB]), { minAccepted: 1.5 }))).resolves.toBeDefined();
   });
 });
