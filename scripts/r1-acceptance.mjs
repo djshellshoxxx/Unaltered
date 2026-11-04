@@ -1,14 +1,16 @@
 // Opt-in R1 acceptance: a confirmed upgrade and verification through the built app's real UI in Chromium.
 // Usage (after `npm run build`): node scripts/r1-acceptance.mjs <file> <receipt.ots> [output-dir]
+// Without output-dir the upgraded receipt goes to a fresh private directory under the system temp directory.
 // Sends only the app's own requests for the receipt's existing pending commitments: no new calendar submission,
 // no route mocks, no CORS bypass, the app's strict CSP. Prints statuses and hosts only, never file names or digests.
 // The procedure, including the independent reference check, is in docs/R1_ACCEPTANCE.md.
 import { chromium } from '@playwright/test';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { basename, join, resolve } from 'node:path';
 import { serveDist } from './lib/serve-dist.mjs';
 
-const [file, receipt, outDir = '/tmp/unaltered-r1'] = process.argv.slice(2);
+const [file, receipt, outArg] = process.argv.slice(2);
 if (!file || !receipt) {
   console.error('usage: node scripts/r1-acceptance.mjs <file> <receipt.ots> [output-dir]');
   process.exit(1);
@@ -68,9 +70,15 @@ try {
   let verifyReceipt = resolve(receipt);
   if (await upOut.locator('a[download]').count() > 0) {
     const [download] = await Promise.all([page.waitForEvent('download'), upOut.locator('a[download]').click()]);
-    await mkdir(outDir, { recursive: true });
-    verifyReceipt = join(outDir, basename(download.suggestedFilename()));
-    await writeFile(verifyReceipt, await readFile(await download.path()));
+    // The default is an atomically created private directory, never a predictable shared parent (as r1-bob-finney.mjs).
+    const outDir = outArg === undefined ? await mkdtemp(join(tmpdir(), 'unaltered-r1-')) : resolve(outArg);
+    if (outArg !== undefined) await mkdir(outDir, { recursive: true, mode: 0o700 });
+    const name = basename(download.suggestedFilename());
+    if (!name || name === '.' || name === '..') throw new Error('The app offered a download without a usable file name.');
+    verifyReceipt = join(outDir, name);
+    // Replace whatever entry has that name, then create the file exclusively: an existing link is never written through.
+    await rm(verifyReceipt, { force: true });
+    await writeFile(verifyReceipt, await readFile(await download.path()), { flag: 'wx', mode: 0o600 });
     upgrade.downloaded = true;
   }
 
