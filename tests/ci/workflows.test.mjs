@@ -59,8 +59,13 @@ const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 test('the Windows job checks the Windows zip itself, with the Verify-Checksums.ps1 it ships', () => {
   const build = read('scripts/build.mjs');
-  const packages = [...build.matchAll(/\[`\$\{prefix\}([^`]*)`,\s*make\w+\(prefixed\((\w+)\)\)\]/g)]
-    .map(([, suffix, files]) => ({ name: `unaltered-${version}${suffix}`, files }));
+  // Package names are written either inline ([`${prefix}.zip`, makeZip(prefixed(windowsFiles))]) or through the
+  // `archive` map (const archive = { windows: `${prefix}.zip`, ... }; [archive.windows, makeZip(...)]).
+  const archiveMap = Object.fromEntries([...(/const archive = \{(.*)\};$/m.exec(build)?.[1] ?? '').matchAll(/(\w+):\s*`\$\{prefix\}([^`]*)`/g)].map(([, key, suffix]) => [key, suffix]));
+  const packages = [
+    ...[...build.matchAll(/\[`\$\{prefix\}([^`]*)`,\s*make\w+\(prefixed\((\w+)\)\)\]/g)].map(([, suffix, files]) => ({ suffix, files })),
+    ...[...build.matchAll(/\[archive\.(\w+),\s*make\w+\(prefixed\((\w+)\)\)\]/g)].map(([, key, files]) => ({ suffix: archiveMap[key], files })),
+  ].filter((p) => p.suffix !== undefined).map(({ suffix, files }) => ({ name: `unaltered-${version}${suffix}`, files }));
   const windowsZip = packages.find((p) => p.files === 'windowsFiles')?.name;
   assert.ok(windowsZip, 'scripts/build.mjs no longer names the package built from windowsFiles');
   const dist = [...packages.map((p) => p.name), `unaltered-${version}.html`, `unaltered-cli-${version}.mjs`, 'SHA256SUMS'];
@@ -92,11 +97,16 @@ test('the Windows job checks the Windows zip itself, with the Verify-Checksums.p
 
   // The shipped script exits 0 whatever it finds, so the step must judge its printed verdict: every SHA256SUMS entry
   // reported OK plus the all-clear, and a changed and a missing file reported as such.
-  for (const line of ["Write-Host 'All files match.'", 'Write-Host "OK       $name"', 'Write-Host "MISMATCH $name"', 'Write-Host "MISSING  $name"']) {
+  for (const line of ['Write-Host "OK       $name"', 'Write-Host "MISMATCH $name"', 'Write-Host "MISSING  $name"']) {
     assert.ok(build.includes(line), `scripts/build.mjs Verify-Checksums.ps1 no longer prints ${line}`);
   }
+  // The all-clear is whatever the shipped script prints first after a clean pass; the step must require that exact text.
+  const clear = /if \(\$bad -eq 0\) \{\s*Write-Host (?:"(All files match[^"]*)"|'(All files match[^']*)')/.exec(build);
+  const allClear = clear?.[1] ?? clear?.[2];
+  assert.ok(allClear, 'scripts/build.mjs Verify-Checksums.ps1 no longer prints an all-clear line');
   if (!/['"]OK\s/.test(script)) problems.push('does not count the OK lines');
-  if (!script.includes("'All files match.'")) problems.push('does not require the all-clear');
+  // Required on the clean pass: the step must fail when the all-clear is absent (`-notcontains`), not merely mention it.
+  if (!script.includes(`-notcontains "${allClear}"`) && !script.includes(`-notcontains '${allClear}'`)) problems.push(`does not require the all-clear "${allClear}"`);
   if (!/['"]MISMATCH \S/.test(script)) problems.push('does not prove a changed file is reported');
   if (!/['"]MISSING {2}\S/.test(script)) problems.push('does not prove a missing file is reported');
   assert.deepEqual(problems, [], `Windows zip check (${step.name}):\n  ${problems.join('\n  ')}`);

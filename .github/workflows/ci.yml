@@ -228,14 +228,14 @@ jobs:
           $out = Invoke-Shipped
           $out | Write-Host
           $ok = @($out | Where-Object { $_ -like 'OK *' }).Count
-          if ($entries.Count -lt 1 -or $ok -ne $entries.Count -or $out -notcontains 'All files match.') {
+          if ($entries.Count -lt 1 -or $ok -ne $entries.Count -or $out -notcontains "All files match this folder's SHA256SUMS.") {
             throw "Verify-Checksums.ps1 confirmed $ok of $($entries.Count) files in $($zip.Name)."
           }
           Add-Content -LiteralPath (Join-Path $dir 'README.txt') -Value 'changed'
           Remove-Item -LiteralPath (Join-Path $dir 'LICENSE')
           $out = Invoke-Shipped
           $out | Write-Host
-          if ($out -notcontains 'MISMATCH README.txt' -or $out -notcontains 'MISSING  LICENSE' -or $out -contains 'All files match.') {
+          if ($out -notcontains 'MISMATCH README.txt' -or $out -notcontains 'MISSING  LICENSE' -or $out -contains "All files match this folder's SHA256SUMS.") {
             throw 'Verify-Checksums.ps1 did not report a changed and a missing file.'
           }
           Write-Host "All $($entries.Count) files in $($zip.Name) match its SHA256SUMS, checked by its own Verify-Checksums.ps1."
