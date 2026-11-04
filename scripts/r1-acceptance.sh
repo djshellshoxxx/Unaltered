@@ -21,7 +21,8 @@ if [ "$status" -ne 0 ]; then
   exit "$status"
 fi
 read -r upgraded block < <(node -e 'const r=require(process.argv[1]);console.log(r.verify.upgradedReceiptPath, r.verify.block)' "$work/browser.json")
-python3 -m venv "$work/venv" && "$work/venv/bin/pip" install -q opentimestamps==0.4.5
+# Same version- and hash-pinned reference set as the differential CI job.
+python3 -m venv "$work/venv" && "$work/venv/bin/pip" install -q --require-hashes --only-binary :all: -r tests/differential/requirements.txt
 # Third source, independent of the app's explorers (mempool.space, blockstream.info). An own node is better.
 hash=$(curl -fsS "https://blockchain.info/block-height/$block?format=json" | python3 -c 'import json,sys;print(json.load(sys.stdin)["blocks"][0]["hash"])')
 # Download fully, then truncate: piping curl into head under pipefail makes curl exit 23 (SIGPIPE).
