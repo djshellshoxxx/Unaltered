@@ -285,8 +285,16 @@ function opKey(op: Op): string {
 
 /** Merge `from` into `into` (same message). Mirrors Timestamp.merge. Iterative; indexed so cost is linear. */
 export function mergeTree(into: TsNode, from: TsNode, validate?: () => void): void {
-  if (!equalBytes(into.msg, from.msg)) throw new UnalteredError('PROOF_MALFORMED', 'Cannot combine receipts for different data.');
-  const work: [TsNode, TsNode][] = [[into, from]];
+  mergeTrees([[into, from]], validate);
+}
+
+/** Merge several matching roots as one transaction, with one aggregate validation and shared rollback. */
+export function mergeTrees(pairs: readonly (readonly [TsNode, TsNode])[], validate?: () => void): void {
+  const work: [TsNode, TsNode][] = [];
+  for (const [into, from] of pairs) {
+    if (!equalBytes(into.msg, from.msg)) throw new UnalteredError('PROOF_MALFORMED', 'Cannot combine receipts for different data.');
+    work.push([into, from]);
+  }
   let steps = 0;
   // Record touched arrays so aggregate rejection cannot poison the previously valid proof.
   const snapshots = new Map<TsNode, { atts: Attestation[]; attLength: number; children: TsNode['children']; childLength: number }>();
