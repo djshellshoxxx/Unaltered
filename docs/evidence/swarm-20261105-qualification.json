@@ -1,0 +1,210 @@
+{
+  "recordedAt": "2026-11-05T22:40:00Z",
+  "sourceCheckpoint": "7ec46d4",
+  "status": "IN_PROGRESS",
+  "recovery": {
+    "main": "1b6dd91",
+    "pr51Previous": "c02dd52",
+    "pr52": "295877e",
+    "newerPRs": false,
+    "originalDirtyCheckout": "preserved"
+  },
+  "workers": {
+    "security": {
+      "start": "src/core/strip/png.ts",
+      "branch": "codex/security-sweep-20261105",
+      "status": "PNG ignored-transparency-bit regression/fix in progress"
+    },
+    "bugs": {
+      "start": "src/ui/views/stamp.ts",
+      "branch": "codex/bugs-sweep-20261105",
+      "status": "receipt-label retention regression/fix in progress"
+    },
+    "audit": {
+      "start": "src/core/ots/types.ts",
+      "branch": "codex/audit-sweep-20261105",
+      "commit": "7600d46124f0cf771439b549b3c614cd2c896859",
+      "integration": "7ec46d4"
+    }
+  },
+  "completed": {
+    "networkLimits": {
+      "commit": "63fef7b",
+      "newCases": 16,
+      "failingBefore": 12,
+      "relatedPassed": 79,
+      "typecheck": "PASSED",
+      "lint": "PASSED",
+      "opsec": "PASSED",
+      "limit": "invalid programmatic overrides; no demonstrated browser-input exploit"
+    },
+    "serialization": {
+      "integration": "7ec46d4",
+      "newCases": 17,
+      "failingBefore": 14,
+      "referenceRelatedPassed": 108,
+      "leadRelatedPassed": 76,
+      "typecheck": "PASSED",
+      "lint": "PASSED",
+      "limit": "unknown runtime operation could become prepend and produce VERIFIED in exported in-memory API; wire parser already rejected unknown tags"
+    }
+  },
+  "livePendingProbe": {
+    "testedArtifact": "b63394d9086f7bd9 (prior qualified build; emitted CSP unchanged)",
+    "result": {
+      "checkedAt": "2026-11-05T22:36:43.601Z",
+      "browser": "156.0.8078.4",
+      "calendars": [
+        {
+          "host": "alice.btc.calendar.opentimestamps.org",
+          "post": {
+            "status": 200,
+            "length": 172,
+            "error": null
+          },
+          "pendingLookups": [
+            {
+              "host": "alice.btc.calendar.opentimestamps.org",
+              "status": null,
+              "length": null,
+              "error": "TypeError",
+              "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+            }
+          ],
+          "pending": {
+            "host": "alice.btc.calendar.opentimestamps.org",
+            "status": null,
+            "length": null,
+            "error": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+          }
+        },
+        {
+          "host": "bob.btc.calendar.opentimestamps.org",
+          "post": {
+            "status": 200,
+            "length": 170,
+            "error": null
+          },
+          "pendingLookups": [
+            {
+              "host": "bob.btc.calendar.opentimestamps.org",
+              "status": null,
+              "length": null,
+              "error": "TypeError",
+              "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+            }
+          ],
+          "pending": {
+            "host": "bob.btc.calendar.opentimestamps.org",
+            "status": null,
+            "length": null,
+            "error": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+          }
+        },
+        {
+          "host": "finney.calendar.eternitywall.com",
+          "post": {
+            "status": 200,
+            "length": 191,
+            "error": null
+          },
+          "pendingLookups": [
+            {
+              "host": "finney.calendar.eternitywall.com",
+              "status": null,
+              "length": null,
+              "error": "TypeError",
+              "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+            }
+          ],
+          "pending": {
+            "host": "finney.calendar.eternitywall.com",
+            "status": null,
+            "length": null,
+            "error": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+          }
+        }
+      ],
+      "sources": [
+        {
+          "host": "mempool.space",
+          "height": {
+            "status": 200,
+            "length": 64,
+            "error": null
+          },
+          "header": {
+            "status": 200,
+            "length": 160,
+            "error": null
+          },
+          "hashMatches": true,
+          "headerMatches": true
+        },
+        {
+          "host": "blockstream.info",
+          "height": {
+            "status": 200,
+            "length": 64,
+            "error": null
+          },
+          "header": {
+            "status": 200,
+            "length": 160,
+            "error": null
+          },
+          "hashMatches": true,
+          "headerMatches": true
+        }
+      ],
+      "csp": [],
+      "requestFailures": [
+        {
+          "host": "bob.btc.calendar.opentimestamps.org",
+          "error": "net::ERR_FAILED"
+        },
+        {
+          "host": "alice.btc.calendar.opentimestamps.org",
+          "error": "net::ERR_FAILED"
+        },
+        {
+          "host": "finney.calendar.eternitywall.com",
+          "error": "net::ERR_FAILED"
+        }
+      ],
+      "pendingLookupIdentity": "Validated POST proof; looked up each pending attestation node commitment.",
+      "confirmedUpgrade": "NOT TESTED: a known anchored receipt and independent reference verification remain separate requirements.",
+      "ok": false
+    }
+  },
+  "hosted": {
+    "checkedAt": "2026-11-05T22:33:00Z",
+    "run": 42121387431,
+    "head": "c02dd52",
+    "queuedJobs": 12,
+    "runnerIds": 0,
+    "executedSteps": 0,
+    "headSonar": "SUCCESS",
+    "headSnyk": "SUCCESS",
+    "pr52Sonar": "SUCCESS at295877e",
+    "dispatchPermission": "403 requires actions=write; prior exact response retained; unchanged credential not retried"
+  },
+  "dependencies": {
+    "fullAuditModerateDevOnly": 10,
+    "runtimeAudit": 0,
+    "change": "none; latest lint parents still declare minimatch10; no incompatible override"
+  },
+  "next": "Integrate PNG/UI worker slices, run current-source project check/build/browser/fuzz qualification, update existing draft PR51. No release/deploy/merge.",
+  "apiUsage": "not exposed; no cache-hit/cost/hard-budget claim",
+  "rawLogs": {
+    "net-policy-before.log": "6891c66d093e26c05dfcae52ecc9998b9a8894c4fc4bb8dca413e6db8fdae13a",
+    "net-policy-after.log": "aaf8cf597046f31f0d20593b9c27d22c3effd550fa0d4121897c5f3da71f6908",
+    "swarm-serializer-before.log": "2b4f60d311d7422a1c09421271d957bb655607fe977f64d6f8d6c0d1d9a6cd82",
+    "swarm-unknown-op-before.log": "70e0bce4edb3d040a7bdf6da3d814379f1728ec8a79afc24bfb0acc226da18df",
+    "swarm-serializer-reference.log": "ea887dcdb26d83466a57176712ae57de50fe658315648f76ddda86564dc74b25",
+    "serialization-integrated.log": "8c3f70d53a978628c9ac839d58ca2aa9f593270a291fb6e2f68aa78a7e784868"
+  }
+}

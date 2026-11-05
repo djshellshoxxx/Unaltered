@@ -1,11 +1,11 @@
 # Autonomous development checkpoint — 2026-11-05 UTC
 
 Application branch: `codex/recover-qualify-20261104`, [draft PR51](https://github.com/djshellshoxxx/Unaltered/pull/51).
-Latest published implementation checkpoint: `69087ff`; evidence checkpoint: `c1b003f`. Later documentation commits may follow.
+Latest published implementation checkpoint: `7ec46d4`; prior evidence checkpoint: `c1b003f`. Later documentation commits may follow.
 Active checkout: `.development/consolidation-20261104`. Original main checkout/lockfile edits are preserved.
 Separate automation branch: `codex/automation-scope-guards-20261104`, published `295877ef9edcda37282f7981b25b996808dc6e35`,
 [draft PR52](https://github.com/djshellshoxxx/Unaltered/pull/52). No automation changes enter PR51.
-Implementation workers finished; no background browser/fuzz/test processes remain. Lead owns final review/publication.
+Three review/implementation workers are active in isolated sweep worktrees; see the resumed section below. Lead owns integration, network, CI and shared release files.
 
 ## Recovery and consolidation
 
@@ -116,6 +116,36 @@ Evidence: docs/evidence/continuation-20261105-qualification.json and cors-contin
 Raw logs are in .development/evidence-continuation-20261105/. Token/cost/cache telemetry remains unavailable.
 Next: required hosted/native CI and Pages artifact; operator CORS headers; human/independent review, signing and
 explicit release/site authorization. No further source change or paid automation activation is implied.
+
+## Resumed random-start review — 2026-11-05 22:40 UTC
+
+Remote recovery confirmed unchanged main1b6dd91 and original PR51c02dd52/PR52295877e; no newer PRs or merges.
+Both exact source heads have successful Sonar/Snyk checks. PR51 run42121387431 has12 queued jobs with
+runner_id0 and no executed steps. Publication succeeds; the credential still lacks Actions write dispatch permission.
+The owner can use Actions → CI → Run workflow with the reviewed branch; see docs/PAGES.md for the precise
+credential/new-Codespaces distinction. No permission/settings/paid workflow change was made.
+
+Three workers were assigned different random starting files, with exclusive editing areas and25-minute initial budgets:
+security: src/core/strip/png.ts in security-sweep-20261105; bugs: src/ui/views/stamp.ts in bugs-sweep-20261105;
+general audit: src/core/ots/types.ts in audit-sweep-20261105. All branches start atc02dd52. Workers publish their
+branches; lead ports verified slices into the existing PR51. The original dirty main checkout remains unchanged.
+
+Published63fef7b validates response/timer limits before transport. NaN/Infinity can no longer disable byte caps;
+invalid timers return a typed generic input error. Defaults and zero-byte budgets remain intact. Twelve cases failed
+before repair;16 new cases and79 related cases now pass, plus TS/lint/OPSEC. This is a programmatic override
+boundary, not a demonstrated malicious browser-input path. Independent agent review found no blocker.
+
+Published7ec46d4 ports worker7600d46: serialization rejects invalid binary arguments, pending URIs, unsupported
+runtime kinds and operation results exceeding message limits. An unknown in-memory operation previously encoded as
+prepend and could yield VERIFIED; it now returns INVALID_PROOF before source requests. The wire parser already
+rejected unknown tags. Seventeen new cases,108 related reference cases and76 lead integration cases pass; TS/lint
+pass. Fourteen original cases failed before repair; the explicit old false-VERIFIED reproduction is retained.
+
+Fresh live probe22:36:43Z on the prior qualified emitted build: all three calendar POSTs200; every actual pending-node
+lookup is unreadable; both explorer genesis/header checks pass; no CSP violations. External CORS remains unresolved.
+Current-source build/browser/fuzz requalification is in progress; prior artefacts are not claimed as this new source.
+Security worker is testing PNG ignored transparency bits; UI worker is testing a receipt label lost on language changes.
+Evidence: docs/evidence/swarm-20261105-qualification.json. No production release, deployment or main merge.
 
 ## Hosted state and exact remaining gates
 
