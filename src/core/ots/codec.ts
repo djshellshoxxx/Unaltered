@@ -24,6 +24,13 @@ const malformed = (m: string): never => {
   throw new UnalteredError('PROOF_MALFORMED', m);
 };
 
+// python-opentimestamps v0.5.0, TimeAttestation.MAX_HEIGHT (core/notary.py): unsigned 32-bit height.
+function checkBitcoinHeight(height: number): void {
+  if (!Number.isInteger(height) || height < 0 || height > 0xffff_ffff) {
+    malformed('The receipt contains an invalid Bitcoin block height.');
+  }
+}
+
 function readOp(r: Reader, tag: number): Op {
   if (tag === TAG_SHA256) return { kind: 'sha256' };
   if (tag === 0xf0 || tag === 0xf1) {
@@ -41,6 +48,7 @@ function readAttestation(r: Reader): Attestation {
   const payload = new Reader(r.varbytes(LIMITS.maxAttPayload), 'PROOF_MALFORMED');
   if (equalBytes(tag, ATT_BITCOIN)) {
     const height = payload.varuint();
+    checkBitcoinHeight(height);
     if (!payload.eof()) malformed('Trailing data in an attestation.');
     return { kind: 'bitcoin', height };
   }
@@ -139,6 +147,7 @@ export function parseProof(bytes: Uint8Array): DetachedProof {
 
 function attestationBytes(a: Attestation): Uint8Array {
   if (a.kind === 'bitcoin') {
+    checkBitcoinHeight(a.height);
     const p = Uint8Array.from(writeVaruint(a.height));
     return concat(ATT_BITCOIN, Uint8Array.from(writeVaruint(p.length)), p);
   }
