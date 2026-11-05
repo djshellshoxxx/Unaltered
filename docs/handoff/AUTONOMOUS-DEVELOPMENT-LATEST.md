@@ -1,7 +1,7 @@
 # Autonomous development checkpoint — 2026-11-05 UTC
 
 Application branch: `codex/recover-qualify-20261104`, [draft PR51](https://github.com/djshellshoxxx/Unaltered/pull/51).
-Latest published implementation checkpoint: `69087ff`; later documentation commits may follow.
+Latest published implementation checkpoint: `69087ff`; evidence checkpoint: `c1b003f`. Later documentation commits may follow.
 Active checkout: `.development/consolidation-20261104`. Original main checkout/lockfile edits are preserved.
 Separate automation branch: `codex/automation-scope-guards-20261104`, published `295877ef9edcda37282f7981b25b996808dc6e35`,
 [draft PR52](https://github.com/djshellshoxxx/Unaltered/pull/52). No automation changes enter PR51.
@@ -28,7 +28,7 @@ Accepted requirements remain `docs/SPEC.md` plus `docs/DECISIONS.md`.
 | Consolidate compatible branches | INTEGRATING: recovered unpublished work and semantic ports published | PR39,43–50; PR51 | Required hosted checks/review before main merge; lead/maintainer; high; inspect current CI |
 | Local SHA-256, FR1–2 | COMPLETE local acceptance: streaming, bounded reads, cancellation, worker protocol/readiness, failures and large boundaries | `src/core/hash/`, hash tests; PR38/43/47/48/51 | Native OS CI remains a release gate; lead; high; preserve unchanged memory/deadline gates |
 | OTS submission/serialization/upgrade, FR4–6 | COMPLETE local slice: calendar quorum, nonce, immutable upgrades, canonical URL policy, unsigned 32-bit height bounds | `src/core/ots/`, OTS tests; PR39/44/47/51 | Pending404 CORS remains external; operators; high; require compatible headers or explicit documented release disposition |
-| Bitcoin verification, FR7–8 | COMPLETE stated L1 slice: replay/header integrity/quorum, real target-isolated upgrades and same-receipt reference checks | `bitcoin.ts`, `verify.ts`, R1 evidence; PR51 | Own-node/L2 and independent audit are not established by explorer headers; external reviewers; high |
+| Bitcoin verification, FR7–8 | COMPLETE stated L1 slice: replay/header integrity/quorum, real target-isolated upgrades and same-receipt reference checks; optional offline trusted-header comparison with separate trust state | `bitcoin.ts`, `verify.ts`, `trusted-header.ts`, R1/offline evidence; PR51 | Own-node/L2 and independent audit are not established by explorer headers; external reviewers; high |
 | Browser interoperability | PARTIAL release qualification: pinned three-engine local functional/CSP/axe/offline coverage and 9 large-file trials pass | `tests/e2e/`, browser evidence | Actual OS/Tor/human coverage and pending404 CORS remain; maintainer/operators; high |
 | Metadata privacy | COMPLETE current structural parser fixes and bounded local acceptance | `src/core/strip/`, parser tests/fuzz; PR47/51 | Broader decoder campaigns/independent audit remain; external reviewers; medium |
 | UI/accessibility, FR14 | PARTIAL: focus/cancellation/live-region fixes; keyboard, axe, narrow reflow and emulated preferences pass | `src/ui/`, `tests/e2e/`; PR46/47/51 | Human screen-reader, actual zoom/OS contrast, native Spanish/usability; human testers; medium; use gate script |
@@ -50,7 +50,7 @@ Accepted requirements remain `docs/SPEC.md` plus `docs/DECISIONS.md`.
   through 2 GiB + 1 match independent Node crypto with bounded reads and sampled extra RSS below 200 MiB.
 - After final build/CI changes, current continuation project check: **422 unit passes / 2 optional large-file skips;
   127 Node passes / 3 platform-privilege skips**. Reference still enabled. OPSEC, typecheck and lint pass.
-  The two skipped large-file cases passed in the preceding full run on identical application source.
+  The two skipped large-file cases passed in the preceding full run; hashing and browser runtime code are unchanged.
 - Final strict integration initially found two new test-helper string/undefined assignments. `a70cdce`
   uses definite-string comment stripping; final project check passes without changing flags/assertions.
 - Chromium: **85 ordinary passes / 1 separately qualified memory skip**, one complete final-source run.
@@ -66,7 +66,7 @@ Accepted requirements remain `docs/SPEC.md` plus `docs/DECISIONS.md`.
   of the same downloaded receipt at blocks 428648 / 429355 / 523367. No mocks/new submissions in confirmed
   runs; pending404 replies still lack CORS headers. This is L1/reference-header evidence, not L2.
 - All 7 Python-generated fixture files compare byte-identically. Python toolkit discovery: 34 passes.
-  Separate automation guard: 12 passes, including actual-workflow module-injection regressions.
+  Separate automation guard: 18 current passes, including actual-workflow module-injection regressions.
 - Fuzz seed 20261105: 300,001 ms, 58,888 mutations / 58,924 executions, no finding. Wall-clock budget stop;
   the 1,000,000 iteration ceiling was not reached. Earlier fuzz evidence is preserved separately.
 - Final notice-bearing build `b9b13732e3ee856a`: two builds match all 10 files; all 5 release checksums
@@ -119,11 +119,12 @@ explicit release/site authorization. No further source change or paid automation
 
 ## Hosted state and exact remaining gates
 
-PR51 Sonar passes on published `e10929e` (also earlier checkpoints); queried vulnerability/BUG counts are 0.
-Maintainability issues remain; analyzer evidence is not independent audit approval.
-PR-triggered Actions run [42112041644](https://github.com/djshellshoxxx/Unaltered/actions/runs/42112041644)
-for `a70cdce` was superseded/cancelled by later verified pushes. Newer source/documentation heads have
-separate pending PR checks; no hosted pass or official Pages upload is inferred.
+PR51 Sonar passes on published `c1b003f` (completed 2026-11-05 22:24:01 UTC); Snyk also passes.
+These analyzer checks are not independent audit approval. PR52 Sonar passes on `295877e`.
+Current PR51 Actions run [42121018061](https://github.com/djshellshoxxx/Unaltered/actions/runs/42121018061)
+for `c1b003f` remains queued at 22:25 UTC. Earlier runs were superseded/cancelled by verified pushes;
+no executed hosted failure or pass is inferred. Later documentation heads have separate checks.
+Official Pages upload and native Windows/macOS qualification remain pending.
 Manual CI dispatch failed HTTP 403 `Resource not accessible by integration` at
 `/actions/workflows/379498388/dispatches`. Branch-protection inspection also returned 403; settings were
 not changed, and absent protection is not inferred. Push/PR publication succeeds.
