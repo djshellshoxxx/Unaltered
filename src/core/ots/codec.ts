@@ -31,6 +31,12 @@ function checkBitcoinHeight(height: number): void {
   }
 }
 
+function checkPendingUri(uri: string): void {
+  if (typeof uri !== 'string' || uri.length > LIMITS.maxUri || !/^[a-zA-Z0-9.\-_/:]+$/.test(uri)) {
+    malformed('The receipt names an invalid calendar address.');
+  }
+}
+
 function readOp(r: Reader, tag: number): Op {
   if (tag === TAG_SHA256) return { kind: 'sha256' };
   if (tag === 0xf0 || tag === 0xf1) {
@@ -62,7 +68,7 @@ function readAttestation(r: Reader): Attestation {
     } catch {
       return malformed('The receipt names an invalid calendar address.');
     }
-    if (!/^[a-zA-Z0-9.\-_/:]+$/.test(uri)) malformed('The receipt names an invalid calendar address.');
+    checkPendingUri(uri);
     return { kind: 'pending', uri };
   }
   for (const k of ATTS_KNOWN_UNSUPPORTED) {
@@ -151,6 +157,8 @@ function attestationBytes(a: Attestation): Uint8Array {
     const p = Uint8Array.from(writeVaruint(a.height));
     return concat(ATT_BITCOIN, Uint8Array.from(writeVaruint(p.length)), p);
   }
+  if (a?.kind !== 'pending') malformed('The receipt contains an unknown attestation type.');
+  checkPendingUri(a.uri);
   const uri = new TextEncoder().encode(a.uri);
   const inner = concat(Uint8Array.from(writeVaruint(uri.length)), uri);
   return concat(ATT_PENDING, Uint8Array.from(writeVaruint(inner.length)), inner);
@@ -171,11 +179,18 @@ function opBytes(op: Op): Uint8Array {
   return concat(Uint8Array.from([opTag(op)]), Uint8Array.from(writeVaruint(op.arg.length)), op.arg);
 }
 
+function checkOperation(op: Op): void {
+  opTag(op); // Unknown runtime kinds must never be encoded as a supported operation.
+  if (op.kind !== 'sha256' && (!(op.arg instanceof Uint8Array) || op.arg.length < 1 || op.arg.length > LIMITS.maxOpArg)) {
+    malformed('The receipt contains an invalid operation argument.');
+  }
+}
+
 /** Canonical serialisation, matching the reference implementation's ordering. Iterative. */
 export function serializeTree(root: TsNode): Uint8Array {
   const out: Uint8Array[] = [];
-  type Work = { node: TsNode; depth: number } | Uint8Array;
-  const work: Work[] = [{ node: root, depth: 1 }];
+  type Work = { node: TsNode; depth: number; messageLength: number } | Uint8Array;
+  const work: Work[] = [{ node: root, depth: 1, messageLength: root.msg.length }];
   let nodes = 0;
   let attestations = 0;
   let bytes = 0;
@@ -193,7 +208,9 @@ export function serializeTree(root: TsNode): Uint8Array {
     attestations += item.node.attestations.length;
     if (attestations > LIMITS.maxAttestations) throw new UnalteredError('PROOF_TOO_LARGE', 'The receipt contains too many attestations.');
     const atts = [...item.node.attestations].sort(compareAtt);
-    const kids = [...item.node.children].sort((a, b) => compareOps(a.op, b.op));
+    const kids = [...item.node.children];
+    for (const kid of kids) checkOperation(kid.op);
+    kids.sort((a, b) => compareOps(a.op, b.op));
     const total = atts.length + kids.length;
     if (total === 0) throw new UnalteredError('PROOF_MALFORMED', 'Cannot serialise an empty timestamp.');
     const seq: Work[] = [];
@@ -204,9 +221,11 @@ export function serializeTree(root: TsNode): Uint8Array {
       seq.push(Uint8Array.from([TAG_ATTESTATION]), attestationBytes(a));
     }
     for (const k of kids) {
+      const messageLength = k.op.kind === 'sha256' ? 32 : item.messageLength + k.op.arg.length;
+      if (messageLength > LIMITS.maxMsg) malformed('The receipt contains an oversized value.');
       i++;
       if (i < total) seq.push(Uint8Array.from([TAG_MORE]));
-      seq.push(opBytes(k.op), { node: k.node, depth: item.depth + 1 });
+      seq.push(opBytes(k.op), { node: k.node, depth: item.depth + 1, messageLength });
     }
     for (let j = seq.length - 1; j >= 0; j--) work.push(seq[j]!);
   }
