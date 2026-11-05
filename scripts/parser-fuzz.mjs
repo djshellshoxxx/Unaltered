@@ -1,7 +1,7 @@
 // REL-2 / SPEC12: bounded, seeded V8 block-feedback fuzzing, using installed dev dependencies only.
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
@@ -26,7 +26,14 @@ const MAX_CORPUS = 256;
 const SEED_DIR = 'tests/fixtures/ots';
 const HARNESS = ['parser-fuzz.mjs', 'lib/fuzz-coverage.mjs', 'lib/fuzz-executor.mjs', 'lib/fuzz-worker.mjs'];
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
-const git = (...args) => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+// Git is a development prerequisite, never a shipped dependency. Do not search inherited PATH (which may
+// include a writable checkout or temp directory) when collecting the campaign's source/fixture evidence.
+const gitLocations = process.platform === 'win32'
+  ? ['C:/Program Files/Git/cmd/git.exe', 'C:/Program Files (x86)/Git/cmd/git.exe']
+  : ['/usr/bin/git', '/bin/git'];
+const gitExecutable = gitLocations.find((path) => existsSync(path));
+if (!gitExecutable) throw new Error('Fuzzing requires Git installed in a standard system location.');
+const git = (...args) => execFileSync(gitExecutable, args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
 let randomState = options.seed >>> 0;
 const random = (n) => {
   randomState ^= randomState << 13; randomState ^= randomState >>> 17; randomState ^= randomState << 5;

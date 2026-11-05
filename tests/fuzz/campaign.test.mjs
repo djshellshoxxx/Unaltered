@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
@@ -51,6 +51,31 @@ test('campaign report counts covered source offsets per target', (t) => {
   assert.equal(report.status, 'budget-complete');
   assert.ok(report.targets.sample.coveredOffsets > 0);
   assert.equal(Object.hasOwn(report.targets.sample, 'ranges'), false);
+});
+
+test('campaign never executes a Git replacement from the inherited PATH', (t) => {
+  const { repo, git, run } = fixtureRepo(t);
+  const tools = join(repo, 'untrusted-tools');
+  mkdirSync(tools);
+  const fake = join(tools, process.platform === 'win32' ? 'git.exe' : 'git');
+  if (process.platform === 'win32') {
+    // A real executable that rejects Git arguments, without requiring a compiler or shell lookup.
+    copyFileSync(process.execPath, fake);
+  } else {
+    writeFileSync(fake, '#!/bin/sh\necho UNTRUSTED_GIT_EXECUTED >&2\nexit 99\n');
+    chmodSync(fake, 0o755);
+  }
+  const result = run({ PATH: tools, Path: tools });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).sourceCommit, git('rev-parse', 'HEAD'));
+  assert.doesNotMatch(result.stderr, /UNTRUSTED_GIT_EXECUTED/);
+});
+
+test('campaign reads Git evidence even with an empty inherited PATH', (t) => {
+  const { git, run } = fixtureRepo(t);
+  const result = run({ PATH: '', Path: '' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).sourceCommit, git('rev-parse', 'HEAD'));
 });
 
 // macOS's temp directory (/var/folders/...) is a symlink to /private/var/...: V8 reports coverage under the module's

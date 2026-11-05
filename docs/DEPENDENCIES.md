@@ -133,3 +133,23 @@ Pin exact versions at M0-1 via `npm install --save-exact --save-dev <pkg>`; revi
 | 2026-10-24 | Current direct dependencies and lockfile | exact versions in current snapshot above | internal resume review | local manifest/lockfile agreement; no diff from resume baseline | REL-1 record refresh only. No dependencies changed; current CI signature/provenance results recorded above. No new upstream audit/advisory research or independently audited-version diff claimed |
 | 2026-11-04 | minimatch (transitive, dev-only via eslint/typescript-eslint) | 10.2.6 | integration session | npm registry metadata of eslint 10.14.0, @eslint/config-array 0.23.5, typescript-estree 8.72.1, minimatch 11.0.4 | GHSA-g3hv-75wg-m249 accepted as dev-only risk (repository-controlled patterns); no override, lockfile unchanged. See 2026-11-04 snapshot |
 | 2026-11-04 | opentimestamps, python-bitcoinlib, pycryptodomex (PyPI, python) | 0.4.5, 0.12.2, 3.23.0: version and wheel SHA-256 pins in `tests/differential/requirements.txt` | integration session | PyPI JSON metadata: declared dependencies, upload dates, published SHA-256 of each listed wheel. `pip --require-hashes` re-hashed the Linux x86_64 wheels on install (Python 3.12 and 3.13); the other platforms' hashes are as PyPI publishes them | Dev/CI only: differential job and `scripts/r1-acceptance.sh`, installed with `--require-hashes --only-binary :all:`. Before this, `pip install opentimestamps==0.4.5` resolved the newest pycryptodomex (`>=3.3.1`) and python-bitcoinlib (`>=0.9.0,<0.13.0`) on every run, with no hash. The 2026-10-14 row records no hash. python-bitcoinlib 0.12.2 is the newest version the range allows. pycryptodomex 3.23.0 (2025-05-17) was chosen over 3.24.x (October 2026) as the longest-aged release. No code review of the wheels is claimed. Pip is not covered by Dependabot, so a bump is a manual edit plus a new row here |
+
+## Fuzz-runner Git prerequisite — 2026-11-05
+
+The development fuzz runner invokes Git by an absolute system path: `/usr/bin/git` or
+`/bin/git` on Linux/macOS; `C:/Program Files/Git/cmd/git.exe` or the corresponding
+`Program Files (x86)` location on Windows. These administrator-managed locations must
+contain the trusted Git installation. A nonstandard installation fails with an explicit
+prerequisite error; the runner never falls back to inherited `PATH` or the current
+working directory. This changes development tooling only; no Git binary is bundled.
+
+The exact PR47 Sonar finding was retrieved from the public issues API: `javascript:S4036`,
+`scripts/parser-fuzz.mjs:29`, unsafe executable search. Before the fix, executed regression
+tests demonstrated that a writable directory at the front of `PATH` could supply a fake
+Git binary, and an empty `PATH` stopped source-evidence collection. Both cases and the
+four existing campaign tests pass after the fix. This closes the reproduced behavior;
+a passing new Sonar analysis is a separate external gate.
+
+Sources: [Node child-process command lookup](https://nodejs.org/api/child_process.html),
+[Sonar's S4036 introduction](https://community.sonarsource.com/t/many-improvements-for-js-ts-css-and-two-new-rules-for-security-and-tests/64617).
+No third-party source code was copied and no dependency changed.
