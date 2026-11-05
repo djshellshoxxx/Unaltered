@@ -206,7 +206,7 @@ class ScopeTests(unittest.TestCase):
 
     def trusted_guard_pipelines(self):
         lines = [line.strip() for line in WORKFLOW.read_text().splitlines()
-                 if ':.github/scripts/cloud_scope_guard.py' in line and '| python3 ' in line]
+                 if ':.github/scripts/cloud_scope_guard.py' in line and ' | ' in line]
         self.assertEqual(len(lines), 4, 'Test all trusted-source bootstraps, not just Python')
         return lines
 
@@ -253,6 +253,31 @@ class ScopeTests(unittest.TestCase):
                                             env=env, text=True, capture_output=True)
                     self.assertEqual(result.returncode, 0, result.stderr)
                     self.assertFalse(marker.exists(), 'The source loader must not discover Git through PATH')
+
+    @unittest.skipUnless(os.name == 'posix', 'Ubuntu workflow shell boundary')
+    def test_bootstrap_does_not_execute_a_path_shadowed_python(self):
+        stored = self.root / '.github/scripts/cloud_scope_guard.py'
+        stored.parent.mkdir(parents=True)
+        stored.write_text(GUARD.read_text())
+        self.git('add', '.')
+        self.git('commit', '-qm', 'capture trusted guard')
+        self.base = self.git('rev-parse', 'HEAD').strip()
+        (self.root / 'src/core/net/allowlist.ts').write_text('changed\n')
+        self.git('add', '.')
+        with tempfile.TemporaryDirectory() as outside:
+            marker = Path(outside) / 'shadowed-python-ran'
+            fake = Path(outside) / 'python3'
+            fake.write_text('#!/bin/sh\n: > "$UNALTERED_PYTHON_PROBE"\n/bin/cat >/dev/null\nexit 0\n')
+            fake.chmod(0o755)
+            for pipeline in self.trusted_guard_pipelines():
+                with self.subTest(pipeline=pipeline):
+                    marker.unlink(missing_ok=True)
+                    env = {**os.environ, 'BASE_SHA': self.base, 'PATH': outside + os.pathsep + os.environ['PATH'],
+                           'UNALTERED_PYTHON_PROBE': str(marker)}
+                    result = subprocess.run(['/bin/bash', '-o', 'pipefail', '-c', pipeline], cwd=self.root,
+                                            env=env, text=True, capture_output=True)
+                    self.assertNotEqual(result.returncode, 0, 'The actual interpreter must reject the protected edit')
+                    self.assertFalse(marker.exists(), 'The interpreter must not be discovered through PATH')
 
 
 if __name__ == '__main__':

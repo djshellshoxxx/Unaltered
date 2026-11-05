@@ -103,3 +103,11 @@ The fresh privileged publisher still applies data without executing patched code
 Allowed-code semantics, full job/process/filesystem isolation, API spending/accounting/backoff, human review and exact
 candidate CI remain separate gates. Triggers, permissions, API-key inputs and scheduling are unchanged; no paid run,
 automatic merge, release or deployment was activated.
+
+
+Independent continuation review of f2622df reproduced the analogous interpreter lookup gap: a PATH-shadowed
+`python3` consumed the real trusted source and returned success in all four bootstraps. A follow-up pins the Ubuntu
+system interpreter `/usr/bin/python3` as well, retaining isolated mode. The four workflow pipelines are tested end to
+end with a staged protected edit: all four cases failed before the change, and all22 tests now pass. Previous Git,
+replacement-object, Python-module and argument regressions remain unchanged. This is a specific executable-source
+boundary repair; the same-job filesystem/process isolation and spending limitations above remain open.
