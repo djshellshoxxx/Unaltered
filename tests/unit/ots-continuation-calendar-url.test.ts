@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { toHex } from '../../src/core/bytes';
+import { concat, toHex, writeVaruint } from '../../src/core/bytes';
 import { defaultStampConfig, upgrade } from '../../src/core/ots/calendar';
 import { collectAttestations, parseProof, serializeProof } from '../../src/core/ots/codec';
+import { ATT_PENDING, HEADER_MAGIC } from '../../src/core/ots/types';
 import { calendar, routerFetch } from '../helpers/chain';
 
 const ALICE = 'https://alice.btc.calendar.opentimestamps.org';
@@ -62,7 +63,13 @@ describe('calendar endpoint canonicalization during upgrade', () => {
   it('rejects credential-bearing receipt addresses before any network request', async () => {
     let requests = 0;
     const uri = `https://user:pass${'@'}alice.btc.calendar.opentimestamps.org`;
-    await expect(upgrade(pending(uri), { ...defaultStampConfig(), calendars: [uri], net: {
+    // The serializer now correctly rejects this field too. Assemble hostile wire input independently so this still
+    // exercises the upgrade import boundary rather than throwing while constructing the test fixture.
+    const address = new TextEncoder().encode(uri);
+    const payload = concat(Uint8Array.from(writeVaruint(address.length)), address);
+    const hostile = concat(HEADER_MAGIC, Uint8Array.of(1, 8), digest, Uint8Array.of(0), ATT_PENDING,
+      Uint8Array.from(writeVaruint(payload.length)), payload);
+    await expect(upgrade(hostile, { ...defaultStampConfig(), calendars: [uri], net: {
       fetchImpl: routerFetch(() => { requests++; throw new Error('Unexpected network request'); }),
     } })).rejects.toMatchObject({ code: 'PROOF_MALFORMED' });
     expect(requests).toBe(0);
