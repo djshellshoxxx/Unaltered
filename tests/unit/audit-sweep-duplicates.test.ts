@@ -78,9 +78,25 @@ describe('duplicate operation ambiguity and canonical attestations', () => {
   });
 
   const python = process.env.UNALTERED_PYTHON;
-  it.skipIf(!python)('pinned Python reference confirms that the earlier Bitcoin branch is not retained', () => {
-    const script = 'import sys,json; from opentimestamps.core.serialize import BytesDeserializationContext; from opentimestamps.core.timestamp import DetachedTimestampFile; from opentimestamps.core.notary import BitcoinBlockHeaderAttestation; p=DetachedTimestampFile.deserialize(BytesDeserializationContext(sys.stdin.buffer.read())); print(json.dumps([a.height for _,a in p.timestamp.all_attestations() if isinstance(a,BitcoinBlockHeaderAttestation)]))';
+  it.skipIf(!python)('qualified reference versions never retain the ambiguous earlier Bitcoin branch', () => {
+    const script = `import sys,json,importlib.metadata
+from opentimestamps.core.serialize import BytesDeserializationContext,DeserializationError
+from opentimestamps.core.timestamp import DetachedTimestampFile
+from opentimestamps.core.notary import BitcoinBlockHeaderAttestation
+report = {"version": importlib.metadata.version("opentimestamps")}
+try:
+    proof = DetachedTimestampFile.deserialize(BytesDeserializationContext(sys.stdin.buffer.read()))
+    report["bitcoinHeights"] = [a.height for _,a in proof.timestamp.all_attestations() if isinstance(a,BitcoinBlockHeaderAttestation)]
+except DeserializationError as error:
+    report["error"] = str(error)
+print(json.dumps(report))`;
     const result = execFileSync(python!, ['-I', '-c', script], { input: duplicateProof, encoding: 'utf8' });
-    expect(JSON.parse(result)).toEqual([]);
+    const report = JSON.parse(result) as { version: string; bitcoinHeights?: number[]; error?: string };
+    if (report.version === '0.4.5') {
+      expect(report).toEqual({ version: '0.4.5', bitcoinHeights: [] });
+    } else {
+      // Unknown reference versions require explicit qualification, rather than silently accepting any failure.
+      expect(report).toEqual({ version: '0.5.0', error: expect.stringMatching(/op .* repeated/i) });
+    }
   });
 });
