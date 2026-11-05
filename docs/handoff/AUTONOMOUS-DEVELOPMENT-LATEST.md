@@ -1,7 +1,7 @@
 # Autonomous development checkpoint — 2026-11-05 UTC
 
 Application branch: `codex/recover-qualify-20261104`, [draft PR51](https://github.com/djshellshoxxx/Unaltered/pull/51).
-Latest published implementation checkpoint: `54ff6e5`; qualified full-browser checkpoint: `210e3df` / build `2969d158f4936bfd`. Later documentation commits may follow.
+Latest published implementation checkpoint: `6da4011`; current artifact `d582df5797284236`. Full regular browser checkpoint: `210e3df` / preserved `2969d158f4936bfd`. Later documentation commits may follow.
 Active checkout: `.development/consolidation-20261104`. Original main checkout/lockfile edits are preserved.
 Separate automation branch: `codex/automation-scope-guards-20261104`, published `269118949894b137b6a8ad855780da296955e7de`,
 [draft PR52](https://github.com/djshellshoxxx/Unaltered/pull/52). No automation changes enter PR51.
@@ -191,13 +191,50 @@ PR52 is published2691189: fixed Git/Python bootstrap paths, disabled replacement
 unqualified. No paid workflow was dispatched or activated. Two earlier workers hit transient API TPM limits; focused
 fresh-context replacements preserved and completed their work. Cost/cache/token accounting is not exposed.
 
-Current54ff6e5 contains a later runtime upgrade change, so its new build/affected browser/project qualification is
-running separately; the98/98/97 result above belongs to preserved2969. No main merge, production release or deployment.
+Current54ff6e5 contains a later runtime upgrade change; its final qualification is recorded in the next section; the98/98/97 result above belongs to preserved2969. No main merge, production release or deployment.
 Detailed record: docs/evidence/swarm-20261105-qualification.json plus swarm PNG/reference/fuzz JSON and protocol evidence.
+
+## Final integrated qualification — 2026-11-05T23:44:26.990030+00:00
+
+Current runtime source is6da4011, src treea0cc1c55b3b06a5d1779ef33c206a5c62b2624d4; later changes are evidence only.
+Node22 final project check passes **520unit/2optional skips +127Node/3platform skips**; OPSEC/typecheck/lint pass.
+New build **d582df5797284236** passes four affected tests per engine,12total, zero retries: full stamp/upgrade/verify,
+converging commitments through one request and a real downloaded standard receipt, cancellation, and pending fallback.
+This is separate from the captured complete98/98/97 suite on2969. The latter's exact source, failures and skips remain.
+
+Two current Node22 builds match all10files/five outer checksums. Fresh detached checkout6da4011 rebuilt the same ten
+files using Node22.23.4 and24.22.2; both match the captured current manifest. Independent stdlib checks pass27 internal
+archive checksums, ZIP CRCs/path uniqueness/order and fixed ZIP/tar metadata. Same Linux/shared dependencies only;
+no native Windows/macOS or second-person/signature approval. Report:latest-build-independent-20261105.json.
+The current CLI is byte-identical to the actual no-fetch Bob/Finney offline acceptance bundle (ca74be05...), so that
+exact-bundle evidence applies; no fresh own-node verification is claimed. Historical2969 remains preserved separately.
+
+Fuzzer compilation on current source has identical target SHA312f0e7dc7d73746828c246530eb5083ae2128440051dc1658d5359aabdf218c
+to the completed205,415-mutation campaign. New merge transactions are covered by deterministic/reference/browser tests,
+not implied fuzz coverage. The million-iteration ceiling was not reached. All failed/invalidated runs remain in records.
+
+One further isolated Firefox QA checkout changed no main code, dependencies, binaries or environment. Firefox157.0
+passes32 unchanged selected tests across Ion/Baseline JIT disabled with fingerprinting resistance off/on. Persisted
+preferences were verified. Actual Worker bytes/digest/fallback controls, synthetic proof flows, offline/SRI/CSP and
+keyboard/focus/cancellation pass. This is not actual Tor/Edge/nativeSafari qualification; Edge was absent. A preliminary
+about:config harness timeout is disclosed; no large-file/performance/canvas claim. Evidence commitab16332 ported with prepublication home-path redaction as39cdc32.
+
+Fresh emitted-build browser network probe23:33:16UTC: all3calendar POST200; every receipt-bound pending GET remains
+unreadable; both explorer genesis/header checks pass; CSP violations0. Overall network qualification **FAILED** on
+pending readability. No compliant provider or frontend CORS bypass is claimed. Operator-side compatibility remains open.
+
+Existing draftPR51 received every verified source/test checkpoint promptly; PR52 remains2691189 with22tests and exact
+Sonar green. Source6da4011 Sonar/Snyk green; required Actions run42130213579 remains queued. Source PRs/main were not
+merged/closed; no production workflow, site, release, signature, key or paid automation was activated. New branch ref
+errors were preserved and publication recovered through the existing integration branch; no force push/rule bypass.
+
+Final OPSEC caught a machine home path in restricted-profile evidence before publication; it is redacted as <HOME>, with metrics/preferences/binary hashes preserved. The unpublished integration commit was amended; original worker history stays local. All workers completed; port4173 and browser processes were released. Final qualification records and selected raw logs
+are published in docs/evidence/swarm-20261105-qualification.json and verification-swarm-20261105.zip. API token/cost/cache
+telemetry is unavailable. Completed work is committed and pushed; no unattended continuation is assumed.
 
 ## Hosted state and exact remaining gates
 
-PR51 Sonar/Snyk passed on210e3df; later heads have separate checks. PR52 exact2691189 Sonar is green.
+PR51 Sonar/Snyk passed on6da4011; later evidence-only heads have separate checks. PR52 exact2691189 Sonar is green.
 Hosted Actions for the application and automation branches remain queued; no native execution/pass or official Pages
 upload is inferred. Manual CI dispatch previously returned403 Resource not accessible by integration with
 X-Accepted-GitHub-Permissions: actions=write. Only the existing GITHUB_TOKEN is configured; no alternate authorized
@@ -211,6 +248,6 @@ independent audit/second-person rebuild; signing/public-key distribution and ope
 explicit release/site authorization and owner-configured protected Pages environment. The deployment template remains
 in docs/templates only; no production deployment workflow is installed or triggered.
 
-Next: finish the current integrated qualification and publish exact results/artifact identity; inspect hosted CI when
-runners execute; resolve actual failures without weakening gates; preserve source PRs until review accounts for all work.
+Next: inspect required hosted CI when runners execute and resolve actual failures without weakening gates; complete
+the named owner/operator/human acceptance work; preserve source PRs until review accounts for all changes.
 No background continuation is guaranteed after this process ends. API token/cost/cache telemetry is unavailable.
