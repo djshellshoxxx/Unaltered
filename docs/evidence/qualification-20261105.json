@@ -1,0 +1,162 @@
+{
+  "recordedAt": "2026-11-05T21:08:44.215099+00:00",
+  "sourceCheckpoint": "2c7823f5fdafb21aa1f1a0b8bbc2d66973fac00f",
+  "applicationSourceTree": "1943fc021675d14b074a4458c5b27919533def20",
+  "scriptsTree": "e17146f42a38f67699dd01bc98cce8fda7a1c8d8",
+  "unitTestsTree": "a4697a940ecde981d5d42fd6704489009f85ed69",
+  "buildCode": "85f5bc962b80d2c4",
+  "environment": {
+    "os": "Linux",
+    "node": "22.23.4",
+    "reference": "opentimestamps 0.4.5; hash-pinned wheels"
+  },
+  "check": {
+    "command": "UNALTERED_PYTHON=<reference>/bin/python UNALTERED_REAL_FILES=1 UNALTERED_BIG=1 npm run check",
+    "status": "PASSED",
+    "unit": {
+      "files": 41,
+      "passed": 390,
+      "skipped": 0
+    },
+    "node": {
+      "passed": 127,
+      "skipped": 3,
+      "skipReasons": [
+        "native PowerShell required",
+        "root ownership change required",
+        "root and private UTS namespace required"
+      ]
+    },
+    "limits": "Local Linux qualification. Workflows/docs/evidence changed during execution; application source, scripts, unit cases and generated artifacts match the tree identities above. Pages workflow tests were also run separately. No native Windows/macOS qualification inferred."
+  },
+  "realFileHash": {
+    "status": "PASSED within full check",
+    "source": "tests/unit/hash-real-file.test.ts",
+    "sizes": [
+      0,
+      1048576,
+      4194303,
+      4194304,
+      4194305,
+      104857600,
+      1073741824,
+      2147483648,
+      2147483649
+    ],
+    "independentComparison": "Node crypto SHA-256 over descriptor-backed reads",
+    "bounds": "Each read <=4 MiB; sampled additional RSS <200 MiB asserted per size; cancellation asserted. No browser-memory inference."
+  },
+  "fixtures": {
+    "status": "PASSED",
+    "files": 7,
+    "method": "Regenerate with pinned Python oracle and recursively compare complete directories"
+  },
+  "build": {
+    "status": "PASSED",
+    "fileCount": 10,
+    "method": "Two builds, SHA-256 compare every dist file, verify all five release SHA256SUMS entries",
+    "checksums": [
+      "8d0b6383b70148ff5d5bc748bddacb58f377217611430f651b27de70a012e9a8  dist/RELEASE-NOTES.md",
+      "b7c13c069aa790ee3987c2dbae60a79ce5919ae8773228faba9d8e37065a1938  dist/SHA256SUMS",
+      "b6e59699c650bf1a4d616673845acc5ec9976d2b2542827a89dc93d54d63cb1c  dist/unaltered-0.3.1-linux.tar.gz",
+      "2875a897d531b0f7f32acd7755df214a35625d4a82b4dc8ef9cfa175240f8412  dist/unaltered-0.3.1-macos.zip",
+      "ae92f1338288f30720e457dbceaef95af45cb95996a61b004b488ad5e4b2dfe4  dist/unaltered-0.3.1.html",
+      "ca6e2917b67f782a08d1847762a33002f620e5864aeb3c8b157cb7d9e5bfbccc  dist/unaltered-0.3.1.zip",
+      "ff84f8576bc53f389e53b3e3917c356ec3c12fe3ec2460be90730fa3e61a9eb6  dist/unaltered-cli-0.3.1.mjs",
+      "9737b8b6a53489c63ae56bc471a003256a3dd8298c2a7d7f2e69a4e494752d5d  dist/web/index.html",
+      "8e683ae47bae2c2470fc02112bee9e61b4827cb54538f85ad438457b2f884807  dist/web/main.js",
+      "a6615aedfd8aa0549a9d01c462ddefc2548d3908b9c306e8b0e232cad756d161  dist/web/styles.css"
+    ]
+  },
+  "supplyChain": {
+    "cleanInstall": "PASSED --ignore-scripts",
+    "registrySignatures": 139,
+    "attestations": 58,
+    "runtimeVulnerabilities": 0,
+    "devModerateFindings": 10,
+    "lockfileSha256": "836f4e61ef6339339bbbf6f07692a31dadd141cbe3755ef5610f7980dff262df",
+    "remaining": "Existing minimatch dev-only advisory; no forced semver override or downgrade"
+  },
+  "toolkitPython": {
+    "status": "PASSED",
+    "tests": 34,
+    "note": "HTTP fixture cleanup ResourceWarnings occurred; no test failures"
+  },
+  "fuzz": {
+    "status": "budget-complete",
+    "mutations": 58888,
+    "executions": 58924,
+    "elapsedMs": 300001,
+    "findings": 0,
+    "stopReason": "wall-clock",
+    "report": "fuzz-20261105-autonomous.json",
+    "limit": "Bounded seeded corpus, not an exhaustive or independent audit"
+  },
+  "sonar": {
+    "head": "2077df8c1912414f45762a1ad7f95b4c5a579146",
+    "checkRunId": 127531633869,
+    "conclusion": "success",
+    "openVulnerabilities": 0,
+    "openBugs": 0,
+    "limit": "Other maintainability issues remain; this is analyzer evidence, not independent audit"
+  },
+  "remaining": [
+    "Browser qualification continues in browser-20261105-qualification.json",
+    "Exact-head hosted CI queued",
+    "Native Windows/macOS and hosted Pages artifact qualification",
+    "Pending404 calendar CORS",
+    "Human accessibility/Spanish/usability and Tor checks",
+    "Independent audit/rebuild, signing, operations/legal/domain controls",
+    "Explicit authorization before production release/deployment"
+  ],
+  "rawLogs": {
+    "check-initial.log": {
+      "location": ".development/evidence-20261105/check-initial.log",
+      "sha256": "30496f9fc670dfa6896b7356adcba2addf320ed9d08568c3d7971bed4b949843"
+    },
+    "check-node22-integrated.log": {
+      "location": ".development/evidence-20261105/check-node22-integrated.log",
+      "sha256": "ebd6a54392359757df53a25b81eda9207500c36265198a7efb2fb4065bf26cef"
+    },
+    "npm-ci.log": {
+      "location": ".development/evidence-20261105/npm-ci.log",
+      "sha256": "d5bb702f989a410e3bb4317ca06deb5d4b825e8deab883024124178b4c5b34e2"
+    },
+    "npm-signatures.log": {
+      "location": ".development/evidence-20261105/npm-signatures.log",
+      "sha256": "5f37fe86424eb340aee9ba5715d54129773462f242568d923ea6de71d677dffd"
+    },
+    "npm-runtime-audit.json": {
+      "location": ".development/evidence-20261105/npm-runtime-audit.json",
+      "sha256": "6d75d6f52a631a393fc7df8eb94642126c59520ec953aa8b6fe153b12413b533"
+    },
+    "npm-audit.json": {
+      "location": ".development/evidence-20261105/npm-audit.json",
+      "sha256": "14e9d7d022d1ff3f9620050d5c30b85f4217092dc041a1ea2c45a0d33191348a"
+    },
+    "toolkit-python.log": {
+      "location": ".development/evidence-20261105/toolkit-python.log",
+      "sha256": "bc3e8da63b54693bd3ef5032d1452ea915f5f2c1e49c321182bcd4372cd762ff"
+    },
+    "fuzz-campaign.log": {
+      "location": ".development/evidence-20261105/fuzz-campaign.log",
+      "sha256": "0fa2c32cc83ef795bcbff1722f6855802afef617af49afdb6a6ad2b6b8126aac"
+    },
+    "build1.sums": {
+      "location": ".development/evidence-20261105/build1.sums",
+      "sha256": "efed613f0c63090a0dffc8b9b0bcff7102c2704083209fb8bcd72195d1d4e8c7"
+    },
+    "build2.sums": {
+      "location": ".development/evidence-20261105/build2.sums",
+      "sha256": "efed613f0c63090a0dffc8b9b0bcff7102c2704083209fb8bcd72195d1d4e8c7"
+    },
+    "reference-fixtures.log": {
+      "location": ".development/evidence-20261105/reference-fixtures.log",
+      "sha256": "dc51b8c96c2d745df3bd5590d990230a482fd247123599548e0632fdbf97fc22"
+    },
+    "sonar-check-2077df8.json": {
+      "location": ".development/evidence-20261105/sonar-check-2077df8.json",
+      "sha256": "0aeb69fd6c0964a91de2c0d2540cb3571b5aedfe5ebd8717c7e038ca757e3e04"
+    }
+  }
+}
