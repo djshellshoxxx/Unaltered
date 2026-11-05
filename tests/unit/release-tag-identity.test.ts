@@ -1,7 +1,8 @@
 // Execute the shipped draft-creation shell with a local gh test double. A tag may move while the three platform
 // builds run; --verify-tag only checks existence. Never associate those build artifacts with a different commit.
+// https://cli.github.com/manual/gh_release_create (--verify-tag and draft mutability, checked 2026-11-05).
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -38,7 +39,8 @@ function draft(remoteSha: string, apiExit = 0) {
         UNALTERED_API_EXIT: String(apiExit),
       },
     });
-    return { ...result, calls: readFileSync(calls, 'utf8').trim().split('\n').filter(Boolean) };
+    const notesPath = join(dir, 'release-notes.md');
+    return { ...result, calls: readFileSync(calls, 'utf8').trim().split('\n').filter(Boolean), notes: existsSync(notesPath) ? readFileSync(notesPath, 'utf8') : '' };
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -52,6 +54,7 @@ describe.skipIf(Boolean(spawnSync('bash', ['--version']).error))('release tag id
     expect(result.calls).toHaveLength(2);
     expect(result.calls[1]).toContain('release create v0.3.1');
     expect(result.calls[1]).toContain('--verify-tag --draft --prerelease');
+    expect(result.notes).toContain(`Source commit: \`${sha}\``);
   });
 
   it.each([
