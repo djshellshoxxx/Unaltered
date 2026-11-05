@@ -7,7 +7,8 @@ const root = resolve('dist', 'web');
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' };
 createServer(async (req, res) => {
   try {
-    let pathname = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+    // The loopback base only parses relative request URLs; constructing a URL makes no network request.
+    let pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
     if (pathname.includes('\\') || pathname.includes('\0')) throw new Error('invalid path');
     if (pathname === '/Unaltered') {
       res.writeHead(308, { location: '/Unaltered/' }).end();

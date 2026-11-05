@@ -8,7 +8,8 @@ test('Pages project path loads assets and hashes offline with a real worker', as
   const requested: string[] = [];
   page.on('request', (request) => {
     const url = new URL(request.url());
-    if (url.origin === 'http://127.0.0.1:4173') requested.push(url.pathname);
+    // Blob worker URLs retain the page origin but are not HTTP asset paths under the project prefix.
+    if (url.protocol === 'http:' && url.origin === 'http://127.0.0.1:4173') requested.push(url.pathname);
   });
   await page.addInitScript(installHashWorkerEvidence);
   const response = await page.goto('/Unaltered/');
