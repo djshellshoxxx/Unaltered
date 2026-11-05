@@ -183,8 +183,10 @@ describe('codec exact parser boundaries (SPEC 6)', () => {
   });
 
   it('accepts the attestation cap and rejects the next attestation', () => {
+    // Distinct heights keep this at the wire-count boundary without duplicate-set normalization changing the count.
     const repeated = (count: number): Uint8Array => concat(...Array.from({ length: count }, (_, i) => concat(
-      i + 1 < count ? Uint8Array.of(0xff) : new Uint8Array(), bitcoin,
+      i + 1 < count ? Uint8Array.of(0xff) : new Uint8Array(), Uint8Array.of(0), ATT_BITCOIN,
+      varbytes(Uint8Array.from(writeVaruint(i))),
     )));
     expect(collectAttestations(parseProof(concat(head, repeated(LIMITS.maxAttestations))).root)).toHaveLength(LIMITS.maxAttestations);
     expect(() => parseProof(concat(head, repeated(LIMITS.maxAttestations + 1)))).toThrowError(/too many attestations/);
@@ -197,7 +199,8 @@ describe('codec exact parser boundaries (SPEC 6)', () => {
       return concat(...Array.from({ length: branches }, (_, i) => {
         const operations = Math.min(left, LIMITS.maxDepth - 1);
         left -= operations;
-        return concat(i + 1 < branches ? Uint8Array.of(0xff) : new Uint8Array(), chain(operations));
+        // Give each sibling a unique append edge, then preserve the exact number of nodes with SHA-256 descendants.
+        return concat(i + 1 < branches ? Uint8Array.of(0xff) : new Uint8Array(), Uint8Array.of(0xf0, 1, i), chain(operations - 1));
       }));
     };
     expect(collectAttestations(parseProof(concat(head, tree(LIMITS.maxNodes))).root)).toHaveLength(79);
