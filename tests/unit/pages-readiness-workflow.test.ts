@@ -69,3 +69,27 @@ it('both review and official Pages artifacts require install, checks, build and 
   expect(source).not.toMatch(/^\s*(?:if|continue-on-error):/m);
   expect(steps.filter((step) => step.run).map((step) => step.run)).toHaveLength(gates.length);
 });
+
+it('existing PR CI uploads one official Pages artifact only after successful Chromium acceptance', () => {
+  const ci = readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8').replace(/\r\n?/g, '\n');
+  const e2e = /(?:^|\n) {2}e2e:\n([\s\S]*?)(?=\n {2}\S|\n\S|$)/.exec(ci)?.[1];
+  expect(e2e, 'missing existing browser matrix job').toBeDefined();
+  const jobSteps = e2e!.split(/\n(?= {6}- )/).slice(1);
+  const acceptance = jobSteps.findIndex((step) => /^ {6}- run: npm run test:e2e -- --retries=0$/m.test(step));
+  const uploads = jobSteps.map((step, index) => ({ step, index })).filter(({ step }) => /uses: actions\/upload-pages-artifact@/.test(step));
+  expect(acceptance, 'missing strict built-site browser gate').toBeGreaterThanOrEqual(0);
+  expect(uploads).toHaveLength(1);
+  expect(uploads[0]!.index).toBeGreaterThan(acceptance);
+  const upload = uploads[0]!.step;
+  const reference = steps.find((step) => step.uses?.startsWith('actions/upload-pages-artifact@'))!.uses;
+  expect(/^ {8}uses:\s*(\S+)/m.exec(upload)?.[1]).toBe(reference);
+  expect(/^ {8}if:\s*(.*)$/m.exec(upload)?.[1]).toMatch(/^success\(\)\s*&&\s*matrix\.browser\s*==\s*['"]chromium['"]$/);
+  expect(/^ {10}path:\s*(.*)$/m.exec(upload)?.[1]?.replace(/\/$/, '')).toBe('dist/web');
+  expect(/^ {10}name:\s*(.*)$/m.exec(upload)?.[1]).toBe('github-pages');
+  expect(Number(/^ {10}retention-days:\s*(.*)$/m.exec(upload)?.[1])).toBeGreaterThan(0);
+  expect(upload).not.toMatch(/continue-on-error:/);
+  expect(jobSteps[acceptance]).not.toMatch(/continue-on-error:|^ {8}if:/m);
+  expect(ci).toMatch(/^ {2}pull_request:$/m);
+  expect(/^permissions:\n((?: {2}[^\n]+\n)+)/m.exec(ci)?.[1]?.trim()).toBe('contents: read');
+  expect(e2e).not.toMatch(/^\s*(?:permissions|environment):|actions\/(?:deploy|configure)-pages@/m);
+});

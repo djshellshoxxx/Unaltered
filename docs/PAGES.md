@@ -5,7 +5,15 @@ application after building. JavaScript and CSS references are relative, navigati
 worker runs from source pinned within the page script. The site therefore supports the repository project path
 `/Unaltered/` as well as a domain root. Preserve the trailing slash on a directory URL.
 
-The **Pages readiness artifact** workflow is manual (`workflow_dispatch`). Select the candidate branch in Actions. It
+The existing **CI** workflow uploads the official `github-pages` artifact from its Chromium matrix job after the full
+built-site browser suite passes with zero retries, including the project-path/offline test. Firefox and WebKit do not
+upload a duplicate. This route works for candidate pull requests before the standalone readiness workflow is available.
+The artifact reflects that job's tested checkout; record its run and SHA. Other CI and release gates still need to pass
+before publication eligibility, even when Chromium has already uploaded an artifact.
+
+The separate **Pages readiness artifact** workflow is manual (`workflow_dispatch`). GitHub registers manual workflows
+only when their file is present on the default branch; a candidate-only copy cannot yet be dispatched by selecting its
+ref. Once registered, select the candidate branch in Actions. It
 installs locked dependencies with lifecycle scripts disabled, runs `npm run check`, builds, and runs the Chromium
 project-path/offline test with zero retries. Only successful gates permit either upload. Both artifacts expire after
 seven days:
@@ -51,4 +59,6 @@ packages the directory with tar and delegates upload to full-SHA-pinned `actions
 Pages settings or deployment call. No third-party source was copied and no runtime dependency was added. GitHub's
 [custom Pages workflow documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)
 describes the artifact and separate deployment requirements. Local workflow regression tests check the preparation
-contract; a hosted readiness run must still establish successful upload on the final candidate.
+contract; a hosted CI or readiness run must still establish successful upload on the final candidate. GitHub documents
+the default-branch prerequisite for
+[`workflow_dispatch`](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_dispatch).
