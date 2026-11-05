@@ -1,11 +1,11 @@
 # Autonomous development checkpoint — 2026-11-05 UTC
 
 Application branch: `codex/recover-qualify-20261104`, [draft PR51](https://github.com/djshellshoxxx/Unaltered/pull/51).
-Latest published implementation checkpoint: `7ec46d4`; prior evidence checkpoint: `c1b003f`. Later documentation commits may follow.
+Latest published implementation checkpoint: `54ff6e5`; qualified full-browser checkpoint: `210e3df` / build `2969d158f4936bfd`. Later documentation commits may follow.
 Active checkout: `.development/consolidation-20261104`. Original main checkout/lockfile edits are preserved.
-Separate automation branch: `codex/automation-scope-guards-20261104`, published `295877ef9edcda37282f7981b25b996808dc6e35`,
+Separate automation branch: `codex/automation-scope-guards-20261104`, published `269118949894b137b6a8ad855780da296955e7de`,
 [draft PR52](https://github.com/djshellshoxxx/Unaltered/pull/52). No automation changes enter PR51.
-Three review/implementation workers are active in isolated sweep worktrees; see the resumed section below. Lead owns integration, network, CI and shared release files.
+Independent protocol/security, Pages and release workstreams completed in isolated worktrees. Lead owns final integrated qualification/publication; no background agent continuation is assumed.
 
 ## Recovery and consolidation
 
@@ -36,7 +36,7 @@ Accepted requirements remain `docs/SPEC.md` plus `docs/DECISIONS.md`.
 | Confirmed security defects | COMPLETE bounded fixes: PATH shadowing, worker startup, protocol bounds, template script/style/link integrity, tag recheck | Code/regressions in PR51 | Sonar passes; independent security audit still required; reviewer; high |
 | Release packaging | PARTIAL: reproducible files and checksums; unsigned portable artifacts prepared | `scripts/build.mjs`, `dist/`, `docs/RELEASE.md` | Native OS, second-person rebuild/signing/operations/legal controls; maintainer; high |
 | Toolkit URL correction | COMPLETE scoped inherited PR49 fix; 34 Python cases pass | `skills/paper-search/`, toolkit tests | Further toolkit work stays separate; maintainer; low |
-| Automation safety | COMPLETE scoped repair: immutable captured base, fixed Git API/operands/executable and isolated Python; 18 tests pass, Sonar green at295877e | PR52, `AUTOMATION_SCOPE_20261104.md` on that branch | Hosted review, spending/backoff/accounting/isolation unqualified; maintainer; high; do not activate PR41/42 |
+| Automation safety | COMPLETE scoped repair: immutable captured base, fixed Git API/operands/executable and isolated Python; 22 tests pass, Sonar green at2691189 | PR52, `AUTOMATION_SCOPE_20261104.md` on that branch | Hosted review, spending/backoff/accounting/isolation unqualified; maintainer; high; do not activate PR41/42 |
 | Production publication | BLOCKED on external acceptance and explicit authorization | `docs/TODO.md`, `AUDIT.md`, `RELEASE.md` | No release/deployment/signature/approval fabricated; maintainer and independent people |
 
 ## Verified results
@@ -147,32 +147,70 @@ Current-source build/browser/fuzz requalification is in progress; prior artefact
 Security worker is testing PNG ignored transparency bits; UI worker is testing a receipt label lost on language changes.
 Evidence: docs/evidence/swarm-20261105-qualification.json. No production release, deployment or main merge.
 
+## Published swarm checkpoint — 2026-11-05T23:31:30.677545+00:00
+
+The full prior browser run completed before any independent slice was integrated: build2969d158f4936bfd on source210e3df
+passes Chromium98/1skip, Firefox98/1skip, WebKit97/2skips, zero retries. Versions156.0.8078.4/157.0/27.2.
+Optional2GiB cases were not rerun; WebKit also skips unsupported Worker.evaluate. Actual48MiB responsiveness,
+CSP/SRI, four axe scans, keyboard/touch/reflow, offline/file://, lifecycle and privacy flows pass in this regular suite.
+This is engine/local qualification, not native Safari/Edge/Tor/current+previous-major or human accessibility approval.
+
+Full Node22 project check passes506unit/2optional skips and127Node/3platform skips; OPSEC/TS/lint pass.
+The first run's malformed-URI fixture failure was fixed by assembling hostile wire input independently, retaining its
+strict rejection/no-network assertions. Other initial selector, fallback-link and current-reference expectation failures
+are retained in the evidence record. Both0.4.5 and0.5.0 codec/duplicate suites now pass33/33; five standard fixtures
+serialize identically in both. Current0.5 wheel hash/files/license are recorded; no runtime dependency changed.
+
+Published source fixes sincec02dd52:63fef7b resource overrides;7ec46d4 strict serialization;16aed97 duplicate operations;
+047956f header snapshots;5d59596 receipt snapshots;38e38f7+052d31d PNG ignored bits/private copies/conservative refusal;
+64f5757 label retention;4113c49 reference upgrade help;c415f40 view-owned announcements;0e04089 accurate cleaning warnings.
+PNG final evidence is15 identical decoded RGBA observations and9 safe refusals across three engines. The initial24/24
+claim was invalidated by the Buffer bug; subsequent3 Chromium discrepancies drove the explicit unsupported policy.
+No browser-wire exploit is claimed for programmatic Buffer/object vectors. Wire duplicate ambiguity follows current
+reference rejection. Evidence lists exact roots, tests and compatibility limits.
+
+Fuzz seed20261106:205,415mutations/205,451executions in300,004ms; no finding, wall-clock budget stop before the
+million-iteration ceiling. This belongs to source5d59596 and does not silently qualify later merge-transaction changes.
+Build2969 reproduces all10files/five checksums; separate checkout builds on Node22.23.4 and24.22.2 match all10.
+Real cached Bob/Finney receipts match the actual bundled offline command with fetch forbidden and explicit
+USER_SUPPLIED_HEADER trust. Old qualified artefacts are preserved at .development/qualified-build-2969d158f4936bfd.
+No own-node/consensus or independent human/native-OS rebuild is inferred.
+
+New independent workstreams used separate210e3df worktrees and did not touch the running suite/environment:
+- release-independent: localc21b4fa ported as0e3d397; corrected GPG signature filename and recorded ten-file rebuild.
+- pages-preparation:684d355+5d587bc ported as39e0347+8de04f2; inactive docs template with exact-ref/SHA shell preflight,
+  explicit default-false authorization, protected-environment prerequisites and least permissions.10 related cases pass.
+- protocol-independent:1c3b7af ported as54ff6e5; one calendar lookup now updates all matching pending branches/aliases in
+  one rollback-protected transaction. Known FR6 cosmetic residual completed, not a new security finding.114 current-
+  reference cases and7 pinned-reference cases pass; independent reviewer repeats these and additional rollback checks.
+All source slices are now published through PR51. Worker branch pushes initially failed with remotecommit_refs_rules;
+local work was preserved, a later Pages push succeeded, and the existing PR51 push confirmed54ff6e5. No rules bypass.
+
+PR52 is published2691189: fixed Git/Python bootstrap paths, disabled replacement objects, isolated Python retained.
+22 tests pass independently; source2691189 Sonar is green. Full same-job isolation/spending/accounting/backoff remain
+unqualified. No paid workflow was dispatched or activated. Two earlier workers hit transient API TPM limits; focused
+fresh-context replacements preserved and completed their work. Cost/cache/token accounting is not exposed.
+
+Current54ff6e5 contains a later runtime upgrade change, so its new build/affected browser/project qualification is
+running separately; the98/98/97 result above belongs to preserved2969. No main merge, production release or deployment.
+Detailed record: docs/evidence/swarm-20261105-qualification.json plus swarm PNG/reference/fuzz JSON and protocol evidence.
+
 ## Hosted state and exact remaining gates
 
-PR51 Sonar passes on published `c1b003f` (completed 2026-11-05 22:24:01 UTC); Snyk also passes.
-These analyzer checks are not independent audit approval. PR52 Sonar passes on `295877e`.
-Current PR51 Actions run [42121018061](https://github.com/djshellshoxxx/Unaltered/actions/runs/42121018061)
-for `c1b003f` remains queued at 22:25 UTC. Earlier runs were superseded/cancelled by verified pushes;
-no executed hosted failure or pass is inferred. Later documentation heads have separate checks.
-Official Pages upload and native Windows/macOS qualification remain pending.
-Manual CI dispatch failed HTTP 403 `Resource not accessible by integration` at
-`/actions/workflows/379498388/dispatches`. Branch-protection inspection also returned 403; settings were
-not changed, and absent protection is not inferred. Push/PR publication succeeds.
+PR51 Sonar/Snyk passed on210e3df; later heads have separate checks. PR52 exact2691189 Sonar is green.
+Hosted Actions for the application and automation branches remain queued; no native execution/pass or official Pages
+upload is inferred. Manual CI dispatch previously returned403 Resource not accessible by integration with
+X-Accepted-GitHub-Permissions: actions=write. Only the existing GITHUB_TOKEN is configured; no alternate authorized
+credential or GitHub connector is available. Repository/branch settings reads also lack required administration access.
+The owner can use Actions → CI → Run workflow or separately authorize a repository-scoped Actions-write credential;
+see docs/PAGES.md. No token, setting or permissions were changed to bypass that boundary.
 
-Still open: hosted/native Windows/macOS and official Pages upload; external pending404 CORS; Tor;
-human screen-reader/actual zoom/OS contrast/native Spanish/usability; independent audit/rebuild;
-signing/public-key distribution and operations/legal/domain controls; explicit release/site authorization.
-Standalone manual Pages workflow requires default-branch registration. Existing Chromium PR CI now
-packages its official artifact after successful tests, with no duplicate job or deploy/write permissions.
-PR52 S8705 is resolved at published295877e: immutable validated40-hex base, fixed read-only Git operations,
-explicit operand boundaries, fixed executable, paging/fsmonitor disabled, and prior isolated Python launchers.
-A real PATH-shadowing failure was reproduced before repair;18 tests pass, including17 malformed-argument
-subcases. Exact-head external Sonar is green with0 unresolved vulnerability/BUG findings; no rule suppression
-or acceptance was used. Independent agent review found no actionable blocker; human audit is still separate.
-No main merge, release/tag/site publication, signing key or broader API-funded workflow activation occurred.
-API token/cost/cache telemetry is unavailable; no hard spending limit or cache-hit claim is made.
+Still open: hosted/native Windows/macOS and final-candidate large-file qualification; operator pending404 CORS;
+native Safari/Edge/Tor/current+previous major matrix; human screen-reader/actual zoom/OS contrast/native Spanish/usability;
+independent audit/second-person rebuild; signing/public-key distribution and operations/legal/domain/IPFS controls;
+explicit release/site authorization and owner-configured protected Pages environment. The deployment template remains
+in docs/templates only; no production deployment workflow is installed or triggered.
 
-Next executable tasks: inspect current PR51 required checks and Pages artifact once runners execute;
-resolve any actual failures without weakening gates; complete the named external/human acceptance work;
-review PR52 separately before any automation change. Do not close original PRs before review accounts
-for their changes. All completed source/test/evidence work is published; no agent continuation is assumed.
+Next: finish the current integrated qualification and publish exact results/artifact identity; inspect hosted CI when
+runners execute; resolve actual failures without weakening gates; preserve source PRs until review accounts for all work.
+No background continuation is guaranteed after this process ends. API token/cost/cache telemetry is unavailable.

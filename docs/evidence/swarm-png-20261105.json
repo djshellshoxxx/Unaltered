@@ -1,0 +1,356 @@
+{
+  "checkedAt": "2026-11-05T22:46:50.169Z",
+  "pngSourceSha256": "d744a9fdd8e5def6b61f97b4ec238dc2de96aacecce1075db5e92c724ebb8f2e",
+  "scope": "Independent browser decode of synthetic one-pixel PNGs; no product CSP or UI claim",
+  "source": "https://www.w3.org/TR/2025/REC-png-3-20250624/#11tRNS",
+  "results": [
+    {
+      "engine": "chromium",
+      "browserVersion": "156.0.8078.4",
+      "name": "truecolor8-transparent",
+      "kind": "cleaned",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "156.0.8078.4",
+      "name": "truecolor8-opaque",
+      "kind": "cleaned",
+      "original": [
+        99,
+        88,
+        77,
+        255
+      ],
+      "cleaned": [
+        99,
+        88,
+        77,
+        255
+      ],
+      "equal": true
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "156.0.8078.4",
+      "name": "greyscale1-transparent",
+      "kind": "unsupported",
+      "safelyRefused": true
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "156.0.8078.4",
+      "name": "greyscale2-transparent",
+      "kind": "unsupported",
+      "safelyRefused": true
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "156.0.8078.4",
+      "name": "greyscale4-transparent",
+      "kind": "unsupported",
+      "safelyRefused": true
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "156.0.8078.4",
+      "name": "greyscale8-transparent",
+      "kind": "cleaned",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "156.0.8078.4",
+      "name": "greyscale16-transparent",
+      "kind": "cleaned",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "156.0.8078.4",
+      "name": "truecolor16-transparent",
+      "kind": "cleaned",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "firefox",
+      "browserVersion": "157.0",
+      "name": "truecolor8-transparent",
+      "kind": "cleaned",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "firefox",
+      "browserVersion": "157.0",
+      "name": "truecolor8-opaque",
+      "kind": "cleaned",
+      "original": [
+        99,
+        88,
+        77,
+        255
+      ],
+      "cleaned": [
+        99,
+        88,
+        77,
+        255
+      ],
+      "equal": true
+    },
+    {
+      "engine": "firefox",
+      "browserVersion": "157.0",
+      "name": "greyscale1-transparent",
+      "kind": "unsupported",
+      "safelyRefused": true
+    },
+    {
+      "engine": "firefox",
+      "browserVersion": "157.0",
+      "name": "greyscale2-transparent",
+      "kind": "unsupported",
+      "safelyRefused": true
+    },
+    {
+      "engine": "firefox",
+      "browserVersion": "157.0",
+      "name": "greyscale4-transparent",
+      "kind": "unsupported",
+      "safelyRefused": true
+    },
+    {
+      "engine": "firefox",
+      "browserVersion": "157.0",
+      "name": "greyscale8-transparent",
+      "kind": "cleaned",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "firefox",
+      "browserVersion": "157.0",
+      "name": "greyscale16-transparent",
+      "kind": "cleaned",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "firefox",
+      "browserVersion": "157.0",
+      "name": "truecolor16-transparent",
+      "kind": "cleaned",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "27.2",
+      "name": "truecolor8-transparent",
+      "kind": "cleaned",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "27.2",
+      "name": "truecolor8-opaque",
+      "kind": "cleaned",
+      "original": [
+        99,
+        88,
+        77,
+        255
+      ],
+      "cleaned": [
+        99,
+        88,
+        77,
+        255
+      ],
+      "equal": true
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "27.2",
+      "name": "greyscale1-transparent",
+      "kind": "unsupported",
+      "safelyRefused": true
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "27.2",
+      "name": "greyscale2-transparent",
+      "kind": "unsupported",
+      "safelyRefused": true
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "27.2",
+      "name": "greyscale4-transparent",
+      "kind": "unsupported",
+      "safelyRefused": true
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "27.2",
+      "name": "greyscale8-transparent",
+      "kind": "cleaned",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "27.2",
+      "name": "greyscale16-transparent",
+      "kind": "cleaned",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "27.2",
+      "name": "truecolor16-transparent",
+      "kind": "cleaned",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    }
+  ]
+}
