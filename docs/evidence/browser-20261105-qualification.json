@@ -1,0 +1,177 @@
+{
+  "recordedAtUtc": "2026-11-05T21:04:43.771539+00:00",
+  "status": "IN_PROGRESS: WebKit remainder and browser large-file acceptance running or pending.",
+  "environment": {
+    "os": "Ubuntu24.04.5LTS x86_64",
+    "node": "24.22.2",
+    "playwright": "1.64.1",
+    "chromium": "156.0.8078.4",
+    "firefox": "157.0",
+    "webkit": "27.2"
+  },
+  "integratedSourceCommit": "52da9e7f3f8b9fcf5ffe975f282c4b07ff4b5241",
+  "sourceCommitsPorted": [
+    "f835e79",
+    "9dc775c",
+    "bae1e79",
+    "752ba8d"
+  ],
+  "buildCode": "85f5bc962b80d2c4",
+  "artifacts": {
+    "dist/web/main.js": "8e683ae47bae2c2470fc02112bee9e61b4827cb54538f85ad438457b2f884807",
+    "dist/unaltered-0.3.1.html": "ae92f1338288f30720e457dbceaef95af45cb95996a61b004b488ad5e4b2dfe4"
+  },
+  "completedAttempts": [
+    {
+      "log": "chromium.log",
+      "buildCode": "0632a93e305a31b8",
+      "passed": 80,
+      "failed": 2,
+      "skipped": 1,
+      "notes": [
+        "Initial concurrent setup run; responsiveness maxgap107.7ms exceeded unchanged50ms.",
+        "Pages collector misclassified same-origin blob worker URLs as HTTP asset paths; fixed in be9b2c1."
+      ],
+      "logSha256": "0741e8f08c8915c5368f0a3c2109b4cb752121c018661575d7491c252fd52f07",
+      "retries": 0
+    },
+    {
+      "log": "chromium-focused.log",
+      "buildCode": "0632a93e305a31b8",
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "notes": [
+        "Isolated unchanged50ms responsiveness and corrected Pages smoke."
+      ],
+      "logSha256": "81432f23fc838548d58ade78304eb6f5f23094fa313e3aba29c4de8811c156b9",
+      "retries": 0
+    },
+    {
+      "log": "firefox-responsiveness.log",
+      "buildCode": "0632a93e305a31b8",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "notes": [
+        "Isolated unchanged50ms responsiveness."
+      ],
+      "logSha256": "9052f06997ec45fd6085818c8a084a7295f933c441adf7040aace839e506658e",
+      "retries": 0
+    },
+    {
+      "log": "webkit-responsiveness.log",
+      "buildCode": "0632a93e305a31b8",
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "notes": [
+        "Initial isolated responsiveness maxgap103ms exceeded unchanged50ms."
+      ],
+      "logSha256": "f810ce01ad256078e76165c1841c4793426cd263857f73d269b4cfb01301a1a0",
+      "retries": 0
+    },
+    {
+      "log": "webkit-responsiveness-integrated.log",
+      "buildCode": "85f5bc962b80d2c4",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "notes": [
+        "Isolated unchanged50ms responsiveness after integrated worker initialization changes."
+      ],
+      "logSha256": "7af9346a54acc4a70c663ea46a6502261613d296f610434a24900b4e7b47d1f8",
+      "retries": 0
+    },
+    {
+      "log": "firefox.log",
+      "buildCode": "85f5bc962b80d2c4",
+      "passed": 81,
+      "failed": 0,
+      "skipped": 1,
+      "notes": [
+        "Every normal case except timing benchmark; that benchmark was executed separately on the earlier build.",
+        "One optional2GiB skip; actual large-file acceptance remains pending."
+      ],
+      "logSha256": "25f4322e6aea51ad14db426cbced372f360fb048342af28e4e52081eb69601bc",
+      "retries": 0
+    }
+  ],
+  "integratedAliceR1": {
+    "browser": {
+      "checkedAt": "2026-11-05T21:01:31.843Z",
+      "browser": "chromium 156.0.8078.4",
+      "classification": "PASS",
+      "upgrade": {
+        "confirmed": true,
+        "stillPending": false,
+        "receiptError": null,
+        "failedCalendars": [],
+        "unknownCalendars": null,
+        "downloaded": true
+      },
+      "verify": {
+        "state": "VERIFIED",
+        "block": "428648",
+        "upgradedReceiptSha256": "2f61436069b1d0150dec9be136015f83dfc2cfa9f91cd6733aa0baea5af01992"
+      },
+      "csp": [],
+      "requests": [
+        {
+          "host": "alice.btc.calendar.opentimestamps.org",
+          "method": "GET",
+          "kind": "upgrade",
+          "status": 200,
+          "acao": "*"
+        },
+        {
+          "host": "blockstream.info",
+          "method": "GET",
+          "kind": "explorer",
+          "status": 200,
+          "acao": "*"
+        },
+        {
+          "host": "blockstream.info",
+          "method": "GET",
+          "kind": "explorer",
+          "status": 200,
+          "acao": "*"
+        },
+        {
+          "host": "mempool.space",
+          "method": "GET",
+          "kind": "explorer",
+          "status": 200,
+          "acao": "*"
+        },
+        {
+          "host": "mempool.space",
+          "method": "GET",
+          "kind": "explorer",
+          "status": 200,
+          "acao": "*"
+        }
+      ],
+      "note": "Browser evidence only. R1 also requires the independent reference check in docs/R1_ACCEPTANCE.md."
+    },
+    "reference": {
+      "bitcoin": [
+        {
+          "height": 428648,
+          "verifiedTime": 1473227803
+        }
+      ],
+      "digestMatches": true,
+      "headerHash": "000000000000000000ca478eb185560e1f1178746ee05e3d9bc9a31765f6f4a3",
+      "ok": true,
+      "pending": 0
+    },
+    "headerSource": "blockchain.info, independently fetched during earlier R1 run at20:56UTC; same immutable block428648"
+  },
+  "limits": [
+    "Local measurements are separate from hosted native CI and human accessibility/audit/signing gates.",
+    "Fresh-pending CORS failure remains documented in browser-20261105-network.json.",
+    "No benchmark limit, memory limit, deadline, CSP or TLS policy was weakened."
+  ]
+}
