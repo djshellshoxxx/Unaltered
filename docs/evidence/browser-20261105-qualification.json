@@ -1,6 +1,6 @@
 {
-  "recordedAtUtc": "2026-11-05T21:12:29.694850+00:00",
-  "status": "Normal browser qualification complete. Chromium real 2 GiB RSS acceptance passed 3/3; Firefox/WebKit completion qualification remains in progress.",
+  "recordedAtUtc": "2026-11-05T21:14:56.252354+00:00",
+  "status": "Complete final-source Chromium suite passed 85/86 with one separately qualified memory skip. Chromium memory 3/3 and Firefox completion 1/1 passed; further Firefox/WebKit trials running or pending.",
   "environment": {
     "os": "Ubuntu 24.04.5 LTS x86_64",
     "node": "24.22.2",
@@ -156,6 +156,21 @@
         "Both forced-colors:active and prefers-reduced-motion:reduce matched; keyboard and focus outline passed."
       ],
       "logSha256": "984cd6d818dce64cf804a404c0368679341b093476fb29dda888914cbddd8f13",
+      "retries": 0
+    },
+    {
+      "log": "chromium-final-full.log",
+      "buildCode": "85f5bc962b80d2c4",
+      "command": "CHROMIUM_PATH=<pinned Chrome156 executable> node node_modules/@playwright/test/cli.js test --retries=0",
+      "passed": 85,
+      "failed": 0,
+      "skipped": 1,
+      "notes": [
+        "Complete final-source invocation, all 86 cases.",
+        "The opt-in memory case was skipped here and separately passed three real-file RSS trials.",
+        "Unchanged 50 ms responsiveness passed in this complete invocation."
+      ],
+      "logSha256": "c9c2292b3f99a80c48a1114e34f0666d3b16e01b64ed7e58000da8bdf20b3ee9",
       "retries": 0
     }
   ],
@@ -321,7 +336,45 @@
       ]
     },
     "firefox": {
-      "status": "RUNNING: real-file completion; renderer RSS is not measured."
+      "status": "One completion attempt PASSED; two additional attempts RUNNING.",
+      "buildCode": "85f5bc962b80d2c4",
+      "stats": {
+        "startTime": "2026-11-05T21:11:48.309Z",
+        "duration": 55106.373,
+        "expected": 1,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "reportSha256": "cb9bd89c587a6166351c0b94c42e8b854c7790c0523675a87ed97c2d9e262bec",
+      "attempts": [
+        {
+          "status": "passed",
+          "durationMs": 53338,
+          "retry": 0,
+          "rendererRssMeasured": false,
+          "annotations": [
+            {
+              "type": "rss-not-measured",
+              "description": "firefox: memory ceiling not evidenced by this run"
+            }
+          ],
+          "workerCompletion": {
+            "starts": [
+              2147483648
+            ],
+            "done": [
+              {
+                "bytes": 2147483648,
+                "hex": "a7c744c13cc101ed66c29f672f92455547889cc586ce6d44fe76ae824958ea51",
+                "cross": "skipped"
+              }
+            ],
+            "failures": []
+          }
+        }
+      ],
+      "rendererRssMeasured": false
     },
     "webkit": {
       "status": "NOT_RUN: real-file completion; renderer RSS is not measured."
