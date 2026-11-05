@@ -1,5 +1,9 @@
 // Offline policy checks for the inactive deployment template. No workflow is dispatched by these tests.
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { expect, it } from 'vitest';
 
 // Bounded YAML reader for mapping/step/quoted-scalar layouts used by these two files. Reject unsupported syntax
@@ -68,12 +72,19 @@ const readiness = parse(read('.github/workflows/pages-readiness.yml'));
 const prepare = template.jobs.prepare;
 const deploy = template.jobs.deploy;
 
-it('is manual, disabled by default, and grants capabilities only to the job that needs them', () => {
-  // An eventual separately authorized activation must install this exact reviewed structure. Keeping this
-  // guard activation-compatible matters: the template itself runs npm run check after installation.
-  if (existsSync(new URL('.github/workflows/pages-deployment.yml', root))) {
-    expect(parse(read('.github/workflows/pages-deployment.yml'))).toEqual(template);
+function verifyInstalledWorkflows(workflowDirectory: string): void {
+  const installed = join(workflowDirectory, 'pages-deployment.yml');
+  if (existsSync(installed)) expect(parse(readFileSync(installed, 'utf8'))).toEqual(template);
+  for (const file of readdirSync(workflowDirectory).filter((name) => /\.ya?ml$/.test(name))) {
+    if (file !== 'pages-deployment.yml') {
+      expect(readFileSync(join(workflowDirectory, file), 'utf8'))
+        .not.toMatch(/uses:\s*actions\/(?:deploy|configure)-pages@/);
+    }
   }
+}
+
+it('is manual, disabled by default, and grants capabilities only to the job that needs them', () => {
+  verifyInstalledWorkflows(fileURLToPath(new URL('.github/workflows/', root)));
   expect(Object.keys(template.on)).toEqual(['workflow_dispatch']);
   expect(template.on.workflow_dispatch.inputs.authorize_deployment).toMatchObject({ type: 'boolean', required: true, default: false });
   expect(template.on.workflow_dispatch.inputs.reviewed_commit).toMatchObject({ type: 'string', required: true, default: '' });
@@ -88,17 +99,12 @@ it('is manual, disabled by default, and grants capabilities only to the job that
     expect(job.secrets).toBeUndefined();
     expect(job['runs-on']).toBe('ubuntu-latest');
   }
-  // Existing registered workflows cannot acquire publication capability. The sole future installation
-  // allowed by this contract is the exact template above; tests cannot prove owner authorization.
-  for (const file of readdirSync(new URL('.github/workflows/', root)).filter((name) => /\.ya?ml$/.test(name))) {
-    if (file !== 'pages-deployment.yml') expect(read(`.github/workflows/${file}`)).not.toMatch(/uses:\s*actions\/(?:deploy|configure)-pages@/);
-  }
 });
 
 it('preserves the readiness gates and only consumes its successful same-run official artifact', () => {
   const base = readiness.jobs.prepare;
   // Semantic objects ignore comments/formatting while detecting skipped checks, artifact drift and changed flags.
-  expect(prepare.steps).toEqual(base.steps);
+  expect(prepare.steps.slice(1)).toEqual(base.steps);
   expect(prepare.env).toEqual(base.env);
   expect(prepare['timeout-minutes']).toBe(base['timeout-minutes']);
   expect(deploy.needs).toBe('prepare');
@@ -123,11 +129,11 @@ it('preserves the readiness gates and only consumes its successful same-run offi
 // closed. This exercises the actual template expressions across rejected dispatch/ref/SHA/result combinations.
 function eligible(expression: string, context: { event: string; authorized: boolean; ref: string; defaultBranch: string; reviewed: string; sha: string; result: string }): boolean {
   const terms: Record<string, () => boolean> = {
-    "github.event_name == 'workflow_dispatch'": () => context.event === 'workflow_dispatch',
+    "github.event_name == 'workflow_dispatch'": () => context.event.toLowerCase() === 'workflow_dispatch',
     'inputs.authorize_deployment': () => context.authorized,
-    "github.ref == format('refs/heads/{0}', github.event.repository.default_branch)": () => context.ref === `refs/heads/${context.defaultBranch}`,
+    "github.ref == format('refs/heads/{0}', github.event.repository.default_branch)": () => context.ref.toLowerCase() === `refs/heads/${context.defaultBranch}`.toLowerCase(),
     'inputs.reviewed_commit == github.sha': () => context.reviewed.toLowerCase() === context.sha.toLowerCase(),
-    "needs.prepare.result == 'success'": () => context.result === 'success',
+    "needs.prepare.result == 'success'": () => context.result.toLowerCase() === 'success',
   };
   return expression.split(/\s*&&\s*/).map((term) => {
     if (!terms[term]) throw new Error(`unreviewed authorization expression: ${term}`);
@@ -135,7 +141,7 @@ function eligible(expression: string, context: { event: string; authorized: bool
   }).every(Boolean);
 }
 
-it('rejects unapproved, non-default, stale and unsuccessful publication runs', () => {
+it('models native case-insensitive guards for unapproved, non-default, stale and unsuccessful runs', () => {
   const accepted = { event: 'workflow_dispatch', authorized: true, ref: 'refs/heads/main', defaultBranch: 'main', reviewed: 'a'.repeat(40), sha: 'a'.repeat(40), result: 'success' };
   for (const job of [prepare, deploy]) {
     expect(eligible(job.if, accepted)).toBe(true);
@@ -146,6 +152,53 @@ it('rejects unapproved, non-default, stale and unsuccessful publication runs', (
     expect(eligible(job.if, { ...accepted, defaultBranch: 'trunk', ref: 'refs/heads/trunk' })).toBe(true);
   }
   for (const result of ['failure', 'cancelled', 'skipped', '']) expect(eligible(deploy.if, { ...accepted, result })).toBe(false);
+});
+
+it('executes a case-sensitive preflight before checkout and all readiness gates', () => {
+  const preflight = prepare.steps[0];
+  expect(preflight.shell).toBe('bash');
+  expect(preflight.env).toEqual({
+    PAGES_DEFAULT_BRANCH: '${{ github.event.repository.default_branch }}',
+    PAGES_REVIEWED_COMMIT: '${{ inputs.reviewed_commit }}',
+  });
+  expect(preflight.run).not.toContain('${{');
+  expect(preflight.uses).toBeUndefined();
+  const accepted = { event: 'workflow_dispatch', authorized: true, ref: 'refs/heads/main', defaultBranch: 'main', reviewed: 'a'.repeat(40), sha: 'a'.repeat(40), result: 'success' };
+  const execute = (context: typeof accepted) => spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', preflight.run], {
+    env: { ...process.env, GITHUB_REF: context.ref, GITHUB_SHA: context.sha, PAGES_DEFAULT_BRANCH: context.defaultBranch, PAGES_REVIEWED_COMMIT: context.reviewed },
+    encoding: 'utf8',
+  });
+  expect(execute(accepted).status).toBe(0);
+  expect(execute({ ...accepted, defaultBranch: 'Main', ref: 'refs/heads/Main' }).status).toBe(0);
+  for (const rejected of [
+    { ref: 'refs/heads/Main' }, { defaultBranch: 'Main' }, { reviewed: 'A'.repeat(40) },
+    { reviewed: 'b'.repeat(40) }, { reviewed: '' }, { reviewed: 'a'.repeat(7) },
+    { defaultBranch: 'main*' }, { reviewed: '$(exit 0)' },
+  ]) {
+    const context = { ...accepted, ...rejected };
+    const outcome = execute(context);
+    expect(outcome.error).toBeUndefined();
+    expect(outcome.status, JSON.stringify(rejected)).not.toBe(0);
+    expect(eligible(deploy.if, { ...context, result: 'failure' })).toBe(false);
+  }
+  // Native Actions == alone accepts case-only differences. The shell preflight closes that preparation gap.
+  expect(eligible(prepare.if, { ...accepted, ref: 'refs/heads/Main' })).toBe(true);
+  expect(eligible(prepare.if, { ...accepted, reviewed: 'A'.repeat(40) })).toBe(true);
+});
+
+it('accepts a future exact template installation in an isolated fixture tree and rejects altered installation', () => {
+  const fixture = mkdtempSync(join(tmpdir(), 'unaltered-pages-activation-'));
+  try {
+    const workflows = join(fixture, '.github', 'workflows');
+    mkdirSync(workflows, { recursive: true });
+    const installed = join(workflows, 'pages-deployment.yml');
+    writeFileSync(installed, read('docs/templates/pages-deployment.yml'));
+    verifyInstalledWorkflows(workflows);
+    writeFileSync(installed, read('docs/templates/pages-deployment.yml').replace('default: false', 'default: true'));
+    expect(() => verifyInstalledWorkflows(workflows)).toThrow();
+  } finally {
+    rmSync(fixture, { recursive: true, force: true });
+  }
 });
 
 it('allows only reviewed official full-SHA action contracts and no credential override', () => {

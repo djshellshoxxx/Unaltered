@@ -95,15 +95,20 @@ It changes no site assets, adds no backend, embeds no secrets, and does not invo
 repository. Its presence is preparation, not publication authorization or evidence of a successful deployment.
 
 The template repeats the existing readiness job because that workflow does not expose `workflow_call`; calling it as a
-reusable workflow would fail. Contract tests keep the preparation steps, environment and time limit aligned with that
-workflow. Both review and official Pages uploads follow locked installation, `npm run check`, build and the zero-retry
-Chromium project-path/offline check. The deployment job depends on successful preparation and consumes the named
+reusable workflow would fail. Contract tests keep the readiness steps, environment and time limit aligned with that
+workflow after a first, case-sensitive preflight. Both review and official Pages uploads follow locked installation,
+`npm run check`, build and the zero-retry Chromium project-path/offline check. The deployment job depends on successful preparation and consumes the named
 `github-pages` artifact from the **same run**. It cannot select an artifact from another CI/readiness run. There is no
 artifact download/re-upload or externally supplied artifact/run identifier.
 
 Even after installation, the only trigger is manual dispatch. Both jobs require `authorize_deployment: true`, the
 default branch ref, and `reviewed_commit` equal to the run's full `github.sha`; the authorization input defaults to
-`false`. A branch dispatch, an incorrect/empty commit, or unchecked authorization skips both jobs. This binds the build
+`false`. An ordinary non-default branch, an incorrect/empty commit, or unchecked authorization skips both jobs.
+GitHub [ignores case in expression string comparisons](https://docs.github.com/en/actions/reference/workflows-and-actions/expressions#operators),
+so preparation begins with a Bash preflight that compares `GITHUB_REF` to the exact default-branch ref and `GITHUB_SHA`
+to the exact reviewed SHA using case-sensitive, quoted shell tests. Both supplied values enter through step environment
+variables rather than insertion into the shell script. A case-only branch mismatch or SHA mismatch fails before
+checkout, tests, build and artifact upload; deployment remains blocked by its successful-preparation dependency. This binds the build
 and upload to the selected reviewed commit; it does not mechanically prove a review or satisfy the independent release
 gates. Root permissions are empty, preparation has only `contents: read`, and deployment has only `pages: write` and
 `id-token: write`. The deploy job runs no repository code and checks out no files. Publication runs share a concurrency
@@ -126,7 +131,7 @@ Only after separate explicit owner authorization to publish, the repository owne
 4. Using an authorized account, open **Actions → Authorized Pages publication → Run workflow**, select the default
    branch, enter that full SHA as `reviewed_commit`, and select `authorize_deployment` only with explicit owner publication
    authorization. Leaving its default `false` cannot publish. A moved branch head must be reviewed again and entered as
-   the new exact SHA; a stale SHA causes both jobs to skip.
+   the new exact SHA; a stale SHA skips preparation or fails its exact-match preflight, blocking deployment.
 5. Inspect the successful preparation job and its official `github-pages` artifact for that run/SHA, then have the
    required environment reviewer verify those records and approve the waiting deployment job. If the artifact has
    expired, perform a new qualified run rather than approving a stale one. Record deployment result and URL, then verify
