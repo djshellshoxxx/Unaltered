@@ -1,7 +1,7 @@
 {
   "sourceCommit": "e15b756a86415e5ab0cd1bf8fb413ea8d998d600",
   "buildCode": "0632a93e305a31b8",
-  "scope": "Live Chromium measurements; source unchanged, new test-only edits present. No original user files or filenames submitted. No browser policy or TLS bypass.",
+  "scope": "Live Chromium measurements; source unchanged, new test-only edits present. No original user files or filenames submitted. No CORS, CSP or TLS bypass; Chromium uses the repository existing --no-sandbox container launch configuration.",
   "randomCommitmentProbe": {
     "checkedAt": "2026-11-05T20:56:23.986Z",
     "browser": "156.0.8078.4",
