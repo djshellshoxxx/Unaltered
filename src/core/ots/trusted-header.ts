@@ -27,8 +27,8 @@ export function checkTrustedHeader(evidence: TrustedHeaderEvidence): BlockHeader
     || !(evidence.raw instanceof Uint8Array) || evidence.raw.length !== 80) {
     throw new UnalteredError('SOURCE_INVALID', 'Invalid trusted header evidence.');
   }
-  // Hash and extract fields from the same private 80-byte snapshot, including for shared-buffer callers.
-  const header = parseHeader(evidence.raw.slice());
+  // parseHeader hashes and extracts fields from a private snapshot, including Buffer and shared-buffer callers.
+  const header = parseHeader(evidence.raw);
   if (header.hashHex !== evidence.hashHex.toLowerCase()) {
     throw new UnalteredError('SOURCE_INVALID', 'The supplied header does not match its expected block hash.');
   }
