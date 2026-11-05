@@ -83,8 +83,10 @@ export function readTimestampTree(r: Reader, rootMsg: Uint8Array): TsNode {
   interface Frame {
     node: TsNode;
     lastItem: boolean;
+    operations: Set<string>;
+    attestations: Set<string>;
   }
-  const stack: Frame[] = [{ node: root, lastItem: false }];
+  const stack: Frame[] = [{ node: root, lastItem: false, operations: new Set(), attestations: new Set() }];
   let nodes = 1;
   let attestations = 0;
   while (stack.length > 0) {
@@ -97,7 +99,12 @@ export function readTimestampTree(r: Reader, rootMsg: Uint8Array): TsNode {
     }
     if (tag === TAG_ATTESTATION) {
       if (++attestations > LIMITS.maxAttestations) throw new UnalteredError('PROOF_TOO_LARGE', 'The receipt contains too many attestations.');
-      frame.node.attestations.push(readAttestation(r));
+      const attestation = readAttestation(r);
+      const key = attKey(attestation);
+      if (!frame.attestations.has(key)) {
+        frame.attestations.add(key);
+        frame.node.attestations.push(attestation);
+      }
       let complete = last;
       while (complete) {
         stack.pop();
@@ -106,6 +113,10 @@ export function readTimestampTree(r: Reader, rootMsg: Uint8Array): TsNode {
       }
     } else {
       const op = readOp(r, tag);
+      // Duplicate edges have differed across reference versions; current reference rejects this ambiguity.
+      const key = opKey(op);
+      if (frame.operations.has(key)) malformed('The receipt repeats an operation at the same timestamp.');
+      frame.operations.add(key);
       let msg: Uint8Array;
       try {
         msg = applyOp(op, frame.node.msg);
@@ -118,7 +129,7 @@ export function readTimestampTree(r: Reader, rootMsg: Uint8Array): TsNode {
       const child: TsNode = { msg, attestations: [], children: [] };
       frame.node.children.push({ op, node: child });
       frame.lastItem = last;
-      stack.push({ node: child, lastItem: false });
+      stack.push({ node: child, lastItem: false, operations: new Set(), attestations: new Set() });
     }
   }
   return root;
@@ -151,14 +162,18 @@ export function parseProof(bytes: Uint8Array): DetachedProof {
   return { digest, root };
 }
 
+function checkAttestation(a: Attestation): void {
+  if (a?.kind === 'bitcoin') checkBitcoinHeight(a.height);
+  else if (a?.kind === 'pending') checkPendingUri(a.uri);
+  else malformed('The receipt contains an unknown attestation type.');
+}
+
 function attestationBytes(a: Attestation): Uint8Array {
+  checkAttestation(a);
   if (a.kind === 'bitcoin') {
-    checkBitcoinHeight(a.height);
     const p = Uint8Array.from(writeVaruint(a.height));
     return concat(ATT_BITCOIN, Uint8Array.from(writeVaruint(p.length)), p);
   }
-  if (a?.kind !== 'pending') malformed('The receipt contains an unknown attestation type.');
-  checkPendingUri(a.uri);
   const uri = new TextEncoder().encode(a.uri);
   const inner = concat(Uint8Array.from(writeVaruint(uri.length)), uri);
   return concat(ATT_PENDING, Uint8Array.from(writeVaruint(inner.length)), inner);
@@ -207,9 +222,20 @@ export function serializeTree(root: TsNode): Uint8Array {
     if (item.depth > LIMITS.maxDepth) throw new UnalteredError('PROOF_TOO_LARGE', 'The receipt is nested too deeply.');
     attestations += item.node.attestations.length;
     if (attestations > LIMITS.maxAttestations) throw new UnalteredError('PROOF_TOO_LARGE', 'The receipt contains too many attestations.');
-    const atts = [...item.node.attestations].sort(compareAtt);
+    const uniqueAtts = new Map<string, Attestation>();
+    for (const att of item.node.attestations) {
+      checkAttestation(att); // Validate before deduplication, including unsupported runtime kinds.
+      uniqueAtts.set(attKey(att), att);
+    }
+    const atts = [...uniqueAtts.values()].sort(compareAtt);
     const kids = [...item.node.children];
-    for (const kid of kids) checkOperation(kid.op);
+    const operations = new Set<string>();
+    for (const kid of kids) {
+      checkOperation(kid.op);
+      const key = opKey(kid.op);
+      if (operations.has(key)) malformed('The receipt repeats an operation at the same timestamp.');
+      operations.add(key);
+    }
     kids.sort((a, b) => compareOps(a.op, b.op));
     const total = atts.length + kids.length;
     if (total === 0) throw new UnalteredError('PROOF_MALFORMED', 'Cannot serialise an empty timestamp.');
