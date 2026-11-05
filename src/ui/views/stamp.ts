@@ -194,7 +194,7 @@ export function mountStamp(root: HTMLElement): StampView {
         el(
           'div',
           { class: 'notice warn' },
-          el('p', {}, pdf ? t('stamp.pdfWarn') : isImage(it.kind) ? t('stamp.stripOffWarn') : t('stamp.unsupportedWarn')),
+          el('p', {}, pdf ? t('stamp.pdfWarn') : isImage(it.kind) ? t(it.strip ? 'stamp.stripUnsupportedWarn' : 'stamp.stripOffWarn') : t('stamp.unsupportedWarn')),
           el(
             'label',
             { class: 'check' },
