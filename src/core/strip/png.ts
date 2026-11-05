@@ -42,7 +42,7 @@ function validHeader(input: Uint8Array, dv: DataView, data: number): boolean {
 /** PNG3 11.3.1.1: decoders mask sample bits above the IHDR depth, so those ignored bits must not survive cleaning. */
 function normalizeTransparency(chunk: Uint8Array, bitDepth: number): Uint8Array | null {
   if (bitDepth === 16) return null;
-  const normalized = chunk.slice();
+  const normalized = Uint8Array.from(chunk); // Buffer.slice aliases its input; always own a zero-offset copy.
   const fields = new DataView(normalized.buffer);
   const mask = 2 ** bitDepth - 1;
   let changed = false;
@@ -125,6 +125,8 @@ export function cleanPng(input: Uint8Array): PngResult {
         if (colorType !== 3) {
           const normalized = normalizeTransparency(chunk, bitDepth);
           if (normalized) {
+            // Supported engines disagree about masking sub-8-bit greyscale transparency. Refuse to silently change it.
+            if (bitDepth < 8) return { kind: 'unsupported', reason: 'This PNG uses transparency data that browsers interpret differently, so it cannot be cleaned safely.' };
             chunk = normalized;
             note('Unused transparency sample bits (tRNS)');
           }
