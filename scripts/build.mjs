@@ -173,7 +173,7 @@ WINDOWS
      Get-FileHash ${archive.windows} and compare the value with the line for ${archive.windows} in the SHA256SUMS
      published with the release (signature: SHA256SUMS.sig). Letter case does not matter.
   2. Double-click "Open-Unaltered.cmd". It opens ${singleName} in your default browser. No installation, no internet needed for fingerprinting.
-  3. Stamping and verifying need internet access to the OpenTimestamps calendar servers and two Bitcoin block explorers.
+  3. Browser stamping and explorer verification need internet access to calendars and two Bitcoin block explorers.
      Fingerprinting and cleaning pictures work completely offline.
   "Verify-Checksums.ps1" (right-click > Run with PowerShell) only compares this folder with the SHA256SUMS inside the
   same zip: it finds damaged or incomplete copies, not deliberate changes.
@@ -185,6 +185,13 @@ LINUX / MACOS
   "verify-checksums.sh" only compares this folder with the SHA256SUMS inside the same archive: it finds damaged or
   incomplete copies, not deliberate changes.
   Command line (Node 22+): node unaltered-cli-${version}.mjs verify <file> [receipt.ots]
+
+OFFLINE HEADER COMPARISON (Node 22+, all systems)
+  node unaltered-cli-${version}.mjs verify-offline <file> <receipt.ots> <height> <block-hash> <header.hex>
+  Supply a trusted height-to-hash mapping and an 80-byte Bitcoin header encoded as 160 hex characters in header.hex.
+  Result MATCHED_TRUSTED_HEADER compares the receipt with your evidence without any network access.
+  Chain membership and height remain trusted inputs; this command does not perform Bitcoin consensus verification.
+  Pending receipts still require calendar upgrade data. The normal verify command retains explorer-quorum checks.
 
 OTHER SYSTEMS
   Open ${singleName} in any current browser.

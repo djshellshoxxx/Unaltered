@@ -87,4 +87,7 @@ it.each(['.zip', '-macos.zip', '-linux.tar.gz'])('retains the notice in every bu
   const files = archiveFiles(readFileSync(join(dist, prefix + suffix)), suffix.endsWith('.tar.gz'));
   for (const name of ['main.js', `${prefix}.html`, cliName]) requireNotices(text(files.get(name)!), suffix + '/' + name);
   expect(files.get('LICENSE')).toEqual(readFileSync(join(repo, 'LICENSE')));
+  const readme = text(files.get('README.txt')!);
+  expect(readme).toContain('verify-offline');
+  expect(readme).toContain('Chain membership and height remain trusted inputs');
 });
