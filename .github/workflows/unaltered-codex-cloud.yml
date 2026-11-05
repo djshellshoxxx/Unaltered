@@ -91,7 +91,7 @@ jobs:
         run: |
           set -euo pipefail
           # Run the guard from captured trusted Git bytes, never an agent-edited working-tree copy.
-          git show "$BASE_SHA:.github/scripts/cloud_scope_guard.py" | python3 - "$BASE_SHA"
+          git show "$BASE_SHA:.github/scripts/cloud_scope_guard.py" | python3 -I - "$BASE_SHA"
       - name: Run OPSEC, typecheck, lint and tests
         if: steps.gate.outputs.run_agent == 'true' && steps.scope.outcome == 'success'
         id: validate
@@ -112,10 +112,10 @@ jobs:
         run: |
           set -euo pipefail
           # Validation runs changed code, so check again after it has finished.
-          git show "$BASE_SHA:.github/scripts/cloud_scope_guard.py" | python3 - "$BASE_SHA"
+          git show "$BASE_SHA:.github/scripts/cloud_scope_guard.py" | python3 -I - "$BASE_SHA"
           git reset --soft "$BASE_SHA"
           git add -A -- src tests docs scripts
-          git show "$BASE_SHA:.github/scripts/cloud_scope_guard.py" | python3 - "$BASE_SHA"
+          git show "$BASE_SHA:.github/scripts/cloud_scope_guard.py" | python3 -I - "$BASE_SHA"
           if git diff --cached --quiet "$BASE_SHA"; then
             echo 'changed=false' >> "$GITHUB_OUTPUT"
           else
@@ -164,7 +164,7 @@ jobs:
           git apply --check --index --binary "$RUNNER_TEMP/unaltered-staging/unaltered-changes.patch"
           git apply --index --binary "$RUNNER_TEMP/unaltered-staging/unaltered-changes.patch"
           # --index includes new/deleted paths; the guard also independently reads untracked/mode/symlink state.
-          git show "$BASE_SHA:.github/scripts/cloud_scope_guard.py" | python3 - "$BASE_SHA"
+          git show "$BASE_SHA:.github/scripts/cloud_scope_guard.py" | python3 -I - "$BASE_SHA"
       - name: Open review PR
         id: pr
         uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7

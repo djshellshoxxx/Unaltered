@@ -33,3 +33,22 @@ not malicious semantics within allowed code; independent review and exact-head C
 
 Recovery: use the separate automation bundle provided by the recovery session, check out the named branch, run
 `python3 .github/scripts/test_cloud_scope_guard.py`, and inspect this diff independently from application changes.
+
+## Independent recovery review — 2026-11-05
+
+The retained `2d42bf0` guard and tests are unique relative to main `1b6dd91` and the refreshed PR41/42 heads
+`d352916`/`db519a9`. All ten existing Git-state tests pass in the unrestricted recovery environment.
+The patch remains separate from core application work, and the checkout had no dirty files or stashes before review.
+
+Review reproduced an additional publication-boundary defect: loading trusted guard bytes with `python3 -` still allows
+Python to import a patch-provided root `json.py` before the guard can reject that file. `PYTHONPATH` can similarly
+redirect imports. The guard now runs as `python3 -I -` at all four development, packaging and publication invocations.
+[Python isolated mode](https://docs.python.org/3/using/cmdline.html#cmdoption-I) excludes the working directory and user
+site packages from module lookup and ignores `PYTHON*` environment variables. Two new regression tests execute the
+actual four workflow invocations against checkout-local and `PYTHONPATH` module injection. Their eight subcases failed
+before the invocation repair; all twelve tests pass after it. No workflow was activated or dispatched.
+
+This does not qualify paid scheduling, spending controls or same-job agent isolation. The inherited daily schedule,
+missing hard expenditure limits, missing cost accounting/backoff and requirement for independent code review remain.
+PR41/42 use shell scope loops rather than this Python stdin launcher; their existing enumeration gaps are not resolved
+by this isolated change. Do not fold in their automatic integration or parallel paid execution as part of this repair.

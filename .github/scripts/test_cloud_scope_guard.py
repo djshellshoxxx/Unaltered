@@ -1,11 +1,13 @@
 """Offline Git-state regressions for the trusted cloud-publication scope boundary."""
 import os
 from pathlib import Path
+import shlex
 import subprocess
 import tempfile
 import unittest
 
 GUARD = Path(__file__).with_name('cloud_scope_guard.py')
+WORKFLOW = Path(__file__).parents[1] / 'workflows' / 'unaltered-codex-cloud.yml'
 
 
 class ScopeTests(unittest.TestCase):
@@ -29,6 +31,38 @@ class ScopeTests(unittest.TestCase):
 
     def guard(self):
         return subprocess.run(['python3', str(GUARD), self.base], cwd=self.root, text=True, capture_output=True)
+
+    def trusted_guard_commands(self):
+        prefix = 'git show "$BASE_SHA:.github/scripts/cloud_scope_guard.py" | '
+        commands = [shlex.split(line.strip().split(prefix, 1)[1])
+                    for line in WORKFLOW.read_text().splitlines() if line.strip().startswith(prefix)]
+        self.assertEqual(len(commands), 4, 'Exercise development, both packaging and publication boundaries')
+        return [[self.base if arg == '$BASE_SHA' else arg for arg in command] for command in commands]
+
+    def test_trusted_guard_never_imports_untrusted_checkout_modules(self):
+        marker = self.root / 'executed-before-scope-check'
+        (self.root / 'json.py').write_text(
+            'from pathlib import Path\nPath("executed-before-scope-check").write_text("yes")\n')
+        for command in self.trusted_guard_commands():
+            with self.subTest(command=command):
+                marker.unlink(missing_ok=True)
+                result = subprocess.run(command, input=GUARD.read_text(), cwd=self.root, text=True, capture_output=True)
+                self.assertNotEqual(result.returncode, 0, 'The newly added root module is out of scope')
+                self.assertFalse(marker.exists(), 'Rejecting the patch must not first execute its Python module')
+
+    def test_trusted_guard_ignores_pythonpath_module_injection(self):
+        marker = self.root / 'executed-before-scope-check'
+        with tempfile.TemporaryDirectory() as outside:
+            (Path(outside) / 'json.py').write_text(
+                f'from pathlib import Path\nPath({str(marker)!r}).write_text("yes")\n')
+            env = {**os.environ, 'PYTHONPATH': outside}
+            for command in self.trusted_guard_commands():
+                with self.subTest(command=command):
+                    marker.unlink(missing_ok=True)
+                    result = subprocess.run(command, input=GUARD.read_text(), cwd=self.root, env=env,
+                                            text=True, capture_output=True)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertFalse(marker.exists(), 'Interpreter environment must not run untrusted modules')
 
     def test_staged_protected_change_missing_from_legacy_guard_is_rejected(self):
         (self.root / 'src/core/net/allowlist.ts').write_text('changed\n')
