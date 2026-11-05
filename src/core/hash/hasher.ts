@@ -30,6 +30,8 @@ const MISMATCH = 'Internal error: two fingerprint calculations disagree. Do not 
 
 /** Input failures a working worker reports; retrying them on the main thread would re-read the whole file. */
 const WORKER_FAILURES: readonly ErrorCode[] = ['INPUT_INVALID', 'INPUT_UNREADABLE'];
+/** Worker initialization only; file reads and hashing have no overall deadline. */
+const WORKER_STARTUP_MS = 10_000;
 
 const nextTick = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
 
@@ -53,13 +55,7 @@ function workerPolicy(tt: TrustedTypesApi): { createScriptURL(s: string): string
 
 /** The blob: URL each inline worker was started from; released once that worker has answered or been stopped. */
 const scriptUrls = new WeakMap<Worker, string>();
-const scriptTimers = new WeakMap<Worker, ReturnType<typeof setTimeout>>();
 function releaseScript(w: Worker): void {
-  const timer = scriptTimers.get(w);
-  if (timer !== undefined) {
-    clearTimeout(timer);
-    scriptTimers.delete(w);
-  }
   const url = scriptUrls.get(w);
   if (url === undefined) return;
   scriptUrls.delete(w);
@@ -88,7 +84,6 @@ function makeWorker(): Worker | null {
     const w = new Worker(src);
     if (blobUrl) {
       scriptUrls.set(w, blobUrl);
-      scriptTimers.set(w, setTimeout(() => releaseScript(w), 10_000));
     }
     return w;
   } catch {
@@ -100,8 +95,15 @@ function makeWorker(): Worker | null {
 function hashInWorker(w: Worker, blob: Blob, opts: HashOptions): Promise<{ digest: Uint8Array; bytes: number; cross: string } | 'unavailable'> {
   return new Promise((resolve, reject) => {
     let settled = false;
+    let startupTimer: ReturnType<typeof setTimeout> | undefined;
+    const started = (): void => {
+      clearTimeout(startupTimer);
+      startupTimer = undefined;
+      releaseScript(w);
+    };
     const finish = (): void => {
       settled = true;
+      started();
       opts.signal?.removeEventListener('abort', abort);
       w.onmessage = null;
       w.onmessageerror = null;
@@ -126,8 +128,11 @@ function hashInWorker(w: Worker, blob: Blob, opts: HashOptions): Promise<{ diges
       if (opts.signal?.aborted) return abort();
       if (typeof ev.data !== 'object' || ev.data === null || Array.isArray(ev.data)) return unavailable();
       const m = ev.data as Record<string, unknown>;
-      if (m.type === 'progress') {
+      if (m.type === 'ready') {
+        started();
+      } else if (m.type === 'progress') {
         if (typeof m.done !== 'number' || !Number.isSafeInteger(m.done) || m.done < 0 || m.done > blob.size) return unavailable();
+        started();
         opts.onProgress?.(m.done);
       }
       else if (m.type === 'done') {
@@ -143,6 +148,9 @@ function hashInWorker(w: Worker, blob: Blob, opts: HashOptions): Promise<{ diges
     };
     w.onerror = unavailable;
     w.onmessageerror = unavailable;
+    // The worker acknowledges initialization before reading the Blob. Waiting for file progress here would impose
+    // a deadline on a slow initial backend read; readiness instead bounds only a worker that never starts.
+    startupTimer = setTimeout(unavailable, WORKER_STARTUP_MS);
     try {
       w.postMessage({ type: 'start', blob, chunkSize: CHUNK_SIZE });
     } catch {
