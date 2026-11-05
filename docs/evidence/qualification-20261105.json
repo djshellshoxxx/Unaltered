@@ -108,7 +108,8 @@
     "Human accessibility/Spanish/usability and Tor checks",
     "Independent audit/rebuild, signing, operations/legal/domain controls",
     "Explicit authorization before production release/deployment",
-    "Separate automation safety draft PR52; no scheduling/spending/activation qualification"
+    "Separate automation safety draft PR52; no scheduling/spending/activation qualification",
+    "PR52 Sonar S8705 argument-flow finding remains unresolved external review"
   ],
   "rawLogs": {
     "check-initial.log": {
@@ -178,6 +179,26 @@
     "automation-scope-tests.log": {
       "location": ".development/evidence-20261105/automation-scope-tests.log",
       "sha256": "11a6f3af83f940b559db0d9be6546b41c49c076ddfb40f14f075654b7ce202ee"
+    },
+    "check-node22-notices.log": {
+      "location": ".development/evidence-20261105/check-node22-notices.log",
+      "sha256": "39d6b675bbdab1dd455d9b5b31378c88e9565dc27aacf36591e0b1d24d2b27ef"
+    },
+    "build-notices1.sums": {
+      "location": ".development/evidence-20261105/build-notices1.sums",
+      "sha256": "0d93e87f747e682fe24241e321cc9d9d4c2f91985ca56607cba6556efc5aff50"
+    },
+    "build-notices2.sums": {
+      "location": ".development/evidence-20261105/build-notices2.sums",
+      "sha256": "0d93e87f747e682fe24241e321cc9d9d4c2f91985ca56607cba6556efc5aff50"
+    },
+    "build-notices2.log": {
+      "location": ".development/evidence-20261105/build-notices2.log",
+      "sha256": "d1222e3618961ea93fd18c65aba5d06117038247b1c97a45ecf461ddfdc63a59"
+    },
+    "opsec-notices.log": {
+      "location": ".development/evidence-20261105/opsec-notices.log",
+      "sha256": "e4077262184572f5d6a4b7dbcef9e277b8caf020a6f3c6f9298b714817a2c3a7"
     }
   },
   "finalQualification": {
@@ -212,7 +233,59 @@
     "ciRun": {
       "id": 42112041644,
       "head": "a70cdce1214fdeae5d52caeba333c2d4498c0758",
-      "status": "queued/pending; no pass inferred"
+      "status": "superseded/cancelled; newer PR checks pending, no hosted pass inferred"
     }
+  },
+  "noticeDistributionQualification": {
+    "implementationCommit": "e10929e46c433447ca2e95235b206c849ba57334",
+    "buildCode": "b9b13732e3ee856a",
+    "applicationSourceTree": "1943fc021675d14b074a4458c5b27919533def20",
+    "scriptsTree": "06d2d50b01170c6d32c5b7eff63dbe091eef3ced",
+    "unitTestsTree": "846002bc266b0a4e093e8df4cd681845b769e4d3",
+    "unit": {
+      "passed": 398,
+      "skipped": 2,
+      "files": 42
+    },
+    "node": {
+      "passed": 127,
+      "skipped": 3
+    },
+    "projectChecks": "OPSEC/typecheck/lint/full test PASSED",
+    "distribution": "Full first-party and locked noble MIT notices in every distributed JavaScript/worker/HTML/CLI copy and archive",
+    "noticeCases": 6,
+    "build": {
+      "fileCount": 10,
+      "twoBuildsIdentical": true,
+      "releaseChecksumEntries": 5,
+      "checksums": [
+        "7b3390897fe0c6ba7dc10d4343724eb4cc7684750aefd85205c1a826452c519a  dist/RELEASE-NOTES.md",
+        "1ff40da9ffb17de53c371906b8aa897fcd02fc896d7fc0d4f468f5532ae8f22c  dist/SHA256SUMS",
+        "625db973b232f5ba008b05a5aa0d87f1b83b8e480f756765ab0693f2c3a64ed1  dist/unaltered-0.3.1-linux.tar.gz",
+        "5eda8dd50853241c9aace7ab344406823a2153d4a280c122afe080492b94c37c  dist/unaltered-0.3.1-macos.zip",
+        "6aeec8adff618184c5d4da80f520c46709e09ca749715e2c8b837da9a63b6512  dist/unaltered-0.3.1.html",
+        "6ac1e76b0f33ad1ee8846527105d5d62cb62bc0172c379bb1aa7dbef8e32623a  dist/unaltered-0.3.1.zip",
+        "0e3837e086ca99084edea69baeea8060cb9315d5a5d9b6a3af05813be796443f  dist/unaltered-cli-0.3.1.mjs",
+        "c086382caefc68d6a7c9d5e755efde053778894a38c9c6183f5db73e3e1128fd  dist/web/index.html",
+        "10be46c8fd673f8b56617e2ef0b96d2f8855c8feba05c558322f41f262445cc1  dist/web/main.js",
+        "a6615aedfd8aa0549a9d01c462ddefc2548d3908b9c306e8b0e232cad756d161  dist/web/styles.css"
+      ]
+    },
+    "browserEvidence": "browser-20261105-notice-b9b13732e3ee856a.json",
+    "browserSmoke": {
+      "chromium": {
+        "passed": 10,
+        "skipped": 0
+      },
+      "firefox": {
+        "passed": 10,
+        "skipped": 0
+      },
+      "webkit": {
+        "passed": 9,
+        "skipped": 1
+      }
+    },
+    "scope": "Runtime app source and dependency manifests identical to historical 85f. Nine large-file trials remain qualified at 85f; not repeated for license-only packaging delta."
   }
 }

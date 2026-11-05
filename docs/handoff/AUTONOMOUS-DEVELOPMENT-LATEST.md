@@ -1,11 +1,11 @@
 # Autonomous development checkpoint — 2026-11-05 UTC
 
 Application branch: `codex/recover-qualify-20261104`, [draft PR51](https://github.com/djshellshoxxx/Unaltered/pull/51).
-Latest published implementation checkpoint: `a70cdce1214fdeae5d52caeba333c2d4498c0758`; later documentation commits may follow.
+Latest published implementation checkpoint: `e10929e46c433447ca2e95235b206c849ba57334`; later documentation commits may follow.
 Active checkout: `.development/consolidation-20261104`. Original main checkout/lockfile edits are preserved.
 Separate automation branch: `codex/automation-scope-guards-20261104`, published `75cb81ec4080d028de2ad125c660b1652c478c11`,
 [draft PR52](https://github.com/djshellshoxxx/Unaltered/pull/52). No automation changes enter PR51.
-All three workers finished; no background browser/fuzz/test processes remain. Lead owns final publication.
+Implementation workers finished; no background browser/fuzz/test processes remain. Lead owns final review/publication.
 
 ## Recovery and consolidation
 
@@ -48,7 +48,7 @@ Accepted requirements remain `docs/SPEC.md` plus `docs/DECISIONS.md`.
 - Full Node 22 check with pinned Python 0.4.5, virtual 2 GiB and real descriptor-backed files enabled:
   **390 unit passes, zero skips; 127 Node passes / 3 platform-privilege skips**. Nine real-file sizes
   through 2 GiB + 1 match independent Node crypto with bounded reads and sampled extra RSS below 200 MiB.
-- After final build/CI changes, stable project check: **392 unit passes / 2 optional large-file skips;
+- After final build/CI changes, stable project check: **398 unit passes / 2 optional large-file skips;
   127 Node passes / 3 platform-privilege skips**. Reference still enabled. OPSEC, typecheck and lint pass.
   The two skipped large-file cases passed in the preceding full run on identical application source.
 - Final strict integration initially found two new test-helper string/undefined assignments. `a70cdce`
@@ -69,21 +69,28 @@ Accepted requirements remain `docs/SPEC.md` plus `docs/DECISIONS.md`.
   Separate automation guard: 12 passes, including actual-workflow module-injection regressions.
 - Fuzz seed 20261105: 300,001 ms, 58,888 mutations / 58,924 executions, no finding. Wall-clock budget stop;
   the 1,000,000 iteration ceiling was not reached. Earlier fuzz evidence is preserved separately.
-- Two builds match all 10 dist files; the final template/link gate build still matches byte-for-byte.
-  All 5 release checksums pass. Build `85f5bc962b80d2c4`; application source tree
-  `1943fc021675d14b074a4458c5b27919533def20`. No native cross-OS or second-person inference.
+- Final notice-bearing build `b9b13732e3ee856a`: two builds match all 10 files; all 5 release checksums
+  pass. Full first-party and noble MIT notices are embedded in JS, decoded worker, HTML, CLI and archives.
+  Six artifact notice tests pass; CLI shebang, CSP/SRI and exact dependency pin are checked.
+- After notice-only packaging changes, exact final artifacts pass Chromium 10/10, Firefox 10/10,
+  WebKit 9 passes/one unsupported CSP probe skip, including unchanged responsiveness per engine.
+  Application source tree `1943fc021675d14b074a4458c5b27919533def20` and both dependency manifests
+  match historical build 85f. Prior nine 2 GiB trials belong to 85f and were not rerun on the notice build.
+  This bounded artifact delta is explicit; no native cross-OS or second-person inference.
 
 Evidence: `docs/evidence/qualification-20261105.json`, `browser-20261105-qualification.json`,
-`browser-20261105-network.json`, `r1-targets-20261105.json`, `fuzz-20261105-autonomous.json`.
+`browser-20261105-network.json`, `r1-targets-20261105.json`, `fuzz-20261105-autonomous.json`,
+`browser-20261105-notice-b9b13732e3ee856a.json`.
 Raw logs remain in `.development/evidence-20261105/`; evidence JSON records hashes and tested identities.
 Existing container Chromium --no-sandbox is disclosed; CORS/CSP/TLS policies remained enforced.
 
 ## Hosted state and exact remaining gates
 
-Sonar passes on published `a70cdce` (also earlier checkpoints); queried vulnerability/BUG counts were 0.
+PR51 Sonar passes on published `e10929e` (also earlier checkpoints); queried vulnerability/BUG counts are 0.
 Maintainability issues remain; analyzer evidence is not independent audit approval.
 PR-triggered Actions run [42112041644](https://github.com/djshellshoxxx/Unaltered/actions/runs/42112041644)
-for `a70cdce` is queued/pending, not passed. Later documentation heads get separate PR checks.
+for `a70cdce` was superseded/cancelled by later verified pushes. Newer source/documentation heads have
+separate pending PR checks; no hosted pass or official Pages upload is inferred.
 Manual CI dispatch failed HTTP 403 `Resource not accessible by integration` at
 `/actions/workflows/379498388/dispatches`. Branch-protection inspection also returned 403; settings were
 not changed, and absent protection is not inferred. Push/PR publication succeeds.
@@ -93,6 +100,11 @@ human screen-reader/actual zoom/OS contrast/native Spanish/usability; independen
 signing/public-key distribution and operations/legal/domain controls; explicit release/site authorization.
 Standalone manual Pages workflow requires default-branch registration. Existing Chromium PR CI now
 packages its official artifact after successful tests, with no duplicate job or deploy/write permissions.
+PR52 separately has an unresolved Sonar S8705 argument-injection finding at `cloud_scope_guard.py:20`.
+Bounded review established full lowercase40-hex validation before Git calls and argument vectors without
+a shell; no concrete injection was established. Leading-option/control inputs were not executed in that
+review (existing invalid-base case covers HEAD). Possible false-positive triage is not scanner suppression
+or independent approval; the external gate remains unresolved. Keep its safety repair draft and separate from PR51.
 No main merge, release/tag/site publication, signing key or broader API-funded workflow activation occurred.
 API token/cost/cache telemetry is unavailable; no hard spending limit or cache-hit claim is made.
 
