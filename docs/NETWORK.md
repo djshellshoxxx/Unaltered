@@ -188,3 +188,27 @@ a live browser check. Do not work around this with `no-cors`, disabled TLS verif
 Options, in order of preference (SPEC section 9): (a) remove that host from `src/core/net/allowlist.ts` (the CSP is generated from
 it) and use only hosts that allow CORS, provided at least two calendars and two explorers remain; (b) ship a CLI for stamping and keep
 the browser for hashing and verification; (c) an optional relay, which adds a trusted party and needs its own ADR.
+
+## Continuation: receipt-bound pending probes — 2026-11-05
+
+The earlier random-commitment probe queried its submitted root directly. A calendar may append/hash that root before
+placing a pending attestation on another node, so that lookup could be an unknown-root404 rather than the pending path
+actually named by the returned receipt. Existing historical observations are preserved, but do not substitute for this
+corrected receipt-bound test. Confirmed-upgrade evidence used actual receipts and is unaffected.
+
+The corrected `scripts/browser-network-check.mjs` validates/replays the POST proof and follows each pending node's
+commitment, constrained to existing application calendar origins. Its bounded shared transport and parser have seven
+regressions passing on Chromium, Firefox and WebKit. Malformed proofs, unapproved origins, redirects, oversized replies,
+timeouts and unverified Bitcoin metadata cannot produce a successful verification claim.
+
+[Exact live results and source/licensing research](evidence/cors-continuation-20261105.md) show that canonical calendars,
+reference-client pool aliases and alternate Accept headers still fail pending-response browser reads. Pool POST proofs
+name the canonical calendars; substituting a pool origin was research-only and did not qualify. Catallaxy POST lacked
+readable CORS too. App CSP/allowlist are unchanged, and no candidate was promoted.
+
+The public upstream nginx example lacks `always` on its ACAO header, and nginx documents that ordinary `add_header`
+omits404. This matches the observed mechanism; deployed private configuration was not inspected. Operators must make
+appropriate CORS headers available on pending/error replies before that response becomes readable to this client-only
+application. A source-derived trailing slash produced400, not a compatible alternate protocol route. No proxy, policy
+bypass or operator communication was introduced. Pending/unreadable UI behavior and original receipt preservation remain
+conservative; an outage is never promoted to Bitcoin confirmation.

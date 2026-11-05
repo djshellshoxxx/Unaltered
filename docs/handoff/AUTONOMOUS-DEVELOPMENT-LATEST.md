@@ -1,9 +1,9 @@
 # Autonomous development checkpoint — 2026-11-05 UTC
 
 Application branch: `codex/recover-qualify-20261104`, [draft PR51](https://github.com/djshellshoxxx/Unaltered/pull/51).
-Latest published implementation checkpoint: `e10929e46c433447ca2e95235b206c849ba57334`; later documentation commits may follow.
+Latest published implementation checkpoint: `69087ff`; later documentation commits may follow.
 Active checkout: `.development/consolidation-20261104`. Original main checkout/lockfile edits are preserved.
-Separate automation branch: `codex/automation-scope-guards-20261104`, published `75cb81ec4080d028de2ad125c660b1652c478c11`,
+Separate automation branch: `codex/automation-scope-guards-20261104`, published `295877ef9edcda37282f7981b25b996808dc6e35`,
 [draft PR52](https://github.com/djshellshoxxx/Unaltered/pull/52). No automation changes enter PR51.
 Implementation workers finished; no background browser/fuzz/test processes remain. Lead owns final review/publication.
 
@@ -36,7 +36,7 @@ Accepted requirements remain `docs/SPEC.md` plus `docs/DECISIONS.md`.
 | Confirmed security defects | COMPLETE bounded fixes: PATH shadowing, worker startup, protocol bounds, template script/style/link integrity, tag recheck | Code/regressions in PR51 | Sonar passes; independent security audit still required; reviewer; high |
 | Release packaging | PARTIAL: reproducible files and checksums; unsigned portable artifacts prepared | `scripts/build.mjs`, `dist/`, `docs/RELEASE.md` | Native OS, second-person rebuild/signing/operations/legal controls; maintainer; high |
 | Toolkit URL correction | COMPLETE scoped inherited PR49 fix; 34 Python cases pass | `skills/paper-search/`, toolkit tests | Further toolkit work stays separate; maintainer; low |
-| Automation safety | READY separate draft: trusted Git-state scope guard and isolated Python invocation; 12 tests pass | PR52, `AUTOMATION_SCOPE_20261104.md` on that branch | Hosted review, spending/backoff/accounting/isolation unqualified; maintainer; high; do not activate PR41/42 |
+| Automation safety | COMPLETE scoped repair: immutable captured base, fixed Git API/operands/executable and isolated Python; 18 tests pass, Sonar green at295877e | PR52, `AUTOMATION_SCOPE_20261104.md` on that branch | Hosted review, spending/backoff/accounting/isolation unqualified; maintainer; high; do not activate PR41/42 |
 | Production publication | BLOCKED on external acceptance and explicit authorization | `docs/TODO.md`, `AUDIT.md`, `RELEASE.md` | No release/deployment/signature/approval fabricated; maintainer and independent people |
 
 ## Verified results
@@ -48,7 +48,7 @@ Accepted requirements remain `docs/SPEC.md` plus `docs/DECISIONS.md`.
 - Full Node 22 check with pinned Python 0.4.5, virtual 2 GiB and real descriptor-backed files enabled:
   **390 unit passes, zero skips; 127 Node passes / 3 platform-privilege skips**. Nine real-file sizes
   through 2 GiB + 1 match independent Node crypto with bounded reads and sampled extra RSS below 200 MiB.
-- After final build/CI changes, stable project check: **398 unit passes / 2 optional large-file skips;
+- After final build/CI changes, current continuation project check: **422 unit passes / 2 optional large-file skips;
   127 Node passes / 3 platform-privilege skips**. Reference still enabled. OPSEC, typecheck and lint pass.
   The two skipped large-file cases passed in the preceding full run on identical application source.
 - Final strict integration initially found two new test-helper string/undefined assignments. `a70cdce`
@@ -84,6 +84,39 @@ Evidence: `docs/evidence/qualification-20261105.json`, `browser-20261105-qualifi
 Raw logs remain in `.development/evidence-20261105/`; evidence JSON records hashes and tested identities.
 Existing container Chromium --no-sandbox is disclosed; CORS/CSP/TLS policies remained enforced.
 
+
+## Continuation implementation — 2026-11-05 22:25 UTC
+
+- PR51 recovered unchanged at56e5a92; current main remains1b6dd91. Existing consolidation ancestry remains valid;
+  no source PR was closed, merged or overwritten. PR52 remains separate from core and PR41/42 remain inactive here.
+- Published056436b (worker05df046) fixes draft-release qualification: actual artifact bytes from linux/windows/macos
+  all validate before draft creation. Four Windows/macOS corruption/missing regressions failed first;15 related
+  tests pass. Header evidence establishes dispatch403 requires actions=write; repository settings403 require
+  administration=read. Authentication works; account restrictions were not inspected or changed.
+- Published7cef891 adds optional `verify-offline FILE RECEIPT HEIGHT HASH HEADER.hex`. Standard proof replay,
+  original-file digest, supplied height,80-byte header/hash and Merkle commitment must match. Result is
+  MATCHED_TRUSTED_HEADER with USER_SUPPLIED_HEADER trust; chain membership/height/identity remain trusted inputs.
+  Existing online verifier and quorum are unchanged. Eighteen focused cases pass, including actual genesis,
+  malformed/mismatched inputs, resource limits, zero-network checks and independent Node SHA-256.
+  Actual packaged CLI matched cached genuine Bob/Finney receipts with fetch disabled and reference times equal.
+- Publishedafeb1b7 ships explicit offline-command help and trust limits in every package. Three package help tests
+  failed before that addition;24 related artifact/offline tests pass. Guide: docs/OFFLINE_VERIFICATION.md.
+- Integrated69087ff (workera6412b1) fixes the existing browser diagnostic: pending GET identities come from parsed,
+  replayed POST receipts, not blindly from the submitted random root. Seven cases pass per engine,21 total, with
+  no retries. Real corrected app-CSP probes and seven-source provider research remain blocked on pending CORS.
+  Source-derived alternate Accept/pool/trailing-slash paths did not qualify. Exact evidence: cors-continuation-20261105.md.
+- Current build b63394d9086f7bd9 reproduces all10 files; all5 release checksums pass. Browser JS/CSS are byte-identical
+  to qualified b9; HTML changes only the footer build-code label. CLI and archive/help bytes changed as intended.
+  The prior nine browser2GiB trials were not repeated for these CLI/diagnostic changes.
+- Final full Node22 check:422 unit passes/2 optional large-file skips,127 Node passes/3 platform-privilege skips;
+  OPSEC/typecheck/lint pass. No dependency/lockfile change. Broad previous browser/a11y/fuzz evidence is retained,
+  with new CORS regressions executed against the emitted site. All workers completed in isolated worktrees.
+
+Evidence: docs/evidence/continuation-20261105-qualification.json and cors-continuation-20261105.{json,md}.
+Raw logs are in .development/evidence-continuation-20261105/. Token/cost/cache telemetry remains unavailable.
+Next: required hosted/native CI and Pages artifact; operator CORS headers; human/independent review, signing and
+explicit release/site authorization. No further source change or paid automation activation is implied.
+
 ## Hosted state and exact remaining gates
 
 PR51 Sonar passes on published `e10929e` (also earlier checkpoints); queried vulnerability/BUG counts are 0.
@@ -100,11 +133,11 @@ human screen-reader/actual zoom/OS contrast/native Spanish/usability; independen
 signing/public-key distribution and operations/legal/domain controls; explicit release/site authorization.
 Standalone manual Pages workflow requires default-branch registration. Existing Chromium PR CI now
 packages its official artifact after successful tests, with no duplicate job or deploy/write permissions.
-PR52 separately has an unresolved Sonar S8705 argument-injection finding at `cloud_scope_guard.py:20`.
-Bounded review established full lowercase40-hex validation before Git calls and argument vectors without
-a shell; no concrete injection was established. Leading-option/control inputs were not executed in that
-review (existing invalid-base case covers HEAD). Possible false-positive triage is not scanner suppression
-or independent approval; the external gate remains unresolved. Keep its safety repair draft and separate from PR51.
+PR52 S8705 is resolved at published295877e: immutable validated40-hex base, fixed read-only Git operations,
+explicit operand boundaries, fixed executable, paging/fsmonitor disabled, and prior isolated Python launchers.
+A real PATH-shadowing failure was reproduced before repair;18 tests pass, including17 malformed-argument
+subcases. Exact-head external Sonar is green with0 unresolved vulnerability/BUG findings; no rule suppression
+or acceptance was used. Independent agent review found no actionable blocker; human audit is still separate.
 No main merge, release/tag/site publication, signing key or broader API-funded workflow activation occurred.
 API token/cost/cache telemetry is unavailable; no hard spending limit or cache-hit claim is made.
 
