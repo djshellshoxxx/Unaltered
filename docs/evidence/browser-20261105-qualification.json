@@ -1,8 +1,8 @@
 {
-  "recordedAtUtc": "2026-11-05T21:09:39.151073+00:00",
-  "status": "Normal browser coverage and three-engine reflow/media qualification complete; real2GiB Chromium acceptance running.",
+  "recordedAtUtc": "2026-11-05T21:12:29.694850+00:00",
+  "status": "Normal browser qualification complete. Chromium real 2 GiB RSS acceptance passed 3/3; Firefox/WebKit completion qualification remains in progress.",
   "environment": {
-    "os": "Ubuntu24.04.5LTS x86_64",
+    "os": "Ubuntu 24.04.5 LTS x86_64",
     "node": "24.22.2",
     "playwright": "1.64.1",
     "chromium": "156.0.8078.4",
@@ -29,7 +29,7 @@
       "failed": 2,
       "skipped": 1,
       "notes": [
-        "Initial concurrent setup run; responsiveness maxgap107.7ms exceeded unchanged50ms.",
+        "Initial concurrent setup run; responsiveness maximum gap 107.7 ms exceeded unchanged 50 ms.",
         "Pages collector misclassified same-origin blob worker URLs as HTTP asset paths; fixed in be9b2c1."
       ],
       "logSha256": "0741e8f08c8915c5368f0a3c2109b4cb752121c018661575d7491c252fd52f07",
@@ -42,7 +42,7 @@
       "failed": 0,
       "skipped": 0,
       "notes": [
-        "Isolated unchanged50ms responsiveness and corrected Pages smoke."
+        "Isolated unchanged 50 ms responsiveness and corrected Pages smoke."
       ],
       "logSha256": "81432f23fc838548d58ade78304eb6f5f23094fa313e3aba29c4de8811c156b9",
       "retries": 0
@@ -54,7 +54,7 @@
       "failed": 0,
       "skipped": 0,
       "notes": [
-        "Isolated unchanged50ms responsiveness."
+        "Isolated unchanged 50 ms responsiveness."
       ],
       "logSha256": "9052f06997ec45fd6085818c8a084a7295f933c441adf7040aace839e506658e",
       "retries": 0
@@ -66,7 +66,7 @@
       "failed": 1,
       "skipped": 0,
       "notes": [
-        "Initial isolated responsiveness maxgap103ms exceeded unchanged50ms."
+        "Initial isolated responsiveness maximum gap 103 ms exceeded unchanged 50 ms."
       ],
       "logSha256": "f810ce01ad256078e76165c1841c4793426cd263857f73d269b4cfb01301a1a0",
       "retries": 0
@@ -78,7 +78,7 @@
       "failed": 0,
       "skipped": 0,
       "notes": [
-        "Isolated unchanged50ms responsiveness after integrated worker initialization changes."
+        "Isolated unchanged 50 ms responsiveness after integrated worker initialization changes."
       ],
       "logSha256": "7af9346a54acc4a70c663ea46a6502261613d296f610434a24900b4e7b47d1f8",
       "retries": 0
@@ -91,7 +91,7 @@
       "skipped": 1,
       "notes": [
         "Every normal case except timing benchmark; that benchmark was executed separately on the earlier build.",
-        "One optional2GiB skip; actual large-file acceptance remains pending."
+        "One optional 2 GiB skip; actual large-file acceptance remains pending."
       ],
       "logSha256": "25f4322e6aea51ad14db426cbced372f360fb048342af28e4e52081eb69601bc",
       "retries": 0
@@ -104,7 +104,7 @@
       "skipped": 2,
       "notes": [
         "All normal cases except separately executed timing benchmark.",
-        "Skips: opt-in2GiB and Worker.evaluate CSP probe unsupported by WebKit."
+        "Skips: opt-in 2 GiB and Worker.evaluate CSP probe unsupported by WebKit."
       ],
       "logSha256": "cdd4ddee7401afbfa8dc9ba9923bf480f9c5323c148f4d01ee72fafd71b87d7a",
       "retries": 0
@@ -116,7 +116,7 @@
       "failed": 0,
       "skipped": 0,
       "notes": [
-        "Integrated worker, offlineHTML, SRI/CSP, Pages, unchanged50ms timing, lifecycle and reflow/media coverage.",
+        "Integrated worker, offline HTML, SRI/CSP, Pages, unchanged 50 ms timing, lifecycle and reflow/media coverage.",
         "The later chromium-media.log separately requires forced-colors media matching."
       ],
       "logSha256": "9400efb4e7f8a5519fc6210367661af6b05a0c57c5b7692f3d7103589066cc24",
@@ -129,7 +129,7 @@
       "failed": 0,
       "skipped": 0,
       "notes": [
-        "Final-source unchanged50ms timing plus new reflow and media cases."
+        "Final-source unchanged 50 ms timing plus new reflow and media cases."
       ],
       "logSha256": "0b6f261504e7968bdd8ad5eec785126dbee851fdfe83ceb2522795188601c410",
       "retries": 0
@@ -236,9 +236,95 @@
     "Fresh-pending CORS failure remains documented in browser-20261105-network.json.",
     "No benchmark limit, memory limit, deadline, CSP or TLS policy was weakened."
   ],
-  "newAccessibilityScope": "640/320CSS-px layout widths model a1280px window at200%/400%; actual browser zoom UI, physical display scaling and human assistive-technology review remain separate manual gates.",
+  "newAccessibilityScope": "640/320 CSS-px layout widths model a 1280px window at 200%/400%; actual browser zoom UI, physical display scaling and human assistive-technology review remain separate manual gates.",
   "staticChecks": {
     "typecheck": "PASSED",
     "lint": "PASSED"
+  },
+  "largeFileAcceptance": {
+    "file": "Real descriptor-backed sparse file containing 2,147,483,648 zero bytes; browser File API and real worker, compared with independent Node crypto SHA-256.",
+    "unchangedLimits": {
+      "hashWaitMs": 540000,
+      "testDeadlineMs": 600000,
+      "chromiumExtraRendererRssCeilingBytes": 209715200
+    },
+    "chromium": {
+      "buildCode": "85f5bc962b80d2c4",
+      "command": "UNALTERED_BIG_BROWSER=1 CHROMIUM_PATH=<pinned Chrome156 executable> node node_modules/@playwright/test/cli.js test tests/e2e/memory.spec.ts --repeat-each=3 --retries=0 --max-failures=1 --reporter=json",
+      "stats": {
+        "startTime": "2026-11-05T21:09:16.140Z",
+        "duration": 134571.357,
+        "expected": 3,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "reportSha256": "fdd0ba2ae0504a81fcf3ac5fa505e225048e221413fb46f8e75b06b1b106448f",
+      "attempts": [
+        {
+          "status": "passed",
+          "durationMs": 43565,
+          "retry": 0,
+          "peakExtraRendererRssBytes": 63078400,
+          "workerCompletion": {
+            "starts": [
+              2147483648
+            ],
+            "done": [
+              {
+                "bytes": 2147483648,
+                "hex": "a7c744c13cc101ed66c29f672f92455547889cc586ce6d44fe76ae824958ea51",
+                "cross": "skipped"
+              }
+            ],
+            "failures": []
+          }
+        },
+        {
+          "status": "passed",
+          "durationMs": 45413,
+          "retry": 0,
+          "peakExtraRendererRssBytes": 49258496,
+          "workerCompletion": {
+            "starts": [
+              2147483648
+            ],
+            "done": [
+              {
+                "bytes": 2147483648,
+                "hex": "a7c744c13cc101ed66c29f672f92455547889cc586ce6d44fe76ae824958ea51",
+                "cross": "skipped"
+              }
+            ],
+            "failures": []
+          }
+        },
+        {
+          "status": "passed",
+          "durationMs": 41929,
+          "retry": 0,
+          "peakExtraRendererRssBytes": 46362624,
+          "workerCompletion": {
+            "starts": [
+              2147483648
+            ],
+            "done": [
+              {
+                "bytes": 2147483648,
+                "hex": "a7c744c13cc101ed66c29f672f92455547889cc586ce6d44fe76ae824958ea51",
+                "cross": "skipped"
+              }
+            ],
+            "failures": []
+          }
+        }
+      ]
+    },
+    "firefox": {
+      "status": "RUNNING: real-file completion; renderer RSS is not measured."
+    },
+    "webkit": {
+      "status": "NOT_RUN: real-file completion; renderer RSS is not measured."
+    }
   }
 }
