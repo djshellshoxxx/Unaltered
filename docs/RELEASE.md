@@ -26,6 +26,34 @@ consistent with HTML newline preprocessing and its CSP hash, including source co
 Package tests compare all generated files across those input forms and allow only the declared runtime and distribution
 files; the bundled research/agent toolkit is excluded.
 
+## Local rebuild evidence (2026-11-05)
+
+Source `210e3df8e05220d65fc7fa31cc78a8d3a5b3102a` was rebuilt in the separate checkout
+`.development/release-independent-20261105`, first with
+`/usr/local/share/nvm/versions/node/v22.23.4/bin/node` (22.23.4), then with
+`/usr/local/share/nvm/versions/node/v24.22.2/bin/node` (24.22.2). Both Linux builds produced build code
+`2969d158f4936bfd`. All ten generated files matched each other and the captured
+`.development/consolidation-20261104/dist` baseline byte for byte; all five published checksum entries passed
+`sha256sum -c SHA256SUMS`. The complete matching manifest is:
+
+```text
+6a3a66e6e473852a84dc6499080accdb3039100467d910b2002ac0713b245409  RELEASE-NOTES.md
+651f38a9c826527a44595e6f6fb6a4f505c766c5cab18b01c1c14753217b0b9e  SHA256SUMS
+680b530420a9abf32b04d1d9d31cd9cfbdd89a06debf99d72e6c7ad0fb527fa3  unaltered-0.3.1-linux.tar.gz
+65fc5922cad4fd077b5dabea99c03a002b97f8d61c0a880dd17525a670f7e259  unaltered-0.3.1-macos.zip
+86a35c926509baf489278933bbd7d2fa91a9800b38b435e2b11c533660738e5e  unaltered-0.3.1.html
+4d48d029933161ed611b55d929b1d46531eb8f85d5ad8241db51fc7c1052afb9  unaltered-0.3.1.zip
+ca74be05617b86b3e7a9145a9206281a345800cb210d6f96c0dbf830d47e8ef0  unaltered-cli-0.3.1.mjs
+4f2cc36eccf9845f1c31ab35e2ab8a5ac94c67d3d1a2a62ccfe7ecc7fff4c14e  web/index.html
+39b1a18e3d2bfd56619381cdc777f51d47061534aff45384b40cc46f76d48ca2  web/main.js
+a6615aedfd8aa0549a9d01c462ddefc2548d3908b9c306e8b0e232cad756d161  web/styles.css
+```
+
+These builds used the existing installed dependencies without modifying the shared dependency tree; no fresh
+dependency installation was performed. This establishes reproducibility across separate checkout paths and these
+two Node versions on one Linux environment. Independent human approval and native Windows/macOS results remain
+separate release gates. No signing keys or signatures were created, and no release was dispatched or published.
+
 ## Linux and macOS
 
 Same model as Windows (ADR-009, extended by ADR-011): no installer, no executable shipped. Linux: `tar xzf unaltered-<v>-linux.tar.gz && sh unaltered-<v>/open-unaltered.sh`.
@@ -59,7 +87,7 @@ These are future maintainer actions requiring separate authorization. The 2026-1
 2. Explicitly dispatch `.github/workflows/release.yml`, selecting that tagged commit/ref and supplying its existing tag. The tag must exactly equal `v` plus the package version (three numeric components) and resolve to the selected commit. Branch pushes and tag pushes do not run this workflow or create releases. The validation checks tag identity and commit, not the cryptographic signer's trust; a maintainer must verify the signed tag separately.
 3. The workflow builds on Linux, Windows and macOS, requires matching checksum lists and release notes, verifies the actual downloaded artefacts against `SHA256SUMS` in **each platform's directory**, and creates an unsigned **draft pre-release** using `gh release create --verify-tag --draft --prerelease`, with the build's `RELEASE-NOTES.md` as its notes. It never edits an existing release or overwrites assets; creation fails if the tag already has a release. A draft is preparation, not a signed public release. Do not run the dispatch under the current resume authorization.
 4. A second person rebuilds the exact tagged source locally (`npm ci --ignore-scripts && npm run build`) and compares `dist/SHA256SUMS`.
-5. **Offline:** `gpg --detach-sign --armor SHA256SUMS` (or `minisign`) with the dedicated release key. Attach `SHA256SUMS.sig` using the chosen signature format and publish verification instructions. The workflow never holds the key (OPSEC 2.2).
+5. **Offline:** `gpg --detach-sign --armor --output SHA256SUMS.sig SHA256SUMS` (or `minisign`) with the dedicated release key. The [explicit GPG output name](https://www.gnupg.org/documentation/manuals/gnupg/GPG-Input-and-Output.html) matches the signature asset expected by these instructions. Attach `SHA256SUMS.sig` using the chosen signature format and publish verification instructions. The workflow never holds the key (OPSEC 2.2).
 6. With separate maintainer authorization, publish only after the signed tag, independent rebuild, native CI/acceptance results, signing, and required security review are complete. Pin the same files to IPFS and record the CID in the notes. Publish the public key in the repo and two other places (OPSEC section 7).
 
 Not done in this repository (needs people or credentials): the release key itself, signing, IPFS pin, domain decision (Q5), independent audit (REL-3).
