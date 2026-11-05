@@ -1,6 +1,6 @@
 {
-  "recordedAtUtc": "2026-11-05T21:17:58.227146+00:00",
-  "status": "Complete final-source Chromium regular suite passed. Chromium RSS and Firefox completion passed 3/3 each; WebKit completion qualification is running.",
+  "recordedAtUtc": "2026-11-05T21:19:11.147226+00:00",
+  "status": "COMPLETE for assigned local automated browser gates. Earlier failed attempts remain recorded; production, hosted CI and human release gates are separate.",
   "environment": {
     "os": "Ubuntu 24.04.5 LTS x86_64",
     "node": "24.22.2",
@@ -443,8 +443,129 @@
       "command": "UNALTERED_BROWSER=firefox UNALTERED_BIG_BROWSER=1 node node_modules/@playwright/test/cli.js test tests/e2e/memory.spec.ts --retries=0 --max-failures=1 --reporter=json; first run 1 attempt, second run --repeat-each=2."
     },
     "webkit": {
-      "status": "RUNNING: 3 real-file completion attempts; renderer RSS is not measured."
+      "status": "PASSED: 3/3 real-file completion attempts; renderer RSS is not measured.",
+      "buildCode": "85f5bc962b80d2c4",
+      "stats": {
+        "startTime": "2026-11-05T21:17:14.206Z",
+        "duration": 86049.16900000001,
+        "expected": 3,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "reportSha256": "0a74ccd1bca054a31a6cc188fc4cf8a9c27af727b188485329fd1bc054a7ac22",
+      "attempts": [
+        {
+          "status": "passed",
+          "durationMs": 28196,
+          "retry": 0,
+          "rendererRssMeasured": false,
+          "annotations": [
+            {
+              "type": "rss-not-measured",
+              "description": "webkit: memory ceiling not evidenced by this run"
+            }
+          ],
+          "workerCompletion": {
+            "starts": [
+              2147483648
+            ],
+            "done": [
+              {
+                "bytes": 2147483648,
+                "hex": "a7c744c13cc101ed66c29f672f92455547889cc586ce6d44fe76ae824958ea51",
+                "cross": "skipped"
+              }
+            ],
+            "failures": []
+          }
+        },
+        {
+          "status": "passed",
+          "durationMs": 26626,
+          "retry": 0,
+          "rendererRssMeasured": false,
+          "annotations": [
+            {
+              "type": "rss-not-measured",
+              "description": "webkit: memory ceiling not evidenced by this run"
+            }
+          ],
+          "workerCompletion": {
+            "starts": [
+              2147483648
+            ],
+            "done": [
+              {
+                "bytes": 2147483648,
+                "hex": "a7c744c13cc101ed66c29f672f92455547889cc586ce6d44fe76ae824958ea51",
+                "cross": "skipped"
+              }
+            ],
+            "failures": []
+          }
+        },
+        {
+          "status": "passed",
+          "durationMs": 27552,
+          "retry": 0,
+          "rendererRssMeasured": false,
+          "annotations": [
+            {
+              "type": "rss-not-measured",
+              "description": "webkit: memory ceiling not evidenced by this run"
+            }
+          ],
+          "workerCompletion": {
+            "starts": [
+              2147483648
+            ],
+            "done": [
+              {
+                "bytes": 2147483648,
+                "hex": "a7c744c13cc101ed66c29f672f92455547889cc586ce6d44fe76ae824958ea51",
+                "cross": "skipped"
+              }
+            ],
+            "failures": []
+          }
+        }
+      ],
+      "rendererRssMeasured": false,
+      "command": "UNALTERED_BROWSER=webkit UNALTERED_BIG_BROWSER=1 node node_modules/@playwright/test/cli.js test tests/e2e/memory.spec.ts --repeat-each=3 --retries=0 --max-failures=1 --reporter=json"
     }
   },
-  "launchConfiguration": "Chromium uses the repository existing --no-sandbox container launch flag. No CORS, CSP or TLS policy is bypassed."
+  "launchConfiguration": "Chromium uses the repository existing --no-sandbox container launch flag. No CORS, CSP or TLS policy is bypassed.",
+  "coverageSummary": {
+    "chromium": {
+      "regularPassed": 85,
+      "regularSkipped": 1,
+      "method": "One complete final-source invocation, all 86 cases. The ordinary optional-memory skip was qualified separately.",
+      "largeFilePassed": 3,
+      "largeFileAttempts": 3,
+      "rssMeasured": true
+    },
+    "firefox": {
+      "regularPassed": 85,
+      "regularSkipped": 1,
+      "method": "Final-source remainder 81 passes + final-source timing 1 pass + new reflow/media 3 passes; one ordinary optional-memory skip qualified separately.",
+      "largeFilePassed": 3,
+      "largeFileAttempts": 3,
+      "rssMeasured": false
+    },
+    "webkit": {
+      "regularPassed": 84,
+      "regularSkipped": 2,
+      "method": "Final-source remainder 80 passes + isolated timing 1 pass + new reflow/media 3 passes. Skips: optional-memory (qualified separately), Worker.evaluate probe unsupported.",
+      "largeFilePassed": 3,
+      "largeFileAttempts": 3,
+      "rssMeasured": false
+    }
+  },
+  "remainingBrowserLimits": [
+    "WebKit Playwright Worker.evaluate does not support the active worker CSP-injection probe; ordinary page CSP/SRI, actual worker completion, offline and Trusted Types capability tests passed.",
+    "Viewport equivalence and emulated media do not certify actual browser zoom UI, operating-system high contrast, screen-reader use or WCAG compliance.",
+    "Live random-commitment and confirmed Alice checks in these files used Chromium; Bob/Finney evidence is in the protocol workstream. Fresh pending404 responses still omit ACAO.",
+    "These measurements do not establish native Windows/macOS acceptance or an independent human review."
+  ]
 }
