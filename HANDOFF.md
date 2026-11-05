@@ -1,3 +1,10 @@
+# Active autonomous checkpoint — 2026-11-05 UTC
+
+Continue from [the incremental development handoff](docs/handoff/AUTONOMOUS-DEVELOPMENT-LATEST.md)
+and [draft PR51](https://github.com/djshellshoxxx/Unaltered/pull/51). Recovered work is preserved
+in the isolated development checkout; the original main checkout and lockfile edit are intact.
+Older handoffs below remain history. No merge, production release or deployment occurred.
+
 # Active continuous development — 2026-11-04 UTC
 
 Branch: `codex/recover-qualify-20261104`. See [continuous progress and publication handoff](docs/CONTINUOUS_PROGRESS_20261104.md)

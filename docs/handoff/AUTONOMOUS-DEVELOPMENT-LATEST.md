@@ -1,7 +1,8 @@
 # Autonomous development checkpoint — 2026-11-05 UTC
 
 Active branch: `codex/recover-qualify-20261104` in `.development/consolidation-20261104`.
-Recovered local checkpoint: `e15b756`; previously published checkpoint: `5e1b920`.
+Recovered local checkpoint: `e15b756`; initial remote checkpoint: `5e1b920`.
+Latest published source checkpoint: `cc41aea`; [draft PR51](https://github.com/djshellshoxxx/Unaltered/pull/51).
 The top-level `main` checkout and its pre-existing lockfile modification remain intact.
 
 ## Refreshed recovery evidence
@@ -61,3 +62,50 @@ Next: finish checks, push recovered work and create/update the candidate draft; 
 reproduced Sonar issue; integrate verified agent commits; rerun focused and broad checks;
 record actual remote SHA/PR and test evidence after each milestone. Check publication
 at least every20minutes and immediately after significant verified work.
+
+## Verified implementation checkpoint — 21:02 UTC
+
+Recovered commits are published in PR51. Published source `cc41aea` includes:
+
+- `c138080`: absolute-system Git invocation for fuzz source evidence; hostile/empty PATH
+  regressions failed before repair, all six campaign tests pass afterward. The exact
+  former Sonar S4036 finding is addressed without analyzer suppression.
+- `f835e79` (agent `0314c796`): unsigned32-bit Bitcoin attestation height bounds in parse
+  and serialize. Twelve new cases;107 related protocol tests passed with pinned Python0.4.5.
+  The current upstream0.5.0 bound is distinct from that older oracle; no upstream code copied.
+- `9dc775c` / `bae1e79` (agents `9fc0395` / `a1bd3c8`): remote-tag identity recheck before
+  draft creation, plus fail-closed template script/style gates. Nine regressions pass;
+  build/workflow tests23pass/one PowerShell-only skip. Maintainer tag recheck remains required.
+- `752ba8d` (agent `a4d5aa0`): explicit worker readiness and initialization-only10s watchdog.
+  Four lifecycle tests;81 focused hash passes/two optional skips. No total-file deadline.
+- `cc41aea`: live browser/calendar/explorer and same-receipt reference results in
+  `docs/evidence/browser-20261105-network.json`. Alice upgraded receipt independently
+  verified at block428648. All three fresh pending404 responses still lack CORS headers.
+
+Parent integration tests for protocol/release/build:21/21 passed. Worker TypeScript/lint
+checks passed. Bounded cross-agent review found no actionable Git/height defect; this is
+internal review, not independent audit approval. Final broad combined checks are running.
+
+Fresh Node22.23.4 `npm ci --ignore-scripts` passed with the original lockfile unchanged
+(SHA256 `836f4e61ef6339339bbbf6f07692a31dadd141cbe3755ef5610f7980dff262df`).
+Package signatures:139 registry signatures and58 attestations verified. Runtime audit:0
+vulnerabilities; full audit:10 moderate findings from existing dev-only minimatch, no unsafe
+override/downgrade applied. All seven Python-generated fixtures compare byte-for-byte.
+
+Initial pinned Chromium:80passed/2failed/one optional2GiB skip. The Pages failure was a
+collector incorrectly treating blob worker URLs as HTTP assets. Corrected collector and
+unchanged50ms responsiveness test passed together2/2. Initial loaded-run107.7ms failure
+is retained. Firefox isolated responsiveness passed. WebKit initial103ms failure is retained;
+the integrated worker build `85f5bc962b80d2c4` then passed the same unchanged test. Final
+three-engine functional and2GiB qualification is still running; no gate was weakened.
+
+`ccfdc3b` adds real-browser keyboard/upgrade cancellation coverage, corrects the Pages
+collector, and uses an accurate localhost URL-parsing base in the test-only loopback server.
+`2998f09` prepares an official Pages-format artifact after all existing validation gates
+using pinned upload-pages-artifact5.0.0. No deployment job, settings change or write/OIDC
+permission was added. Hosted artifact upload remains unverified.
+
+Next: finish fresh Node22/reference/real-file checks and seeded300s fuzz; publish browser
+and Pages slices; preserve current engine failure/pass evidence; run exact-source native
+CI and manual nondeployment acceptance when available. Sonar's later analysis no longer
+reports S4036; its remaining test-server URL warning precedes `ccfdc3b` publication.
