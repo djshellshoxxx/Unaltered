@@ -1,0 +1,32 @@
+import { expect, test } from '@playwright/test';
+import { installNetwork } from './helpers';
+
+test('draft receipt label and saved status survive language changes without extra submission or storage', async ({ page, context }) => {
+  const chain = await installNetwork(context);
+  await page.goto('/index.html#settings');
+  await page.getByLabel('Remember my receipts on this device').check();
+  await page.locator('#nav-stamp').click();
+  await page.setInputFiles('#stamp-file', { name: 'sample.txt', mimeType: 'text/plain', buffer: Buffer.from('Synthetic label fixture.') });
+  await page.getByLabel(/I understand and want to continue/).check();
+  await page.getByRole('button', { name: 'Create receipt', exact: true }).click();
+  const label = page.locator('#label-1');
+  await expect(label).toBeVisible();
+  const posts = chain.digestPosts.length;
+  expect(posts).toBeGreaterThan(0);
+  await label.fill('Draft label á 記録');
+  await page.locator('#nav-settings').click();
+  await page.getByRole('radio', { name: 'Español', exact: true }).check();
+  await page.locator('#nav-stamp').click();
+  await expect(label).toHaveValue('Draft label á 記録');
+  expect(await page.evaluate(() => localStorage.getItem('unaltered.receipts.v1'))).toBeNull();
+  await page.getByRole('button', { name: 'Guardar en la lista de este dispositivo', exact: true }).click();
+  await expect(page.locator('.label-row [role=status]')).toHaveText('Guardado.');
+  await page.locator('#nav-settings').click();
+  await page.getByRole('radio', { name: 'English', exact: true }).check();
+  await page.locator('#nav-stamp').click();
+  await expect(label).toHaveValue('Draft label á 記録');
+  await expect(page.locator('.label-row [role=status]')).toHaveText('Saved.');
+  expect(chain.digestPosts).toHaveLength(posts);
+  const records = await page.evaluate(() => JSON.parse(localStorage.getItem('unaltered.receipts.v1') ?? '[]') as unknown[]);
+  expect(records).toHaveLength(1);
+});
