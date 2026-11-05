@@ -106,7 +106,12 @@ jobs:
           diff linux/RELEASE-NOTES.md windows/RELEASE-NOTES.md
           diff linux/RELEASE-NOTES.md macos/RELEASE-NOTES.md
       - name: Verify artefacts against SHA256SUMS
-        run: cd linux && sha256sum -c SHA256SUMS
+        run: |
+          set -euo pipefail
+          # Equal manifests alone do not check that every downloaded platform artifact still matches its manifest.
+          for platform in linux windows macos; do
+            (cd "$platform" && sha256sum -c SHA256SUMS)
+          done
       - name: Create draft pre-release (unsigned; existing releases are never overwritten)
         env:
           GH_TOKEN: ${{ github.token }}

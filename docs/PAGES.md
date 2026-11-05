@@ -62,3 +62,19 @@ describes the artifact and separate deployment requirements. Local workflow regr
 contract; a hosted CI or readiness run must still establish successful upload on the final candidate. GitHub documents
 the default-branch prerequisite for
 [`workflow_dispatch`](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_dispatch).
+
+Manual CI dispatch also requires permission in the credential making the API request.
+On 2026-11-05 at 22:00 UTC, the active registered CI workflow accepted read requests, but
+`POST /repos/djshellshoxxx/Unaltered/actions/workflows/379498388/dispatches` returned
+HTTP403, `Resource not accessible by integration`, with
+`X-Accepted-GitHub-Permissions: actions=write`. No run was created by that request.
+This is a credential authorization boundary, separate from the workflow's own read-only
+job permissions. The repository metadata response's user-role flags do not grant that
+permission to the credential. GitHub documents the required
+[Actions write permission for dispatch](https://docs.github.com/en/rest/actions/workflows#create-a-workflow-dispatch-event)
+and the [meaning of this response header](https://docs.github.com/en/rest/using-the-rest-api/troubleshooting-the-rest-api#resource-not-accessible).
+An authorized maintainer or credential is required to dispatch; changing the site or
+granting its jobs additional permissions does not repair this CLI-token limitation.
+Repository Actions settings could not be inspected with this credential either (HTTP403,
+`administration=read` required), so runner capacity, allowed-action restrictions and
+repository security settings are not inferred from a queued run.
