@@ -10,7 +10,7 @@ Current November 5 implementation, local qualification and remaining external ga
 | `dist/unaltered-<v>.zip` | **Windows package**: multi-file site (SRI), the single file, `Open-Unaltered.cmd`, `Verify-Checksums.ps1`. Stored, byte-reproducible. |
 | `dist/unaltered-<v>-linux.tar.gz` | **Linux package**: same site/single file, `open-unaltered.sh` (xdg-open), `verify-checksums.sh` (`sha256sum -c`). Fixed mtime/owner, gzip OS byte pinned. |
 | `dist/unaltered-<v>-macos.zip` | **macOS package**: same site/single file, `Open-Unaltered.command` (double-click), `verify-checksums.sh` (`shasum -a 256 -c`). Unix modes recorded in the zip. |
-| `dist/unaltered-cli-<v>.mjs` | **CLI verifier** (Node >= 22): `hash <file>`, `verify <file> [receipt.ots]`; also inside every package. Exit code encodes the result state. |
+| `dist/unaltered-cli-<v>.mjs` | **CLI verifier** (Node >= 22): `hash <file>`, `verify <file> [receipt.ots]`, and explicit `verify-offline` trusted-header comparison ([guide](OFFLINE_VERIFICATION.md)); also inside every package. Exit code encodes the result state. |
 | `dist/web/` | The multi-file site unpacked, for hosting. It needs a web server: opened from disk, browsers refuse its SRI-checked script and stylesheet (SR-3), so the packages' `README.txt` points local users to the single file. |
 | `dist/SHA256SUMS` | Checksums of the offline HTML, CLI bundle, Windows and macOS ZIPs, and Linux tarball. |
 | `dist/RELEASE-NOTES.md` | Draft release notes: the footer build code next to the `SHA256SUMS` lines, so the comparison the app's footer and About page ask for has a published value (SPEC 13). Not a release asset. The build code covers the bundles, stylesheet, page template and both CSPs. |

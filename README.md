@@ -83,3 +83,7 @@ scripts were byte-compiled and `create_project.py --help` ran; they have no func
 ## Licence
 
 MIT. See [LICENSE](LICENSE).
+
+The bundled Node CLI can also compare a receipt offline against an explicitly supplied trusted Bitcoin header:
+see [offline trusted-header comparison](docs/OFFLINE_VERIFICATION.md). This reports a supplied-header match and leaves
+chain membership/height trust with the evidence source; it does not grant explorer-quorum or full-node verification.
