@@ -1,5 +1,34 @@
 # Network facts (M0-3)
 
+## Current browser qualification — 2026-11-05 UTC
+
+On integrated build `85f5bc962b80d2c4`, strict-CSP Chromium156 successfully upgraded historical
+pending receipts separately through **Alice, Bob and Finney**, downloaded each upgraded receipt,
+and verified Bitcoin blocks428648,429355 and523367 respectively. Pinned Python OpenTimestamps0.4.5
+independently verified each same app-downloaded receipt against an80-byte header fetched separately
+from blockchain.info. Exact input/output digests, source fixture commits, per-host requests, displayed
+versus reference times and browser/source hashes are recorded in
+[initial and integrated Alice evidence](evidence/browser-20261105-network.json),
+[integrated qualification](evidence/browser-20261105-qualification.json), and
+[target-isolated Bob/Finney evidence](evidence/r1-targets-20261105.json).
+
+Bob/Finney qualification used each upstream fixture's genuine pending branch, preserving the
+file digest and all commitment-path operations while removing other pending calendar hints in a
+scratch receipt. Each run contacted only its target calendar. The application downloaded a new
+receipt; independent verification checked that exact download. No new submission, route mock,
+TLS/CORS bypass, application proxy or committed upstream fixture was used for these confirmed runs.
+This establishes these hosts' confirmed paths on this Chromium build; it is explorer/reference-header
+L1 evidence, not own-node/L2 verification or universal live-browser compatibility.
+
+Fresh random non-evidence submissions to all three calendars returned200 in the actual browser,
+and both explorers returned genesis headers whose double-SHA256 matched. Fresh pending lookups
+still failed browser reads. Separate timed header probes found404 with no Access-Control-Allow-Origin
+on all three calendars. **Pending404 CORS remains an external interoperability limitation**: browser
+code cannot distinguish that response from an outage. The app must keep its conservative pending/
+unreadable state, retain original receipts and permit later upgrades. No backend or security exception
+was introduced to hide this limitation. Older statements that Bob/Finney confirmed paths are untested
+are superseded only for the exact build and evidence above.
+
 Current publication addendum: [final handoff and raw evidence](FINAL_HANDOFF_20261030.md).
 
 ### Current consolidation evidence — 2026-10-30

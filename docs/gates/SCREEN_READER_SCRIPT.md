@@ -6,8 +6,9 @@ covers that gap (SPEC FR-14, SPEC section 11, UX.md "Open (UT-1)"). It needs no 
 
 ## Setup
 
-- Build: `npm ci --ignore-scripts && npm run build`, then open `dist/web/index.html` (offline) or serve `dist/web` locally.
-  Record the commit (`git rev-parse HEAD`).
+- Build: `npm ci --ignore-scripts && npm run build`. For offline use, open the self-contained
+  `dist/unaltered-<version>.html` artifact. For the multi-file site, serve `dist/web` locally and visit its HTTP URL.
+  Record the commit (`git rev-parse HEAD`) and build code. The multi-file index requires HTTP serving.
 - Screen readers, at least two: NVDA + Firefox on Windows; VoiceOver + Safari on macOS or iOS. TalkBack + Chrome on Android
   if available. Record names and versions.
 - Test files (synthetic, nothing private): one small `.txt`, one generated JPEG with synthetic EXIF and rotation,
@@ -76,6 +77,22 @@ Give each person only the task, not instructions:
 1. "Make a receipt for this file and keep it." 2. "Check whether this other file is the same one." 3. "Check later whether
 the receipt is confirmed." Then ask them to explain, in their own words, what the receipt proves and what it does not.
 Record time taken, where they hesitated, and any wording they misread. Do not correct them during the task.
+
+## G. Zoom, contrast and motion (human gate)
+
+1. At a desktop window at least 1280 pixels wide, use the browser's actual zoom controls at 200% and 400%.
+   Visit Stamp, Verify, Settings and About; complete the file/receipt tasks by keyboard. Record browser/OS and
+   zoom level. Look for clipped controls, hidden text, overlapping content and horizontal document scrolling.
+2. Repeat with a long synthetic Unicode filename and a full fingerprint; confirm both remain readable and selectable.
+   Check any independently verified result and its trust details at 400%. Scrollable command examples may have their
+   own horizontal scrolling; surrounding navigation, explanations and controls must reflow.
+3. Enable the OS high-contrast/forced-colors mode where available, then check keyboard focus, selected navigation,
+   pending/error/verified text and file-input outlines. Record the actual OS mode; CSS emulation alone is not this pass.
+4. Enable reduced motion in OS/browser accessibility settings. Repeat navigation and hash cancellation; confirm the
+   interface stays operable and does not require animation. Restore the tester's settings afterward.
+
+Automated 320/640 CSS-pixel layout checks model narrow reflow widths; they do not establish actual browser zoom,
+OS contrast behavior or screen-reader usability. Record those human results separately.
 
 ## Hand back
 
