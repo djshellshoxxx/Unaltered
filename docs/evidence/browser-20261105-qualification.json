@@ -1,6 +1,6 @@
 {
-  "recordedAtUtc": "2026-11-05T21:04:43.771539+00:00",
-  "status": "IN_PROGRESS: WebKit remainder and browser large-file acceptance running or pending.",
+  "recordedAtUtc": "2026-11-05T21:09:39.151073+00:00",
+  "status": "Normal browser coverage and three-engine reflow/media qualification complete; real2GiB Chromium acceptance running.",
   "environment": {
     "os": "Ubuntu24.04.5LTS x86_64",
     "node": "24.22.2",
@@ -95,6 +95,68 @@
       ],
       "logSha256": "25f4322e6aea51ad14db426cbced372f360fb048342af28e4e52081eb69601bc",
       "retries": 0
+    },
+    {
+      "log": "webkit.log",
+      "buildCode": "85f5bc962b80d2c4",
+      "passed": 80,
+      "failed": 0,
+      "skipped": 2,
+      "notes": [
+        "All normal cases except separately executed timing benchmark.",
+        "Skips: opt-in2GiB and Worker.evaluate CSP probe unsupported by WebKit."
+      ],
+      "logSha256": "cdd4ddee7401afbfa8dc9ba9923bf480f9c5323c148f4d01ee72fafd71b87d7a",
+      "retries": 0
+    },
+    {
+      "log": "chromium-integrated.log",
+      "buildCode": "85f5bc962b80d2c4",
+      "passed": 11,
+      "failed": 0,
+      "skipped": 0,
+      "notes": [
+        "Integrated worker, offlineHTML, SRI/CSP, Pages, unchanged50ms timing, lifecycle and reflow/media coverage.",
+        "The later chromium-media.log separately requires forced-colors media matching."
+      ],
+      "logSha256": "9400efb4e7f8a5519fc6210367661af6b05a0c57c5b7692f3d7103589066cc24",
+      "retries": 0
+    },
+    {
+      "log": "firefox-integrated-focused.log",
+      "buildCode": "85f5bc962b80d2c4",
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "notes": [
+        "Final-source unchanged50ms timing plus new reflow and media cases."
+      ],
+      "logSha256": "0b6f261504e7968bdd8ad5eec785126dbee851fdfe83ceb2522795188601c410",
+      "retries": 0
+    },
+    {
+      "log": "webkit-reflow.log",
+      "buildCode": "85f5bc962b80d2c4",
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "notes": [
+        "New reflow and forced-colors/reduced-motion cases; both media queries matched."
+      ],
+      "logSha256": "8603decba543dfc6451d38c509a857c19d2ae541f120dec997518cb1c6f53bee",
+      "retries": 0
+    },
+    {
+      "log": "chromium-media.log",
+      "buildCode": "85f5bc962b80d2c4",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "notes": [
+        "Both forced-colors:active and prefers-reduced-motion:reduce matched; keyboard and focus outline passed."
+      ],
+      "logSha256": "984cd6d818dce64cf804a404c0368679341b093476fb29dda888914cbddd8f13",
+      "retries": 0
     }
   ],
   "integratedAliceR1": {
@@ -173,5 +235,10 @@
     "Local measurements are separate from hosted native CI and human accessibility/audit/signing gates.",
     "Fresh-pending CORS failure remains documented in browser-20261105-network.json.",
     "No benchmark limit, memory limit, deadline, CSP or TLS policy was weakened."
-  ]
+  ],
+  "newAccessibilityScope": "640/320CSS-px layout widths model a1280px window at200%/400%; actual browser zoom UI, physical display scaling and human assistive-technology review remain separate manual gates.",
+  "staticChecks": {
+    "typecheck": "PASSED",
+    "lint": "PASSED"
+  }
 }
