@@ -36,9 +36,7 @@ class ScopeTests(unittest.TestCase):
         return subprocess.run(['python3', str(GUARD), self.base], cwd=self.root, text=True, capture_output=True)
 
     def trusted_guard_commands(self):
-        prefix = 'git show "$BASE_SHA:.github/scripts/cloud_scope_guard.py" | '
-        commands = [shlex.split(line.strip().split(prefix, 1)[1])
-                    for line in WORKFLOW.read_text().splitlines() if line.strip().startswith(prefix)]
+        commands = [shlex.split(line.split('|', 1)[1]) for line in self.trusted_guard_pipelines()]
         self.assertEqual(len(commands), 4, 'Exercise development, both packaging and publication boundaries')
         return [[self.base if arg == '$BASE_SHA' else arg for arg in command] for command in commands]
 
@@ -190,6 +188,71 @@ class ScopeTests(unittest.TestCase):
         state = api['GitState'](base)
         with chdir(self.root):
             state.verify_base()
+
+    def replace_base_tree(self):
+        # A replacement root avoids a parent cycle while giving the captured SHA a different tree.
+        tree = self.git('rev-parse', 'HEAD^{tree}').strip()
+        replacement = self.git('commit-tree', tree, '-m', 'replacement root').strip()
+        self.git('replace', self.base, replacement)
+
+    def test_replacement_ref_cannot_hide_a_committed_protected_edit(self):
+        (self.root / 'src/core/net/allowlist.ts').write_text('changed\n')
+        self.git('add', '.')
+        self.git('commit', '-qm', 'protected change')
+        self.replace_base_tree()
+        result = self.guard()
+        self.assertNotEqual(result.returncode, 0, 'An immutable SHA must not silently read replacement objects')
+        self.assertIn('Rejected path', result.stderr)
+
+    def trusted_guard_pipelines(self):
+        lines = [line.strip() for line in WORKFLOW.read_text().splitlines()
+                 if ':.github/scripts/cloud_scope_guard.py' in line and '| python3 ' in line]
+        self.assertEqual(len(lines), 4, 'Test all trusted-source bootstraps, not just Python')
+        return lines
+
+    @unittest.skipUnless(os.name == 'posix', 'Ubuntu workflow shell boundary')
+    def test_replacement_ref_cannot_substitute_the_bootstrap_guard(self):
+        stored = self.root / '.github/scripts/cloud_scope_guard.py'
+        stored.parent.mkdir(parents=True)
+        stored.write_text(GUARD.read_text())
+        self.git('add', '.')
+        self.git('commit', '-qm', 'capture trusted guard')
+        self.base = self.git('rev-parse', 'HEAD').strip()
+        marker = self.root / 'untrusted-bootstrap-ran'
+        stored.write_text('from pathlib import Path\nPath("untrusted-bootstrap-ran").touch()\n')
+        self.git('add', '.')
+        self.git('commit', '-qm', 'substitute guard')
+        self.replace_base_tree()
+        for pipeline in self.trusted_guard_pipelines():
+            with self.subTest(pipeline=pipeline):
+                marker.unlink(missing_ok=True)
+                result = subprocess.run(['/bin/bash', '-o', 'pipefail', '-c', pipeline], cwd=self.root,
+                                        env={**os.environ, 'BASE_SHA': self.base}, text=True, capture_output=True)
+                self.assertNotEqual(result.returncode, 0, 'Never load trusted source through replacement refs')
+                self.assertFalse(marker.exists(), 'The replacement guard must never execute')
+
+    @unittest.skipUnless(os.name == 'posix', 'Ubuntu workflow shell boundary')
+    def test_bootstrap_does_not_execute_a_path_shadowed_git(self):
+        stored = self.root / '.github/scripts/cloud_scope_guard.py'
+        stored.parent.mkdir(parents=True)
+        stored.write_text(GUARD.read_text())
+        self.git('add', '.')
+        self.git('commit', '-qm', 'capture trusted guard')
+        self.base = self.git('rev-parse', 'HEAD').strip()
+        with tempfile.TemporaryDirectory() as outside:
+            marker = Path(outside) / 'shadowed-git-ran'
+            fake = Path(outside) / 'git'
+            fake.write_text('#!/bin/sh\n: > "$UNALTERED_GIT_PROBE"\nprintf "raise SystemExit(0)\\n"\n')
+            fake.chmod(0o755)
+            for pipeline in self.trusted_guard_pipelines():
+                with self.subTest(pipeline=pipeline):
+                    marker.unlink(missing_ok=True)
+                    env = {**os.environ, 'BASE_SHA': self.base, 'PATH': outside + os.pathsep + os.environ['PATH'],
+                           'UNALTERED_GIT_PROBE': str(marker)}
+                    result = subprocess.run(['/bin/bash', '-o', 'pipefail', '-c', pipeline], cwd=self.root,
+                                            env=env, text=True, capture_output=True)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertFalse(marker.exists(), 'The source loader must not discover Git through PATH')
 
 
 if __name__ == '__main__':

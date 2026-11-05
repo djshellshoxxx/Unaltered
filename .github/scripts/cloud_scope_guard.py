@@ -18,7 +18,7 @@ PROTECTED_DOCS = {'OPSEC.md', 'SPEC.md', 'RELEASE.md', 'DECISIONS.md', 'DEPENDEN
 
 
 # This guard runs only in the Ubuntu workflow. Never discover its executable through an agent-controlled PATH.
-TRUSTED_GIT = ('/usr/bin/git', '--no-pager', '-c', 'core.fsmonitor=false')
+TRUSTED_GIT = ('/usr/bin/git', '--no-replace-objects', '--no-pager', '-c', 'core.fsmonitor=false')
 
 
 @dataclass(frozen=True)

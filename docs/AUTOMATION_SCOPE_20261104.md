@@ -72,7 +72,34 @@ All eighteen offline tests pass, including the reproduced PATH shadow, immutable
 unmerged index cases, plus the existing four-launcher module-injection and Git-state path-policy regressions.
 Python compilation, OPSEC and diff checks pass. The allowlist and rejection rules for paths, modes, symlinks and deletions
 are unchanged. These are functional argument/executable boundaries; no analyzer suppression or rule configuration is
-introduced. External Sonar reanalysis remains required after publication; local passing tests alone do not close it.
+introduced. External exact-head Sonar passed at295877e with no unresolved BUG/vulnerability findings; this does not replace independent review or qualify later commits.
 
 The inherited daily schedule, missing expenditure/accounting/backoff controls and same-job agent isolation limitations
 remain unchanged. No paid workflow, merge, production deployment or release is authorized by this repair.
+
+
+## Trusted Git bootstrap and replacement objects — 2026-11-05
+
+Fresh adjacent review reproduced two separate gaps in the captured-source boundary. Git replacement refs can make an
+exact40-hex object name read a different tree: a protected committed edit disappeared from the guard's comparison.
+The same mechanism could substitute the guard returned by the workflow's `git show`. In addition, the four shell
+bootstraps still discovered Git through PATH before the existing Python helper's fixed-executable boundary ran.
+A shadow Git returned an empty successful guard before scope validation.
+
+The helper now disables replacement objects for every Git operation. All four source-loading pipelines use the fixed
+`/usr/bin/git` executable, disable replacement objects, paging and fsmonitor, and put the fixed captured-source operand
+after `--end-of-options`; isolated Python execution is retained. Git documents
+[replacement objects and the disabling option](https://git-scm.com/docs/git-replace).
+No Git refs, history or global settings are modified by this repair.
+
+Three added tests execute the actual workflow bootstraps and real synthetic Git repositories. Before the repair, all
+three tests failed across nine checks: one hidden protected edit, four substituted-source pipelines and four shadowed
+Git pipelines. All21 tests now pass, retaining all18 previous cases and their17 malformed-argument subcases. The tests
+also continue to exercise checkout/PYTHONPATH injection and path/mode/index policy. Python compilation and diff checks
+pass. Exact-head external checks remain separate from local validation.
+
+This closes the reproduced replacement/PATH loading routes, not all tampering in a same-job writable Git database.
+The fresh privileged publisher still applies data without executing patched code and checks paths independently.
+Allowed-code semantics, full job/process/filesystem isolation, API spending/accounting/backoff, human review and exact
+candidate CI remain separate gates. Triggers, permissions, API-key inputs and scheduling are unchanged; no paid run,
+automatic merge, release or deployment was activated.
