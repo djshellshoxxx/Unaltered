@@ -52,3 +52,27 @@ This does not qualify paid scheduling, spending controls or same-job agent isola
 missing hard expenditure limits, missing cost accounting/backoff and requirement for independent code review remain.
 PR41/42 use shell scope loops rather than this Python stdin launcher; their existing enumeration gaps are not resolved
 by this isolated change. Do not fold in their automatic integration or parallel paid execution as part of this repair.
+
+## Git argument and executable boundary — 2026-11-05
+
+PR52 analysis at `75cb81e` reports `pythonsecurity:S8705`, issue `AaGtmvaYEQLW3PQJTyKi`, tracing the command-line base
+through the generic Git wrapper into `rev-parse`. Seventeen adversarial CLI cases (leading switches, revision syntax,
+control characters, trailing arguments and malformed/uppercase/wrong-length SHA text) now confirm rejection before
+any Git process starts. No argument-injection reproduction was found after the required exact-SHA validation.
+Review did reproduce a separate executable lookup defect: a malicious `git` earlier in `PATH` ran before validation.
+
+The generic arbitrary-argument wrapper has been replaced with an immutable validated `CapturedBase` and fixed
+read-only `GitState` operations. Every dynamic revision operand follows its command's explicit option terminator:
+`--end-of-options` for `rev-parse`/`diff`, and `--` for `merge-base`/`ls-tree`. See
+[Git's untrusted revision guidance](https://git-scm.com/docs/git-rev-parse#Documentation/git-rev-parse.txt---verify).
+The Ubuntu-only workflow guard uses `/usr/bin/git` directly, disables paging and the optional filesystem monitor,
+and retains the existing external-diff/text-conversion prohibitions. It does not discover executables through `PATH`.
+
+All eighteen offline tests pass, including the reproduced PATH shadow, immutable API, non-commit/non-ancestor base and
+unmerged index cases, plus the existing four-launcher module-injection and Git-state path-policy regressions.
+Python compilation, OPSEC and diff checks pass. The allowlist and rejection rules for paths, modes, symlinks and deletions
+are unchanged. These are functional argument/executable boundaries; no analyzer suppression or rule configuration is
+introduced. External Sonar reanalysis remains required after publication; local passing tests alone do not close it.
+
+The inherited daily schedule, missing expenditure/accounting/backoff controls and same-job agent isolation limitations
+remain unchanged. No paid workflow, merge, production deployment or release is authorized by this repair.

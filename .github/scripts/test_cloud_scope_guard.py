@@ -1,8 +1,11 @@
 """Offline Git-state regressions for the trusted cloud-publication scope boundary."""
+from contextlib import chdir
 import os
 from pathlib import Path
+import runpy
 import shlex
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -121,6 +124,72 @@ class ScopeTests(unittest.TestCase):
     def test_base_must_be_an_exact_commit(self):
         self.base = 'HEAD'
         self.assertNotEqual(self.guard().returncode, 0)
+
+    @unittest.skipUnless(os.name == 'posix', 'POSIX executable probe')
+    def test_malformed_base_is_rejected_before_any_git_process(self):
+        probe = self.root / 'bin'
+        probe.mkdir()
+        executable = probe / 'git'
+        executable.write_text('#!/bin/sh\n: > "$UNALTERED_GIT_PROBE"\nexit 99\n')
+        executable.chmod(0o755)
+        marker = self.root / 'git-was-called'
+        env = {**os.environ, 'PATH': str(probe), 'UNALTERED_GIT_PROBE': str(marker)}
+        for value in ['', 'HEAD', '--help', '--version', '-c', '--config-env=core.pager=EVIL',
+                      '--upload-pack=payload', 'a' * 39, 'a' * 41, 'A' * 40, 'g' * 40,
+                      'a' * 40 + '\n', 'a' * 39 + '\t', 'a' * 39 + '\r', 'a' * 40 + ' --help',
+                      'a' * 40 + ';payload', 'a' * 40 + '^{commit}']:
+            with self.subTest(value=repr(value)):
+                result = subprocess.run([sys.executable, '-I', str(GUARD), value], cwd=self.root,
+                                        env=env, text=True, capture_output=True)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertFalse(marker.exists(), 'Malformed input must not reach any Git process')
+
+    @unittest.skipUnless(os.name == 'posix', 'Ubuntu workflow executable boundary')
+    def test_guard_does_not_execute_a_path_shadowed_git(self):
+        probe = self.root / 'bin'
+        probe.mkdir()
+        executable = probe / 'git'
+        executable.write_text('#!/bin/sh\n: > "$UNALTERED_GIT_PROBE"\nexit 99\n')
+        executable.chmod(0o755)
+        marker = self.root / 'git-was-called'
+        # Keep the probe outside scope accounting so successful validation is still possible.
+        self.git('config', 'core.excludesFile', str(self.root / 'ignored'))
+        (self.root / 'ignored').write_text('/bin/\n/ignored\n')
+        env = {**os.environ, 'PATH': str(probe), 'UNALTERED_GIT_PROBE': str(marker)}
+        result = subprocess.run([sys.executable, '-I', str(GUARD), self.base], cwd=self.root,
+                                env=env, text=True, capture_output=True)
+        self.assertFalse(marker.exists(), 'The trusted validator must not resolve Git through an untrusted PATH')
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_valid_hex_must_identify_a_commit(self):
+        self.base = self.git('rev-parse', 'HEAD^{tree}').strip()
+        self.assertNotEqual(self.guard().returncode, 0)
+
+    def test_base_must_be_an_ancestor_of_current_head(self):
+        self.git('checkout', '-q', '--orphan', 'unrelated')
+        self.git('commit', '-qm', 'unrelated root')
+        self.assertNotEqual(self.guard().returncode, 0)
+
+    def test_unmerged_index_is_rejected(self):
+        blob = self.git('rev-parse', 'HEAD:src/ui/example.ts').strip()
+        self.git('update-index', '--force-remove', 'src/ui/example.ts')
+        stages = ''.join(f'100644 {blob} {stage}\tsrc/ui/example.ts\n' for stage in [1, 2, 3])
+        subprocess.run(['git', 'update-index', '--index-info'], input=stages, cwd=self.root,
+                       text=True, capture_output=True, check=True)
+        self.assertNotEqual(self.guard().returncode, 0)
+
+    def test_git_api_requires_an_immutable_validated_base(self):
+        api = runpy.run_path(str(GUARD))
+        with self.assertRaises(TypeError):
+            api['GitState']('--help')
+        with self.assertRaises(ValueError):
+            api['CapturedBase']('--help')
+        base = api['CapturedBase'](self.base)
+        with self.assertRaises(AttributeError):
+            base.value = 'HEAD'
+        state = api['GitState'](base)
+        with chdir(self.root):
+            state.verify_base()
 
 
 if __name__ == '__main__':

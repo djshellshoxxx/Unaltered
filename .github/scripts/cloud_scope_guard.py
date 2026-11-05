@@ -3,6 +3,7 @@
 This policy deliberately excludes trust/network/cryptographic code and all workflow/build/release controls.
 It does not replace independent code review: allowed tests and sources can themselves execute code.
 """
+from dataclasses import dataclass
 import json
 import os
 from pathlib import Path
@@ -16,8 +17,75 @@ SAFE_EXACT = {'src/main.ts', 'scripts/parser-fuzz.mjs', 'unaltered-codex-report.
 PROTECTED_DOCS = {'OPSEC.md', 'SPEC.md', 'RELEASE.md', 'DECISIONS.md', 'DEPENDENCIES.md', 'THREAT_MODEL.md', 'AUDIT.md', 'NETWORK.md', 'R1_ACCEPTANCE.md'}
 
 
-def git(*args):
-    return subprocess.check_output(['git', *args], stderr=subprocess.PIPE)
+# This guard runs only in the Ubuntu workflow. Never discover its executable through an agent-controlled PATH.
+TRUSTED_GIT = ('/usr/bin/git', '--no-pager', '-c', 'core.fsmonitor=false')
+
+
+@dataclass(frozen=True)
+class CapturedBase:
+    """An exact immutable commit identifier, never a Git option, revision expression or mutable ref."""
+
+    value: str
+
+    def __post_init__(self):
+        if not isinstance(self.value, str) or re.fullmatch('[0-9a-f]{40}', self.value) is None:
+            raise ValueError('Expected an immutable full commit SHA')
+
+
+class GitState:
+    """Fixed read-only operations: callers cannot supply Git switches or arbitrary command argument vectors."""
+
+    def __init__(self, base: CapturedBase):
+        if not isinstance(base, CapturedBase):
+            raise TypeError('Git state requires a validated captured base')
+        self.base = base
+
+    def verify_base(self):
+        # Git documents --end-of-options for verification of untrusted revision operands. The validated SHA is also
+        # kept behind each command's option terminator, independently of the input validation above.
+        verified = subprocess.check_output([
+            *TRUSTED_GIT, 'rev-parse', '--verify', '--end-of-options', self.base.value + '^{commit}',
+        ], stderr=subprocess.PIPE).decode().strip()
+        if verified != self.base.value:
+            raise ValueError('Base does not identify the captured commit')
+        subprocess.check_output([
+            *TRUSTED_GIT, 'merge-base', '--is-ancestor', '--', self.base.value, 'HEAD',
+        ], stderr=subprocess.PIPE)
+
+    def root(self):
+        return Path(os.fsdecode(subprocess.check_output([
+            *TRUSTED_GIT, 'rev-parse', '--show-toplevel',
+        ], stderr=subprocess.PIPE).strip()))
+
+    def changed_paths(self):
+        outputs = [
+            subprocess.check_output([
+                *TRUSTED_GIT, 'diff', '--no-ext-diff', '--no-textconv', '--no-renames', '--name-only', '-z',
+                '--end-of-options', self.base.value, 'HEAD', '--',
+            ], stderr=subprocess.PIPE),
+            subprocess.check_output([
+                *TRUSTED_GIT, 'diff', '--no-ext-diff', '--no-textconv', '--no-renames', '--name-only', '-z',
+                '--cached', '--end-of-options', self.base.value, '--',
+            ], stderr=subprocess.PIPE),
+            subprocess.check_output([
+                *TRUSTED_GIT, 'diff', '--no-ext-diff', '--no-textconv', '--no-renames', '--name-only', '-z', '--',
+            ], stderr=subprocess.PIPE),
+            subprocess.check_output([
+                *TRUSTED_GIT, 'ls-files', '--others', '--exclude-standard', '-z', '--',
+            ], stderr=subprocess.PIPE),
+        ]
+        return {os.fsdecode(path) for output in outputs for path in output.split(b'\0') if path}
+
+    def tree_entries(self):
+        return subprocess.check_output([
+            *TRUSTED_GIT, 'ls-tree', '-r', '-z', '--', self.base.value,
+        ], stderr=subprocess.PIPE)
+
+    @staticmethod
+    def index_entries():
+        return subprocess.check_output([
+            *TRUSTED_GIT, 'ls-files', '--stage', '-z', '--',
+        ], stderr=subprocess.PIPE)
 
 
 def allowed(path):
@@ -33,18 +101,18 @@ def allowed(path):
     return path.startswith('docs/') and path.endswith('.md') and path.split('/')[1] not in PROTECTED_DOCS and not path.startswith(('docs/gates/', 'docs/diagnostics/'))
 
 
-def tree_modes(base):
+def tree_modes(state):
     out = {}
-    for item in git('ls-tree', '-r', '-z', base).split(b'\0'):
+    for item in state.tree_entries().split(b'\0'):
         if item:
             meta, path = item.split(b'\t', 1)
             out[os.fsdecode(path)] = meta.split()[0].decode('ascii')
     return out
 
 
-def index_modes():
+def index_modes(state):
     out = {}
-    for item in git('ls-files', '--stage', '-z').split(b'\0'):
+    for item in state.index_entries().split(b'\0'):
         if item:
             meta, path = item.split(b'\t', 1)
             mode, _, stage = meta.split()
@@ -55,24 +123,16 @@ def index_modes():
 
 
 def main():
-    if len(sys.argv) != 2 or re.fullmatch('[0-9a-f]{40}', sys.argv[1]) is None:
+    if len(sys.argv) != 2:
         raise ValueError('Expected an immutable full commit SHA')
-    base = sys.argv[1]
-    if git('rev-parse', '--verify', base + '^{commit}').decode().strip() != base:
-        raise ValueError('Base does not identify the captured commit')
-    git('merge-base', '--is-ancestor', base, 'HEAD')
-    root = Path(os.fsdecode(git('rev-parse', '--show-toplevel').strip()))
+    base = CapturedBase(sys.argv[1])
+    state = GitState(base)
+    state.verify_base()
+    root = state.root()
     os.chdir(root)
-    changed = set()
-    for args in [
-        ('diff', '--no-ext-diff', '--no-textconv', '--no-renames', '--name-only', '-z', base, 'HEAD', '--'),
-        ('diff', '--no-ext-diff', '--no-textconv', '--no-renames', '--name-only', '-z', '--cached', base, '--'),
-        ('diff', '--no-ext-diff', '--no-textconv', '--no-renames', '--name-only', '-z', '--'),
-        ('ls-files', '--others', '--exclude-standard', '-z'),
-    ]:
-        changed.update(os.fsdecode(p) for p in git(*args).split(b'\0') if p)
-    original = tree_modes(base)
-    index = index_modes()
+    changed = state.changed_paths()
+    original = tree_modes(state)
+    index = index_modes(state)
     # Git may ignore worktree mode changes with core.filemode=false. Inspect modes independently.
     for path in original.keys() | index.keys():
         file = root / path
@@ -107,7 +167,7 @@ def main():
     if problems:
         print('\n'.join(problems), file=sys.stderr)
         return 1
-    print(f'Scope checked against {base}: {len(changed)} path(s)')
+    print(f'Scope checked against {base.value}: {len(changed)} path(s)')
     return 0
 
 
