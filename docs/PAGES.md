@@ -78,3 +78,13 @@ granting its jobs additional permissions does not repair this CLI-token limitati
 Repository Actions settings could not be inspected with this credential either (HTTP403,
 `administration=read` required), so runner capacity, allowed-action restrictions and
 repository security settings are not inferred from a queued run.
+
+For the owner: open **Actions → CI → Run workflow**, select the reviewed development branch, and dispatch CI
+without dispatching the release or paid-development workflows. GitHub documents this
+[browser route for users with repository write access](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow).
+Alternatively, use a separately authorized, repository-scoped credential with Actions write permission; do not paste it
+into a PR, log or frontend asset. The existing token cannot grant itself that permission.
+[Codespaces permission changes](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-repository-access-for-your-codespaces)
+apply to new codespaces after owner authorization, not the current codespace, even after a rebuild. No credential,
+devcontainer permission or repository-setting change was made here. A successful dispatch alone would not establish
+runner availability or a passing CI result.
