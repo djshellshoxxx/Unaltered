@@ -36,7 +36,7 @@ describe('PNG transparency bits that decoders ignore', () => {
     expect(cleaned(result.output)).toMatchObject({ output: result.output, removed: [] });
   });
 
-  for (const depth of [1, 2, 4, 8]) {
+  for (const depth of [8]) {
     it(`removes all unused bits from a ${depth}-bit greyscale transparency value`, () => {
       const input = png(depth, 0, Uint8Array.of(0xff, 0xff));
       const result = cleaned(input);
@@ -45,11 +45,50 @@ describe('PNG transparency bits that decoders ignore', () => {
     });
   }
 
+  for (const depth of [1, 2, 4]) {
+    it(`refuses ${depth}-bit greyscale transparency bits that supported browsers interpret differently`, () => {
+      const input = png(depth, 0, Uint8Array.of(0xff, 0xff));
+      const before = input.slice();
+      const result = cleanPng(input);
+      expect(result.kind).toBe('unsupported');
+      if (result.kind !== 'unsupported') throw new Error('Ambiguous transparency was accepted');
+      expect(result.reason).toMatch(/browsers.*differently/);
+      expect(input).toEqual(before);
+    });
+
+    it(`keeps canonical ${depth}-bit greyscale transparency unchanged`, () => {
+      const input = png(depth, 0, Uint8Array.of(0, 2 ** depth - 1));
+      expect(cleaned(input)).toMatchObject({ output: input, removed: [] });
+    });
+  }
+
   it('handles a PNG view whose backing buffer starts before the signature', () => {
     const input = png(8, 2, Uint8Array.of(0xde, 1, 0xad, 2, 0xbe, 3));
     const backing = concat(Uint8Array.of(1, 2, 3, 4, 5), input, Uint8Array.of(6, 7));
     const view = backing.subarray(5, 5 + input.length);
     expect(cleaned(view).output).toEqual(png(8, 2, Uint8Array.of(0, 1, 0, 2, 0, 3)));
+  });
+
+  it('does not alias a Node Buffer while normalizing its transparency bytes', () => {
+    const input = Buffer.from(png(8, 2, Uint8Array.of(0x53, 11, 0x45, 22, 0x43, 33)));
+    const before = Uint8Array.from(input);
+    const result = cleanPng(input);
+    expect(input).toEqual(Buffer.from(before));
+    expect(result.kind).toBe('cleaned');
+    if (result.kind !== 'cleaned') throw new Error('Synthetic Buffer PNG was not accepted');
+    expect(result.output).toEqual(png(8, 2, Uint8Array.of(0, 11, 0, 22, 0, 33)));
+  });
+
+  it('never writes outside a nonzero-offset Buffer view during normalization', () => {
+    const image = png(8, 2, Uint8Array.of(0xde, 1, 0xad, 2, 0xbe, 3));
+    const backing = Buffer.alloc(image.length + 31, 0xa7);
+    backing.set(image, 17);
+    const before = Uint8Array.from(backing);
+    const result = cleanPng(backing.subarray(17, 17 + image.length));
+    expect(backing).toEqual(Buffer.from(before));
+    expect(result.kind).toBe('cleaned');
+    if (result.kind !== 'cleaned') throw new Error('Synthetic Buffer PNG was not accepted');
+    expect(result.output).toEqual(png(8, 2, Uint8Array.of(0, 1, 0, 2, 0, 3)));
   });
 
   it('preserves all meaningful 16-bit truecolor and greyscale transparency bytes', () => {
