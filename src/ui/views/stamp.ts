@@ -285,7 +285,7 @@ export function mountStamp(root: HTMLElement): StampView {
   }
 
   function flash(target: HTMLElement, msg: string): void {
-    announce(msg);
+    announce(msg, root);
     const old = target.textContent;
     target.textContent = msg;
     setTimeout(() => (target.textContent = old), 1500);
@@ -347,7 +347,7 @@ export function mountStamp(root: HTMLElement): StampView {
       const r = await stampBatch(digests, cfg);
       lastCalendars = r.calendars;
       items.forEach((it, i) => (it.proof = r.proofs[i]!));
-      announce(t('stamp.done'));
+      announce(t('stamp.done'), root);
     } catch (e) {
       if (!isAbort(e)) {
         stampError = safeMessage(e);

@@ -100,14 +100,15 @@ export function setLiveRegion(node: HTMLElement): void {
   liveRegion = node;
   announcementGeneration++;
 }
-/** Polite screen-reader announcement. Only the newest queued status may be spoken. */
-export function announce(message: string): void {
-  if (!liveRegion) return;
+/** Polite status: only the newest message from a still-visible owning view may be spoken. */
+export function announce(message: string, owner?: HTMLElement): void {
+  const active = (): boolean => !owner || (owner.isConnected && !owner.hidden);
+  if (!liveRegion || !active()) return;
   const target = liveRegion;
   const generation = ++announcementGeneration;
   target.textContent = '';
   setTimeout(() => {
-    if (generation === announcementGeneration && liveRegion === target) target.textContent = message;
+    if (generation === announcementGeneration && liveRegion === target && active()) target.textContent = message;
   }, 30);
 }
 

@@ -158,7 +158,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
       const report = await verify(digest, bytes, verifyConfigFromSettings(controller.signal));
       if (!current()) return;
       show({ kind: 'report', report, hex, fromLink: selectedFile === null });
-      announce(t(reportTitleKey(report.state, selectedFile === null)));
+      announce(t(reportTitleKey(report.state, selectedFile === null)), root);
     } catch (e) {
       if (current()) show(isAbort(e) ? null : { kind: 'error', message: safeMessage(e) });
     } finally {
