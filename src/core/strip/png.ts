@@ -39,6 +39,26 @@ function validHeader(input: Uint8Array, dv: DataView, data: number): boolean {
     && input[data + 10] === 0 && input[data + 11] === 0 && input[data + 12]! <= 1;
 }
 
+/** PNG3 11.3.1.1: decoders mask sample bits above the IHDR depth, so those ignored bits must not survive cleaning. */
+function normalizeTransparency(chunk: Uint8Array, bitDepth: number): Uint8Array | null {
+  if (bitDepth === 16) return null;
+  const normalized = chunk.slice();
+  const fields = new DataView(normalized.buffer);
+  const mask = 2 ** bitDepth - 1;
+  let changed = false;
+  for (let offset = 8; offset < normalized.length - 4; offset += 2) {
+    const value = fields.getUint16(offset);
+    const sample = value & mask;
+    if (value !== sample) {
+      fields.setUint16(offset, sample);
+      changed = true;
+    }
+  }
+  if (!changed) return null;
+  fields.setUint32(normalized.length - 4, crc32(normalized.subarray(4, normalized.length - 4)));
+  return normalized;
+}
+
 export function cleanPng(input: Uint8Array): PngResult {
   const n = input.length;
   if (n < 8 + 25 || !SIG.every((v, i) => input[i] === v)) return rej('Not a PNG file.');
@@ -78,7 +98,7 @@ export function cleanPng(input: Uint8Array): PngResult {
     if (crc32(input.subarray(pos + 4, pos + 8 + len)) !== crcStored) return rej('A PNG chunk failed its integrity check.');
     if (first && type !== 'IHDR') return rej('The PNG does not start with a header chunk.');
     if (type === 'acTL' || type === 'fcTL' || type === 'fdAT') return { kind: 'unsupported', reason: 'Animated PNG files cannot be cleaned safely.' };
-    const chunk = input.subarray(pos, pos + 12 + len);
+    let chunk = input.subarray(pos, pos + 12 + len);
     if (KEEP.has(type)) {
       if (type === 'IHDR') {
         if (!first || len !== 13 || !validHeader(input, dv, pos + 8)) return rej('Invalid PNG header chunk.');
@@ -102,6 +122,13 @@ export function cleanPng(input: Uint8Array): PngResult {
         // Greyscale/truecolour tRNS has one fixed size; indexed tRNS follows PLTE and covers no more entries than it.
         const ok = colorType === 3 ? len > 0 && len <= paletteEntries : len === (colorType === 0 ? 2 : colorType === 2 ? 6 : -1);
         if (sawIdat || sawTrns || !ok) return rej('Invalid PNG transparency chunk.');
+        if (colorType !== 3) {
+          const normalized = normalizeTransparency(chunk, bitDepth);
+          if (normalized) {
+            chunk = normalized;
+            note('Unused transparency sample bits (tRNS)');
+          }
+        }
         sawTrns = true;
       }
       if (type === 'sRGB' && (sawIdat || sawPlte)) return rej('Invalid PNG chunk order.');
