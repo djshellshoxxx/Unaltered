@@ -2,7 +2,7 @@
 
 Active branch: `codex/recover-qualify-20261104` in `.development/consolidation-20261104`.
 Recovered local checkpoint: `e15b756`; initial remote checkpoint: `5e1b920`.
-Latest published source checkpoint: `cc41aea`; [draft PR51](https://github.com/djshellshoxxx/Unaltered/pull/51).
+Latest published checkpoint before this update: `494157a`; [draft PR51](https://github.com/djshellshoxxx/Unaltered/pull/51).
 The top-level `main` checkout and its pre-existing lockfile modification remain intact.
 
 ## Refreshed recovery evidence
@@ -109,3 +109,34 @@ Next: finish fresh Node22/reference/real-file checks and seeded300s fuzz; publis
 and Pages slices; preserve current engine failure/pass evidence; run exact-source native
 CI and manual nondeployment acceptance when available. Sonar's later analysis no longer
 reports S4036; its remaining test-server URL warning precedes `ccfdc3b` publication.
+
+
+## Qualification milestone — 21:13 UTC
+
+- Fresh Node22 full check PASSED:41 unit files,390 tests,zero skips, including pinned
+  Python reference, virtual2GiB and real descriptor-backed files through2GiB+1. Node
+  regressions:127passed/three native-PowerShell/root/UTS skips. OPSEC/typecheck/lint passed.
+  Python toolkit discovery:34passed. Exact tree identities/log hashes are in
+  `docs/evidence/qualification-20261105.json`.
+- Fuzz seed20261105:300,001ms,58,888 mutations/58,924 executions,no finding. Normal
+  wall-clock stop, not1,000,000 iterations. Earlier evidence preserved; new report is
+  `docs/evidence/fuzz-20261105-autonomous.json`.
+- Two fresh builds:all10 files identical,five artifact checksums passed. Build
+  `85f5bc962b80d2c4`, source tree1943fc021675d14b074a4458c5b27919533def20.
+  Local reproduction does not replace independent/native cross-platform acceptance.
+- Alice/Bob/Finney target-isolated browser upgrades and same-download reference checks
+  PASSED at428648/429355/523367. Evidence6076c14 and refreshed network/human docs2c7823f.
+  Pending404 CORS remains open; no proxy/security exception or own-node/L2 claim.
+- Chromium real2GiB:3/3PASSED,zero retries. Extra renderer RSS63,078,400/49,258,496/
+  46,362,624 bytes, below unchanged209,715,200-byte ceiling. Every worker read the full
+  2,147,483,648 bytes and matched independent SHA-256. Firefox first completion passed;
+  full final Chromium and FF/WebKit remaining attempts continue, with no FF/WebKit RSS claim.
+- Firefox/WebKit ordinary suites passed81/80 cases with documented optional/platform
+  skips. All three engines passed640/320 CSS-pixel reflow, forced-colors and reduced-motion
+  checks; actual browser zoom/screen-reader human gates remain. Initial timing failures
+  and subsequent unchanged-threshold isolated passes remain in the browser evidence.
+- Sonar gate PASSED at2077df8 and494157a; API reports zero open vulnerability/BUG findings.
+  Maintainability findings remain; this is analyzer evidence, not independent audit.
+  Required hosted CI remains queued. Standalone Pages workflow is not yet registered on
+  default branch; an artifact step in existing Chromium CI is being prepared without
+  duplicate jobs, deploy/write permissions or premature main merge.
