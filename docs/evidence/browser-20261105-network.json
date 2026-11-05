@@ -1,0 +1,188 @@
+{
+  "sourceCommit": "e15b756a86415e5ab0cd1bf8fb413ea8d998d600",
+  "buildCode": "0632a93e305a31b8",
+  "scope": "Live Chromium measurements; source unchanged, new test-only edits present. No original user files or filenames submitted. No browser policy or TLS bypass.",
+  "randomCommitmentProbe": {
+    "checkedAt": "2026-11-05T20:56:23.986Z",
+    "browser": "156.0.8078.4",
+    "calendars": [
+      {
+        "host": "alice.btc.calendar.opentimestamps.org",
+        "post": {
+          "status": 200,
+          "length": 172
+        },
+        "pending": {
+          "error": "TypeError"
+        }
+      },
+      {
+        "host": "bob.btc.calendar.opentimestamps.org",
+        "post": {
+          "status": 200,
+          "length": 170
+        },
+        "pending": {
+          "error": "TypeError"
+        }
+      },
+      {
+        "host": "finney.calendar.eternitywall.com",
+        "post": {
+          "status": 200,
+          "length": 191
+        },
+        "pending": {
+          "error": "TypeError"
+        }
+      }
+    ],
+    "sources": [
+      {
+        "host": "mempool.space",
+        "height": {
+          "status": 200,
+          "length": 64
+        },
+        "header": {
+          "status": 200,
+          "length": 160
+        },
+        "hashMatches": true,
+        "headerMatches": true
+      },
+      {
+        "host": "blockstream.info",
+        "height": {
+          "status": 200,
+          "length": 64
+        },
+        "header": {
+          "status": 200,
+          "length": 160
+        },
+        "hashMatches": true,
+        "headerMatches": true
+      }
+    ],
+    "csp": [],
+    "requestFailures": [
+      {
+        "host": "alice.btc.calendar.opentimestamps.org",
+        "error": "net::ERR_FAILED"
+      },
+      {
+        "host": "bob.btc.calendar.opentimestamps.org",
+        "error": "net::ERR_FAILED"
+      },
+      {
+        "host": "finney.calendar.eternitywall.com",
+        "error": "net::ERR_FAILED"
+      }
+    ],
+    "confirmedUpgrade": "NOT TESTED: requires a known anchored live receipt; this probe alone cannot close R1.",
+    "ok": false
+  },
+  "pendingResponseHeaderChecks": {
+    "checkedAtUtc": "2026-11-05T20:56:54Z/2026-11-05T20:56:55Z",
+    "method": "curl GET with Origin: http://127.0.0.1:4173 and OTS Accept header; all-zero unknown commitment",
+    "hosts": [
+      {
+        "host": "alice.btc.calendar.opentimestamps.org",
+        "status": 404,
+        "accessControlAllowOrigin": null
+      },
+      {
+        "host": "bob.btc.calendar.opentimestamps.org",
+        "status": 404,
+        "accessControlAllowOrigin": null
+      },
+      {
+        "host": "finney.calendar.eternitywall.com",
+        "status": 404,
+        "accessControlAllowOrigin": null
+      }
+    ]
+  },
+  "confirmedAliceUpgrade": {
+    "browser": {
+      "checkedAt": "2026-11-05T20:56:26.956Z",
+      "browser": "chromium 156.0.8078.4",
+      "classification": "PASS",
+      "upgrade": {
+        "confirmed": true,
+        "stillPending": false,
+        "receiptError": null,
+        "failedCalendars": [],
+        "unknownCalendars": null,
+        "downloaded": true
+      },
+      "verify": {
+        "state": "VERIFIED",
+        "block": "428648",
+        "upgradedReceiptSha256": "2f61436069b1d0150dec9be136015f83dfc2cfa9f91cd6733aa0baea5af01992"
+      },
+      "csp": [],
+      "requests": [
+        {
+          "host": "alice.btc.calendar.opentimestamps.org",
+          "method": "GET",
+          "kind": "upgrade",
+          "status": 200,
+          "acao": "*"
+        },
+        {
+          "host": "blockstream.info",
+          "method": "GET",
+          "kind": "explorer",
+          "status": 200,
+          "acao": "*"
+        },
+        {
+          "host": "blockstream.info",
+          "method": "GET",
+          "kind": "explorer",
+          "status": 200,
+          "acao": "*"
+        },
+        {
+          "host": "mempool.space",
+          "method": "GET",
+          "kind": "explorer",
+          "status": 200,
+          "acao": "*"
+        },
+        {
+          "host": "mempool.space",
+          "method": "GET",
+          "kind": "explorer",
+          "status": 200,
+          "acao": "*"
+        }
+      ],
+      "note": "Browser evidence only. R1 also requires the independent reference check in docs/R1_ACCEPTANCE.md."
+    },
+    "reference": {
+      "bitcoin": [
+        {
+          "height": 428648,
+          "verifiedTime": 1473227803
+        }
+      ],
+      "digestMatches": true,
+      "headerHash": "000000000000000000ca478eb185560e1f1178746ee05e3d9bc9a31765f6f4a3",
+      "ok": true,
+      "pending": 0
+    },
+    "referenceLibrary": "opentimestamps==0.4.5 (hash-pinned tests/differential/requirements.txt)",
+    "headerSource": "blockchain.info (independent of app explorers)",
+    "fixtureSource": "https://raw.githubusercontent.com/opentimestamps/opentimestamps-client/master/examples/incomplete.txt.ots",
+    "fixtureSha256": "95673f2878cbcfdddded530bd2ad5f3fb04e13d2e659760d7c1386346fdd036c",
+    "originalFileSha256": "05c4f616a8e5310d19d938cfd769864d7f4ccdc2ca8b479b10af83564b097af9"
+  },
+  "remaining": [
+    "Fresh pending responses remain unreadable in browser due to missing ACAO.",
+    "Bob and Finney confirmed-upgrade paths are not established by this Alice fixture; same historical commitment returned404 from each at20:58:20Z/20:58:21Z.",
+    "Explorer quorum is L1 evidence and does not replace an independently synchronized Bitcoin node."
+  ]
+}
