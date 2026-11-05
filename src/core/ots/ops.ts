@@ -21,7 +21,12 @@ export function applyOp(op: Op, msg: Uint8Array): Uint8Array {
 }
 
 export function opTag(op: Op): number {
-  return op.kind === 'sha256' ? TAG_SHA256 : op.kind === 'append' ? TAG_APPEND : TAG_PREPEND;
+  switch (op?.kind) {
+    case 'sha256': return TAG_SHA256;
+    case 'append': return TAG_APPEND;
+    case 'prepend': return TAG_PREPEND;
+    default: throw new UnalteredError('PROOF_MALFORMED', 'The receipt contains an unknown operation.');
+  }
 }
 
 /** Ordering used by the reference serializer: by tag, then by argument. */
