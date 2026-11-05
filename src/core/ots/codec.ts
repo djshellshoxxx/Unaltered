@@ -41,7 +41,8 @@ function readOp(r: Reader, tag: number): Op {
   if (tag === TAG_SHA256) return { kind: 'sha256' };
   if (tag === 0xf0 || tag === 0xf1) {
     const arg = r.varbytes(LIMITS.maxOpArg, 1);
-    return { kind: tag === 0xf0 ? 'append' : 'prepend', arg: arg.slice() };
+    // Buffer.slice() returns a view; parsed operations must not retain caller-owned receipt bytes.
+    return { kind: tag === 0xf0 ? 'append' : 'prepend', arg: Uint8Array.from(arg) };
   }
   if (TAGS_KNOWN_UNSUPPORTED.has(tag)) {
     throw new UnalteredError('PROOF_UNSUPPORTED', 'This receipt uses an operation this version does not support.');
@@ -156,7 +157,8 @@ export function parseProof(bytes: Uint8Array): DetachedProof {
     if (TAGS_KNOWN_UNSUPPORTED.has(hashTag)) throw new UnalteredError('PROOF_UNSUPPORTED', 'This receipt uses a fingerprint type other than SHA-256, which is not supported.');
     malformed('The receipt has an unknown fingerprint type.');
   }
-  const digest = r.bytes(32).slice();
+  // Keep digest equality and later asynchronous header verification bound to the same private fingerprint.
+  const digest = Uint8Array.from(r.bytes(32));
   const root = readTimestampTree(r, digest);
   if (!r.eof()) malformed('Unexpected data after the end of the receipt.');
   return { digest, root };
