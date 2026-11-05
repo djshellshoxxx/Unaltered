@@ -18,11 +18,11 @@ for (const line of block('jobs')) {
   const start = /^ {6}- ([\w-]+):\s*(.*)$/.exec(line);
   if (start) {
     const step: Step = { with: {} };
-    if (start[1] === 'uses' || start[1] === 'run') step[start[1]] = start[2]!.split(/\s+#/)[0];
+    if (start[1] === 'uses' || start[1] === 'run') step[start[1]] = start[2]!.replace(/\s+#.*$/, '');
     steps.push(step);
   } else if (steps.length) {
     const scalar = /^ {8}(uses|run):\s*(.*)$/.exec(line);
-    if (scalar) steps.at(-1)![scalar[1] as 'uses' | 'run'] = scalar[2]!.split(/\s+#/)[0];
+    if (scalar) steps.at(-1)![scalar[1] as 'uses' | 'run'] = scalar[2]!.replace(/\s+#.*$/, '');
     const input = /^ {10}([\w-]+):\s*(.*)$/.exec(line);
     if (input) steps.at(-1)!.with[input[1]!] = input[2]!.replace(/^['"](.*)['"]$/, '$1');
   }
