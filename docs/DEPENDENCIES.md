@@ -153,3 +153,22 @@ a passing new Sonar analysis is a separate external gate.
 Sources: [Node child-process command lookup](https://nodejs.org/api/child_process.html),
 [Sonar's S4036 introduction](https://community.sonarsource.com/t/many-improvements-for-js-ts-css-and-two-new-rules-for-security-and-tests/64617).
 No third-party source code was copied and no dependency changed.
+
+## Distributed license notices — 2026-11-05
+
+The build now places the complete first-party `LICENSE` and the installed `@noble/hashes`
+MIT notice in explicit comments in every page, worker and CLI bundle. The source package's
+comments had previously been removed by bundling without retaining its full notice in
+the distributed assets. Loose JavaScript, standalone HTML, the embedded worker, the CLI,
+all portable archives and the Pages site now carry both notices without a sidecar file.
+The CLI shebang stays first. CSP, SRI, build codes and artifact checksums cover the added
+notice bytes; line endings use the same deterministic normalization as other build inputs.
+
+The installed `@noble/hashes@2.4.0` license matches the
+[official upstream license](https://github.com/paulmillr/noble-hashes/blob/663c2aeeffc308ac0cded59bd32f7c212adacfc2/LICENSE):
+SHA-256 `4f221aee6e072336700c408c68ab3b96a3fc09f6aebe6f48f1bd99e5ef13faec`.
+The `2.4.0` annotated tag resolves to commit `663c2aeeffc308ac0cded59bd32f7c212adacfc2`.
+No dependency or lockfile changed, and building requires no network request. Artifact
+tests compare complete notice text, decode the actual embedded worker source and check
+the generated integrity values. This packaging correction is not a new cryptographic
+audit or an audited-version comparison.

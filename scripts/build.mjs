@@ -22,6 +22,13 @@ const dist = join(root, 'dist');
 const read = (p) => readFileSync(join(root, p), 'utf8').replace(/\r\n?/g, '\n');
 const pkg = JSON.parse(read('package.json'));
 const version = pkg.version;
+// Loose HTML/JS/CLI downloads must retain both MIT notices, without relying on a neighbouring archive LICENSE.
+// Use the installed, lockfile-pinned package's actual notice rather than reconstructing its permission text.
+const noble = JSON.parse(read('node_modules/@noble/hashes/package.json'));
+if (noble.version !== pkg.dependencies['@noble/hashes']) throw new Error('installed hash dependency differs from its exact manifest pin');
+const notices = `Unaltered\n${read('LICENSE')}\n@noble/hashes ${noble.version}\n${read('node_modules/@noble/hashes/LICENSE')}`;
+if (notices.includes('*/')) throw new Error('a license notice cannot be embedded safely in a JavaScript comment');
+const licenseBanner = `/*! Unaltered and dependency licenses\n\n${notices}\n*/`;
 
 const sha = (data, algo, enc) => createHash(algo).update(data).digest(enc);
 const hex256 = (d) => sha(d, 'sha256', 'hex');
@@ -60,6 +67,7 @@ async function bundle(entry, define) {
     platform: 'browser',
     minify: true,
     legalComments: 'none',
+    banner: { js: licenseBanner },
     charset: 'ascii',
     sourcemap: false,
     define,
@@ -77,7 +85,7 @@ const workerJs = await bundle('src/core/hash/hasher.worker.ts', {});
 const mainSingle = await bundle('src/main.ts', { __WORKER_URL__: 'null', __WORKER_INLINE__: JSON.stringify(workerJs) });
 const mainMulti = mainSingle;
 const cliJs = (
-  await build({ absWorkingDir: root, entryPoints: ['src/cli/main.ts'], bundle: true, write: false, format: 'esm', target: 'node22', platform: 'node', minify: true, legalComments: 'none', charset: 'ascii', logLevel: 'error', banner: { js: '#!/usr/bin/env node' } })
+  await build({ absWorkingDir: root, entryPoints: ['src/cli/main.ts'], bundle: true, write: false, format: 'esm', target: 'node22', platform: 'node', minify: true, legalComments: 'none', charset: 'ascii', logLevel: 'error', banner: { js: `#!/usr/bin/env node\n${licenseBanner}` } })
 ).outputFiles[0].text;
 const cliName = `unaltered-cli-${version}.mjs`;
 const css = read('src/styles.css');
