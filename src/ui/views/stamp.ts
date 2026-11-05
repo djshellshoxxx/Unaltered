@@ -24,6 +24,8 @@ interface Item {
   ackHidden: boolean;
   ackOrientation: boolean;
   proof: Uint8Array | null;
+  label: string;
+  savedToList: boolean | null;
   abort: AbortController;
   card: HTMLElement;
 }
@@ -79,6 +81,7 @@ export function mountStamp(root: HTMLElement): StampView {
     it.outcome = null;
     // A receipt belongs to the previous byte target; changing cleaning requires a new stamp.
     it.proof = null;
+    it.savedToList = null;
     lastCalendars = null;
     stampError = null;
     it.progress = 0;
@@ -250,8 +253,15 @@ export function mountStamp(root: HTMLElement): StampView {
   function labelRow(it: Item): Node | null {
     if (!isEnabled() || !it.hash) return null;
     const hex = it.hash.hex;
-    const input = el('input', { type: 'text', id: `label-${it.id}`, maxlength: 100, autocomplete: 'off' });
-    const saved = el('span', { class: 'muted', role: 'status' });
+    const saved = el('span', { class: 'muted', role: 'status' }, it.savedToList === null ? '' : t(it.savedToList ? 'stamp.savedToList' : 'stamp.saveFailed'));
+    const input = el('input', {
+      type: 'text', id: `label-${it.id}`, maxlength: 100, autocomplete: 'off', value: it.label,
+      oninput: (event: Event) => {
+        it.label = (event.target as HTMLInputElement).value;
+        it.savedToList = null;
+        saved.textContent = '';
+      },
+    });
     return el(
       'div',
       { class: 'label-row' },
@@ -264,6 +274,7 @@ export function mountStamp(root: HTMLElement): StampView {
           class: 'button small',
           onclick: () => {
             const ok = addReceipt({ digestHex: hex, createdAtUtc: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), label: input.value });
+            it.savedToList = ok;
             saved.textContent = ok ? t('stamp.savedToList') : t('stamp.saveFailed');
           },
         },
@@ -311,6 +322,8 @@ export function mountStamp(root: HTMLElement): StampView {
         ackHidden: false,
         ackOrientation: false,
         proof: null,
+        label: '',
+        savedToList: null,
         abort: new AbortController(),
         card: el('div', { class: 'card item', role: 'listitem' }),
       };
