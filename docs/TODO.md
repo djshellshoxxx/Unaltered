@@ -1,5 +1,7 @@
 # TODO
 
+Current November 5 implementation, local qualification and remaining external gates: [autonomous checkpoint](handoff/AUTONOMOUS-DEVELOPMENT-LATEST.md). Older dated records below remain historical; production publication is not authorized by local test results.
+
 Active continuation: [continuous development ledger](CONTINUOUS_PROGRESS_20261104.md), branch
 `codex/recover-qualify-20261104`. Candidate/CI claims below are historical unless requalified in that ledger.
 

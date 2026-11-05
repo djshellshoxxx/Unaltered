@@ -1,142 +1,102 @@
 # Autonomous development checkpoint — 2026-11-05 UTC
 
-Active branch: `codex/recover-qualify-20261104` in `.development/consolidation-20261104`.
-Recovered local checkpoint: `e15b756`; initial remote checkpoint: `5e1b920`.
-Latest published checkpoint before this update: `494157a`; [draft PR51](https://github.com/djshellshoxxx/Unaltered/pull/51).
-The top-level `main` checkout and its pre-existing lockfile modification remain intact.
+Application branch: `codex/recover-qualify-20261104`, [draft PR51](https://github.com/djshellshoxxx/Unaltered/pull/51).
+Latest published implementation checkpoint: `a70cdce1214fdeae5d52caeba333c2d4498c0758`; later documentation commits may follow.
+Active checkout: `.development/consolidation-20261104`. Original main checkout/lockfile edits are preserved.
+Separate automation branch: `codex/automation-scope-guards-20261104`, published `75cb81ec4080d028de2ad125c660b1652c478c11`,
+[draft PR52](https://github.com/djshellshoxxx/Unaltered/pull/52). No automation changes enter PR51.
+All three workers finished; no background browser/fuzz/test processes remain. Lead owns final publication.
 
-## Refreshed recovery evidence
+## Recovery and consolidation
 
-GitHub fetch/prune and CLI authentication succeeded on November 5. Main remains `1b6dd91`.
-PR47 is `2592675`, PR48 `9abae9d`, PR49 `dde46ea`, and PR50 `3811638`.
-All are open drafts. PR49 targets PR48's branch. PR39 and PR43–46 are ancestors of
-PR47; PR47 is an ancestor of this candidate. PR47/48 diverge, so the candidate retains
-PR47 and ports PR48's cancellation tests and CI controls, rather than merging its older tree.
-PR50 adds only an ancestry audit, read during recovery. Source PRs remain open.
-No assignees or submitted reviews appear on PR47/48; no contributor branch was modified.
+Fresh GitHub state: main `1b6dd91`; PR47 `2592675`, PR48 `9abae9d`, PR49 `dde46ea`, PR50 `3811638`.
+PR39/43–46 are ancestors of PR47; PR47 is retained. PR47/48 diverge; unique PR48 cancellation/CI work
+was ported instead of merging its older tree. PR49 stacks on PR48; its previously recovered URL fix
+and corrected paging regression are retained. PR50 is an ancestry-only audit, read and accounted for.
+No original PR was closed or contributor branch overwritten. PR41/42 remain separate and inactive here.
+Older recovery evidence/provenance is in `AUTONOMOUS_HANDOFF_20261104.md`, `RECOVERY_PROGRESS_20261104.md`,
+`CONTINUOUS_PROGRESS_20261104.md` and `RECOVERY_BRANCH_LEDGER_20261104.md`.
+Latest published release remains prerelease `v0.3.0-build.2`; source/artifacts remain development `0.3.1`.
 
-Latest published release is the older prerelease `v0.3.0-build.2`. Source version remains
-`0.3.1` development. No production release, deployment, tag, merge, signing or API-funded
-automation activation is authorized by this checkpoint. PR41/42 stay separate.
+## Incremental task inventory
 
-## Executable inventory
+COMPLETE below means the stated implementation/local acceptance slice, not production release approval.
+Accepted requirements remain `docs/SPEC.md` plus `docs/DECISIONS.md`.
 
-Accepted behavior is defined in `docs/SPEC.md`, with the later decisions in
-`docs/DECISIONS.md`. These classifications describe the candidate, not merged main.
+| Slice / accepted requirement | Status / implementation and evidence | Sources / PRs | Remaining dependency / owner / risk / next task |
+|---|---|---|---|
+| Consolidate compatible branches | INTEGRATING: recovered unpublished work and semantic ports published | PR39,43–50; PR51 | Required hosted checks/review before main merge; lead/maintainer; high; inspect current CI |
+| Local SHA-256, FR1–2 | COMPLETE local acceptance: streaming, bounded reads, cancellation, worker protocol/readiness, failures and large boundaries | `src/core/hash/`, hash tests; PR38/43/47/48/51 | Native OS CI remains a release gate; lead; high; preserve unchanged memory/deadline gates |
+| OTS submission/serialization/upgrade, FR4–6 | COMPLETE local slice: calendar quorum, nonce, immutable upgrades, canonical URL policy, unsigned 32-bit height bounds | `src/core/ots/`, OTS tests; PR39/44/47/51 | Pending404 CORS remains external; operators; high; require compatible headers or explicit documented release disposition |
+| Bitcoin verification, FR7–8 | COMPLETE stated L1 slice: replay/header integrity/quorum, real target-isolated upgrades and same-receipt reference checks | `bitcoin.ts`, `verify.ts`, R1 evidence; PR51 | Own-node/L2 and independent audit are not established by explorer headers; external reviewers; high |
+| Browser interoperability | PARTIAL release qualification: pinned three-engine local functional/CSP/axe/offline coverage and 9 large-file trials pass | `tests/e2e/`, browser evidence | Actual OS/Tor/human coverage and pending404 CORS remain; maintainer/operators; high |
+| Metadata privacy | COMPLETE current structural parser fixes and bounded local acceptance | `src/core/strip/`, parser tests/fuzz; PR47/51 | Broader decoder campaigns/independent audit remain; external reviewers; medium |
+| UI/accessibility, FR14 | PARTIAL: focus/cancellation/live-region fixes; keyboard, axe, narrow reflow and emulated preferences pass | `src/ui/`, `tests/e2e/`; PR46/47/51 | Human screen-reader, actual zoom/OS contrast, native Spanish/usability; human testers; medium; use gate script |
+| Offline/Pages, FR9 | READY: emitted single-file/archives and nested-path offline tests pass; official artifact follows successful Chromium CI | `scripts/build.mjs`, `docs/PAGES.md`, workflows; PR51 | Hosted upload/native CI pending; maintainer; medium; inspect artifact from successful CI |
+| Confirmed security defects | COMPLETE bounded fixes: PATH shadowing, worker startup, protocol bounds, template script/style/link integrity, tag recheck | Code/regressions in PR51 | Sonar passes; independent security audit still required; reviewer; high |
+| Release packaging | PARTIAL: reproducible files and checksums; unsigned portable artifacts prepared | `scripts/build.mjs`, `dist/`, `docs/RELEASE.md` | Native OS, second-person rebuild/signing/operations/legal controls; maintainer; high |
+| Toolkit URL correction | COMPLETE scoped inherited PR49 fix; 34 Python cases pass | `skills/paper-search/`, toolkit tests | Further toolkit work stays separate; maintainer; low |
+| Automation safety | READY separate draft: trusted Git-state scope guard and isolated Python invocation; 12 tests pass | PR52, `AUTOMATION_SCOPE_20261104.md` on that branch | Hosted review, spending/backoff/accounting/isolation unqualified; maintainer; high; do not activate PR41/42 |
+| Production publication | BLOCKED on external acceptance and explicit authorization | `docs/TODO.md`, `AUDIT.md`, `RELEASE.md` | No release/deployment/signature/approval fabricated; maintainer and independent people |
 
-| Subsystem / accepted criteria | Status and current implementation | Source / branch evidence | Remaining criteria / dependencies | Owner / risk / next task |
-|---|---|---|---|---|
-| Branch consolidation | INTEGRATING: PR47 plus unique PR48 cancellation/CI and PR49 URL fix recovered, including nine unpublished commits | PR39,43–50; earlier commit provenance in `docs/AUTONOMOUS_HANDOFF_20261104.md` and `docs/CONTINUOUS_PROGRESS_20261104.md` | Publish recovered commits; exact-head checks and review | Lead / high / full checks then draft PR |
-| SHA-256, FR1–2 | PARTIAL qualification: streaming, bounded reads, fallback, cancellation, worker message validation implemented | `src/core/hash/`; PR38,43,47,48; real-file acceptance test | Current browser memory/deadline and real descriptor qualification | Lead / high / run unrestricted acceptance |
-| OTS submission/upgrade, FR4–6 | PARTIAL qualification: nonce, calendar quorum, canonical URLs, immutable upgrades implemented | `src/core/ots/calendar.ts`, `codec.ts`; PR39,44,47 | Reference compatibility, negative lifecycle cases and live browser results | Protocol agent / high / compare pinned reference |
-| Bitcoin verification, FR7–8 | PARTIAL qualification: replay, header integrity, independent-host quorum, L1 wording and L2 instructions | `src/core/ots/bitcoin.ts`, `verify.ts` | Current reference and live checks; no own-node trust claim from explorer responses | Protocol agent / high / targeted adversarial cases |
-| Metadata privacy | PARTIAL qualification: JPEG/PNG/WAV/MP3 bounded structural parsers; recent PNG ordering fixes recovered | `src/core/strip/`, parser regressions | Browser decoding and longer current-source fuzz campaign | Lead / medium / seeded fuzz after source review |
-| Browser/CORS, M0-3 | PARTIAL: deterministic mocks and R1 runner implemented; historical pending404 CORS limitation | `tests/e2e/`, `scripts/browser-network-check.mjs`, `r1-acceptance.sh` | Current three-engine and actual-service evidence; remote operator headers | Browser agent / high / install browser dependencies and execute |
-| Offline and Pages, FR9 | PARTIAL qualification: self-contained HTML, portable archives, `/Unaltered/` smoke and manual artifact workflow | `scripts/build.mjs`, `tests/e2e/pages-base-path.spec.ts`, `.github/workflows/pages-readiness.yml` | Emitted-build offline/subpath browser checks | Browser agent / medium / current built-site test |
-| Accessibility/UI, FR14 | PARTIAL: live-region, focus and superseded-upgrade fixes recovered | `src/ui/`, PR46,47; new stamp/verify lifecycle tests | Current axe/keyboard checks; human screen-reader, Spanish, usability | Browser agent + external reviewers / medium / three-engine suite |
-| Supply chain/release | PARTIAL: pinned dependencies/actions, reproducible build, manifest guards, native archive CI | `scripts/build.mjs`, `.github/workflows/{ci,release}.yml` | Tag-race review, exact-candidate native checks, independent reproduction/signing | Release agent / high / executable release regression |
-| Sonar security gate | READY: exact outstanding PR47 finding retrieved: S4036, `scripts/parser-fuzz.mjs:29`, Git resolved through PATH | Public Sonar issues API and check run126460511873 | Reproduce PATH shadowing, fix, passing current analysis | Lead / medium / regression before implementation |
-| Toolkit | INTEGRATING: inherited PR49 custom sort and decoded paging assertions retained | `skills/paper-search/scripts/search.sh`, toolkit tests | Keep future toolkit changes separate from core | Lead / low / focused toolkit regression only |
-| Operations/human acceptance | BLOCKED on external evidence and maintainer controls | `docs/TODO.md`, `docs/AUDIT.md`, `docs/RELEASE.md` | Independent audit/rebuild, screen-reader/native Spanish/usability, Tor, signing, legal/domain/account controls | Maintainer/external reviewers / high / prepare evidence; do not fabricate approval |
-| Automation PR41/42 | DEFERRED: independent workstream; existing main workflow inherited | `.github/workflows/unaltered-codex-cloud.yml` | Ownership, spending and lane isolation review before activation | Maintainer / high / no competing dispatch |
+## Verified results
 
-## Current execution
+- Fresh Node 22.23.4 locked install passed with lifecycle scripts disabled; original lockfile SHA256
+  `836f4e61ef6339339bbbf6f07692a31dadd141cbe3755ef5610f7980dff262df` unchanged.
+  Registry signatures: 139; attestations: 58. Runtime audit: 0 vulnerabilities. Full audit: 10 existing
+  moderate dev-only minimatch findings; no unsupported override/downgrade applied.
+- Full Node 22 check with pinned Python 0.4.5, virtual 2 GiB and real descriptor-backed files enabled:
+  **390 unit passes, zero skips; 127 Node passes / 3 platform-privilege skips**. Nine real-file sizes
+  through 2 GiB + 1 match independent Node crypto with bounded reads and sampled extra RSS below 200 MiB.
+- After final build/CI changes, stable project check: **392 unit passes / 2 optional large-file skips;
+  127 Node passes / 3 platform-privilege skips**. Reference still enabled. OPSEC, typecheck and lint pass.
+  The two skipped large-file cases passed in the preceding full run on identical application source.
+- Final strict integration initially found two new test-helper string/undefined assignments. `a70cdce`
+  uses definite-string comment stripping; final project check passes without changing flags/assertions.
+- Chromium: **85 ordinary passes / 1 separately qualified memory skip**, one complete final-source run.
+  Firefox: **85 / 1**, WebKit: **84 / 2**, across explicitly recorded ordinary/timing/new-case invocations.
+  The additional WebKit skip is the unsupported Worker.evaluate CSP probe. Zero retries.
+- Real browser 2 GiB trials: **3/3 per engine, 9 total**, correct independent digest and actual worker
+  completion. Chromium extra renderer RSS: 63,078,400 / 49,258,496 / 46,362,624 bytes, below the unchanged
+  209,715,200-byte ceiling. Firefox/WebKit establish completion only, with RSS unmeasured.
+  Initial loaded timing failures remain recorded; final unchanged-threshold responsiveness passed.
+- All three engines pass 640/320 CSS-pixel reflow with long Unicode filenames, keyboard navigation,
+  forced-colors and reduced-motion emulation. These do not replace actual browser zoom/OS/human testing.
+- Alice/Bob/Finney each pass target-specific Chromium upgrade, download and independent verification
+  of the same downloaded receipt at blocks 428648 / 429355 / 523367. No mocks/new submissions in confirmed
+  runs; pending404 replies still lack CORS headers. This is L1/reference-header evidence, not L2.
+- All 7 Python-generated fixture files compare byte-identically. Python toolkit discovery: 34 passes.
+  Separate automation guard: 12 passes, including actual-workflow module-injection regressions.
+- Fuzz seed 20261105: 300,001 ms, 58,888 mutations / 58,924 executions, no finding. Wall-clock budget stop;
+  the 1,000,000 iteration ceiling was not reached. Earlier fuzz evidence is preserved separately.
+- Two builds match all 10 dist files; the final template/link gate build still matches byte-for-byte.
+  All 5 release checksums pass. Build `85f5bc962b80d2c4`; application source tree
+  `1943fc021675d14b074a4458c5b27919533def20`. No native cross-OS or second-person inference.
 
-Three bounded agents have isolated branches/worktrees from `e15b756`: OTS verification,
-browser qualification, and release integrity. The lead owns hash/fuzz/integration/docs.
-No overlapping source ownership. All agents use the available inherited model; no extra
-OpenAI API workflow is launched. Token/cache/cost telemetry is unavailable.
+Evidence: `docs/evidence/qualification-20261105.json`, `browser-20261105-qualification.json`,
+`browser-20261105-network.json`, `r1-targets-20261105.json`, `fuzz-20261105-autonomous.json`.
+Raw logs remain in `.development/evidence-20261105/`; evidence JSON records hashes and tested identities.
+Existing container Chromium --no-sandbox is disclosed; CORS/CSP/TLS policies remained enforced.
 
-Initial unrestricted `npm run check`: **PASSED**. OPSEC, TypeScript and lint passed;
-Vitest **360 passed / 3 skipped**, including formerly restricted FIFO/stdout cases;
-Node regression tests **124 passed / 4 skipped**. This is Linux Node24 evidence; Node22/reference/native OS and
-browser qualification are separate outstanding tasks. Pinned Chromium downloaded and
-loopback HTTP works; missing OS browser libraries are being installed.
+## Hosted state and exact remaining gates
 
-GitHub branch-protection inspection returned HTTP403 `Resource not accessible by integration`;
-no settings were changed and protections are not assumed absent. PR47's historical Sonar
-gate is failed; other required Actions succeeded, with optional FF/WebKit large-file jobs
-skipped and live-network informational failure. Historical checks do not qualify this head.
+Sonar passes on published `a70cdce` (also earlier checkpoints); queried vulnerability/BUG counts were 0.
+Maintainability issues remain; analyzer evidence is not independent audit approval.
+PR-triggered Actions run [42112041644](https://github.com/djshellshoxxx/Unaltered/actions/runs/42112041644)
+for `a70cdce` is queued/pending, not passed. Later documentation heads get separate PR checks.
+Manual CI dispatch failed HTTP 403 `Resource not accessible by integration` at
+`/actions/workflows/379498388/dispatches`. Branch-protection inspection also returned 403; settings were
+not changed, and absent protection is not inferred. Push/PR publication succeeds.
 
-Next: finish checks, push recovered work and create/update the candidate draft; fix the
-reproduced Sonar issue; integrate verified agent commits; rerun focused and broad checks;
-record actual remote SHA/PR and test evidence after each milestone. Check publication
-at least every20minutes and immediately after significant verified work.
+Still open: hosted/native Windows/macOS and official Pages upload; external pending404 CORS; Tor;
+human screen-reader/actual zoom/OS contrast/native Spanish/usability; independent audit/rebuild;
+signing/public-key distribution and operations/legal/domain controls; explicit release/site authorization.
+Standalone manual Pages workflow requires default-branch registration. Existing Chromium PR CI now
+packages its official artifact after successful tests, with no duplicate job or deploy/write permissions.
+No main merge, release/tag/site publication, signing key or broader API-funded workflow activation occurred.
+API token/cost/cache telemetry is unavailable; no hard spending limit or cache-hit claim is made.
 
-## Verified implementation checkpoint — 21:02 UTC
-
-Recovered commits are published in PR51. Published source `cc41aea` includes:
-
-- `c138080`: absolute-system Git invocation for fuzz source evidence; hostile/empty PATH
-  regressions failed before repair, all six campaign tests pass afterward. The exact
-  former Sonar S4036 finding is addressed without analyzer suppression.
-- `f835e79` (agent `0314c796`): unsigned32-bit Bitcoin attestation height bounds in parse
-  and serialize. Twelve new cases;107 related protocol tests passed with pinned Python0.4.5.
-  The current upstream0.5.0 bound is distinct from that older oracle; no upstream code copied.
-- `9dc775c` / `bae1e79` (agents `9fc0395` / `a1bd3c8`): remote-tag identity recheck before
-  draft creation, plus fail-closed template script/style gates. Nine regressions pass;
-  build/workflow tests23pass/one PowerShell-only skip. Maintainer tag recheck remains required.
-- `752ba8d` (agent `a4d5aa0`): explicit worker readiness and initialization-only10s watchdog.
-  Four lifecycle tests;81 focused hash passes/two optional skips. No total-file deadline.
-- `cc41aea`: live browser/calendar/explorer and same-receipt reference results in
-  `docs/evidence/browser-20261105-network.json`. Alice upgraded receipt independently
-  verified at block428648. All three fresh pending404 responses still lack CORS headers.
-
-Parent integration tests for protocol/release/build:21/21 passed. Worker TypeScript/lint
-checks passed. Bounded cross-agent review found no actionable Git/height defect; this is
-internal review, not independent audit approval. Final broad combined checks are running.
-
-Fresh Node22.23.4 `npm ci --ignore-scripts` passed with the original lockfile unchanged
-(SHA256 `836f4e61ef6339339bbbf6f07692a31dadd141cbe3755ef5610f7980dff262df`).
-Package signatures:139 registry signatures and58 attestations verified. Runtime audit:0
-vulnerabilities; full audit:10 moderate findings from existing dev-only minimatch, no unsafe
-override/downgrade applied. All seven Python-generated fixtures compare byte-for-byte.
-
-Initial pinned Chromium:80passed/2failed/one optional2GiB skip. The Pages failure was a
-collector incorrectly treating blob worker URLs as HTTP assets. Corrected collector and
-unchanged50ms responsiveness test passed together2/2. Initial loaded-run107.7ms failure
-is retained. Firefox isolated responsiveness passed. WebKit initial103ms failure is retained;
-the integrated worker build `85f5bc962b80d2c4` then passed the same unchanged test. Final
-three-engine functional and2GiB qualification is still running; no gate was weakened.
-
-`ccfdc3b` adds real-browser keyboard/upgrade cancellation coverage, corrects the Pages
-collector, and uses an accurate localhost URL-parsing base in the test-only loopback server.
-`2998f09` prepares an official Pages-format artifact after all existing validation gates
-using pinned upload-pages-artifact5.0.0. No deployment job, settings change or write/OIDC
-permission was added. Hosted artifact upload remains unverified.
-
-Next: finish fresh Node22/reference/real-file checks and seeded300s fuzz; publish browser
-and Pages slices; preserve current engine failure/pass evidence; run exact-source native
-CI and manual nondeployment acceptance when available. Sonar's later analysis no longer
-reports S4036; its remaining test-server URL warning precedes `ccfdc3b` publication.
-
-
-## Qualification milestone — 21:13 UTC
-
-- Fresh Node22 full check PASSED:41 unit files,390 tests,zero skips, including pinned
-  Python reference, virtual2GiB and real descriptor-backed files through2GiB+1. Node
-  regressions:127passed/three native-PowerShell/root/UTS skips. OPSEC/typecheck/lint passed.
-  Python toolkit discovery:34passed. Exact tree identities/log hashes are in
-  `docs/evidence/qualification-20261105.json`.
-- Fuzz seed20261105:300,001ms,58,888 mutations/58,924 executions,no finding. Normal
-  wall-clock stop, not1,000,000 iterations. Earlier evidence preserved; new report is
-  `docs/evidence/fuzz-20261105-autonomous.json`.
-- Two fresh builds:all10 files identical,five artifact checksums passed. Build
-  `85f5bc962b80d2c4`, source tree1943fc021675d14b074a4458c5b27919533def20.
-  Local reproduction does not replace independent/native cross-platform acceptance.
-- Alice/Bob/Finney target-isolated browser upgrades and same-download reference checks
-  PASSED at428648/429355/523367. Evidence6076c14 and refreshed network/human docs2c7823f.
-  Pending404 CORS remains open; no proxy/security exception or own-node/L2 claim.
-- Chromium real2GiB:3/3PASSED,zero retries. Extra renderer RSS63,078,400/49,258,496/
-  46,362,624 bytes, below unchanged209,715,200-byte ceiling. Every worker read the full
-  2,147,483,648 bytes and matched independent SHA-256. Firefox first completion passed;
-  full final Chromium and FF/WebKit remaining attempts continue, with no FF/WebKit RSS claim.
-- Firefox/WebKit ordinary suites passed81/80 cases with documented optional/platform
-  skips. All three engines passed640/320 CSS-pixel reflow, forced-colors and reduced-motion
-  checks; actual browser zoom/screen-reader human gates remain. Initial timing failures
-  and subsequent unchanged-threshold isolated passes remain in the browser evidence.
-- Sonar gate PASSED at2077df8 and494157a; API reports zero open vulnerability/BUG findings.
-  Maintainability findings remain; this is analyzer evidence, not independent audit.
-  Required hosted CI remains queued. Standalone Pages workflow is not yet registered on
-  default branch; an artifact step in existing Chromium CI is being prepared without
-  duplicate jobs, deploy/write permissions or premature main merge.
+Next executable tasks: inspect current PR51 required checks and Pages artifact once runners execute;
+resolve any actual failures without weakening gates; complete the named external/human acceptance work;
+review PR52 separately before any automation change. Do not close original PRs before review accounts
+for their changes. All completed source/test/evidence work is published; no agent continuation is assumed.

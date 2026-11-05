@@ -1,5 +1,7 @@
 # Release and distribution
 
+Current November 5 implementation, local qualification and remaining external gates: [autonomous checkpoint](handoff/AUTONOMOUS-DEVELOPMENT-LATEST.md). Older dated records below remain historical; production publication is not authorized by local test results.
+
 ## What a build produces (`npm run build`)
 
 | Artefact | Purpose |

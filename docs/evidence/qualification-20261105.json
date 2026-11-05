@@ -27,7 +27,7 @@
         "root and private UTS namespace required"
       ]
     },
-    "limits": "Local Linux qualification. Workflows/docs/evidence changed during execution; application source, scripts, unit cases and generated artifacts match the tree identities above. Pages workflow tests were also run separately. No native Windows/macOS qualification inferred."
+    "limits": "Initial full run with large cases enabled. Pages tests were introduced after typecheck began; stable final strict project check below covers the corrected complete test tree. Application source stayed unchanged."
   },
   "realFileHash": {
     "status": "PASSED within full check",
@@ -101,13 +101,14 @@
     "limit": "Other maintainability issues remain; this is analyzer evidence, not independent audit"
   },
   "remaining": [
-    "Browser qualification continues in browser-20261105-qualification.json",
+    "Local browser qualification complete; native/OS/human and external pending404 CORS gates remain.",
     "Exact-head hosted CI queued",
     "Native Windows/macOS and hosted Pages artifact qualification",
     "Pending404 calendar CORS",
     "Human accessibility/Spanish/usability and Tor checks",
     "Independent audit/rebuild, signing, operations/legal/domain controls",
-    "Explicit authorization before production release/deployment"
+    "Explicit authorization before production release/deployment",
+    "Separate automation safety draft PR52; no scheduling/spending/activation qualification"
   ],
   "rawLogs": {
     "check-initial.log": {
@@ -157,6 +158,61 @@
     "sonar-check-2077df8.json": {
       "location": ".development/evidence-20261105/sonar-check-2077df8.json",
       "sha256": "0aeb69fd6c0964a91de2c0d2540cb3571b5aedfe5ebd8717c7e038ca757e3e04"
+    },
+    "check-node22-final.log": {
+      "location": ".development/evidence-20261105/check-node22-final.log",
+      "sha256": "a56e0050f74dc14a5a1ad49c5d625d412545676686ace3f030ab6e40ffac10d6"
+    },
+    "check-node22-final-corrected.log": {
+      "location": ".development/evidence-20261105/check-node22-final-corrected.log",
+      "sha256": "5bf295dc97ee5f81af683be79d73927b0c94a47a8ca17710d7f460797e2e9576"
+    },
+    "build-final.log": {
+      "location": ".development/evidence-20261105/build-final.log",
+      "sha256": "57fc69e475086c0344f92cfffcf5fa2237fc17b617e17608e1edd96d04ffe325"
+    },
+    "build-final.sums": {
+      "location": ".development/evidence-20261105/build-final.sums",
+      "sha256": "efed613f0c63090a0dffc8b9b0bcff7102c2704083209fb8bcd72195d1d4e8c7"
+    },
+    "automation-scope-tests.log": {
+      "location": ".development/evidence-20261105/automation-scope-tests.log",
+      "sha256": "11a6f3af83f940b559db0d9be6546b41c49c076ddfb40f14f075654b7ce202ee"
+    }
+  },
+  "finalQualification": {
+    "publishedImplementationCheckpoint": "a70cdce1214fdeae5d52caeba333c2d4498c0758",
+    "applicationSourceTree": "1943fc021675d14b074a4458c5b27919533def20",
+    "scriptsTree": "64a3e0b5c391bb4e17fbd130526eb749a46c1dad",
+    "unitTestsTree": "af2e1715385bdbf9ff8faf60fe91998587f67f1a",
+    "status": "PASSED",
+    "unit": {
+      "passed": 392,
+      "skipped": 2,
+      "skipReasons": [
+        "optional virtual 2 GiB",
+        "optional descriptor-backed real-file acceptance; both passed in preceding full run"
+      ]
+    },
+    "node": {
+      "passed": 127,
+      "skipped": 3
+    },
+    "command": "UNALTERED_PYTHON=<reference>/bin/python npm run check",
+    "strictHelperCorrection": "Initial final check failed TS2322 in two test-helper expressions; definite-string replacement fixed it without weakening project configuration. Corrected stable full check passed.",
+    "build": "Final build matches all ten earlier artifacts; five release checksums pass",
+    "browserEvidence": "browser-20261105-qualification.json",
+    "browserLargeFile": "3/3 per engine; Chromium RSS qualified, Firefox/WebKit completion only",
+    "manualCiDispatch": {
+      "status": "BLOCKED",
+      "httpStatus": 403,
+      "message": "Resource not accessible by integration",
+      "endpoint": "/repos/djshellshoxxx/Unaltered/actions/workflows/379498388/dispatches"
+    },
+    "ciRun": {
+      "id": 42112041644,
+      "head": "a70cdce1214fdeae5d52caeba333c2d4498c0758",
+      "status": "queued/pending; no pass inferred"
     }
   }
 }
