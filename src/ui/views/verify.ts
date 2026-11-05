@@ -10,7 +10,7 @@ import { announce, dropZone, el, formatBytes, setChildren } from '../dom';
 import { downloadLink, revokeAll, revokeOwner, upgradedName } from '../download';
 import { stampConfigFromSettings, verifyConfigFromSettings } from '../state';
 import { t, type StringKey } from '../strings';
-import { localNodeInstructions } from './about';
+import { localNodeInstructions, referenceUpgradeInstructions } from './about';
 
 const ICON: Record<VerifyState, string> = { VERIFIED: '✔', PENDING: '⏳', NO_MATCH_FILE: '✖', INVALID_PROOF: '✖', SOURCES_DISAGREE: '⚠', UNREACHABLE: '⚠' };
 const TITLE: Record<VerifyState, StringKey> = {
@@ -237,7 +237,9 @@ export function mountVerify(root: HTMLElement): VerifyView {
     } else {
       kids.push(el('p', { class: 'notice pending', role: 'status' }, t('upgrade.stillPending')));
     }
-    if (r.status !== 'bitcoin-confirmed' && r.calendars.some((c) => c.unreadable)) kids.push(el('p', { class: 'notice pending' }, t('upgrade.unreadable')));
+    if (r.status !== 'bitcoin-confirmed' && r.calendars.some((c) => c.unreadable)) {
+      kids.push(el('p', { class: 'notice pending' }, t('upgrade.unreadable')), referenceUpgradeInstructions());
+    }
     if (r.changed) kids.push(...download());
     if (r.unknownCalendars.length > 0) kids.push(el('p', { class: 'warn' }, t('upgrade.unknownCalendar', { hosts: r.unknownCalendars.join(', ') })));
     const failed = r.calendars.filter((c) => !c.ok);
