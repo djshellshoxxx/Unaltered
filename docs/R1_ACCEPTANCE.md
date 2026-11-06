@@ -48,6 +48,7 @@ It prints JSON with one `classification`:
 | `RECEIPT_OR_PROOF` | the app rejected the receipt, or Verify showed *not valid* / *no match* with all reads succeeding | browser networking |
 | `NOT_YET_CONFIRMED` | calendar answered `404`/pending with no browser failure | anything: try later or use an older receipt |
 | `EXPLORERS` | Verify could not reach two agreeing explorers | the calendar path |
+| `NOT_UPGRADED` | Verify showed **Verified**, but Upgrade produced no new receipt (for example the input was already complete) | the upgrade path: not R1 evidence; use an incomplete receipt |
 | `CSP_VIOLATION` | the page reported a CSP violation | must be fixed before any other conclusion |
 
 ## Step 2: the reference implementation, independently
@@ -57,7 +58,7 @@ Use the receipt the app downloaded, and a block header from a source you choose 
 file digest and verifies the Bitcoin attestation against that header itself.
 
 ```sh
-python3 -m venv /tmp/otsvenv && /tmp/otsvenv/bin/pip install opentimestamps==0.4.5
+python3 -m venv /tmp/otsvenv && /tmp/otsvenv/bin/pip install --require-hashes --only-binary :all: -r tests/differential/requirements.txt
 # Own node: bitcoin-cli getblockheader <hash> false
 # Or, as a third-party source: the first 160 hex characters of https://blockchain.info/rawblock/<hash>?format=hex
 /tmp/otsvenv/bin/python tests/differential/verify_reference.py /tmp/r1/incomplete.txt /tmp/r1/out/<downloaded>.ots <header-hex>

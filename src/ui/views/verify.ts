@@ -7,10 +7,10 @@ import { parseProof } from '../../core/ots/codec';
 import { LIMITS } from '../../core/ots/types';
 import { verify, type VerifyReport, type VerifyState } from '../../core/ots/verify';
 import { announce, dropZone, el, formatBytes, setChildren } from '../dom';
-import { downloadLink, revokeAll, revokeOwner } from '../download';
+import { downloadLink, revokeAll, revokeOwner, upgradedName } from '../download';
 import { stampConfigFromSettings, verifyConfigFromSettings } from '../state';
 import { t, type StringKey } from '../strings';
-import { localNodeInstructions } from './about';
+import { localNodeInstructions, referenceUpgradeInstructions } from './about';
 
 const ICON: Record<VerifyState, string> = { VERIFIED: '✔', PENDING: '⏳', NO_MATCH_FILE: '✖', INVALID_PROOF: '✖', SOURCES_DISAGREE: '⚠', UNREACHABLE: '⚠' };
 const TITLE: Record<VerifyState, StringKey> = {
@@ -73,6 +73,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
   const upOut = el('div', { class: 'upgrade-result', 'aria-live': 'polite' });
   let upFile: File | null = null;
   let upGeneration = 0;
+  let upAbort: AbortController | null = null;
   let shown: Shown = null;
   let upShown: Shown = null;
 
@@ -111,7 +112,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
             el('button', { type: 'button', class: 'button small', onclick: () => ((prefill = null), resetVerification(), renderInputs(), renderActions()) }, t('common.remove')),
           )
         : null,
-      dropZone({ id: 'verify-file', label: t('verify.dropFile'), hint: t('verify.dropFileHint'), onFiles: (f) => ((file = f[0] ?? null), resetVerification(), renderInputs(), renderActions()) }),
+      dropZone({ id: 'verify-file', label: t('verify.dropFile'), hint: t('verify.dropFileHint'), onFiles: (f) => ((file = f[0] ?? null), (prefill = file ? null : prefill), resetVerification(), renderInputs(), renderActions()) }),
       file ? el('p', { class: 'picked' }, `${file.name} · ${formatBytes(file.size)}`) : null,
       el('h3', {}, t('verify.step2')),
       dropZone({ id: 'verify-receipt', label: t('verify.dropReceipt'), hint: t('verify.dropReceiptHint'), accept: '.ots', onFiles: (f) => ((receipt = f[0] ?? null), resetVerification(), renderInputs(), renderActions()) }),
@@ -157,7 +158,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
       const report = await verify(digest, bytes, verifyConfigFromSettings(controller.signal));
       if (!current()) return;
       show({ kind: 'report', report, hex, fromLink: selectedFile === null });
-      announce(t(reportTitleKey(report.state, selectedFile === null)));
+      announce(t(reportTitleKey(report.state, selectedFile === null)), root);
     } catch (e) {
       if (current()) show(isAbort(e) ? null : { kind: 'error', message: safeMessage(e) });
     } finally {
@@ -169,31 +170,51 @@ export function mountVerify(root: HTMLElement): VerifyView {
     }
   }
 
+  function resetUpgrade(): void {
+    upGeneration++;
+    upAbort?.abort();
+    upAbort = null;
+    showUpgrade(null);
+  }
+
   function renderUpgrade(): void {
+    const hadActionFocus = upActions.contains(document.activeElement);
     setChildren(
       upInputs,
-      dropZone({ id: 'upgrade-receipt', label: t('upgrade.drop'), hint: t('verify.dropReceiptHint'), accept: '.ots', onFiles: (f) => { upFile = f[0] ?? null; upGeneration++; showUpgrade(null); renderUpgrade(); } }),
+      dropZone({ id: 'upgrade-receipt', label: t('upgrade.drop'), hint: t('verify.dropReceiptHint'), accept: '.ots', onFiles: (f) => { resetUpgrade(); upFile = f[0] ?? null; renderUpgrade(); } }),
       upFile ? el('p', { class: 'picked' }, `${upFile.name} · ${formatBytes(upFile.size)}`) : null,
     );
-    setChildren(upActions, el('button', { type: 'button', class: 'button primary', disabled: !upFile, onclick: () => void runUpgrade() }, t('upgrade.run')));
+    setChildren(upActions,
+      el('button', { id: 'upgrade-run', type: 'button', class: 'button primary', disabled: !upFile || upAbort !== null, onclick: () => void runUpgrade() }, t('upgrade.run')),
+      upAbort ? el('button', { id: 'upgrade-cancel', type: 'button', class: 'button', onclick: () => { resetUpgrade(); renderUpgrade(); } }, t('common.cancel')) : null,
+    );
+    if (hadActionFocus) upActions.querySelector<HTMLElement>(upAbort ? '#upgrade-cancel' : '#upgrade-run')?.focus();
   }
 
   async function runUpgrade(): Promise<void> {
-    if (!upFile) return;
+    if (!upFile || upAbort) return;
     const f = upFile;
+    const controller = new AbortController();
+    upAbort = controller;
     const operation = ++upGeneration;
-    const current = (): boolean => operation === upGeneration && upOut.isConnected;
+    const current = (): boolean => operation === upGeneration && !controller.signal.aborted && upOut.isConnected;
     showUpgrade({ kind: 'working' });
+    renderUpgrade();
     try {
       checkReceiptSize(f);
       const bytes = new Uint8Array(await f.arrayBuffer());
       if (!current()) return;
       parseProof(bytes);
-      const result = await upgrade(bytes, stampConfigFromSettings());
+      const result = await upgrade(bytes, { ...stampConfigFromSettings(), signal: controller.signal });
       if (!current()) return;
       showUpgrade({ kind: 'upgraded', result, fileName: f.name });
     } catch (e) {
-      if (current()) showUpgrade({ kind: 'error', message: safeMessage(e) });
+      if (current()) showUpgrade(isAbort(e) ? null : { kind: 'error', message: safeMessage(e) });
+    } finally {
+      if (current()) {
+        upAbort = null;
+        renderUpgrade();
+      }
     }
   }
 
@@ -209,14 +230,16 @@ export function mountVerify(root: HTMLElement): VerifyView {
     if (!next || next.kind !== 'upgraded') return [render(next)];
     const r = next.result;
     const kids: (Node | null)[] = [];
-    const name = next.fileName.replace(/\.ots$/i, '') + '.upgraded.ots';
+    const name = upgradedName(next.fileName);
     const download = (): Node[] => [downloadLink(t('upgrade.download', { name }), name, r.ots, 'application/octet-stream', undefined, { owner: upOut, key: 'receipt' }), el('p', { class: 'muted' }, t('upgrade.newFile'))];
     if (r.status === 'bitcoin-confirmed') {
       kids.push(el('p', { class: 'notice warn', role: 'status' }, r.changed ? t('upgrade.confirmed') : t('upgrade.alreadyConfirmed')));
     } else {
       kids.push(el('p', { class: 'notice pending', role: 'status' }, t('upgrade.stillPending')));
     }
-    if (r.status !== 'bitcoin-confirmed' && r.calendars.some((c) => c.unreadable)) kids.push(el('p', { class: 'notice pending' }, t('upgrade.unreadable')));
+    if (r.status !== 'bitcoin-confirmed' && r.calendars.some((c) => c.unreadable)) {
+      kids.push(el('p', { class: 'notice pending' }, t('upgrade.unreadable')), referenceUpgradeInstructions());
+    }
     if (r.changed) kids.push(...download());
     if (r.unknownCalendars.length > 0) kids.push(el('p', { class: 'warn' }, t('upgrade.unknownCalendar', { hosts: r.unknownCalendars.join(', ') })));
     const failed = r.calendars.filter((c) => !c.ok);
@@ -251,6 +274,8 @@ export function mountVerify(root: HTMLElement): VerifyView {
       const next = hex && HEX64.test(hex) ? hex : null;
       if (next !== prefill) resetVerification();
       prefill = next;
+      // A link and a chosen file are alternatives: Check uses the file when there is one, so showing both would mislead.
+      if (next) file = null;
       renderInputs();
       renderActions();
     },
@@ -269,7 +294,7 @@ function reportTitleKey(state: VerifyState, fromLink: boolean): StringKey {
   return (fromLink ? LINK_TITLE[state] : undefined) ?? TITLE[state];
 }
 
-function renderReport(r: VerifyReport, hex: string, fromLink: boolean): HTMLElement {
+export function renderReport(r: VerifyReport, hex: string, fromLink: boolean): HTMLElement {
   const title = reportTitleKey(r.state, fromLink);
   const linkBody = fromLink ? LINK_BODY[r.state] : undefined;
   const detailRows: Node[] = [
@@ -281,7 +306,7 @@ function renderReport(r: VerifyReport, hex: string, fromLink: boolean): HTMLElem
       el('dt', {}, t('verify.d.block')),
       el('dd', {}, String(r.bitcoin.height)),
       el('dt', {}, t('verify.d.time')),
-      el('dd', {}, t('verify.d.noLater', { time: r.bitcoin.blockTimeUtc })),
+      el('dd', {}, t(fromLink ? 'verify.d.noLater.link' : 'verify.d.noLater', { time: r.bitcoin.blockTimeUtc })),
       el('dt', {}, t('verify.d.sources')),
       el('dd', {}, r.bitcoin.sourcesAgreeing.join(', ')),
     );

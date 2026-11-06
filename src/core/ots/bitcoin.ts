@@ -23,13 +23,15 @@ export interface HeaderSource {
 }
 
 export function parseHeader(raw: Uint8Array): BlockHeader {
-  if (raw.length !== 80) throw new UnalteredError('SOURCE_INVALID', 'A block header had the wrong size.');
-  const dv = new DataView(raw.buffer, raw.byteOffset, raw.byteLength);
-  const hash = sha256(sha256(raw));
+  if (!(raw instanceof Uint8Array) || raw.length !== 80) throw new UnalteredError('SOURCE_INVALID', 'A block header had the wrong size.');
+  // Buffer.slice() aliases its input; copy to a plain Uint8Array before deriving identity or retaining any fields.
+  const snapshot = Uint8Array.from(raw);
+  const dv = new DataView(snapshot.buffer, snapshot.byteOffset, snapshot.byteLength);
+  const hash = sha256(sha256(snapshot));
   return {
-    raw: raw.slice(),
+    raw: snapshot,
     hashHex: toHex(reversed(hash)),
-    merkleRoot: raw.slice(36, 68),
+    merkleRoot: snapshot.slice(36, 68),
     time: dv.getUint32(68, true),
   };
 }
@@ -64,15 +66,22 @@ export function esploraSource(baseUrl: string, net?: Partial<NetPolicy>): Header
 export type QuorumOutcome =
   | { state: 'agreed'; header: BlockHeader; agreeing: string[] }
   | { state: 'disagree'; groups: { ids: string[]; hashHex: string }[] }
-  | { state: 'unreachable'; got: number; failures: string[] };
+  | { state: 'unreachable'; got: number; need: number; failures: string[] };
 
-/** Ask every source; require `minSources` distinct sources, all of which must return the identical header. */
+/** FR-7 step 5 and ADR-006: agreement always needs at least this many independent sources. */
+export const MIN_INDEPENDENT_SOURCES = 2;
+
+/**
+ * Ask every source; require `minSources` distinct sources (never fewer than two), all of which must return the
+ * identical header. A lower, non-numeric or NaN minimum falls back to two.
+ */
 export async function headerQuorum(
   sources: readonly HeaderSource[],
   height: number,
   minSources: number,
   signal?: AbortSignal,
 ): Promise<QuorumOutcome> {
+  const need = minSources > MIN_INDEPENDENT_SOURCES ? Math.ceil(minSources) : MIN_INDEPENDENT_SOURCES;
   const unique = new Map<string, HeaderSource>();
   for (const s of sources) if (!unique.has(s.id)) unique.set(s.id, s);
   const settled = await Promise.allSettled([...unique.values()].map(async (s) => ({ id: s.id, raw: await s.fetchHeader(height, signal) })));
@@ -92,6 +101,6 @@ export async function headerQuorum(
     else groups.push({ raw: o.raw, ids: [o.id] });
   }
   if (groups.length > 1) return { state: 'disagree', groups: groups.map((g) => ({ ids: g.ids, hashHex: parseHeader(g.raw).hashHex })) };
-  if (ok.length < Math.max(1, minSources) || groups.length === 0) return { state: 'unreachable', got: ok.length, failures };
+  if (ok.length < need || groups.length === 0) return { state: 'unreachable', got: ok.length, need, failures };
   return { state: 'agreed', header: parseHeader(groups[0]!.raw), agreeing: groups[0]!.ids };
 }

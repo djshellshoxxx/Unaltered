@@ -24,6 +24,8 @@ interface Item {
   ackHidden: boolean;
   ackOrientation: boolean;
   proof: Uint8Array | null;
+  label: string;
+  savedToList: boolean | null;
   abort: AbortController;
   card: HTMLElement;
 }
@@ -79,6 +81,7 @@ export function mountStamp(root: HTMLElement): StampView {
     it.outcome = null;
     // A receipt belongs to the previous byte target; changing cleaning requires a new stamp.
     it.proof = null;
+    it.savedToList = null;
     lastCalendars = null;
     stampError = null;
     it.progress = 0;
@@ -131,6 +134,7 @@ export function mountStamp(root: HTMLElement): StampView {
   }
 
   function refreshItem(it: Item): void {
+    const hadFocus = it.card.contains(document.activeElement);
     const c = cleanedOf(it);
     const kids: (Node | string | false | null)[] = [];
     kids.push(
@@ -190,7 +194,7 @@ export function mountStamp(root: HTMLElement): StampView {
         el(
           'div',
           { class: 'notice warn' },
-          el('p', {}, pdf ? t('stamp.pdfWarn') : isImage(it.kind) ? t('stamp.stripOffWarn') : t('stamp.unsupportedWarn')),
+          el('p', {}, pdf ? t('stamp.pdfWarn') : isImage(it.kind) ? t(it.strip ? 'stamp.stripUnsupportedWarn' : 'stamp.stripOffWarn') : t('stamp.unsupportedWarn')),
           el(
             'label',
             { class: 'check' },
@@ -228,6 +232,9 @@ export function mountStamp(root: HTMLElement): StampView {
       );
     }
     setChildren(it.card, ...kids);
+    // Cancel/cleaning controls may disappear during a transition. Never leave focus on a detached control or move it
+    // to an unrelated row action that happens to occupy the same position.
+    if (hadFocus && !it.card.contains(document.activeElement)) root.querySelector<HTMLElement>('#stamp-file')?.focus();
   }
 
   function shareRow(it: Item): Node | null {
@@ -246,8 +253,15 @@ export function mountStamp(root: HTMLElement): StampView {
   function labelRow(it: Item): Node | null {
     if (!isEnabled() || !it.hash) return null;
     const hex = it.hash.hex;
-    const input = el('input', { type: 'text', id: `label-${it.id}`, maxlength: 100, autocomplete: 'off' });
-    const saved = el('span', { class: 'muted', role: 'status' });
+    const saved = el('span', { class: 'muted', role: 'status' }, it.savedToList === null ? '' : t(it.savedToList ? 'stamp.savedToList' : 'stamp.saveFailed'));
+    const input = el('input', {
+      type: 'text', id: `label-${it.id}`, maxlength: 100, autocomplete: 'off', value: it.label,
+      oninput: (event: Event) => {
+        it.label = (event.target as HTMLInputElement).value;
+        it.savedToList = null;
+        saved.textContent = '';
+      },
+    });
     return el(
       'div',
       { class: 'label-row' },
@@ -260,6 +274,7 @@ export function mountStamp(root: HTMLElement): StampView {
           class: 'button small',
           onclick: () => {
             const ok = addReceipt({ digestHex: hex, createdAtUtc: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), label: input.value });
+            it.savedToList = ok;
             saved.textContent = ok ? t('stamp.savedToList') : t('stamp.saveFailed');
           },
         },
@@ -270,13 +285,14 @@ export function mountStamp(root: HTMLElement): StampView {
   }
 
   function flash(target: HTMLElement, msg: string): void {
-    announce(msg);
+    announce(msg, root);
     const old = target.textContent;
     target.textContent = msg;
     setTimeout(() => (target.textContent = old), 1500);
   }
 
   function remove(it: Item): void {
+    const hadFocus = it.card.contains(document.activeElement);
     it.abort.abort();
     revokeOwner(it);
     items.splice(items.indexOf(it), 1);
@@ -286,6 +302,8 @@ export function mountStamp(root: HTMLElement): StampView {
       stampError = null;
     }
     refreshActions();
+    // The removed control cannot keep keyboard focus. Use a stable picker rather than another row's Remove.
+    if (hadFocus) root.querySelector<HTMLElement>('#stamp-file')?.focus();
   }
 
   function add(files: File[]): void {
@@ -304,6 +322,8 @@ export function mountStamp(root: HTMLElement): StampView {
         ackHidden: false,
         ackOrientation: false,
         proof: null,
+        label: '',
+        savedToList: null,
         abort: new AbortController(),
         card: el('div', { class: 'card item', role: 'listitem' }),
       };
@@ -327,7 +347,7 @@ export function mountStamp(root: HTMLElement): StampView {
       const r = await stampBatch(digests, cfg);
       lastCalendars = r.calendars;
       items.forEach((it, i) => (it.proof = r.proofs[i]!));
-      announce(t('stamp.done'));
+      announce(t('stamp.done'), root);
     } catch (e) {
       if (!isAbort(e)) {
         stampError = safeMessage(e);

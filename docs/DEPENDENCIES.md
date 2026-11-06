@@ -5,6 +5,35 @@ Goal: **as few as possible**, and only audited or independently verifiable ones.
 
 Historical research tables below were reviewed on 2026-10-09, with adoption records dated separately. Current audit-preparation review: 2026-10-30; see the new snapshot before the historical REL-1 record. The dated snapshot supersedes planning statuses such as “candidate pin” and “decision pending” without rewriting the historical research or claiming that its external sources were rechecked.
 
+## Integration snapshot — 2026-11-04 (minimatch advisory decision)
+
+Lockfile unchanged: SHA-256 `836f4e61ef6339339bbbf6f07692a31dadd141cbe3755ef5610f7980dff262df` (same as 2026-10-30).
+Node 22.23.4 / npm 10.9.9: `npm audit --omit=dev` reports 0. Full `npm audit` still reports the same 11 moderate dev-only
+entries, all from `minimatch@10.2.6` ([GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249), CWE-405,
+fixed in `>=11.0.1`).
+
+Upstream check, from npm registry metadata on 2026-11-04:
+
+- `eslint@10.14.0` (latest) declares `minimatch ^10.2.6`.
+- `@eslint/config-array@0.23.5` (latest) declares `^10.2.4`.
+- `@typescript-eslint/typescript-estree@8.72.1` (latest) declares `^10.2.2`.
+
+No upstream release of the lint chain accepts a fixed version yet. `minimatch@11.0.4` also adds a new transitive
+package (`@isaacs/nonrecursive-glob-match`, BlueOak-1.0.0).
+
+**Decision: accepted risk; no override applied.** An `overrides` entry forcing `minimatch@11` would violate the declared
+semver ranges of three packages and add an unreviewed transitive dependency. The fix it would buy is small:
+
+- The advisory needs attacker-controlled glob patterns.
+- In this repository, glob patterns reach minimatch only from repository-controlled ESLint configuration and command lines.
+- No product, CLI or build code path uses minimatch. Shipped artifacts contain none of the lint chain.
+
+Revisit when ESLint or typescript-eslint publish a release whose declared range includes `>=11.0.1`. Then do a normal
+exact-pin bump, a lockfile diff review, `npm ci --ignore-scripts` and `npm run check`.
+
+`npm audit signatures` is still blocked in this executor ("Failed to download" fetching TUF metadata). No local
+provenance claim is made; the native CI `build-test` job remains the signature evidence.
+
 ## Audit-preparation snapshot — 2026-10-30
 
 Candidate based on main `da9b0a3626e702381f2ad1d1b1d4cd3128fde2dd`; the consolidation changes no dependency or lockfile pin.
@@ -102,3 +131,44 @@ Pin exact versions at M0-1 via `npm install --save-exact --save-dev <pkg>`; revi
 | 2026-10-14 | opentimestamps (PyPI, python) | 0.4.5 | build session | sdist read for protocol constants | Dev/CI only: fixture generation and differential tests |
 | 2026-10-22 | Gitleaks | 8.30.1 | development validation | official GitHub release asset digest checked before extraction | Dev/CI only. Linux artifact SHA-256 `551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb`; local full-history scan passed. No PR comments or third-party reporting configured |
 | 2026-10-24 | Current direct dependencies and lockfile | exact versions in current snapshot above | internal resume review | local manifest/lockfile agreement; no diff from resume baseline | REL-1 record refresh only. No dependencies changed; current CI signature/provenance results recorded above. No new upstream audit/advisory research or independently audited-version diff claimed |
+| 2026-11-04 | minimatch (transitive, dev-only via eslint/typescript-eslint) | 10.2.6 | integration session | npm registry metadata of eslint 10.14.0, @eslint/config-array 0.23.5, typescript-estree 8.72.1, minimatch 11.0.4 | GHSA-g3hv-75wg-m249 accepted as dev-only risk (repository-controlled patterns); no override, lockfile unchanged. See 2026-11-04 snapshot |
+| 2026-11-04 | opentimestamps, python-bitcoinlib, pycryptodomex (PyPI, python) | 0.4.5, 0.12.2, 3.23.0: version and wheel SHA-256 pins in `tests/differential/requirements.txt` | integration session | PyPI JSON metadata: declared dependencies, upload dates, published SHA-256 of each listed wheel. `pip --require-hashes` re-hashed the Linux x86_64 wheels on install (Python 3.12 and 3.13); the other platforms' hashes are as PyPI publishes them | Dev/CI only: differential job and `scripts/r1-acceptance.sh`, installed with `--require-hashes --only-binary :all:`. Before this, `pip install opentimestamps==0.4.5` resolved the newest pycryptodomex (`>=3.3.1`) and python-bitcoinlib (`>=0.9.0,<0.13.0`) on every run, with no hash. The 2026-10-14 row records no hash. python-bitcoinlib 0.12.2 is the newest version the range allows. pycryptodomex 3.23.0 (2025-05-17) was chosen over 3.24.x (October 2026) as the longest-aged release. No code review of the wheels is claimed. Pip is not covered by Dependabot, so a bump is a manual edit plus a new row here |
+
+## Fuzz-runner Git prerequisite — 2026-11-05
+
+The development fuzz runner invokes Git by an absolute system path: `/usr/bin/git` or
+`/bin/git` on Linux/macOS; `C:/Program Files/Git/cmd/git.exe` or the corresponding
+`Program Files (x86)` location on Windows. These administrator-managed locations must
+contain the trusted Git installation. A nonstandard installation fails with an explicit
+prerequisite error; the runner never falls back to inherited `PATH` or the current
+working directory. This changes development tooling only; no Git binary is bundled.
+
+The exact PR47 Sonar finding was retrieved from the public issues API: `javascript:S4036`,
+`scripts/parser-fuzz.mjs:29`, unsafe executable search. Before the fix, executed regression
+tests demonstrated that a writable directory at the front of `PATH` could supply a fake
+Git binary, and an empty `PATH` stopped source-evidence collection. Both cases and the
+four existing campaign tests pass after the fix. This closes the reproduced behavior;
+a passing new Sonar analysis is a separate external gate.
+
+Sources: [Node child-process command lookup](https://nodejs.org/api/child_process.html),
+[Sonar's S4036 introduction](https://community.sonarsource.com/t/many-improvements-for-js-ts-css-and-two-new-rules-for-security-and-tests/64617).
+No third-party source code was copied and no dependency changed.
+
+## Distributed license notices — 2026-11-05
+
+The build now places the complete first-party `LICENSE` and the installed `@noble/hashes`
+MIT notice in explicit comments in every page, worker and CLI bundle. The source package's
+comments had previously been removed by bundling without retaining its full notice in
+the distributed assets. Loose JavaScript, standalone HTML, the embedded worker, the CLI,
+all portable archives and the Pages site now carry both notices without a sidecar file.
+The CLI shebang stays first. CSP, SRI, build codes and artifact checksums cover the added
+notice bytes; line endings use the same deterministic normalization as other build inputs.
+
+The installed `@noble/hashes@2.4.0` license matches the
+[official upstream license](https://github.com/paulmillr/noble-hashes/blob/663c2aeeffc308ac0cded59bd32f7c212adacfc2/LICENSE):
+SHA-256 `4f221aee6e072336700c408c68ab3b96a3fc09f6aebe6f48f1bd99e5ef13faec`.
+The `2.4.0` annotated tag resolves to commit `663c2aeeffc308ac0cded59bd32f7c212adacfc2`.
+No dependency or lockfile changed, and building requires no network request. Artifact
+tests compare complete notice text, decode the actual embedded worker source and check
+the generated integrity values. This packaging correction is not a new cryptographic
+audit or an audited-version comparison.

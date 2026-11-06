@@ -23,6 +23,13 @@ export function makeWav(opts: { extra?: boolean; trailing?: string; oddPad?: num
 // MPEG-1 Layer III, 128 kbit/s, 44100 Hz, no padding: floor(144 * 128000 / 44100) = 417 bytes.
 export const FRAME = [0xff, 0xfb, 0x90, 0x00, ...new Array<number>(413).fill(0)];
 
+/** APEv2 tag: optional header, items (value size, flags, key, NUL, value), footer. The size field excludes the header. */
+export function apeTag(items: readonly (readonly [string, string])[], header = true): number[] {
+  const body = items.flatMap(([key, value]) => [...u32le(value.length), ...u32le(0), ...enc(key), 0, ...enc(value)]);
+  const fields = (flags: number): number[] => [...enc('APETAGEX'), ...u32le(2000), ...u32le(body.length + 32), ...u32le(items.length), ...u32le(flags), ...new Array<number>(8).fill(0)];
+  return [...(header ? fields(0xa0000000) : []), ...body, ...fields(header ? 0x80000000 : 0)];
+}
+
 export function makeMp3(opts: { id3v2?: boolean; id3v1?: boolean; ape?: boolean; frames?: readonly Uint8Array[] } = {}): Uint8Array {
   const out: number[] = [];
   if (opts.id3v2) {
@@ -30,10 +37,7 @@ export function makeMp3(opts: { id3v2?: boolean; id3v1?: boolean; ape?: boolean;
     out.push(...enc('ID3'), 3, 0, 0, ...syncsafe(frames.length + 4), ...frames, 0, 0, 0, 0);
   }
   for (const frame of opts.frames ?? [Uint8Array.from(FRAME), Uint8Array.from(FRAME)]) out.push(...frame);
-  if (opts.ape) {
-    const item = enc('SECRET-APE-ITEM');
-    out.push(...enc('APETAGEX'), ...u32le(2000), ...u32le(32 + item.length), ...u32le(1), ...u32le(0x80000000), ...new Array(8).fill(0), ...item, ...enc('APETAGEX'), ...u32le(2000), ...u32le(32 + item.length), ...u32le(1), ...u32le(0x80000000), ...new Array(8).fill(0));
-  }
+  if (opts.ape) out.push(...apeTag([['Artist', 'SECRET-APE-ITEM']]));
   if (opts.id3v1) out.push(...enc('TAG'), ...enc('SECRET-V1'), ...new Array(128 - 3 - 9).fill(0));
   return Uint8Array.from(out);
 }

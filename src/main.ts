@@ -80,9 +80,16 @@ function start(): void {
 
   function route(focus = true): void {
     const { view, h } = parseHash(location.hash);
-    if (h) {
+    // Every hashchange routes here. Back/Forward (or a language switch) to the same #h= is not a new link: applying
+    // it again would replace a file the user chose since, clear its result and abort a running check.
+    if (h && h !== pendingPrefill) {
       pendingPrefill = h;
       verifyView?.setPrefill(h);
+    } else if (!h && pendingPrefill !== null && /(?:^#?|[&?])h=/.test(location.hash)) {
+      // An invalid or conflicting share link must not leave a previous link's fingerprint available for Check.
+      // Ordinary tab navigation has no h= parameter and keeps the user's current verification state.
+      pendingPrefill = null;
+      verifyView?.setPrefill(null);
     }
     for (const v of VIEWS) {
       sections[v].hidden = v !== view;

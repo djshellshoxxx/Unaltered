@@ -52,3 +52,6 @@ ctx.onmessage = (ev) => {
       ? { type: 'failed', code: e.code, message: e.message }
       : { type: 'error' }));
 };
+
+// Acknowledge startup independently of file I/O, which can be slow without indicating a failed worker.
+ctx.postMessage({ type: 'ready' });

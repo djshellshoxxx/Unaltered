@@ -5,14 +5,14 @@ import { toHex } from '../bytes';
 import { UnalteredError, safeMessage } from '../errors';
 import { DEFAULT_CALENDARS, DEFAULT_MIN_CALENDARS } from '../net/allowlist';
 import { netFetch, type NetPolicy } from '../net/fetch';
-import { collectAttestations, mergeTree, parseProof, parseTimestampBody, serializeProof } from './codec';
+import { collectAttestations, mergeTree, mergeTrees, parseProof, parseTimestampBody, serializeProof, type Leaf } from './codec';
 import { applyOp } from './ops';
 import type { DetachedProof, Op, ProofStatus, TsNode } from './types';
 
 export interface StampConfig {
   /** Calendar base URLs. Every host must also be on the network allowlist. */
   calendars: readonly string[];
-  /** Minimum number of calendars that must accept (never below 1). */
+  /** Minimum number of calendars that must accept (never below 1; NaN or non-numeric means DEFAULT_MIN_CALENDARS). */
   minAccepted: number;
   net?: Partial<NetPolicy>;
   signal?: AbortSignal | undefined;
@@ -46,7 +46,25 @@ export interface BatchStampResult {
 const ACCEPT = { Accept: 'application/vnd.opentimestamps.v1' };
 
 function normBase(u: string): string {
-  return u.replace(/\/+$/, '');
+  try {
+    // URL identity folds host/scheme case and the default HTTPS port, while retaining the selected path.
+    // Network policy still rejects credentials, insecure schemes and non-default ports before any request.
+    return new URL(u).href.replace(/\/+$/, '');
+  } catch {
+    return u.replace(/\/+$/, '');
+  }
+}
+
+/**
+ * Identity for counting accepting calendars (FR-4): the host, as for the explorer quorum, so a trailing slash or a
+ * change of case cannot make one calendar count twice. An unparseable entry keeps its own identity and fails at fetch.
+ */
+function calendarId(u: string): string {
+  try {
+    return new URL(u).host;
+  } catch {
+    return `raw:${normBase(u)}`;
+  }
 }
 
 function nonce16(cfg: StampConfig): Uint8Array {
@@ -89,7 +107,9 @@ export async function stampBatch(digests: Uint8Array[], cfg: StampConfig): Promi
   if (digests.length === 0) throw new UnalteredError('INPUT_INVALID', 'Nothing to stamp.');
   if (digests.some((d) => d.length !== 32)) throw new UnalteredError('INPUT_INVALID', 'A fingerprint has the wrong length.');
   if (cfg.calendars.length === 0) throw new UnalteredError('INPUT_INVALID', 'No calendar servers are selected.');
-  const need = Math.max(1, cfg.minAccepted);
+  // FR-4: never below one, rounded up. NaN would make `accepted < need` always false, so it falls back to the default M.
+  const asked = Math.ceil(Number(cfg.minAccepted));
+  const need = Number.isNaN(asked) ? DEFAULT_MIN_CALENDARS : Math.max(1, asked);
 
   const roots: TsNode[] = digests.map((d) => ({ msg: d, attestations: [], children: [] }));
   const leaves = roots.map((root) => {
@@ -98,9 +118,11 @@ export async function stampBatch(digests: Uint8Array[], cfg: StampConfig): Promi
   });
   const tip = merkleTip(leaves);
 
+  const distinct = new Map<string, string>();
+  for (const c of cfg.calendars) if (!distinct.has(calendarId(c))) distinct.set(calendarId(c), normBase(c));
+
   const results: CalendarResult[] = await Promise.all(
-    cfg.calendars.map(async (base): Promise<CalendarResult> => {
-      const b = normBase(base);
+    [...distinct.values()].map(async (b): Promise<CalendarResult> => {
       try {
         const res = await netFetch(`${b}/digest`, { method: 'POST', body: tip.msg, headers: ACCEPT, signal: cfg.signal }, cfg.net);
         if (res.status !== 200) throw new UnalteredError('NET_HTTP', `The server answered with status ${res.status}.`);
@@ -151,38 +173,42 @@ export interface UpgradeResult {
 export async function upgrade(ots: Uint8Array, cfg: StampConfig): Promise<UpgradeResult> {
   const proof = parseProof(ots);
   const allowed = new Set(cfg.calendars.map(normBase));
-  const seenPending = new Set<string>();
-  const pendings = collectAttestations(proof.root).filter((l) => {
-    if (l.attestation.kind !== 'pending') return false;
-    const key = `${normBase(l.attestation.uri)} ${toHex(l.node.msg)}`;
-    if (seenPending.has(key)) return false;
-    seenPending.add(key);
-    return true;
-  });
+  // Share transport for equal lookups while retaining every target node and equivalent URI spelling.
+  const pendings = new Map<string, { base: string; msg: Uint8Array; leaves: Leaf[] }>();
+  for (const l of collectAttestations(proof.root)) {
+    if (l.attestation.kind !== 'pending') continue;
+    const base = normBase(l.attestation.uri);
+    const key = `${base} ${toHex(l.node.msg)}`;
+    const group = pendings.get(key);
+    if (group) group.leaves.push(l);
+    else pendings.set(key, { base, msg: l.node.msg, leaves: [l] });
+  }
   const unknown = new Set<string>();
   const calendars: CalendarResult[] = [];
 
   await Promise.all(
-    pendings.map(async ({ node, attestation }) => {
-      if (attestation.kind !== 'pending') return;
-      const base = normBase(attestation.uri);
+    [...pendings.values()].map(async ({ base, msg, leaves }) => {
       if (!allowed.has(base)) {
         unknown.add(base);
         return;
       }
       try {
-        const res = await netFetch(`${base}/timestamp/${toHex(node.msg)}`, { headers: ACCEPT, signal: cfg.signal }, cfg.net);
+        const res = await netFetch(`${base}/timestamp/${toHex(msg)}`, { headers: ACCEPT, signal: cfg.signal }, cfg.net);
         if (res.status === 404) {
           calendars.push({ url: base, ok: true, error: 'Not yet confirmed.' });
           return;
         }
         if (res.status !== 200) throw new UnalteredError('NET_HTTP', `The server answered with status ${res.status}.`);
-        const ts = parseTimestampBody(res.bytes, node.msg);
+        const ts = parseTimestampBody(res.bytes, msg);
         const got = collectAttestations(ts);
         if (got.length === 0) throw new UnalteredError('PROOF_MALFORMED', 'The server sent an empty answer.');
-        const sameOnly = got.every((g) => g.attestation.kind === 'pending' && g.attestation.uri === attestation.uri);
-        mergeTree(node, ts, () => {
-          if (!sameOnly) node.attestations = node.attestations.filter((a) => a !== attestation);
+        const nodes = [...new Set(leaves.map((l) => l.node))];
+        mergeTrees(nodes.map((node) => [node, ts] as const), () => {
+          for (const { node, attestation } of leaves) {
+            if (attestation.kind !== 'pending') continue;
+            const sameOnly = got.every((g) => g.attestation.kind === 'pending' && g.attestation.uri === attestation.uri);
+            if (!sameOnly) node.attestations = node.attestations.filter((a) => a !== attestation);
+          }
           serializeProof(proof); // Includes the whole original proof, not only this pending commitment.
         });
         calendars.push({ url: base, ok: true });

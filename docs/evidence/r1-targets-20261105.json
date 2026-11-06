@@ -1,0 +1,377 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-11-05T21:05:00.423Z",
+  "scope": "Live Bob and Finney confirmed-upgrade qualification; local Codespace evidence, not hosted CI or own-node verification",
+  "app": {
+    "buildCode": "85f5bc962b80d2c4",
+    "sourceCommit": "52da9e7f3f8b9fcf5ffe975f282c4b07ff4b5241",
+    "sourceTree": "1943fc021675d14b074a4458c5b27919533def20",
+    "parentSourceEquivalentAtCommit": "2998f09d94bc94eed9e4a573a43c4b7661510c43",
+    "mainJsSha256": "8e683ae47bae2c2470fc02112bee9e61b4827cb54538f85ad438457b2f884807",
+    "indexHtmlSha256": "9737b8b6a53489c63ae56bc471a003256a3dd8298c2a7d7f2e69a4e494752d5d"
+  },
+  "procedure": {
+    "newCalendarSubmissions": 0,
+    "originalFilesUploaded": false,
+    "mocks": false,
+    "tlsBypass": false,
+    "corsBypass": false,
+    "cspRelaxed": false,
+    "fixtureTransformation": "Used existing isolateTarget helper to retain only the selected existing pending branch; no proof operations, commitments or Bitcoin attestations were added.",
+    "observer": "Existing r1-acceptance.mjs copied into scratch with imports resolved and only displayedDetails added to its JSON output; acceptance and network behavior unchanged.",
+    "originalRunnerSha256": "a66d1265cb99467fb78e19c8b2a60f2581dbe54a08a0a838b4c736ed76a38bd5",
+    "observerSha256": "c781cb205d37d221202a3d571c8f69de10fa3cb26eec19cef8b292b1daaa0dca",
+    "reference": "Hash-pinned opentimestamps0.4.5 and dependencies from tests/differential/requirements.txt; verify_reference.py checked exact downloaded bytes against blockchain.info headers.",
+    "paths": "Receipt download paths normalized relative to the scratch evidence directory."
+  },
+  "sources": [
+    {
+      "repository": "https://github.com/opentimestamps/opentimestamps-client",
+      "commit": "f3a9e92e4dcb89ed93396d71ec808b3290a438c4",
+      "receipt": "https://raw.githubusercontent.com/opentimestamps/opentimestamps-client/f3a9e92e4dcb89ed93396d71ec808b3290a438c4/examples/two-calendars.txt.ots",
+      "file": "https://raw.githubusercontent.com/opentimestamps/opentimestamps-client/f3a9e92e4dcb89ed93396d71ec808b3290a438c4/examples/two-calendars.txt",
+      "license": "LGPL-3.0-or-later",
+      "licenseSource": "https://raw.githubusercontent.com/opentimestamps/opentimestamps-client/f3a9e92e4dcb89ed93396d71ec808b3290a438c4/LICENSE"
+    },
+    {
+      "repository": "https://github.com/opentimestamps/javascript-opentimestamps",
+      "commit": "c07ba8be0dae4e8721a84f32820abf7b2547a6ce",
+      "receipt": "https://raw.githubusercontent.com/opentimestamps/javascript-opentimestamps/c07ba8be0dae4e8721a84f32820abf7b2547a6ce/examples/osdsp.txt.ots",
+      "file": "https://raw.githubusercontent.com/opentimestamps/javascript-opentimestamps/c07ba8be0dae4e8721a84f32820abf7b2547a6ce/examples/osdsp.txt",
+      "license": "LGPL-3.0-or-later",
+      "licenseSource": "https://raw.githubusercontent.com/opentimestamps/javascript-opentimestamps/c07ba8be0dae4e8721a84f32820abf7b2547a6ce/LICENSE"
+    }
+  ],
+  "inputFixtureHandling": "All upstream original and derived files remain scratch only; this metadata record redistributes no upstream file or receipt contents.",
+  "initialSameCommitmentProbe": {
+    "inputReceiptSha256": "95673f2878cbcfdddded530bd2ad5f3fb04e13d2e659760d7c1386346fdd036c",
+    "result": "Alice incomplete receipt commitment unavailable on Bob and Finney; actual target-specific existing hints were required.",
+    "observations": [
+      {
+        "checkedAt": "2026-11-05T21:01:21.422085+00:00",
+        "host": "bob.btc.calendar.opentimestamps.org",
+        "method": "GET",
+        "url": "https://bob.btc.calendar.opentimestamps.org/timestamp/57cfa5c46716df9bd9e83595bce439c58108d8fcc1678f30d4c6731c3f1fa6c79ed712c66fb1ac8d4e4eb0e7",
+        "status": 404,
+        "acao": null,
+        "bytes": 9,
+        "capped": false,
+        "responseSha256": "e3ebaa16dd9d9b9fc107c42183fb6cf9d22927e1af03dbbdfa0ccc38e4e4ac31",
+        "finalUrl": "https://bob.btc.calendar.opentimestamps.org/timestamp/57cfa5c46716df9bd9e83595bce439c58108d8fcc1678f30d4c6731c3f1fa6c79ed712c66fb1ac8d4e4eb0e7"
+      },
+      {
+        "checkedAt": "2026-11-05T21:01:21.429093+00:00",
+        "host": "finney.calendar.eternitywall.com",
+        "method": "GET",
+        "url": "https://finney.calendar.eternitywall.com/timestamp/57cfa5c46716df9bd9e83595bce439c58108d8fcc1678f30d4c6731c3f1fa6c79ed712c66fb1ac8d4e4eb0e7",
+        "status": 404,
+        "acao": null,
+        "bytes": 9,
+        "capped": false,
+        "responseSha256": "e3ebaa16dd9d9b9fc107c42183fb6cf9d22927e1af03dbbdfa0ccc38e4e4ac31",
+        "finalUrl": "https://finney.calendar.eternitywall.com/timestamp/57cfa5c46716df9bd9e83595bce439c58108d8fcc1678f30d4c6731c3f1fa6c79ed712c66fb1ac8d4e4eb0e7"
+      }
+    ]
+  },
+  "independentHeaders": [
+    {
+      "checkedAt": "2026-11-05T21:03:34.618456+00:00",
+      "target": "bob",
+      "height": 429355,
+      "heightSource": "https://blockchain.info/block-height/429355?format=json",
+      "sourceHost": "blockchain.info",
+      "trust": "independent-third-party-explorer-not-own-node",
+      "blockHash": "000000000000000001a2d3983295ee55464c32cf0ce0b3fb8239e5bd0293ed9e",
+      "headerHex": "0000002003a430466b1615a304f7d55765a84336b3bd44589ae4800400000000000000003e6c99ec3eac0e17d96d4d3901a80ddce7dc56255db150161908066c559983c4b7d6d55708fb04180358b020",
+      "headerSource": "https://blockchain.info/rawblock/000000000000000001a2d3983295ee55464c32cf0ce0b3fb8239e5bd0293ed9e?format=hex",
+      "unixTime": 1473631927
+    },
+    {
+      "checkedAt": "2026-11-05T21:03:34.622276+00:00",
+      "target": "finney",
+      "height": 523367,
+      "heightSource": "https://blockchain.info/block-height/523367?format=json",
+      "sourceHost": "blockchain.info",
+      "trust": "independent-third-party-explorer-not-own-node",
+      "blockHash": "00000000000000000016051dc6f002cf4b205ccf278096ff5fd99dc9f4362c31",
+      "headerHex": "00000020361cfb493436b91763a47364c117924b19bba391117c38000000000000000000f8065c3c037e44d54680c84efcff14a4392be31d468f43f36a30bf0932c2ac66c5ecff5aa9ec4317b726848b",
+      "headerSource": "https://blockchain.info/rawblock/00000000000000000016051dc6f002cf4b205ccf278096ff5fd99dc9f4362c31?format=hex",
+      "unixTime": 1526721733
+    }
+  ],
+  "targets": [
+    {
+      "target": "bob",
+      "status": "PASS",
+      "scope": "confirmed-upgrade-in-Chromium-and-independent-reference-on-same-app-downloaded-receipt",
+      "checks": {
+        "targetBrowserAccepted": true,
+        "sameDownloadedReceipt": true,
+        "sameOriginalFile": true,
+        "referenceVerified": true,
+        "displayedTimeMatchesReference": true,
+        "independentHeaderHashMatchesReference": true
+      },
+      "displayedUtc": "2016-09-11T22:12:07Z",
+      "transformation": {
+        "operation": "isolate-existing-Bob-pending-branch",
+        "originalSha256": "1f0fe002dc50f6bc96bcab1fffa9d22f8fa71ac1f99b91bd5ece04d06d8b4d64",
+        "isolatedSha256": "cc60c659045f6f5f01542c16f587ffe07d6d2a4c0048b23c6b1789ae2b4aecf2",
+        "fileSha256": "efaa174f68e59705757460f4f7d204bd2b535cfd194d9d945418732129404ddb",
+        "receiptDigest": "efaa174f68e59705757460f4f7d204bd2b535cfd194d9d945418732129404ddb",
+        "attestations": [
+          {
+            "kind": "pending",
+            "uri": "https://bob.btc.calendar.opentimestamps.org"
+          }
+        ],
+        "newCalendarSubmission": false,
+        "note": "Retains the original Bob proof operations and commitment; removes the unrelated Alice branch. No hint or Bitcoin attestation added."
+      },
+      "nonBrowserProbe": {
+        "checkedAt": "2026-11-05T21:01:47.740361+00:00",
+        "host": "bob.btc.calendar.opentimestamps.org",
+        "method": "GET",
+        "url": "https://bob.btc.calendar.opentimestamps.org/timestamp/57d4651676e9ac3b3b57c1584828ea5162979c96483a03c87c69a1b8614d1cbaf387e0f5647b90ea1b270a97",
+        "status": 200,
+        "acao": "*",
+        "bytes": 733,
+        "responseSha256": "ebd660e83eea580e792d7f9ca059e0960cc17cf5ff6864f6408c973de53b5d6b",
+        "bitcoin": [
+          {
+            "height": 429355,
+            "commitment": "3e6c99ec3eac0e17d96d4d3901a80ddce7dc56255db150161908066c559983c4"
+          }
+        ]
+      },
+      "browser": {
+        "checkedAt": "2026-11-05T21:04:02.122Z",
+        "browser": "chromium 156.0.8078.4",
+        "classification": "PASS",
+        "upgrade": {
+          "confirmed": true,
+          "stillPending": false,
+          "receiptError": null,
+          "failedCalendars": [],
+          "unknownCalendars": null,
+          "downloaded": true
+        },
+        "verify": {
+          "state": "VERIFIED",
+          "block": "429355",
+          "displayedDetails": "Fingerprint\nefaa174f 68e59705 757460f4 f7d204bd 2b535cfd 194d9d94 54187321 29404ddb\nBitcoin block\n429355\nBlock time\nThis file existed no later than about 2016-09-11T22:12:07Z (UTC)\nConfirmed by\nmempool.space, blockstream.info",
+          "upgradedReceiptPath": "bob-out-display/bob-isolated.upgraded.ots"
+        },
+        "csp": [],
+        "requests": [
+          {
+            "host": "bob.btc.calendar.opentimestamps.org",
+            "method": "GET",
+            "kind": "upgrade",
+            "status": 200,
+            "acao": "*"
+          },
+          {
+            "host": "mempool.space",
+            "method": "GET",
+            "kind": "explorer",
+            "status": 200,
+            "acao": "*"
+          },
+          {
+            "host": "mempool.space",
+            "method": "GET",
+            "kind": "explorer",
+            "status": 200,
+            "acao": "*"
+          },
+          {
+            "host": "blockstream.info",
+            "method": "GET",
+            "kind": "explorer",
+            "status": 200,
+            "acao": "*"
+          },
+          {
+            "host": "blockstream.info",
+            "method": "GET",
+            "kind": "explorer",
+            "status": 200,
+            "acao": "*"
+          }
+        ],
+        "note": "Browser evidence only. R1 also requires the independent reference check in docs/R1_ACCEPTANCE.md."
+      },
+      "reference": {
+        "checkedAt": "2026-11-05T21:04:30.020682+00:00",
+        "referenceVersion": "0.4.5",
+        "fileSha256": "efaa174f68e59705757460f4f7d204bd2b535cfd194d9d945418732129404ddb",
+        "receiptSha256": "a2b0bc80fe19e49062a8ddae936d469946660338b2e4121cde59e5ac55a71218",
+        "headerSource": "https://blockchain.info/rawblock/000000000000000001a2d3983295ee55464c32cf0ce0b3fb8239e5bd0293ed9e?format=hex",
+        "headerHash": "000000000000000001a2d3983295ee55464c32cf0ce0b3fb8239e5bd0293ed9e",
+        "exitCode": 0,
+        "report": {
+          "bitcoin": [
+            {
+              "height": 429355,
+              "verifiedTime": 1473631927
+            }
+          ],
+          "digestMatches": true,
+          "headerHash": "000000000000000001a2d3983295ee55464c32cf0ce0b3fb8239e5bd0293ed9e",
+          "ok": true,
+          "pending": 0
+        },
+        "stderr": "",
+        "sameBytesAsFirstDownloadedReceipt": true
+      },
+      "strictAssessment": {
+        "target": "bob",
+        "browserAccepted": true,
+        "reasons": [],
+        "fileSha256": "efaa174f68e59705757460f4f7d204bd2b535cfd194d9d945418732129404ddb",
+        "receiptSha256": "a2b0bc80fe19e49062a8ddae936d469946660338b2e4121cde59e5ac55a71218",
+        "block": 429355
+      }
+    },
+    {
+      "target": "finney",
+      "status": "PASS",
+      "scope": "confirmed-upgrade-in-Chromium-and-independent-reference-on-same-app-downloaded-receipt",
+      "checks": {
+        "targetBrowserAccepted": true,
+        "sameDownloadedReceipt": true,
+        "sameOriginalFile": true,
+        "referenceVerified": true,
+        "displayedTimeMatchesReference": true,
+        "independentHeaderHashMatchesReference": true
+      },
+      "displayedUtc": "2018-05-19T09:22:13Z",
+      "transformation": {
+        "operation": "isolate-existing-Finney-pending-branch",
+        "originalSha256": "080ccfea9748ea0c7ee1abe0a11d6ce7745bed5b2d881fe1f24b59ba6373ecdd",
+        "isolatedSha256": "0f82d06d5407c80f90b2f35f68ddd33ca6fc1042e864f19ac1c3d3f65b3ea024",
+        "fileSha256": "397a00836979837319bdd350aa93bcc2798e94e08ab00f32f355e5ebe7837c2b",
+        "receiptDigest": "397a00836979837319bdd350aa93bcc2798e94e08ab00f32f355e5ebe7837c2b",
+        "attestations": [
+          {
+            "kind": "pending",
+            "uri": "https://finney.calendar.eternitywall.com"
+          }
+        ],
+        "newCalendarSubmission": false,
+        "note": "Retains the original Finney proof operations and commitment; removes unrelated branches. No hint or Bitcoin attestation added."
+      },
+      "nonBrowserProbe": {
+        "checkedAt": "2026-11-05T21:02:49.156071+00:00",
+        "host": "finney.calendar.eternitywall.com",
+        "method": "GET",
+        "url": "https://finney.calendar.eternitywall.com/timestamp/5affdc4e9ca8db900367fd8d74967d67d57dbad0f3cdc715d217dfd5d07a4dbb1eacec03384e62331c930912",
+        "status": 200,
+        "acao": "*",
+        "bytes": 953,
+        "responseSha256": "69e6de271ee912bfe9a09bbd127b83ad399795d843c8a7810e6c53ac4e01ace0",
+        "bitcoin": [
+          {
+            "height": 523367,
+            "commitment": "f8065c3c037e44d54680c84efcff14a4392be31d468f43f36a30bf0932c2ac66"
+          }
+        ]
+      },
+      "browser": {
+        "checkedAt": "2026-11-05T21:03:39.106Z",
+        "browser": "chromium 156.0.8078.4",
+        "classification": "PASS",
+        "upgrade": {
+          "confirmed": true,
+          "stillPending": false,
+          "receiptError": null,
+          "failedCalendars": [],
+          "unknownCalendars": null,
+          "downloaded": true
+        },
+        "verify": {
+          "state": "VERIFIED",
+          "block": "523367",
+          "displayedDetails": "Fingerprint\n397a0083 69798373 19bdd350 aa93bcc2 798e94e0 8ab00f32 f355e5eb e7837c2b\nBitcoin block\n523367\nBlock time\nThis file existed no later than about 2018-05-19T09:22:13Z (UTC)\nConfirmed by\nmempool.space, blockstream.info",
+          "upgradedReceiptPath": "finney-out/finney-isolated.upgraded.ots"
+        },
+        "csp": [],
+        "requests": [
+          {
+            "host": "finney.calendar.eternitywall.com",
+            "method": "GET",
+            "kind": "upgrade",
+            "status": 200,
+            "acao": "*"
+          },
+          {
+            "host": "blockstream.info",
+            "method": "GET",
+            "kind": "explorer",
+            "status": 200,
+            "acao": "*"
+          },
+          {
+            "host": "blockstream.info",
+            "method": "GET",
+            "kind": "explorer",
+            "status": 200,
+            "acao": "*"
+          },
+          {
+            "host": "mempool.space",
+            "method": "GET",
+            "kind": "explorer",
+            "status": 200,
+            "acao": "*"
+          },
+          {
+            "host": "mempool.space",
+            "method": "GET",
+            "kind": "explorer",
+            "status": 200,
+            "acao": "*"
+          }
+        ],
+        "note": "Browser evidence only. R1 also requires the independent reference check in docs/R1_ACCEPTANCE.md."
+      },
+      "reference": {
+        "checkedAt": "2026-11-05T21:03:57.101091+00:00",
+        "referenceVersion": "0.4.5",
+        "fileSha256": "397a00836979837319bdd350aa93bcc2798e94e08ab00f32f355e5ebe7837c2b",
+        "receiptSha256": "8131fdf1d375c27362d1a727ba8481e935edd8e3b761f5c7eab0c1b90fa0a84e",
+        "headerSource": "https://blockchain.info/rawblock/00000000000000000016051dc6f002cf4b205ccf278096ff5fd99dc9f4362c31?format=hex",
+        "headerHash": "00000000000000000016051dc6f002cf4b205ccf278096ff5fd99dc9f4362c31",
+        "exitCode": 0,
+        "report": {
+          "bitcoin": [
+            {
+              "height": 523367,
+              "verifiedTime": 1526721733
+            }
+          ],
+          "digestMatches": true,
+          "headerHash": "00000000000000000016051dc6f002cf4b205ccf278096ff5fd99dc9f4362c31",
+          "ok": true,
+          "pending": 0
+        },
+        "stderr": ""
+      },
+      "strictAssessment": {
+        "target": "finney",
+        "browserAccepted": true,
+        "reasons": [],
+        "fileSha256": "397a00836979837319bdd350aa93bcc2798e94e08ab00f32f355e5ebe7837c2b",
+        "receiptSha256": "8131fdf1d375c27362d1a727ba8481e935edd8e3b761f5c7eab0c1b90fa0a84e",
+        "block": 523367
+      }
+    }
+  ],
+  "limitations": [
+    "These confirmed200 results do not resolve pending404 replies missing Access-Control-Allow-Origin.",
+    "Chromium156 only; no equivalent live-confirmed Firefox/WebKit qualification performed here.",
+    "Reference headers came from a third independent explorer, blockchain.info, rather than an own Bitcoin node.",
+    "This local evidence is not a human accessibility review, independent product security audit, production deployment or release approval."
+  ]
+}

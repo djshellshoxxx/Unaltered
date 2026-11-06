@@ -1,4 +1,6 @@
 import { readFileSync } from 'node:fs';
+import { createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { expect, test, type Page } from '@playwright/test';
 import { serializeProof } from '../../src/core/ots/codec';
 import { cleanWav } from '../../src/core/strip/audio';
@@ -93,4 +95,43 @@ test('replacing an upgrade receipt revokes the previous download', async ({ page
   await page.setInputFiles('#upgrade-receipt', { name: 'different.ots', mimeType: 'application/octet-stream', buffer: Buffer.from('bad') });
   await expect(page.locator('.upgrade-result')).toBeEmpty();
   expect(await liveCount(page)).toBe(0);
+});
+
+// The hash worker receives every file the user adds. A worker loaded from its own URL takes its CSP only from that
+// response's headers, which static hosts do not send, so it would run without the page's connect-src, script-src and
+// Trusted Types (THREAT_MODEL row 1). The probe runs inside the app's real worker, after it has hashed a file.
+test('the hash worker runs under the page CSP: no string evaluation, no script import, no other origin', async ({ page, browserName }) => {
+  test.skip(browserName === 'webkit', 'WebKit does not implement Playwright Worker.evaluate');
+  const hits: string[] = [];
+  const sink = createServer((req, res) => {
+    hits.push(req.url ?? '');
+    res.writeHead(204, { 'access-control-allow-origin': '*' }).end();
+  });
+  await new Promise<void>((done) => sink.listen(0, '127.0.0.1', done));
+  const origin = `http://127.0.0.1:${(sink.address() as AddressInfo).port}`;
+  try {
+    // Keep the worker alive after it answers; the app terminates it once the digest arrives.
+    await page.addInitScript(() => { Worker.prototype.terminate = () => undefined; });
+    await page.goto('/index.html#stamp');
+    const [worker] = await Promise.all([
+      page.waitForEvent('worker'),
+      page.setInputFiles('#stamp-file', { name: 'policy.txt', mimeType: 'text/plain', buffer: Buffer.from('worker policy probe') }),
+    ]);
+    await expect(page.locator('.item .digest')).toBeVisible();
+    // Passed as source text: this is the code a changed worker script would run. DevTools evaluation itself is exempt
+    // from the eval check, so the probes run in a later task, as the worker's own code would.
+    const probe = await worker.evaluate(`(async () => {
+      const outcome = (fn) => { try { return String(fn()); } catch (e) { return e instanceof Error ? e.name : 'thrown'; } };
+      await new Promise((resume) => setTimeout(resume, 0));
+      return {
+        evaluated: outcome(() => (0, eval)('6*7')),
+        imported: outcome(() => { importScripts('data:text/javascript,'); return 'allowed'; }),
+        fetched: await fetch(${JSON.stringify(origin)} + '/from-worker').then(() => 'sent', (e) => (e instanceof Error ? e.name : 'thrown')),
+      };
+    })()`);
+    expect(probe).toEqual({ evaluated: 'EvalError', imported: expect.not.stringMatching(/^allowed$/), fetched: 'TypeError' });
+    expect(hits).toEqual([]);
+  } finally {
+    await new Promise<void>((done) => sink.close(() => done()));
+  }
 });

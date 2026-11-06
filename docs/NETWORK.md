@@ -1,5 +1,34 @@
 # Network facts (M0-3)
 
+## Current browser qualification — 2026-11-05 UTC
+
+On integrated build `85f5bc962b80d2c4`, strict-CSP Chromium156 successfully upgraded historical
+pending receipts separately through **Alice, Bob and Finney**, downloaded each upgraded receipt,
+and verified Bitcoin blocks428648,429355 and523367 respectively. Pinned Python OpenTimestamps0.4.5
+independently verified each same app-downloaded receipt against an80-byte header fetched separately
+from blockchain.info. Exact input/output digests, source fixture commits, per-host requests, displayed
+versus reference times and browser/source hashes are recorded in
+[initial and integrated Alice evidence](evidence/browser-20261105-network.json),
+[integrated qualification](evidence/browser-20261105-qualification.json), and
+[target-isolated Bob/Finney evidence](evidence/r1-targets-20261105.json).
+
+Bob/Finney qualification used each upstream fixture's genuine pending branch, preserving the
+file digest and all commitment-path operations while removing other pending calendar hints in a
+scratch receipt. Each run contacted only its target calendar. The application downloaded a new
+receipt; independent verification checked that exact download. No new submission, route mock,
+TLS/CORS bypass, application proxy or committed upstream fixture was used for these confirmed runs.
+This establishes these hosts' confirmed paths on this Chromium build; it is explorer/reference-header
+L1 evidence, not own-node/L2 verification or universal live-browser compatibility.
+
+Fresh random non-evidence submissions to all three calendars returned200 in the actual browser,
+and both explorers returned genesis headers whose double-SHA256 matched. Fresh pending lookups
+still failed browser reads. Separate timed header probes found404 with no Access-Control-Allow-Origin
+on all three calendars. **Pending404 CORS remains an external interoperability limitation**: browser
+code cannot distinguish that response from an outage. The app must keep its conservative pending/
+unreadable state, retain original receipts and permit later upgrades. No backend or security exception
+was introduced to hide this limitation. Older statements that Bob/Finney confirmed paths are untested
+are superseded only for the exact build and evidence above.
+
 Current publication addendum: [final handoff and raw evidence](FINAL_HANDOFF_20261030.md).
 
 ### Current consolidation evidence — 2026-10-30
@@ -159,3 +188,27 @@ a live browser check. Do not work around this with `no-cors`, disabled TLS verif
 Options, in order of preference (SPEC section 9): (a) remove that host from `src/core/net/allowlist.ts` (the CSP is generated from
 it) and use only hosts that allow CORS, provided at least two calendars and two explorers remain; (b) ship a CLI for stamping and keep
 the browser for hashing and verification; (c) an optional relay, which adds a trusted party and needs its own ADR.
+
+## Continuation: receipt-bound pending probes — 2026-11-05
+
+The earlier random-commitment probe queried its submitted root directly. A calendar may append/hash that root before
+placing a pending attestation on another node, so that lookup could be an unknown-root404 rather than the pending path
+actually named by the returned receipt. Existing historical observations are preserved, but do not substitute for this
+corrected receipt-bound test. Confirmed-upgrade evidence used actual receipts and is unaffected.
+
+The corrected `scripts/browser-network-check.mjs` validates/replays the POST proof and follows each pending node's
+commitment, constrained to existing application calendar origins. Its bounded shared transport and parser have seven
+regressions passing on Chromium, Firefox and WebKit. Malformed proofs, unapproved origins, redirects, oversized replies,
+timeouts and unverified Bitcoin metadata cannot produce a successful verification claim.
+
+[Exact live results and source/licensing research](evidence/cors-continuation-20261105.md) show that canonical calendars,
+reference-client pool aliases and alternate Accept headers still fail pending-response browser reads. Pool POST proofs
+name the canonical calendars; substituting a pool origin was research-only and did not qualify. Catallaxy POST lacked
+readable CORS too. App CSP/allowlist are unchanged, and no candidate was promoted.
+
+The public upstream nginx example lacks `always` on its ACAO header, and nginx documents that ordinary `add_header`
+omits404. This matches the observed mechanism; deployed private configuration was not inspected. Operators must make
+appropriate CORS headers available on pending/error replies before that response becomes readable to this client-only
+application. A source-derived trailing slash produced400, not a compatible alternate protocol route. No proxy, policy
+bypass or operator communication was introduced. Pending/unreadable UI behavior and original receipt preservation remain
+conservative; an outage is never promoted to Bitcoin confirmation.

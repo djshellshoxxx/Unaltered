@@ -1,0 +1,65 @@
+{
+  "sourceCommit": "04a9c1fec6f3ba75b77fb457a256dfaa86db364c",
+  "targetSha256": "7bc06e18d0bde4909dc2b088e6dacfedc476617b25fe2103c608ca0ad901d4ae",
+  "node": "v22.23.4",
+  "v8": "12.4.254.21-node.57",
+  "options": {
+    "iterations": 1000000,
+    "seconds": 1800,
+    "seed": 20261105,
+    "out": "scratch/fuzz"
+  },
+  "limits": {
+    "maxInputBytes": 65536,
+    "maxCorpusPerTarget": 256,
+    "caseDeadlineMs": 1000,
+    "workerOldHeapMiB": 128
+  },
+  "status": "budget-complete",
+  "executed": 1000036,
+  "mutations": 1000000,
+  "targets": {
+    "proof": {
+      "accepted": 2711,
+      "rejected": 163968,
+      "ranges": 159,
+      "corpus": 33
+    },
+    "timestamp": {
+      "accepted": 3701,
+      "rejected": 162976,
+      "ranges": 161,
+      "corpus": 31
+    },
+    "jpeg": {
+      "accepted": 1170,
+      "rejected": 165500,
+      "ranges": 183,
+      "corpus": 57
+    },
+    "png": {
+      "accepted": 2844,
+      "rejected": 163826,
+      "ranges": 72,
+      "corpus": 16
+    },
+    "wav": {
+      "accepted": 2891,
+      "rejected": 163779,
+      "ranges": 66,
+      "corpus": 19
+    },
+    "mp3": {
+      "accepted": 4471,
+      "rejected": 162199,
+      "ranges": 66,
+      "corpus": 14
+    }
+  },
+  "output": "scratch/fuzz/(local campaign directory, not committed)",
+  "seedExecutions": 36,
+  "retainedSeeds": 32,
+  "elapsedMs": 1152584,
+  "stopReason": "iterations",
+  "note": "Second seeded bounded campaign on the 2026-11-04 candidate after the final-review WAV/APE cleaner changes (source 04a9c1f). Six targets, no finding, stopped on the iteration budget. Shared 4-vCPU executor with other agents active. A clean bounded run is not exhaustive coverage or an independent audit."
+}

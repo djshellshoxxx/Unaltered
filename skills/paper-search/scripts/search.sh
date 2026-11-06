@@ -11,6 +11,16 @@ SORT_KEY="${3:-relevance}"
 PAGE="${4:-1}"
 MAILTO="paper-search@example.com"
 
+# LIMIT and PAGE reach $(( )) below, where bash would evaluate a value such as
+# NAME[$(cmd)] (running cmd) or read 010 as octal; accept plain positive
+# decimal integers only, before anything is computed or requested.
+for ARG_NAME in LIMIT PAGE; do
+  if [[ ! "${!ARG_NAME}" =~ ^[1-9][0-9]{0,8}$ ]]; then
+    echo "Error: $ARG_NAME must be a positive integer (got '${!ARG_NAME}')" >&2
+    exit 1
+  fi
+done
+
 case "$SORT_KEY" in
   relevance) SORT="relevance_score:desc" ;;
   cites)     SORT="cited_by_count:desc" ;;
@@ -19,8 +29,10 @@ case "$SORT_KEY" in
 esac
 
 ENCODED=$(jq -rn --arg q "$QUERY" '$q | @uri')
+# Encode custom sort expressions as data, not additional OpenAlex query parameters.
+ENCODED_SORT=$(jq -rn --arg sort "$SORT" '$sort | @uri')
 
-URL="https://api.openalex.org/works?search=${ENCODED}&per_page=${LIMIT}&page=${PAGE}&sort=${SORT}&mailto=${MAILTO}"
+URL="https://api.openalex.org/works?search=${ENCODED}&per_page=${LIMIT}&page=${PAGE}&sort=${ENCODED_SORT}&mailto=${MAILTO}"
 
 OFFSET=$(( (PAGE - 1) * LIMIT ))
 

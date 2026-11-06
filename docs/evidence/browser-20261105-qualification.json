@@ -1,0 +1,571 @@
+{
+  "recordedAtUtc": "2026-11-05T21:19:11.147226+00:00",
+  "status": "COMPLETE for assigned local automated browser gates. Earlier failed attempts remain recorded; production, hosted CI and human release gates are separate.",
+  "environment": {
+    "os": "Ubuntu 24.04.5 LTS x86_64",
+    "node": "24.22.2",
+    "playwright": "1.64.1",
+    "chromium": "156.0.8078.4",
+    "firefox": "157.0",
+    "webkit": "27.2"
+  },
+  "integratedSourceCommit": "52da9e7f3f8b9fcf5ffe975f282c4b07ff4b5241",
+  "sourceCommitsPorted": [
+    "f835e79",
+    "9dc775c",
+    "bae1e79",
+    "752ba8d"
+  ],
+  "buildCode": "85f5bc962b80d2c4",
+  "artifacts": {
+    "dist/web/main.js": "8e683ae47bae2c2470fc02112bee9e61b4827cb54538f85ad438457b2f884807",
+    "dist/unaltered-0.3.1.html": "ae92f1338288f30720e457dbceaef95af45cb95996a61b004b488ad5e4b2dfe4"
+  },
+  "completedAttempts": [
+    {
+      "log": "chromium.log",
+      "buildCode": "0632a93e305a31b8",
+      "passed": 80,
+      "failed": 2,
+      "skipped": 1,
+      "notes": [
+        "Initial concurrent setup run; responsiveness maximum gap 107.7 ms exceeded unchanged 50 ms.",
+        "Pages collector misclassified same-origin blob worker URLs as HTTP asset paths; fixed in be9b2c1."
+      ],
+      "logSha256": "0741e8f08c8915c5368f0a3c2109b4cb752121c018661575d7491c252fd52f07",
+      "retries": 0
+    },
+    {
+      "log": "chromium-focused.log",
+      "buildCode": "0632a93e305a31b8",
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "notes": [
+        "Isolated unchanged 50 ms responsiveness and corrected Pages smoke."
+      ],
+      "logSha256": "81432f23fc838548d58ade78304eb6f5f23094fa313e3aba29c4de8811c156b9",
+      "retries": 0
+    },
+    {
+      "log": "firefox-responsiveness.log",
+      "buildCode": "0632a93e305a31b8",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "notes": [
+        "Isolated unchanged 50 ms responsiveness."
+      ],
+      "logSha256": "9052f06997ec45fd6085818c8a084a7295f933c441adf7040aace839e506658e",
+      "retries": 0
+    },
+    {
+      "log": "webkit-responsiveness.log",
+      "buildCode": "0632a93e305a31b8",
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "notes": [
+        "Initial isolated responsiveness maximum gap 103 ms exceeded unchanged 50 ms."
+      ],
+      "logSha256": "f810ce01ad256078e76165c1841c4793426cd263857f73d269b4cfb01301a1a0",
+      "retries": 0
+    },
+    {
+      "log": "webkit-responsiveness-integrated.log",
+      "buildCode": "85f5bc962b80d2c4",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "notes": [
+        "Isolated unchanged 50 ms responsiveness after integrated worker initialization changes."
+      ],
+      "logSha256": "7af9346a54acc4a70c663ea46a6502261613d296f610434a24900b4e7b47d1f8",
+      "retries": 0
+    },
+    {
+      "log": "firefox.log",
+      "buildCode": "85f5bc962b80d2c4",
+      "passed": 81,
+      "failed": 0,
+      "skipped": 1,
+      "notes": [
+        "Every normal case except timing benchmark; that benchmark was executed separately on the earlier build.",
+        "One optional 2 GiB skip; actual large-file acceptance remains pending."
+      ],
+      "logSha256": "25f4322e6aea51ad14db426cbced372f360fb048342af28e4e52081eb69601bc",
+      "retries": 0
+    },
+    {
+      "log": "webkit.log",
+      "buildCode": "85f5bc962b80d2c4",
+      "passed": 80,
+      "failed": 0,
+      "skipped": 2,
+      "notes": [
+        "All normal cases except separately executed timing benchmark.",
+        "Skips: opt-in 2 GiB and Worker.evaluate CSP probe unsupported by WebKit."
+      ],
+      "logSha256": "cdd4ddee7401afbfa8dc9ba9923bf480f9c5323c148f4d01ee72fafd71b87d7a",
+      "retries": 0
+    },
+    {
+      "log": "chromium-integrated.log",
+      "buildCode": "85f5bc962b80d2c4",
+      "passed": 11,
+      "failed": 0,
+      "skipped": 0,
+      "notes": [
+        "Integrated worker, offline HTML, SRI/CSP, Pages, unchanged 50 ms timing, lifecycle and reflow/media coverage.",
+        "The later chromium-media.log separately requires forced-colors media matching."
+      ],
+      "logSha256": "9400efb4e7f8a5519fc6210367661af6b05a0c57c5b7692f3d7103589066cc24",
+      "retries": 0
+    },
+    {
+      "log": "firefox-integrated-focused.log",
+      "buildCode": "85f5bc962b80d2c4",
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "notes": [
+        "Final-source unchanged 50 ms timing plus new reflow and media cases."
+      ],
+      "logSha256": "0b6f261504e7968bdd8ad5eec785126dbee851fdfe83ceb2522795188601c410",
+      "retries": 0
+    },
+    {
+      "log": "webkit-reflow.log",
+      "buildCode": "85f5bc962b80d2c4",
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "notes": [
+        "New reflow and forced-colors/reduced-motion cases; both media queries matched."
+      ],
+      "logSha256": "8603decba543dfc6451d38c509a857c19d2ae541f120dec997518cb1c6f53bee",
+      "retries": 0
+    },
+    {
+      "log": "chromium-media.log",
+      "buildCode": "85f5bc962b80d2c4",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "notes": [
+        "Both forced-colors:active and prefers-reduced-motion:reduce matched; keyboard and focus outline passed."
+      ],
+      "logSha256": "984cd6d818dce64cf804a404c0368679341b093476fb29dda888914cbddd8f13",
+      "retries": 0
+    },
+    {
+      "log": "chromium-final-full.log",
+      "buildCode": "85f5bc962b80d2c4",
+      "command": "CHROMIUM_PATH=<pinned Chrome156 executable> node node_modules/@playwright/test/cli.js test --retries=0",
+      "passed": 85,
+      "failed": 0,
+      "skipped": 1,
+      "notes": [
+        "Complete final-source invocation, all 86 cases.",
+        "The opt-in memory case was skipped here and separately passed three real-file RSS trials.",
+        "Unchanged 50 ms responsiveness passed in this complete invocation."
+      ],
+      "logSha256": "c9c2292b3f99a80c48a1114e34f0666d3b16e01b64ed7e58000da8bdf20b3ee9",
+      "retries": 0
+    }
+  ],
+  "integratedAliceR1": {
+    "browser": {
+      "checkedAt": "2026-11-05T21:01:31.843Z",
+      "browser": "chromium 156.0.8078.4",
+      "classification": "PASS",
+      "upgrade": {
+        "confirmed": true,
+        "stillPending": false,
+        "receiptError": null,
+        "failedCalendars": [],
+        "unknownCalendars": null,
+        "downloaded": true
+      },
+      "verify": {
+        "state": "VERIFIED",
+        "block": "428648",
+        "upgradedReceiptSha256": "2f61436069b1d0150dec9be136015f83dfc2cfa9f91cd6733aa0baea5af01992"
+      },
+      "csp": [],
+      "requests": [
+        {
+          "host": "alice.btc.calendar.opentimestamps.org",
+          "method": "GET",
+          "kind": "upgrade",
+          "status": 200,
+          "acao": "*"
+        },
+        {
+          "host": "blockstream.info",
+          "method": "GET",
+          "kind": "explorer",
+          "status": 200,
+          "acao": "*"
+        },
+        {
+          "host": "blockstream.info",
+          "method": "GET",
+          "kind": "explorer",
+          "status": 200,
+          "acao": "*"
+        },
+        {
+          "host": "mempool.space",
+          "method": "GET",
+          "kind": "explorer",
+          "status": 200,
+          "acao": "*"
+        },
+        {
+          "host": "mempool.space",
+          "method": "GET",
+          "kind": "explorer",
+          "status": 200,
+          "acao": "*"
+        }
+      ],
+      "note": "Browser evidence only. R1 also requires the independent reference check in docs/R1_ACCEPTANCE.md."
+    },
+    "reference": {
+      "bitcoin": [
+        {
+          "height": 428648,
+          "verifiedTime": 1473227803
+        }
+      ],
+      "digestMatches": true,
+      "headerHash": "000000000000000000ca478eb185560e1f1178746ee05e3d9bc9a31765f6f4a3",
+      "ok": true,
+      "pending": 0
+    },
+    "headerSource": "blockchain.info, independently fetched during earlier R1 run at20:56UTC; same immutable block428648"
+  },
+  "limits": [
+    "Local measurements are separate from hosted native CI and human accessibility/audit/signing gates.",
+    "Fresh-pending CORS failure remains documented in browser-20261105-network.json.",
+    "No benchmark limit, memory limit, deadline, CSP or TLS policy was weakened."
+  ],
+  "newAccessibilityScope": "640/320 CSS-px layout widths model a 1280px window at 200%/400%; actual browser zoom UI, physical display scaling and human assistive-technology review remain separate manual gates.",
+  "staticChecks": {
+    "typecheck": "PASSED",
+    "lint": "PASSED"
+  },
+  "largeFileAcceptance": {
+    "file": "Real descriptor-backed sparse file containing 2,147,483,648 zero bytes; browser File API and real worker, compared with independent Node crypto SHA-256.",
+    "unchangedLimits": {
+      "hashWaitMs": 540000,
+      "testDeadlineMs": 600000,
+      "chromiumExtraRendererRssCeilingBytes": 209715200
+    },
+    "chromium": {
+      "buildCode": "85f5bc962b80d2c4",
+      "command": "UNALTERED_BIG_BROWSER=1 CHROMIUM_PATH=<pinned Chrome156 executable> node node_modules/@playwright/test/cli.js test tests/e2e/memory.spec.ts --repeat-each=3 --retries=0 --max-failures=1 --reporter=json",
+      "stats": {
+        "startTime": "2026-11-05T21:09:16.140Z",
+        "duration": 134571.357,
+        "expected": 3,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "reportSha256": "fdd0ba2ae0504a81fcf3ac5fa505e225048e221413fb46f8e75b06b1b106448f",
+      "attempts": [
+        {
+          "status": "passed",
+          "durationMs": 43565,
+          "retry": 0,
+          "peakExtraRendererRssBytes": 63078400,
+          "workerCompletion": {
+            "starts": [
+              2147483648
+            ],
+            "done": [
+              {
+                "bytes": 2147483648,
+                "hex": "a7c744c13cc101ed66c29f672f92455547889cc586ce6d44fe76ae824958ea51",
+                "cross": "skipped"
+              }
+            ],
+            "failures": []
+          }
+        },
+        {
+          "status": "passed",
+          "durationMs": 45413,
+          "retry": 0,
+          "peakExtraRendererRssBytes": 49258496,
+          "workerCompletion": {
+            "starts": [
+              2147483648
+            ],
+            "done": [
+              {
+                "bytes": 2147483648,
+                "hex": "a7c744c13cc101ed66c29f672f92455547889cc586ce6d44fe76ae824958ea51",
+                "cross": "skipped"
+              }
+            ],
+            "failures": []
+          }
+        },
+        {
+          "status": "passed",
+          "durationMs": 41929,
+          "retry": 0,
+          "peakExtraRendererRssBytes": 46362624,
+          "workerCompletion": {
+            "starts": [
+              2147483648
+            ],
+            "done": [
+              {
+                "bytes": 2147483648,
+                "hex": "a7c744c13cc101ed66c29f672f92455547889cc586ce6d44fe76ae824958ea51",
+                "cross": "skipped"
+              }
+            ],
+            "failures": []
+          }
+        }
+      ]
+    },
+    "firefox": {
+      "status": "PASSED: 3/3 real-file completion attempts; renderer RSS is not measured.",
+      "buildCode": "85f5bc962b80d2c4",
+      "attempts": [
+        {
+          "status": "passed",
+          "durationMs": 53338,
+          "retry": 0,
+          "rendererRssMeasured": false,
+          "annotations": [
+            {
+              "type": "rss-not-measured",
+              "description": "firefox: memory ceiling not evidenced by this run"
+            }
+          ],
+          "workerCompletion": {
+            "starts": [
+              2147483648
+            ],
+            "done": [
+              {
+                "bytes": 2147483648,
+                "hex": "a7c744c13cc101ed66c29f672f92455547889cc586ce6d44fe76ae824958ea51",
+                "cross": "skipped"
+              }
+            ],
+            "failures": []
+          }
+        },
+        {
+          "status": "passed",
+          "durationMs": 72366,
+          "retry": 0,
+          "rendererRssMeasured": false,
+          "annotations": [
+            {
+              "type": "rss-not-measured",
+              "description": "firefox: memory ceiling not evidenced by this run"
+            }
+          ],
+          "workerCompletion": {
+            "starts": [
+              2147483648
+            ],
+            "done": [
+              {
+                "bytes": 2147483648,
+                "hex": "a7c744c13cc101ed66c29f672f92455547889cc586ce6d44fe76ae824958ea51",
+                "cross": "skipped"
+              }
+            ],
+            "failures": []
+          }
+        },
+        {
+          "status": "passed",
+          "durationMs": 67552,
+          "retry": 0,
+          "rendererRssMeasured": false,
+          "annotations": [
+            {
+              "type": "rss-not-measured",
+              "description": "firefox: memory ceiling not evidenced by this run"
+            }
+          ],
+          "workerCompletion": {
+            "starts": [
+              2147483648
+            ],
+            "done": [
+              {
+                "bytes": 2147483648,
+                "hex": "a7c744c13cc101ed66c29f672f92455547889cc586ce6d44fe76ae824958ea51",
+                "cross": "skipped"
+              }
+            ],
+            "failures": []
+          }
+        }
+      ],
+      "rendererRssMeasured": false,
+      "runs": [
+        {
+          "stats": {
+            "startTime": "2026-11-05T21:11:48.309Z",
+            "duration": 55106.373,
+            "expected": 1,
+            "skipped": 0,
+            "unexpected": 0,
+            "flaky": 0
+          },
+          "reportSha256": "cb9bd89c587a6166351c0b94c42e8b854c7790c0523675a87ed97c2d9e262bec"
+        },
+        {
+          "stats": {
+            "startTime": "2026-11-05T21:14:29.834Z",
+            "duration": 144265.556,
+            "expected": 2,
+            "skipped": 0,
+            "unexpected": 0,
+            "flaky": 0
+          },
+          "reportSha256": "595da133cd669795aa97ed6c379b9d9dd956fd77a8233add19ed06058f88ad95"
+        }
+      ],
+      "command": "UNALTERED_BROWSER=firefox UNALTERED_BIG_BROWSER=1 node node_modules/@playwright/test/cli.js test tests/e2e/memory.spec.ts --retries=0 --max-failures=1 --reporter=json; first run 1 attempt, second run --repeat-each=2."
+    },
+    "webkit": {
+      "status": "PASSED: 3/3 real-file completion attempts; renderer RSS is not measured.",
+      "buildCode": "85f5bc962b80d2c4",
+      "stats": {
+        "startTime": "2026-11-05T21:17:14.206Z",
+        "duration": 86049.16900000001,
+        "expected": 3,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "reportSha256": "0a74ccd1bca054a31a6cc188fc4cf8a9c27af727b188485329fd1bc054a7ac22",
+      "attempts": [
+        {
+          "status": "passed",
+          "durationMs": 28196,
+          "retry": 0,
+          "rendererRssMeasured": false,
+          "annotations": [
+            {
+              "type": "rss-not-measured",
+              "description": "webkit: memory ceiling not evidenced by this run"
+            }
+          ],
+          "workerCompletion": {
+            "starts": [
+              2147483648
+            ],
+            "done": [
+              {
+                "bytes": 2147483648,
+                "hex": "a7c744c13cc101ed66c29f672f92455547889cc586ce6d44fe76ae824958ea51",
+                "cross": "skipped"
+              }
+            ],
+            "failures": []
+          }
+        },
+        {
+          "status": "passed",
+          "durationMs": 26626,
+          "retry": 0,
+          "rendererRssMeasured": false,
+          "annotations": [
+            {
+              "type": "rss-not-measured",
+              "description": "webkit: memory ceiling not evidenced by this run"
+            }
+          ],
+          "workerCompletion": {
+            "starts": [
+              2147483648
+            ],
+            "done": [
+              {
+                "bytes": 2147483648,
+                "hex": "a7c744c13cc101ed66c29f672f92455547889cc586ce6d44fe76ae824958ea51",
+                "cross": "skipped"
+              }
+            ],
+            "failures": []
+          }
+        },
+        {
+          "status": "passed",
+          "durationMs": 27552,
+          "retry": 0,
+          "rendererRssMeasured": false,
+          "annotations": [
+            {
+              "type": "rss-not-measured",
+              "description": "webkit: memory ceiling not evidenced by this run"
+            }
+          ],
+          "workerCompletion": {
+            "starts": [
+              2147483648
+            ],
+            "done": [
+              {
+                "bytes": 2147483648,
+                "hex": "a7c744c13cc101ed66c29f672f92455547889cc586ce6d44fe76ae824958ea51",
+                "cross": "skipped"
+              }
+            ],
+            "failures": []
+          }
+        }
+      ],
+      "rendererRssMeasured": false,
+      "command": "UNALTERED_BROWSER=webkit UNALTERED_BIG_BROWSER=1 node node_modules/@playwright/test/cli.js test tests/e2e/memory.spec.ts --repeat-each=3 --retries=0 --max-failures=1 --reporter=json"
+    }
+  },
+  "launchConfiguration": "Chromium uses the repository existing --no-sandbox container launch flag. No CORS, CSP or TLS policy is bypassed.",
+  "coverageSummary": {
+    "chromium": {
+      "regularPassed": 85,
+      "regularSkipped": 1,
+      "method": "One complete final-source invocation, all 86 cases. The ordinary optional-memory skip was qualified separately.",
+      "largeFilePassed": 3,
+      "largeFileAttempts": 3,
+      "rssMeasured": true
+    },
+    "firefox": {
+      "regularPassed": 85,
+      "regularSkipped": 1,
+      "method": "Final-source remainder 81 passes + final-source timing 1 pass + new reflow/media 3 passes; one ordinary optional-memory skip qualified separately.",
+      "largeFilePassed": 3,
+      "largeFileAttempts": 3,
+      "rssMeasured": false
+    },
+    "webkit": {
+      "regularPassed": 84,
+      "regularSkipped": 2,
+      "method": "Final-source remainder 80 passes + isolated timing 1 pass + new reflow/media 3 passes. Skips: optional-memory (qualified separately), Worker.evaluate probe unsupported.",
+      "largeFilePassed": 3,
+      "largeFileAttempts": 3,
+      "rssMeasured": false
+    }
+  },
+  "remainingBrowserLimits": [
+    "WebKit Playwright Worker.evaluate does not support the active worker CSP-injection probe; ordinary page CSP/SRI, actual worker completion, offline and Trusted Types capability tests passed.",
+    "Viewport equivalence and emulated media do not certify actual browser zoom UI, operating-system high contrast, screen-reader use or WCAG compliance.",
+    "Live random-commitment and confirmed Alice checks in these files used Chromium; Bob/Finney evidence is in the protocol workstream. Fresh pending404 responses still omit ACAO.",
+    "These measurements do not establish native Windows/macOS acceptance or an independent human review."
+  ]
+}
