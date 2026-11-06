@@ -1,0 +1,596 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-11-06T00:52:15.839814+00:00",
+  "scope": "Read-only exact-source native CI qualification plus one authorized ordinary CI workflow dispatch attempt; no build or browser rerun.",
+  "qualification": {
+    "targetPr": 51,
+    "targetHeadSha": "759335a36f77cdbabab62e95cd013fb6eaf5e441",
+    "targetHeadNativeCiQualified": false,
+    "reason": "The target run has 12 queued jobs, one event-skipped large-file job and no artifacts. The successful macOS job belongs to a different application and build source.",
+    "windowsQualified": false,
+    "macosQualified": false,
+    "crossPlatformByteIdentityQualified": false,
+    "humanApprovalClaimed": false
+  },
+  "targetRun": {
+    "id": 42131913589,
+    "html_url": "https://github.com/djshellshoxxx/Unaltered/actions/runs/42131913589",
+    "head_sha": "759335a36f77cdbabab62e95cd013fb6eaf5e441",
+    "head_branch": "codex/recover-qualify-20261104",
+    "event": "pull_request",
+    "status": "queued",
+    "conclusion": null,
+    "created_at": "2026-11-05T23:46:18Z",
+    "updated_at": "2026-11-05T23:46:20Z",
+    "run_attempt": 1,
+    "pullRequestUrl": "https://github.com/djshellshoxxx/Unaltered/pull/51",
+    "prMergeShaAtObservation": "0d5d665943e3a1d5d4eb6a4bbf457366b2365c6a",
+    "executedCheckoutSha": null,
+    "checkoutObservation": "Merge SHA is PR metadata only. No completed checkout log establishes execution for this run.",
+    "jobs": [
+      {
+        "id": 127610370037,
+        "name": "Typecheck, lint, unit tests, reproducible build (Linux)",
+        "status": "queued",
+        "conclusion": null,
+        "started_at": "2026-11-05T23:46:20Z",
+        "completed_at": null,
+        "runner_id": 0,
+        "runner_name": "",
+        "html_url": "https://github.com/djshellshoxxx/Unaltered/actions/runs/42131913589/job/127610370037"
+      },
+      {
+        "id": 127610370272,
+        "name": "End-to-end (firefox, CSP and accessibility)",
+        "status": "queued",
+        "conclusion": null,
+        "started_at": "2026-11-05T23:46:20Z",
+        "completed_at": null,
+        "runner_id": 0,
+        "runner_name": "",
+        "html_url": "https://github.com/djshellshoxxx/Unaltered/actions/runs/42131913589/job/127610370272"
+      },
+      {
+        "id": 127610370278,
+        "name": "Secret scan (verified Gitleaks release)",
+        "status": "queued",
+        "conclusion": null,
+        "started_at": "2026-11-05T23:46:20Z",
+        "completed_at": null,
+        "runner_id": 0,
+        "runner_name": "",
+        "html_url": "https://github.com/djshellshoxxx/Unaltered/actions/runs/42131913589/job/127610370278"
+      },
+      {
+        "id": 127610370312,
+        "name": "Browser 2 GiB memory acceptance (Chromium)",
+        "status": "queued",
+        "conclusion": null,
+        "started_at": "2026-11-05T23:46:20Z",
+        "completed_at": null,
+        "runner_id": 0,
+        "runner_name": "",
+        "html_url": "https://github.com/djshellshoxxx/Unaltered/actions/runs/42131913589/job/127610370312"
+      },
+      {
+        "id": 127610370363,
+        "name": "macOS build, tests, and package checksums",
+        "status": "queued",
+        "conclusion": null,
+        "started_at": "2026-11-05T23:46:20Z",
+        "completed_at": null,
+        "runner_id": 0,
+        "runner_name": "",
+        "html_url": "https://github.com/djshellshoxxx/Unaltered/actions/runs/42131913589/job/127610370363"
+      },
+      {
+        "id": 127610370375,
+        "name": "Windows build and tests",
+        "status": "queued",
+        "conclusion": null,
+        "started_at": "2026-11-05T23:46:20Z",
+        "completed_at": null,
+        "runner_id": 0,
+        "runner_name": "",
+        "html_url": "https://github.com/djshellshoxxx/Unaltered/actions/runs/42131913589/job/127610370375"
+      },
+      {
+        "id": 127610370385,
+        "name": "End-to-end (chromium, CSP and accessibility)",
+        "status": "queued",
+        "conclusion": null,
+        "started_at": "2026-11-05T23:46:20Z",
+        "completed_at": null,
+        "runner_id": 0,
+        "runner_name": "",
+        "html_url": "https://github.com/djshellshoxxx/Unaltered/actions/runs/42131913589/job/127610370385"
+      },
+      {
+        "id": 127610370442,
+        "name": "Live check of calendars and explorers (CORS and API shape, informational)",
+        "status": "queued",
+        "conclusion": null,
+        "started_at": "2026-11-05T23:46:20Z",
+        "completed_at": null,
+        "runner_id": 0,
+        "runner_name": "",
+        "html_url": "https://github.com/djshellshoxxx/Unaltered/actions/runs/42131913589/job/127610370442"
+      },
+      {
+        "id": 127610370487,
+        "name": "Identity and metadata leak check",
+        "status": "queued",
+        "conclusion": null,
+        "started_at": "2026-11-05T23:46:20Z",
+        "completed_at": null,
+        "runner_id": 0,
+        "runner_name": "",
+        "html_url": "https://github.com/djshellshoxxx/Unaltered/actions/runs/42131913589/job/127610370487"
+      },
+      {
+        "id": 127610370528,
+        "name": "R1 confirmed upgrade in the browser plus reference verification (informational)",
+        "status": "queued",
+        "conclusion": null,
+        "started_at": "2026-11-05T23:46:20Z",
+        "completed_at": null,
+        "runner_id": 0,
+        "runner_name": "",
+        "html_url": "https://github.com/djshellshoxxx/Unaltered/actions/runs/42131913589/job/127610370528"
+      },
+      {
+        "id": 127610370554,
+        "name": "Differential tests against the reference OpenTimestamps client",
+        "status": "queued",
+        "conclusion": null,
+        "started_at": "2026-11-05T23:46:20Z",
+        "completed_at": null,
+        "runner_id": 0,
+        "runner_name": "",
+        "html_url": "https://github.com/djshellshoxxx/Unaltered/actions/runs/42131913589/job/127610370554"
+      },
+      {
+        "id": 127610370557,
+        "name": "End-to-end (webkit, CSP and accessibility)",
+        "status": "queued",
+        "conclusion": null,
+        "started_at": "2026-11-05T23:46:20Z",
+        "completed_at": null,
+        "runner_id": 0,
+        "runner_name": "",
+        "html_url": "https://github.com/djshellshoxxx/Unaltered/actions/runs/42131913589/job/127610370557"
+      },
+      {
+        "id": 127610372016,
+        "name": "Browser 2 GiB completion (${{ matrix.browser }})",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-11-05T23:46:20Z",
+        "completed_at": "2026-11-05T23:46:20Z",
+        "runner_id": null,
+        "runner_name": null,
+        "html_url": "https://github.com/djshellshoxxx/Unaltered/actions/runs/42131913589/job/127610372016"
+      }
+    ],
+    "jobStatusCounts": {
+      "queued": 12,
+      "completed": 1
+    },
+    "artifactCount": 0,
+    "crossPlatformComparison": "Not reported as completed; requires Linux, Windows and macOS build jobs."
+  },
+  "observedMacosSuccess": {
+    "pr": 52,
+    "pullRequestUrl": "https://github.com/djshellshoxxx/Unaltered/pull/52",
+    "runId": 42126700941,
+    "runUrl": "https://github.com/djshellshoxxx/Unaltered/actions/runs/42126700941",
+    "runOverallStatus": "queued",
+    "headSha": "269118949894b137b6a8ad855780da296955e7de",
+    "baseSha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+    "job": {
+      "id": 127592615006,
+      "html_url": "https://github.com/djshellshoxxx/Unaltered/actions/runs/42126700941/job/127592615006",
+      "head_sha": "269118949894b137b6a8ad855780da296955e7de",
+      "name": "macOS build, tests, and package checksums",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-11-05T23:58:09Z",
+      "completed_at": "2026-11-05T23:59:01Z",
+      "labels": [
+        "macos-latest"
+      ]
+    },
+    "executedCheckoutSha": "118d0f34a0bf84ff9859abd4b0ec92fea3e9a553",
+    "checkoutProvenBy": "Completed checkout step git log -1 --format=%H in the downloaded job log. Git merge parents match main and PR52 head.",
+    "runner": {
+      "image": "macos-26-arm64",
+      "osVersion": "26.6.2",
+      "nodeVersion": "22.23.4"
+    },
+    "unitTests": {
+      "filesPassed": 12,
+      "passed": 181,
+      "skipped": 6
+    },
+    "buildCode": "ca54eba4ebeceba0",
+    "scopeLimit": "Typecheck, lint, npm test, build and outer artifact checksums on this merge only. Does not establish Windows execution, browser execution, launchers, or cross-platform byte equality.",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1,
+        "started_at": "2026-11-05T23:58:10Z",
+        "completed_at": "2026-11-05T23:58:10Z"
+      },
+      {
+        "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2,
+        "started_at": "2026-11-05T23:58:10Z",
+        "completed_at": "2026-11-05T23:58:13Z"
+      },
+      {
+        "name": "Run actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3,
+        "started_at": "2026-11-05T23:58:13Z",
+        "completed_at": "2026-11-05T23:58:15Z"
+      },
+      {
+        "name": "Run npm ci --ignore-scripts",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4,
+        "started_at": "2026-11-05T23:58:15Z",
+        "completed_at": "2026-11-05T23:58:45Z"
+      },
+      {
+        "name": "Run npm run typecheck",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5,
+        "started_at": "2026-11-05T23:58:45Z",
+        "completed_at": "2026-11-05T23:58:48Z"
+      },
+      {
+        "name": "Run npm run lint",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 6,
+        "started_at": "2026-11-05T23:58:48Z",
+        "completed_at": "2026-11-05T23:58:50Z"
+      },
+      {
+        "name": "Run npm run test",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 7,
+        "started_at": "2026-11-05T23:58:50Z",
+        "completed_at": "2026-11-05T23:58:56Z"
+      },
+      {
+        "name": "Run npm run build",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 8,
+        "started_at": "2026-11-05T23:58:56Z",
+        "completed_at": "2026-11-05T23:58:56Z"
+      },
+      {
+        "name": "Verify artefacts and retain macOS checksums",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 9,
+        "started_at": "2026-11-05T23:58:56Z",
+        "completed_at": "2026-11-05T23:58:56Z"
+      },
+      {
+        "name": "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 10,
+        "started_at": "2026-11-05T23:58:56Z",
+        "completed_at": "2026-11-05T23:58:58Z"
+      },
+      {
+        "name": "Post Run actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 19,
+        "started_at": "2026-11-05T23:58:58Z",
+        "completed_at": "2026-11-05T23:58:58Z"
+      },
+      {
+        "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 20,
+        "started_at": "2026-11-05T23:58:58Z",
+        "completed_at": "2026-11-05T23:58:58Z"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 21,
+        "started_at": "2026-11-05T23:58:58Z",
+        "completed_at": "2026-11-05T23:58:59Z"
+      }
+    ]
+  },
+  "downloadedEvidence": {
+    "log": {
+      "apiUrl": "https://api.github.com/repos/djshellshoxxx/Unaltered/actions/jobs/127592615006/logs",
+      "httpStatus": 200,
+      "rawSizeBytes": 29725,
+      "rawSha256": "8b2115168fc492b1d98e2d56f303527734d2918460bd1b17544fece6a8cfa5ed",
+      "excerpts": [
+        "2026-11-05T23:58:10.0622860Z 26.6.2",
+        "2026-11-05T23:58:10.0624190Z Image: macos-26-arm64",
+        "2026-11-05T23:58:11.7397470Z [command]/opt/homebrew/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +118d0f34a0bf84ff9859abd4b0ec92fea3e9a553:refs/remotes/pull/52/merge",
+        "2026-11-05T23:58:12.5071680Z  * [new ref]         118d0f34a0bf84ff9859abd4b0ec92fea3e9a553 -> pull/52/merge",
+        "2026-11-05T23:58:12.6271460Z HEAD is now at 118d0f3 Merge 269118949894b137b6a8ad855780da296955e7de into 1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+        "2026-11-05T23:58:12.6978460Z [command]/opt/homebrew/bin/git log -1 --format=%H",
+        "2026-11-05T23:58:12.7079050Z 118d0f34a0bf84ff9859abd4b0ec92fea3e9a553",
+        "2026-11-05T23:58:13.6710350Z node: v22.23.4",
+        "2026-11-05T23:58:56.3449690Z  Test Files  12 passed (12)",
+        "2026-11-05T23:58:56.3450690Z       Tests  181 passed | 6 skipped (187)",
+        "2026-11-05T23:58:56.8878280Z built unaltered-0.3.1 (build ca54eba4ebeceba0); gzip 37.5 KiB; single-file 111 KiB",
+        "2026-11-05T23:58:56.8966480Z shasum -a 256 -c SHA256SUMS",
+        "2026-11-05T23:58:56.9659330Z unaltered-cli-0.3.1.mjs: OK",
+        "2026-11-05T23:58:56.9667380Z unaltered-0.3.1.zip: OK",
+        "2026-11-05T23:58:56.9676260Z unaltered-0.3.1-macos.zip: OK",
+        "2026-11-05T23:58:56.9679460Z unaltered-0.3.1-linux.tar.gz: OK",
+        "2026-11-05T23:58:56.9683500Z unaltered-0.3.1.html: OK",
+        "2026-11-05T23:58:57.7745810Z SHA256 digest of uploaded artifact is fcd98cb649d8b53408f7a84cfd8d14f27ac9e2fad905c07b0e9cd75dd8d80dd7"
+      ],
+      "availability": "Downloaded successfully. Original log is hosted by GitHub and retained in the session temporary evidence directory; only factual excerpts are committed."
+    },
+    "artifact": {
+      "id": 13463039805,
+      "name": "unaltered-macos-build",
+      "size_in_bytes": 307104,
+      "digest": "sha256:fcd98cb649d8b53408f7a84cfd8d14f27ac9e2fad905c07b0e9cd75dd8d80dd7",
+      "created_at": "2026-11-05T23:58:58Z",
+      "expires_at": "2027-02-03T23:04:13Z",
+      "archive_download_url": "https://api.github.com/repos/djshellshoxxx/Unaltered/actions/artifacts/13463039805/zip",
+      "workflow_run": {
+        "id": 42126700941,
+        "repository_id": 1411644469,
+        "head_repository_id": 1411644469,
+        "head_branch": "codex/automation-scope-guards-20261104",
+        "head_sha": "269118949894b137b6a8ad855780da296955e7de"
+      },
+      "httpStatus": 200,
+      "downloadSha256": "fcd98cb649d8b53408f7a84cfd8d14f27ac9e2fad905c07b0e9cd75dd8d80dd7",
+      "apiDigestMatchesDownloadedZip": true,
+      "zipCrcsValid": true,
+      "files": [
+        {
+          "path": "dist/SHA256SUMS",
+          "sizeBytes": 450,
+          "sha256": "de50f814fd2b4dde6c4771c9548e4196877a14eafea75e7d4b49fed340ea5bf7"
+        },
+        {
+          "path": "dist/unaltered-0.3.1-macos.zip",
+          "sizeBytes": 255045,
+          "sha256": "c8ddf6c2e5425d66d68fcb845286a640a4910f2ca1a4f0ef9ccdc04990df59ad"
+        },
+        {
+          "path": "dist/unaltered-0.3.1-linux.tar.gz",
+          "sizeBytes": 85941,
+          "sha256": "e7e704e78cb3158b6e56956f0ecbcd6ce1296e7d8a6285e29908a10da49c34f3"
+        },
+        {
+          "path": "dist/unaltered-0.3.1.html",
+          "sizeBytes": 114151,
+          "sha256": "ff71683c47344706616184065c4f05766b959735c7a3667cca133c5138f1ef2c"
+        },
+        {
+          "path": "dist/unaltered-0.3.1.zip",
+          "sizeBytes": 255575,
+          "sha256": "a2e92eb6d517024f73bfe0b2a2463461a43414c1fd17e75fd030e8f064a9d8e9"
+        },
+        {
+          "path": "dist/unaltered-cli-0.3.1.mjs",
+          "sizeBytes": 21672,
+          "sha256": "09b0fe89685ef168dbcad648817d792c14b5b9fd394cbec362a99e8135ebd0a5"
+        },
+        {
+          "path": "macos-SHA256SUMS",
+          "sizeBytes": 450,
+          "sha256": "de50f814fd2b4dde6c4771c9548e4196877a14eafea75e7d4b49fed340ea5bf7"
+        }
+      ],
+      "outerChecksumResults": [
+        {
+          "path": "dist/unaltered-cli-0.3.1.mjs",
+          "sha256": "09b0fe89685ef168dbcad648817d792c14b5b9fd394cbec362a99e8135ebd0a5",
+          "matchesManifest": true
+        },
+        {
+          "path": "dist/unaltered-0.3.1.zip",
+          "sha256": "a2e92eb6d517024f73bfe0b2a2463461a43414c1fd17e75fd030e8f064a9d8e9",
+          "matchesManifest": true
+        },
+        {
+          "path": "dist/unaltered-0.3.1-macos.zip",
+          "sha256": "c8ddf6c2e5425d66d68fcb845286a640a4910f2ca1a4f0ef9ccdc04990df59ad",
+          "matchesManifest": true
+        },
+        {
+          "path": "dist/unaltered-0.3.1-linux.tar.gz",
+          "sha256": "e7e704e78cb3158b6e56956f0ecbcd6ce1296e7d8a6285e29908a10da49c34f3",
+          "matchesManifest": true
+        },
+        {
+          "path": "dist/unaltered-0.3.1.html",
+          "sha256": "ff71683c47344706616184065c4f05766b959735c7a3667cca133c5138f1ef2c",
+          "matchesManifest": true
+        }
+      ],
+      "macosManifestEqualsDistManifest": true,
+      "availability": "Downloaded successfully without executing artifact contents. Binary archive is not committed."
+    }
+  },
+  "sourceIdentityComparison": {
+    "objects": {
+      "src": {
+        "pr52Head": "41876ff15d87637e11c0c736d818772afe78fe31",
+        "pr52CheckedOutMerge": "41876ff15d87637e11c0c736d818772afe78fe31",
+        "pr51Head": "a0cc1c55b3b06a5d1779ef33c206a5c62b2624d4",
+        "pr52HeadMatchesCheckedOutMerge": true,
+        "pr51MatchesQualifiedMerge": false
+      },
+      "tests": {
+        "pr52Head": "32a1ba5239d17ffc3bf1abbe6ed673c385884c43",
+        "pr52CheckedOutMerge": "32a1ba5239d17ffc3bf1abbe6ed673c385884c43",
+        "pr51Head": "c857104ea9568c71b8525069a7c41b836a8a501f",
+        "pr52HeadMatchesCheckedOutMerge": true,
+        "pr51MatchesQualifiedMerge": false
+      },
+      "scripts/build.mjs": {
+        "pr52Head": "032a1e2ae209157038be494f000153f2b3817765",
+        "pr52CheckedOutMerge": "032a1e2ae209157038be494f000153f2b3817765",
+        "pr51Head": "64c948abe46784b00a25619a9ddad892510ca01e",
+        "pr52HeadMatchesCheckedOutMerge": true,
+        "pr51MatchesQualifiedMerge": false
+      },
+      "scripts/lib/archive.mjs": {
+        "pr52Head": "681a3441cfd6c7285223cfa648a606e5b550907e",
+        "pr52CheckedOutMerge": "681a3441cfd6c7285223cfa648a606e5b550907e",
+        "pr51Head": "681a3441cfd6c7285223cfa648a606e5b550907e",
+        "pr52HeadMatchesCheckedOutMerge": true,
+        "pr51MatchesQualifiedMerge": true
+      },
+      "package.json": {
+        "pr52Head": "a1eb4c895d9e3128dc3b64b1af3b0f8ed3fc2f9b",
+        "pr52CheckedOutMerge": "a1eb4c895d9e3128dc3b64b1af3b0f8ed3fc2f9b",
+        "pr51Head": "c8552ced797c38b266ff72d12e48dca0829c02ab",
+        "pr52HeadMatchesCheckedOutMerge": true,
+        "pr51MatchesQualifiedMerge": false
+      },
+      "package-lock.json": {
+        "pr52Head": "fe84aff726e711dfbe8a02ea590946707dd4a2f1",
+        "pr52CheckedOutMerge": "fe84aff726e711dfbe8a02ea590946707dd4a2f1",
+        "pr51Head": "fe84aff726e711dfbe8a02ea590946707dd4a2f1",
+        "pr52HeadMatchesCheckedOutMerge": true,
+        "pr51MatchesQualifiedMerge": true
+      },
+      ".github/workflows/ci.yml": {
+        "pr52Head": "1bee77671af4fcb07af5e2d68395b3fffc859911",
+        "pr52CheckedOutMerge": "1bee77671af4fcb07af5e2d68395b3fffc859911",
+        "pr51Head": "d6f637d86c26f3dbc354293c3d6b54103b6fe4e2",
+        "pr52HeadMatchesCheckedOutMerge": true,
+        "pr51MatchesQualifiedMerge": false
+      },
+      "src/index.html": {
+        "pr52Head": "105b71c009cbc1dca76616961a7b69cbf3a9128e",
+        "pr52CheckedOutMerge": "105b71c009cbc1dca76616961a7b69cbf3a9128e",
+        "pr51Head": "105b71c009cbc1dca76616961a7b69cbf3a9128e",
+        "pr52HeadMatchesCheckedOutMerge": true,
+        "pr51MatchesQualifiedMerge": true
+      },
+      "src/styles.css": {
+        "pr52Head": "a985fb8dda9b0ade4268aaac9062c38753d1333a",
+        "pr52CheckedOutMerge": "a985fb8dda9b0ade4268aaac9062c38753d1333a",
+        "pr51Head": "a985fb8dda9b0ade4268aaac9062c38753d1333a",
+        "pr52HeadMatchesCheckedOutMerge": true,
+        "pr51MatchesQualifiedMerge": true
+      }
+    },
+    "changedApplicationFiles": [
+      "src/cli/main.ts",
+      "src/cli/run.ts",
+      "src/core/hash/hasher.ts",
+      "src/core/hash/hasher.worker.ts",
+      "src/core/hash/stream.ts",
+      "src/core/net/fetch.ts",
+      "src/core/ots/bitcoin.ts",
+      "src/core/ots/calendar.ts",
+      "src/core/ots/codec.ts",
+      "src/core/ots/index.ts",
+      "src/core/ots/ops.ts",
+      "src/core/ots/trusted-header.ts",
+      "src/core/ots/verify.ts",
+      "src/core/strip/audio.ts",
+      "src/core/strip/detect.ts",
+      "src/core/strip/jpeg.ts",
+      "src/core/strip/png.ts",
+      "src/main.ts",
+      "src/ui/dom.ts",
+      "src/ui/download.ts",
+      "src/ui/router.ts",
+      "src/ui/store.ts",
+      "src/ui/strings.ts",
+      "src/ui/views/about.ts",
+      "src/ui/views/settings.ts",
+      "src/ui/views/stamp.ts",
+      "src/ui/views/verify.ts"
+    ],
+    "changedApplicationFileCount": 27,
+    "conclusion": "Identical lockfile, HTML/CSS templates and archive helper do not establish identical application, tests, package scripts, builder or workflow. Native macOS qualification cannot transfer from PR52 to PR51."
+  },
+  "dispatchAttempt": {
+    "attemptCount": 1,
+    "workflow": ".github/workflows/ci.yml",
+    "endpoint": "https://api.github.com/repos/djshellshoxxx/Unaltered/actions/workflows/ci.yml/dispatches",
+    "ref": "codex/recover-qualify-20261104",
+    "refHeadShaAtAttempt": "759335a36f77cdbabab62e95cd013fb6eaf5e441",
+    "inputs": {},
+    "inputsInspection": "Main and target branch both declare workflow_dispatch with no inputs or defaults. Target is ordinary CI; no paid cloud, release or deployment workflow was dispatched.",
+    "httpStatus": 403,
+    "responseMessage": "Resource not accessible by integration",
+    "responseHeaders": {
+      "Date": "Fri, 06 Nov 2026 00:51:08 GMT",
+      "X-Accepted-Github-Permissions": "actions=write",
+      "X-Accepted-Oauth-Scopes": "",
+      "X-Github-Api-Version-Selected": "2022-11-28",
+      "X-Github-Request-Id": "F20A:2BE58F:702E42:9F22E8:6AED247C",
+      "X-Oauth-Scopes": ""
+    },
+    "dispatchAccepted": false,
+    "subsequentAttempts": 0
+  },
+  "credentialPresence": {
+    "GITHUB_TOKEN": true,
+    "GH_TOKEN": false,
+    "GITHUB_ACTIONS_TOKEN": false,
+    "GH_ENTERPRISE_TOKEN": false,
+    "GITHUB_ENTERPRISE_TOKEN": false,
+    "ghStoredConfigPresent": false,
+    "ghAuthenticated": true,
+    "credentialValuesRecorded": false,
+    "inspection": "Presence of expected environment credential names and gh auth status only. No settings, token scopes or credential values changed."
+  },
+  "review": {
+    "workflowChanged": false,
+    "confirmedRepositorySideCiDefect": null,
+    "finding": "No repository-side failure was established by the queued target run or the inspected successful job. Runner scheduling and the 403 authorization response remain external execution blockers; their underlying account/settings cause was not inspected.",
+    "verification": [
+      "Downloaded artifact digest equals GitHub API manifest digest.",
+      "All five files named in SHA256SUMS match their downloaded bytes; both manifest copies agree and archive CRCs pass.",
+      "Git object identities compare both PR heads and the executed PR52 merge.",
+      "Existing workflow regression suite: 4 passed under Node 22.23.4; evidence JSON parse and git diff --check passed."
+    ]
+  },
+  "remaining": [
+    "Successful native macOS and Windows jobs for the final integrated PR head and its logged checkout SHA.",
+    "Successful dependent Linux/Windows/macOS checksum comparison for that same run.",
+    "Ordinary workflow dispatch remains unavailable to the current integration (403 requires actions=write).",
+    "Refresh snapshots when the PR head or job state changes; this record is not perpetual approval."
+  ],
+  "localValidation": {
+    "nodeVersion": "22.23.4",
+    "workflowRegressionCommand": "node --test tests/ci/workflows.test.mjs",
+    "workflowRegressionPassed": 4,
+    "workflowRegressionFailed": 0,
+    "workflowRegressionSkipped": 0,
+    "evidenceJsonParses": true,
+    "gitDiffCheckPassed": true,
+    "nativeCiReplacement": false
+  }
+}
