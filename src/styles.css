@@ -129,3 +129,10 @@ footer { padding-top: 1rem; padding-bottom: 2rem; border-top: 1px solid var(--li
   .item-head .button { margin-left: 0; }
 }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+
+/* Three optional, keyboard-accessible essentials on the Stamp landing page. */
+.essential-guides { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr)); gap:.65rem; margin:1rem 0 1.25rem; }
+.essential-guide { min-width:0; border:1px solid var(--line); border-radius:.6rem; padding:.35rem .7rem; }
+.essential-guide summary { cursor:pointer; min-height:44px; display:flex; align-items:center; font-weight:600; }
+.essential-guide ol { padding-left:1.4rem; margin:.4rem 0 .7rem; }
+.essential-guide li { margin:.35rem 0; overflow-wrap:anywhere; }
