@@ -92,6 +92,20 @@ const packages = [
   return { ...p, files };
 });
 
+test('beta landing ships dark branding, accessible process instructions and independent help', () => {
+  const html = text(web.get('index.html'));
+  const css = text(web.get('styles.css'));
+  for (const phrase of ['EXPERIMENTAL BETA', 'Prove it existed. Prove it', 'How it works',
+    'process-flow', 'opentimestamps.org', 'opentimestamps-client', 'petertodd.org',
+    'Standard stamping does', 'Detailed help']) {
+    assert.ok(html.includes(phrase), `missing landing content: ${phrase}`);
+  }
+  assert.match(css, /--bg:\\s*#0d111a/);
+  assert.match(html, /href="#about"/);
+  assert.match(html, /aria-label="Timestamping process"/);
+  assert.doesNotMatch(html, /<script[^>]+src=["']https?:/);
+});
+
 // ---- 1. the hashing worker is covered by SRI and by the page CSP --------------------------------------------------
 
 /** Every script file the site serves must be loaded by a <script> whose SRI hash pins its exact bytes. */
