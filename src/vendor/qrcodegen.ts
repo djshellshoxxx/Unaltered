@@ -1,4 +1,5 @@
 /* Vendored MIT-licensed Project Nayuki QR generator. Original notice below. */
+/* eslint-disable */
 // @ts-nocheck -- upstream namespace implementation predates strict noUncheckedIndexedAccess.
 /* 
  * QR Code generator library (TypeScript)
