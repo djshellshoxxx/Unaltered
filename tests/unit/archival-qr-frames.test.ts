@@ -30,5 +30,9 @@ describe('UNALTERED-OTS-QR/1 transport', () => {
     const invalidCompression = frame!.slice(); invalidCompression[10] = 1;
     await expect(recoverReceiptFrames([invalidCompression])).rejects.toThrow();
     await expect(encodeReceiptFrames(receipt(10), 80)).rejects.toThrow();
+    await expect(encodeReceiptFrames(receipt(10), 2954)).rejects.toThrow();
+    const oversized = new Uint8Array(2954);
+    oversized.set(frame!);
+    await expect(recoverReceiptFrames([oversized])).rejects.toThrow();
   });
 });
