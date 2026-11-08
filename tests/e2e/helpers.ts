@@ -80,7 +80,7 @@ export async function watchViolations(page: Page): Promise<{ list: string[] }> {
   await page.addInitScript(() => {
     (window as unknown as { __csp: string[] }).__csp = [];
     document.addEventListener('securitypolicyviolation', (e) => {
-      const target = e.target instanceof Element ? `${e.target.tagName.toLowerCase()}${e.target.id ? '#' + e.target.id : ''}${e.target.className && typeof e.target.className === 'string' ? '.' + e.target.className.trim().replace(/\\s+/g, '.') : ''}` : 'unknown';
+      const target = e.target instanceof Element ? `${e.target.tagName.toLowerCase()}${e.target.id ? '#' + e.target.id : ''}${e.target.className && typeof e.target.className === 'string' ? '.' + e.target.className.trim().replace(/\s+/g, '.') : ''}` : 'unknown';
       (window as unknown as { __csp: string[] }).__csp.push(`${e.violatedDirective} ${e.blockedURI} target=${target} sample=${e.sample}`);
     });
   });
