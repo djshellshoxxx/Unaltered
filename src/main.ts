@@ -57,6 +57,35 @@ function start(): void {
     document.getElementById('nojs')?.remove();
   }
 
+  // Progressive, dependency-free hints. Controls are recreated during file processing,
+  // so observe added nodes; never overwrite an explicitly authored tooltip.
+  const hints: Record<string, string> = {
+    stamp: 'Fingerprint a local file and request a standard OpenTimestamps receipt.',
+    verify: 'Check an existing receipt against the original file and Bitcoin evidence.',
+    upgrade: 'Ask calendar servers for the Bitcoin proof completing a pending receipt.',
+    clean: 'Optionally remove supported metadata before hashing; this changes the file bytes.',
+    remove: 'Remove this item from the current browser session.',
+    cancel: 'Stop the current operation without creating a completed receipt.',
+    download: 'Save this file locally. Unaltered cannot recover receipts you lose.',
+    copy: 'Copy the displayed fingerprint or verification link.',
+    language: 'Choose the interface language without restarting a running operation.',
+    settings: 'Change local application preferences.',
+  };
+  function annotateControls(): void {
+    for (const control of document.querySelectorAll<HTMLElement>('button, input, select, summary, a')) {
+      if (control.hasAttribute('title')) continue;
+      const label = (control.getAttribute('aria-label') || control.textContent || control.getAttribute('type') || '').trim();
+      const lower = label.toLowerCase();
+      const key = Object.keys(hints).find((word) => lower.includes(word));
+      if (key) control.setAttribute('title', hints[key]!);
+      else if (label && (control.matches('button, summary') || control.matches('input[type="file"]'))) {
+        control.setAttribute('title', label);
+      }
+    }
+  }
+  const hintsObserver = new MutationObserver(() => annotateControls());
+  hintsObserver.observe(document.getElementById('app')!, { childList: true, subtree: true });
+
   function mountAll(): void {
     renderChrome();
     stampView = mountStamp(sections.stamp);
@@ -64,6 +93,7 @@ function start(): void {
     if (pendingPrefill) verifyView.setPrefill(pendingPrefill);
     mountAbout(sections.about);
     mountSettings(sections.settings, onLang);
+    annotateControls();
   }
 
   // Language is presentation state: views that hold the user's files and results re-render in place,
