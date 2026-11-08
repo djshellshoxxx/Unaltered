@@ -73,6 +73,7 @@ test.describe('archival certificate preview (network mocked)', () => {
     const frameBytes = readFileSync((await frameDownload.path())!);
     expect(frameBytes.subarray(0, 8).toString('ascii')).toBe('UOTSQR01');
     expect(frameBytes.length).toBeGreaterThan(80);
+    await expect(page.getByRole('button', { name: /^Save QR image 1\\// })).toBeVisible();
     const canvases = sheet.locator('canvas');
     expect(await canvases.count()).toBeGreaterThan(0);
     const first = canvases.first();
