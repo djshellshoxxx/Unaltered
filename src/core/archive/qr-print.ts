@@ -53,6 +53,7 @@ export function createArchivalPrintSheet(
     canvas.width = side * modulePixels;
     canvas.height = side * modulePixels;
     canvas.setAttribute('aria-label', `QR symbol ${symbol.index + 1} of ${symbol.total}`);
+    canvas.dataset.archivalFrame = String(symbol.index);
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Canvas unavailable');
     ctx.fillStyle = '#fff';
