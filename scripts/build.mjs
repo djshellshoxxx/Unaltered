@@ -255,6 +255,24 @@ const shVerify = (sumCmd, name) => `#!/bin/sh
 # This finds damaged or incomplete copies. It cannot show that the copy is genuine, because a changed copy can come with
 # a matching SHA256SUMS: for that, compare the downloaded archive with the SHA256SUMS published with the release.
 cd "$(dirname "$0")" || exit 1
+# Validate the entire manifest independently: BSD/GNU checksum tools differ in
+# how --strict handles empty manifests and malformed lines.
+if ! awk '
+  length($0) < 67 { exit 1 }
+  {
+    hash = substr($0, 1, 64)
+    separator = substr($0, 65, 2)
+    filename = substr($0, 67)
+    if (hash ~ /[^0-9a-f]/ || separator != "  " ||
+        filename == "" || filename == "." || filename == ".." ||
+        filename ~ /[\\\\\/]/ || seen[filename]++) exit 1
+    count++
+  }
+  END { if (count == 0) exit 1 }
+' SHA256SUMS; then
+  echo "Invalid or empty SHA256SUMS." >&2
+  exit 1
+fi
 if ${sumCmd}; then
   echo "All files match this folder's SHA256SUMS."
   echo "This does not show that the copy is genuine: compare ${name} with the SHA256SUMS published with the release."
