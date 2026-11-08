@@ -17,7 +17,8 @@ describe('UNALTERED-OTS-QR/1 transport', () => {
     const frames = await encodeReceiptFrames(receipt(400), 160);
     await expect(recoverReceiptFrames(frames.slice(1))).rejects.toThrow();
     const tampered = frames.map((frame) => frame.slice());
-    tampered[0]![tampered[0]!.length - 1] ^= 1;
+    const first = tampered[0]!;
+    first[first.length - 1] = first[first.length - 1]! ^ 1;
     await expect(recoverReceiptFrames(tampered)).rejects.toThrow();
     const other = await encodeReceiptFrames(receipt(401), 160);
     await expect(recoverReceiptFrames([frames[0]!, other[1]!])).rejects.toThrow();
