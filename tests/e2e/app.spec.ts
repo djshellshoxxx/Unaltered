@@ -57,6 +57,16 @@ test.describe('browser connectivity notice', () => {
   });
 });
 
+test.describe('batch verification', () => {
+  test('rejects missing matching receipts before verification', async ({ page }) => {
+    await page.goto('/index.html#verify');
+    await page.locator('#batch-files').setInputFiles({ name: 'a.txt', mimeType: 'text/plain', buffer: Buffer.from('a') });
+    await page.locator('#batch-receipts').setInputFiles({ name: 'other.txt.ots', mimeType: 'application/octet-stream', buffer: Buffer.from([1, 2, 3]) });
+    await page.getByRole('button', { name: 'Verify batch' }).click();
+    await expect(page.locator('.batch-results')).toContainText('Missing matching receipt: a.txt.ots');
+  });
+});
+
 test.describe('local evidence bundle', () => {
   test('exports a ZIP with original bytes, receipt and manifest', async ({ page }) => {
     await page.goto('/index.html#verify');
