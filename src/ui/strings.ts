@@ -2,6 +2,9 @@
 // To add a language: copy `en`, translate every value, register it in LANGS. A unit test enforces identical keys.
 
 export const en = {
+  'about.strip.featureTitle': 'Optional local metadata removal',
+  'about.strip.featureBody': 'Before stamping, Unaltered can rewrite supported JPEG, PNG, WAV and MP3 files to remove certain embedded metadata. Processing happens locally. Download and retain the cleaned copy: the receipt fingerprints that cleaned file, not the original.',
+  'about.strip.featureLimits': 'This is not complete anonymization. Visible faces, locations and text, audio content, watermarks, sensor patterns and unsupported metadata may remain. PDF metadata is not stripped. If a format cannot be cleaned safely, the application warns you or rejects the file.',
   'about.sources.title': 'Origins, source code and independent technologies',
   'about.sources.intro': 'Unaltered is an independent client-side interface using the open OpenTimestamps receipt format. OpenTimestamps was created by Peter Todd; Bitcoin was introduced under the name Satoshi Nakamoto. These projects are separate from Unaltered.',
   'about.sources.ots': 'OpenTimestamps protocol and project',
@@ -242,6 +245,9 @@ export type Lang = 'en' | 'es';
 type Table = Record<StringKey, string>;
 
 const es: Table = {
+  'about.strip.featureTitle': 'Eliminación opcional de metadatos locales',
+  'about.strip.featureBody': 'Antes de sellar, Unaltered puede reescribir archivos JPEG, PNG, WAV y MP3 compatibles para eliminar determinados metadatos incrustados. El procesamiento es local. Descarga y conserva la copia limpia: el recibo identifica esa copia, no el archivo original.',
+  'about.strip.featureLimits': 'Esto no garantiza el anonimato. Pueden permanecer caras, lugares y texto visibles, contenido de audio, marcas de agua, patrones del sensor y metadatos no compatibles. No se eliminan metadatos de PDF. Si no es posible limpiar un formato de forma segura, la aplicación advierte o rechaza el archivo.',
   'about.sources.title': 'Orígenes, código fuente y tecnologías independientes',
   'about.sources.intro': 'Unaltered es una interfaz independiente que utiliza el formato abierto de recibos OpenTimestamps. OpenTimestamps fue creado por Peter Todd; Bitcoin se presentó bajo el nombre Satoshi Nakamoto. Son proyectos independientes de Unaltered.',
   'about.sources.ots': 'Protocolo y proyecto OpenTimestamps',
