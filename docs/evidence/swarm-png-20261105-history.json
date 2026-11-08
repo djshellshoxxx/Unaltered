@@ -1,0 +1,16 @@
+{
+  "initialObservation": {
+    "timestamp": "2026-11-05T22:39:46.479Z",
+    "reportedEqual": 24,
+    "total": 24,
+    "status": "INVALIDATED",
+    "reason": "The harness supplied Node Buffers; Buffer.slice aliasing in the first fix prevented actual normalization. This is not valid equivalence evidence."
+  },
+  "bufferFixedObservation": {
+    "artifact": "security-png-decode-bufferfixed-mismatch.json",
+    "equal": 21,
+    "total": 24,
+    "mismatches": "Chromium156 greyscale1/2/4: original opaque, normalized transparent; Firefox/WebKit followed PNG3 masking."
+  },
+  "resultingPolicy": "Reject nonzero decoder-ignored tRNS bits in greyscale1/2/4 as unsupported; preserve canonical low-depth samples. Normalize greyscale8/truecolor8 and preserve16-bit/indexed samples."
+}

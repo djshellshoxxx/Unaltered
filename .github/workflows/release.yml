@@ -74,6 +74,7 @@ jobs:
             dist/unaltered-*.zip
             dist/unaltered-*.tar.gz
             dist/SHA256SUMS
+            dist/RELEASE-NOTES.md
           if-no-files-found: error
 
   draft-release:
@@ -102,14 +103,36 @@ jobs:
         run: |
           diff linux/SHA256SUMS windows/SHA256SUMS
           diff linux/SHA256SUMS macos/SHA256SUMS
+          diff linux/RELEASE-NOTES.md windows/RELEASE-NOTES.md
+          diff linux/RELEASE-NOTES.md macos/RELEASE-NOTES.md
       - name: Verify artefacts against SHA256SUMS
-        run: cd linux && sha256sum -c SHA256SUMS
+        run: |
+          set -euo pipefail
+          # Equal manifests alone do not check that every downloaded platform artifact still matches its manifest.
+          for platform in linux windows macos; do
+            (cd "$platform" && sha256sum -c SHA256SUMS)
+          done
       - name: Create draft pre-release (unsigned; existing releases are never overwritten)
         env:
           GH_TOKEN: ${{ github.token }}
           TAG_INPUT: ${{ needs.validate.outputs.tag }}
         run: |
           set -euo pipefail
+          # The build's notes publish the footer build code next to the SHA256SUMS lines (SPEC 13).
+          notes="$RUNNER_TEMP/release-notes.md"
+          {
+            printf '%s\n\n' "Unsigned draft for maintainer review. Per-OS packages: Windows (.zip), Linux (.tar.gz), macOS (-macos.zip), plus the single-file offline .html and the Node CLI (.mjs). All are byte-identical across Linux, Windows and macOS builds; check them against SHA256SUMS. Do not publish until independent rebuild, offline signing (SHA256SUMS.sig), and release controls in docs/RELEASE.md are complete."
+            printf 'Source commit: `%s`\n\n' "$GITHUB_SHA"
+            cat linux/RELEASE-NOTES.md
+          } > "$notes"
+          # --verify-tag checks existence only. Re-resolve the exact remote tag after the long matrix build, including
+          # annotated tags; a same-named branch must not stand in for a deleted tag. The API must succeed and agree.
+          # This is a pre-creation check, not an atomic tag lock: maintainers must recheck before publishing the draft.
+          remote_commit="$(gh api "repos/$GITHUB_REPOSITORY/commits/refs/tags/$TAG_INPUT" --jq .sha)"
+          if [[ "$remote_commit" != "$GITHUB_SHA" ]]; then
+            echo "Release tag no longer resolves to the validated source commit." >&2
+            exit 1
+          fi
           gh release create "$TAG_INPUT" --repo "$GITHUB_REPOSITORY" --verify-tag --draft --prerelease --title "$TAG_INPUT" \
-            --notes "Unsigned draft for maintainer review. Per-OS packages: Windows (.zip), Linux (.tar.gz), macOS (-macos.zip), plus the single-file offline .html and the Node CLI (.mjs). All are byte-identical across Linux, Windows and macOS builds; check them against SHA256SUMS. Do not publish until independent rebuild, offline signing (SHA256SUMS.sig), and release controls in docs/RELEASE.md are complete." \
+            --notes-file "$notes" \
             linux/unaltered-*.html linux/unaltered-*.mjs linux/unaltered-*.zip linux/unaltered-*.tar.gz linux/SHA256SUMS

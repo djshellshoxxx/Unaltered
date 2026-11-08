@@ -1,0 +1,475 @@
+{
+  "recordedAtUtc": "2026-11-05T22:16:51.786909+00:00",
+  "sourceBase": "56e5a92",
+  "implementationCommit": "a6412b1",
+  "emittedAppBuild": "b63394d9086f7bd9",
+  "status": "Diagnostic correctness fixed; pending-response browser CORS remains EXTERNALLY_BLOCKED for all tested documented candidates.",
+  "standardAppCspProbe": {
+    "checkedAt": "2026-11-05T22:14:12.453Z",
+    "browser": "156.0.8078.4",
+    "calendars": [
+      {
+        "host": "alice.btc.calendar.opentimestamps.org",
+        "post": {
+          "status": 200,
+          "length": 242,
+          "error": null
+        },
+        "pendingLookups": [
+          {
+            "host": "alice.btc.calendar.opentimestamps.org",
+            "status": null,
+            "length": null,
+            "error": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+          }
+        ],
+        "pending": {
+          "host": "alice.btc.calendar.opentimestamps.org",
+          "status": null,
+          "length": null,
+          "error": "TypeError",
+          "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+        }
+      },
+      {
+        "host": "bob.btc.calendar.opentimestamps.org",
+        "post": {
+          "status": 200,
+          "length": 240,
+          "error": null
+        },
+        "pendingLookups": [
+          {
+            "host": "bob.btc.calendar.opentimestamps.org",
+            "status": null,
+            "length": null,
+            "error": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+          }
+        ],
+        "pending": {
+          "host": "bob.btc.calendar.opentimestamps.org",
+          "status": null,
+          "length": null,
+          "error": "TypeError",
+          "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+        }
+      },
+      {
+        "host": "finney.calendar.eternitywall.com",
+        "post": {
+          "status": 200,
+          "length": 191,
+          "error": null
+        },
+        "pendingLookups": [
+          {
+            "host": "finney.calendar.eternitywall.com",
+            "status": null,
+            "length": null,
+            "error": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+          }
+        ],
+        "pending": {
+          "host": "finney.calendar.eternitywall.com",
+          "status": null,
+          "length": null,
+          "error": "TypeError",
+          "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+        }
+      }
+    ],
+    "sources": [
+      {
+        "host": "mempool.space",
+        "height": {
+          "status": 200,
+          "length": 64,
+          "error": null
+        },
+        "header": {
+          "status": 200,
+          "length": 160,
+          "error": null
+        },
+        "hashMatches": true,
+        "headerMatches": true
+      },
+      {
+        "host": "blockstream.info",
+        "height": {
+          "status": 200,
+          "length": 64,
+          "error": null
+        },
+        "header": {
+          "status": 200,
+          "length": 160,
+          "error": null
+        },
+        "hashMatches": true,
+        "headerMatches": true
+      }
+    ],
+    "csp": [],
+    "requestFailures": [
+      {
+        "host": "alice.btc.calendar.opentimestamps.org",
+        "error": "net::ERR_FAILED"
+      },
+      {
+        "host": "finney.calendar.eternitywall.com",
+        "error": "net::ERR_FAILED"
+      },
+      {
+        "host": "bob.btc.calendar.opentimestamps.org",
+        "error": "net::ERR_FAILED"
+      }
+    ],
+    "pendingLookupIdentity": "Validated POST proof; looked up each pending attestation node commitment.",
+    "confirmedUpgrade": "NOT TESTED: a known anchored receipt and independent reference verification remain separate requirements.",
+    "ok": false
+  },
+  "separateResearchOriginProbe": {
+    "checkedAt": "2026-11-05T22:11:20.106Z",
+    "browser": "156.0.8078.4",
+    "scope": "Research harness; candidate CSP is not the application CSP. Pool overrides are research-only identity changes. No confirmations, independent Bitcoin verification or new app endpoint eligibility are established.",
+    "pendingLookupIdentity": "Replayed POST proof, then used each pending attestation node commitment.",
+    "results": [
+      {
+        "endpoint": "https://alice.btc.calendar.opentimestamps.org",
+        "post": {
+          "status": 200,
+          "error": null,
+          "length": 277
+        },
+        "lookups": [
+          {
+            "calendar": "https://alice.btc.calendar.opentimestamps.org",
+            "receiptCalendar": "https://alice.btc.calendar.opentimestamps.org",
+            "identity": "RECEIPT_URI",
+            "accept": "application/vnd.opentimestamps.v1",
+            "browserStatus": null,
+            "browserError": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT",
+            "headerOnly": {
+              "status": 404,
+              "acao": null
+            }
+          },
+          {
+            "calendar": "https://alice.btc.calendar.opentimestamps.org",
+            "receiptCalendar": "https://alice.btc.calendar.opentimestamps.org",
+            "identity": "RECEIPT_URI",
+            "accept": "*/*",
+            "browserStatus": null,
+            "browserError": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT",
+            "headerOnly": {
+              "status": 404,
+              "acao": null
+            }
+          }
+        ]
+      },
+      {
+        "endpoint": "https://bob.btc.calendar.opentimestamps.org",
+        "post": {
+          "status": 200,
+          "error": null,
+          "length": 170
+        },
+        "lookups": [
+          {
+            "calendar": "https://bob.btc.calendar.opentimestamps.org",
+            "receiptCalendar": "https://bob.btc.calendar.opentimestamps.org",
+            "identity": "RECEIPT_URI",
+            "accept": "application/vnd.opentimestamps.v1",
+            "browserStatus": null,
+            "browserError": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT",
+            "headerOnly": {
+              "status": 404,
+              "acao": null
+            }
+          },
+          {
+            "calendar": "https://bob.btc.calendar.opentimestamps.org",
+            "receiptCalendar": "https://bob.btc.calendar.opentimestamps.org",
+            "identity": "RECEIPT_URI",
+            "accept": "*/*",
+            "browserStatus": null,
+            "browserError": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT",
+            "headerOnly": {
+              "status": 404,
+              "acao": null
+            }
+          }
+        ]
+      },
+      {
+        "endpoint": "https://finney.calendar.eternitywall.com",
+        "post": {
+          "status": 200,
+          "error": null,
+          "length": 226
+        },
+        "lookups": [
+          {
+            "calendar": "https://finney.calendar.eternitywall.com",
+            "receiptCalendar": "https://finney.calendar.eternitywall.com",
+            "identity": "RECEIPT_URI",
+            "accept": "application/vnd.opentimestamps.v1",
+            "browserStatus": null,
+            "browserError": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT",
+            "headerOnly": {
+              "status": 404,
+              "acao": null
+            }
+          },
+          {
+            "calendar": "https://finney.calendar.eternitywall.com",
+            "receiptCalendar": "https://finney.calendar.eternitywall.com",
+            "identity": "RECEIPT_URI",
+            "accept": "*/*",
+            "browserStatus": null,
+            "browserError": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT",
+            "headerOnly": {
+              "status": 404,
+              "acao": null
+            }
+          }
+        ]
+      },
+      {
+        "endpoint": "https://a.pool.opentimestamps.org",
+        "post": {
+          "status": 200,
+          "error": null,
+          "length": 172
+        },
+        "lookups": [
+          {
+            "calendar": "https://alice.btc.calendar.opentimestamps.org",
+            "receiptCalendar": "https://alice.btc.calendar.opentimestamps.org",
+            "identity": "RECEIPT_URI",
+            "accept": "application/vnd.opentimestamps.v1",
+            "browserStatus": null,
+            "browserError": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT",
+            "headerOnly": {
+              "status": 404,
+              "acao": null
+            }
+          },
+          {
+            "calendar": "https://alice.btc.calendar.opentimestamps.org",
+            "receiptCalendar": "https://alice.btc.calendar.opentimestamps.org",
+            "identity": "RECEIPT_URI",
+            "accept": "*/*",
+            "browserStatus": null,
+            "browserError": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT",
+            "headerOnly": {
+              "status": 404,
+              "acao": null
+            }
+          },
+          {
+            "calendar": "https://a.pool.opentimestamps.org",
+            "receiptCalendar": "https://alice.btc.calendar.opentimestamps.org",
+            "identity": "POOL_OVERRIDE_RESEARCH_ONLY",
+            "accept": "application/vnd.opentimestamps.v1",
+            "browserStatus": null,
+            "browserError": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT",
+            "headerOnly": {
+              "status": 404,
+              "acao": null
+            }
+          }
+        ]
+      },
+      {
+        "endpoint": "https://b.pool.opentimestamps.org",
+        "post": {
+          "status": 200,
+          "error": null,
+          "length": 240
+        },
+        "lookups": [
+          {
+            "calendar": "https://bob.btc.calendar.opentimestamps.org",
+            "receiptCalendar": "https://bob.btc.calendar.opentimestamps.org",
+            "identity": "RECEIPT_URI",
+            "accept": "application/vnd.opentimestamps.v1",
+            "browserStatus": null,
+            "browserError": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT",
+            "headerOnly": {
+              "status": 404,
+              "acao": null
+            }
+          },
+          {
+            "calendar": "https://bob.btc.calendar.opentimestamps.org",
+            "receiptCalendar": "https://bob.btc.calendar.opentimestamps.org",
+            "identity": "RECEIPT_URI",
+            "accept": "*/*",
+            "browserStatus": null,
+            "browserError": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT",
+            "headerOnly": {
+              "status": 404,
+              "acao": null
+            }
+          },
+          {
+            "calendar": "https://b.pool.opentimestamps.org",
+            "receiptCalendar": "https://bob.btc.calendar.opentimestamps.org",
+            "identity": "POOL_OVERRIDE_RESEARCH_ONLY",
+            "accept": "application/vnd.opentimestamps.v1",
+            "browserStatus": null,
+            "browserError": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT",
+            "headerOnly": {
+              "status": 404,
+              "acao": null
+            }
+          }
+        ]
+      },
+      {
+        "endpoint": "https://a.pool.eternitywall.com",
+        "post": {
+          "status": 200,
+          "error": null,
+          "length": 226
+        },
+        "lookups": [
+          {
+            "calendar": "https://finney.calendar.eternitywall.com",
+            "receiptCalendar": "https://finney.calendar.eternitywall.com",
+            "identity": "RECEIPT_URI",
+            "accept": "application/vnd.opentimestamps.v1",
+            "browserStatus": null,
+            "browserError": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT",
+            "headerOnly": {
+              "status": 404,
+              "acao": null
+            }
+          },
+          {
+            "calendar": "https://finney.calendar.eternitywall.com",
+            "receiptCalendar": "https://finney.calendar.eternitywall.com",
+            "identity": "RECEIPT_URI",
+            "accept": "*/*",
+            "browserStatus": null,
+            "browserError": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT",
+            "headerOnly": {
+              "status": 404,
+              "acao": null
+            }
+          },
+          {
+            "calendar": "https://a.pool.eternitywall.com",
+            "receiptCalendar": "https://finney.calendar.eternitywall.com",
+            "identity": "POOL_OVERRIDE_RESEARCH_ONLY",
+            "accept": "application/vnd.opentimestamps.v1",
+            "browserStatus": null,
+            "browserError": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT",
+            "headerOnly": {
+              "status": 404,
+              "acao": null
+            }
+          }
+        ]
+      },
+      {
+        "endpoint": "https://ots.btc.catallaxy.com",
+        "post": {
+          "status": null,
+          "error": "TypeError",
+          "length": null
+        },
+        "lookups": []
+      }
+    ],
+    "ok": false
+  },
+  "headerOnlyNegativeControls": [
+    {
+      "endpoint": "https://alice.btc.calendar.opentimestamps.org/timestamp/<32-zero-byte-commitment>/",
+      "checkedAtUtc": "2026-11-05T22:11:04Z",
+      "status": 400,
+      "acao": null,
+      "meaning": "Trailing slash is parsed as part of hexadecimal commitment and rejected; not a compatible pending path."
+    },
+    {
+      "endpoint": "https://ots.btc.catallaxy.com/digest",
+      "checkedAtUtc": "2026-11-05T22:15:58Z",
+      "method": "POST random32 bytes, OTS Accept, explicit Origin, no Content-Type; header-only corroboration, not browser success",
+      "status": 200,
+      "acao": null,
+      "meaning": "Service replied successfully to header-only probe but browser could not read its POST. This is not evidence of browser compatibility."
+    }
+  ],
+  "sources": [
+    {
+      "repository": "opentimestamps/opentimestamps-server",
+      "commit": "1e955ea3b036453bf795505d923f2643f773810c",
+      "latestCommitUtc": "2026-11-03T17:06:16Z",
+      "license": "LGPL-3.0-or-later (LICENSE text inspected; GitHub API SPDX detection NOASSERTION)",
+      "urls": [
+        "https://github.com/opentimestamps/opentimestamps-server/blob/1e955ea3b036453bf795505d923f2643f773810c/otsserver/rpc.py",
+        "https://github.com/opentimestamps/opentimestamps-server/blob/1e955ea3b036453bf795505d923f2643f773810c/contrib/nginx/a.pool.opentimestamps.org"
+      ]
+    },
+    {
+      "repository": "opentimestamps/opentimestamps-client",
+      "commit": "f3a9e92e4dcb89ed93396d71ec808b3290a438c4",
+      "latestCommitUtc": "2026-10-27T21:16:39Z",
+      "license": "LGPL-3.0-or-later (LICENSE text inspected)",
+      "url": "https://github.com/opentimestamps/opentimestamps-client/blob/f3a9e92e4dcb89ed93396d71ec808b3290a438c4/otsclient/cmds.py#L186"
+    },
+    {
+      "repository": "opentimestamps/python-opentimestamps",
+      "commit": "8c3dc6fbdf6fcba054e78643e9df5eccd8c9fce4",
+      "latestCommitUtc": "2026-10-27T15:47:07Z",
+      "license": "LGPL-3.0-or-later (LICENSE text inspected)",
+      "url": "https://github.com/opentimestamps/python-opentimestamps/blob/8c3dc6fbdf6fcba054e78643e9df5eccd8c9fce4/opentimestamps/calendar.py"
+    },
+    {
+      "title": "Official nginx add_header directive",
+      "url": "https://nginx.org/en/docs/http/ngx_http_headers_module.html#add_header",
+      "finding": "Without always,404 is outside the statuses to which add_header applies. This explains the published example and is consistent with live headers; deployed private configuration was not inspected."
+    }
+  ],
+  "codeReuse": "No external server/client implementation copied. New code uses existing first-party codec and pinned existing development dependencies.",
+  "tests": {
+    "focusedPlaywright": {
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "retries": 0
+    },
+    "typecheck": "PASSED",
+    "lint": "PASSED",
+    "liveChecks": "FAILED honestly: pending browser reads/CORS; not unit regression failures."
+  },
+  "privacyAndPolicy": "Random commitments only; no original files, filenames, commitment hex or proof bodies recorded. No app allowlist/CSP change, no proxy, no-cors, TLS override or endpoint promotion.",
+  "nextAction": "Calendar operators must expose ACAO on pending/error responses, e.g appropriate nginx add_header always configuration, then repeat receipt-bound browser probe and existing confirmed-upgrade/reference acceptance. No operator communication or infrastructure change was performed.",
+  "logHashes": {
+    "cors-protocol-final-tests.log": "d63fb90ffd563fd2479f16fc7a53f34d048d517aea95e844ba572f736385609b",
+    "cors-live-pool-variants.json": "ee47834ea23d0c5f874e9d1e992295294aa489cec7ac4fe38d8954a34b77f246",
+    "cors-standard-app-probe.json": "d0be2aaa1449094f80441af7c1e3490398ffbb94dc275a858d10bd5ef79cc3c3"
+  }
+}

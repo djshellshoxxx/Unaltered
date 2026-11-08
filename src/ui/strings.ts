@@ -42,6 +42,7 @@ export const en = {
   'stamp.orientationWarn': 'This photo is stored rotated. Removing hidden data may change how it is displayed. I understand and want to continue.',
   'stamp.pdfWarn': 'PDF files often contain author names, software and edit history. We cannot remove them. This file type may contain hidden data we cannot remove.',
   'stamp.stripOffWarn': 'You turned off cleaning. This file may contain hidden data such as location or camera details.',
+  'stamp.stripUnsupportedWarn': 'We could not safely clean this file. It may contain hidden data. The receipt will apply to the original file.',
   'stamp.unsupportedWarn': 'This file type may contain hidden data we cannot remove.',
   'stamp.ack': 'I understand and want to continue with this file as it is.',
   'stamp.fingerprint': 'Fingerprint',
@@ -97,6 +98,7 @@ export const en = {
   'verify.d.block': 'Bitcoin block',
   'verify.d.time': 'Block time',
   'verify.d.noLater': 'This file existed no later than about {time} (UTC)',
+  'verify.d.noLater.link': 'This fingerprint existed no later than about {time} (UTC)',
   'verify.d.sources': 'Confirmed by',
   'verify.d.calendars': 'Waiting on',
   'verify.trust.title': 'Trust level L1: explorer check.',
@@ -108,6 +110,12 @@ export const en = {
   'upgrade.intro': 'A few hours after stamping, ask the calendar servers for the Bitcoin confirmation and get an upgraded receipt.',
   'upgrade.drop': 'Choose a pending receipt (.ots), or drop it here',
   'upgrade.run': 'Check for confirmation',
+  'upgrade.referenceSummary': 'Upgrade with the reference client',
+  'upgrade.referenceIntro': 'If this browser cannot read a calendar reply, the OpenTimestamps reference client can retry outside the browser. It needs network access and cannot confirm a receipt that is still pending.',
+  'upgrade.referenceInstall': 'Reference client installation instructions',
+  'upgrade.referenceCmdAria': 'Reference client upgrade command',
+  'upgrade.referenceCopy': 'Keep a backup of your original receipt. Use receipt.ots as the name of a working copy in your terminal\'s current folder.',
+  'upgrade.referenceVerify': 'Upgrading adds calendar data; it does not verify the file or its Bitcoin anchoring. Afterwards, use Verify with the original file (or cleaned copy). For important cases, verify with the reference client and your own Bitcoin node (L2).',
   'upgrade.confirmed': 'Bitcoin timestamp data was added. Download the upgraded receipt, then use Verify with the original file to check it.',
   'upgrade.alreadyConfirmed': 'This receipt contains Bitcoin timestamp data. Use Verify with the original file to check it.',
   'upgrade.stillPending': 'Not confirmed yet. Try again in a few hours.',
@@ -218,6 +226,7 @@ const es: Table = {
   'stamp.orientationWarn': 'Esta foto está guardada girada. Quitar los datos ocultos puede cambiar cómo se muestra. Lo entiendo y quiero continuar.',
   'stamp.pdfWarn': 'Los PDF suelen contener nombres de autor, software e historial de ediciones. No podemos quitarlos. Este tipo de archivo puede contener datos ocultos que no podemos eliminar.',
   'stamp.stripOffWarn': 'Desactivaste la limpieza. Este archivo puede contener datos ocultos como ubicación o detalles de la cámara.',
+  'stamp.stripUnsupportedWarn': 'No pudimos limpiar este archivo de forma segura. Puede contener datos ocultos. El recibo se aplicará al archivo original.',
   'stamp.unsupportedWarn': 'Este tipo de archivo puede contener datos ocultos que no podemos eliminar.',
   'stamp.ack': 'Lo entiendo y quiero continuar con este archivo tal como está.',
   'stamp.fingerprint': 'Huella digital',
@@ -273,6 +282,8 @@ const es: Table = {
   'verify.d.block': 'Bloque de Bitcoin',
   'verify.d.time': 'Hora del bloque',
   'verify.d.noLater': 'Este archivo existía a más tardar hacia {time} (UTC)',
+  // TODO(human review): Spanish copy not final (DRAFT).
+  'verify.d.noLater.link': 'Esta huella digital existía a más tardar hacia {time} (UTC)',
   'verify.d.sources': 'Confirmado por',
   'verify.d.calendars': 'Esperando a',
   'verify.trust.title': 'Nivel de confianza L1: comprobación con exploradores.',
@@ -284,6 +295,13 @@ const es: Table = {
   'upgrade.intro': 'Unas horas después de sellar, pide a los servidores de calendario la confirmación de Bitcoin y obtén un recibo actualizado.',
   'upgrade.drop': 'Elige un recibo pendiente (.ots) o suéltalo aquí',
   'upgrade.run': 'Buscar confirmación',
+  'upgrade.referenceSummary': 'Actualizar con el cliente de referencia',
+  // Draft Spanish copy; native review remains a release gate.
+  'upgrade.referenceIntro': 'Si este navegador no puede leer la respuesta de un calendario, el cliente de referencia de OpenTimestamps puede volver a consultarlo. Necesita acceso a la red y no puede confirmar un recibo que aún está pendiente.',
+  'upgrade.referenceInstall': 'Instrucciones de instalación del cliente de referencia',
+  'upgrade.referenceCmdAria': 'Comando de actualización del cliente de referencia',
+  'upgrade.referenceCopy': 'Conserva una copia de seguridad del recibo original. Usa receipt.ots como nombre de una copia de trabajo en la carpeta actual de la terminal.',
+  'upgrade.referenceVerify': 'Actualizar añade datos de los calendarios; no verifica el archivo ni su anclaje en Bitcoin. Después, usa Verificar con el archivo original (o la copia limpia). Para casos importantes, verifica con el cliente de referencia y tu propio nodo de Bitcoin (L2).',
   'upgrade.confirmed': 'Se añadieron datos de una marca de tiempo de Bitcoin. Descarga el recibo actualizado y usa Verificar con el archivo original para comprobarlos.',
   'upgrade.alreadyConfirmed': 'Este recibo contiene datos de una marca de tiempo de Bitcoin. Usa Verificar con el archivo original para comprobarlos.',
   'upgrade.stillPending': 'Aún no está confirmado. Inténtalo de nuevo en unas horas.',
@@ -373,7 +391,8 @@ export function detectLang(preferred: readonly string[]): Lang {
 }
 
 export function t(key: StringKey, vars?: Record<string, string | number>): string {
-  let s: string = tables[current][key];
-  if (vars) for (const [k, v] of Object.entries(vars)) s = s.split(`{${k}}`).join(String(v));
-  return s;
+  const s: string = tables[current][key];
+  if (!vars) return s;
+  // One pass: substituted text (a host name, a core error message) is never itself treated as a template.
+  return s.replace(/\{([A-Za-z]+)\}/g, (m, k: string) => (Object.prototype.hasOwnProperty.call(vars, k) ? String(vars[k]) : m));
 }

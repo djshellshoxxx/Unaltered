@@ -1,10 +1,11 @@
 // Deterministic build (NFR-7, SR-1, SR-3, FR-9). Produces in dist/:
-//   web/                       multi-file site (external script/style with SRI)
+//   web/                       multi-file site (external script/style with SRI; the hash worker is inside main.js)
 //   unaltered-<v>.html         single self-contained offline file (inline script/style allowed by CSP hash)
 //   unaltered-<v>.zip          Windows package: site + single file + .cmd launcher + PowerShell checksum helper (stored zip)
 //   unaltered-<v>-linux.tar.gz Linux package: site + single file + xdg-open launcher + checksum script
 //   unaltered-<v>-macos.zip    macOS package: site + single file + .command launcher + checksum script
 //   SHA256SUMS                 checksums of the release artefacts
+//   RELEASE-NOTES.md           draft release notes: the footer build code next to the SHA256SUMS lines (SPEC 13)
 // No timestamps, absolute paths or environment data are embedded in any output.
 import { build } from 'esbuild';
 import { createHash } from 'node:crypto';
@@ -16,9 +17,18 @@ import { makeTarGz, makeZip } from './lib/archive.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
-const read = (p) => readFileSync(join(root, p), 'utf8');
+// HTML preprocessing normalizes CRLF and lone CR before CSP hashes are checked. Canonicalize text inputs before
+// hashing and packaging, including copies obtained without Git's eol=lf checkout rules (NFR-7 / SR-3).
+const read = (p) => readFileSync(join(root, p), 'utf8').replace(/\r\n?/g, '\n');
 const pkg = JSON.parse(read('package.json'));
 const version = pkg.version;
+// Loose HTML/JS/CLI downloads must retain both MIT notices, without relying on a neighbouring archive LICENSE.
+// Use the installed, lockfile-pinned package's actual notice rather than reconstructing its permission text.
+const noble = JSON.parse(read('node_modules/@noble/hashes/package.json'));
+if (noble.version !== pkg.dependencies['@noble/hashes']) throw new Error('installed hash dependency differs from its exact manifest pin');
+const notices = `Unaltered\n${read('LICENSE')}\n@noble/hashes ${noble.version}\n${read('node_modules/@noble/hashes/LICENSE')}`;
+if (notices.includes('*/')) throw new Error('a license notice cannot be embedded safely in a JavaScript comment');
+const licenseBanner = `/*! Unaltered and dependency licenses\n\n${notices}\n*/`;
 
 const sha = (data, algo, enc) => createHash(algo).update(data).digest(enc);
 const hex256 = (d) => sha(d, 'sha256', 'hex');
@@ -57,6 +67,7 @@ async function bundle(entry, define) {
     platform: 'browser',
     minify: true,
     legalComments: 'none',
+    banner: { js: licenseBanner },
     charset: 'ascii',
     sourcemap: false,
     define,
@@ -66,17 +77,34 @@ async function bundle(entry, define) {
   return res.outputFiles[0].text;
 }
 
+// Both pages start the hash worker from a blob: URL of this source, inlined in the page script. A blob: worker inherits
+// the page's CSP and Trusted Types, and its code is pinned by main.js's SRI hash or the single file's CSP hash. A worker
+// loaded from its own URL would take its CSP only from HTTP headers, which static hosts do not send, and
+// `new Worker(url)` has no integrity check (SR-1, SR-3).
 const workerJs = await bundle('src/core/hash/hasher.worker.ts', {});
-const mainMulti = await bundle('src/main.ts', { __WORKER_URL__: JSON.stringify('./hasher.worker.js'), __WORKER_INLINE__: 'null' });
 const mainSingle = await bundle('src/main.ts', { __WORKER_URL__: 'null', __WORKER_INLINE__: JSON.stringify(workerJs) });
+const mainMulti = mainSingle;
 const cliJs = (
-  await build({ absWorkingDir: root, entryPoints: ['src/cli/main.ts'], bundle: true, write: false, format: 'esm', target: 'node22', platform: 'node', minify: true, legalComments: 'none', charset: 'ascii', logLevel: 'error', banner: { js: '#!/usr/bin/env node' } })
+  await build({ absWorkingDir: root, entryPoints: ['src/cli/main.ts'], bundle: true, write: false, format: 'esm', target: 'node22', platform: 'node', minify: true, legalComments: 'none', charset: 'ascii', logLevel: 'error', banner: { js: `#!/usr/bin/env node\n${licenseBanner}` } })
 ).outputFiles[0].text;
 const cliName = `unaltered-cli-${version}.mjs`;
 const css = read('src/styles.css');
 const template = read('src/index.html');
+// Only the builder may insert script/style/link tags: their bytes are SRI- or CSP-hash-pinned below. Searching generated
+// HTML for a src-like substring confuses attribute values with attributes, and HTML accepts `/` after a tag name.
+// Fail closed even in template comments; documentation should describe these tags without spelling opening markup.
+// https://html.spec.whatwg.org/multipage/parsing.html#tag-name-state (ASCII whitespace, slash and > delimit names).
+if (/<(?:script|style|link)(?=[\t\n\f\r />])/i.test(template)) {
+  throw new Error('script/style/link tags in the template must be generated by the build');
+}
 
-const buildHash = hex256(Buffer.from(cliJs + '\0' + mainMulti + '\0' + workerJs + '\0' + css + '\0' + template)).slice(0, 16);
+const b64 = (text) => sha(Buffer.from(text), 'sha256', 'base64');
+const multiCsp = csp({ scriptSrc: "'self'", styleSrc: "'self'", workerSrc: 'blob:' });
+const singleCsp = csp({ scriptSrc: `'sha256-${b64(mainSingle)}'`, styleSrc: `'sha256-${b64(css)}'`, workerSrc: 'blob:' });
+
+// The footer build code covers everything the pages are made of except the code itself, including both CSPs: a build
+// that changes only the policy must not show the same code.
+const buildHash = hex256(Buffer.from(cliJs + '\0' + mainMulti + '\0' + workerJs + '\0' + css + '\0' + template + '\0' + multiCsp + '\0' + singleCsp)).slice(0, 16);
 
 // One pass with a replacer function: string replacements would expand `$&`, `$'` and similar patterns inside the
 // bundle or CSS, and sequential passes would fill a token that an earlier value happened to contain.
@@ -88,7 +116,7 @@ function fill(html, { cspValue, styles, script }) {
 // Multi-file page: SRI on every script/stylesheet (SR-3).
 const sri = (text) => `sha384-${sha(Buffer.from(text), 'sha384', 'base64')}`;
 const multiHtml = fill(template, {
-  cspValue: csp({ scriptSrc: "'self'", styleSrc: "'self'", workerSrc: "'self'" }),
+  cspValue: multiCsp,
   styles: `<link rel="stylesheet" href="./styles.css" integrity="${sri(css)}">`,
   script: `<script src="./main.js" defer integrity="${sri(mainMulti)}"></script>`,
 });
@@ -97,9 +125,8 @@ const multiHtml = fill(template, {
 for (const [name, text] of [['main', mainSingle], ['css', css]]) {
   if (/<\/script|<\/style|<!--/i.test(text)) throw new Error(`${name} contains a sequence that could break out of an inline block`);
 }
-const b64 = (text) => sha(Buffer.from(text), 'sha256', 'base64');
 const singleHtml = fill(template, {
-  cspValue: csp({ scriptSrc: `'sha256-${b64(mainSingle)}'`, styleSrc: `'sha256-${b64(css)}'`, workerSrc: 'blob:' }),
+  cspValue: singleCsp,
   styles: `<style>${css}</style>`,
   script: `<script>${mainSingle}</script>`,
 });
@@ -116,15 +143,25 @@ for (const html of [multiHtml, singleHtml]) {
 const inlined = (tag) => [...singleHtml.matchAll(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, 'g'))].map((m) => m[1]);
 if (JSON.stringify(inlined('script')) !== JSON.stringify([mainSingle])) throw new Error('single-file inline script differs from its CSP-hashed bundle');
 if (JSON.stringify(inlined('style')) !== JSON.stringify([css])) throw new Error('single-file inline style differs from its CSP-hashed stylesheet');
-if (/\beval\s*\(|new Function\s*\(/.test(mainMulti.replace(/"(?:[^"\\]|\\.)*"/g, '""'))) throw new Error('eval found in bundle');
+// SR-4 for all shipped code, dependencies included (ESLint does not see node_modules). Any reference to eval (direct or
+// indirect, e.g. `(0,eval)(...)`) and any use of the Function constructor, with or without `new`, fails the build. Every
+// bundle is scanned whole: skipping "string literals" by quote matching loses track at quotes inside other literals
+// (e.g. '"') and then skips real code. Text that merely mentions these words fails too; rephrase it. This is a text check
+// on minified output; the CSP (no 'unsafe-eval') is the runtime control.
+const codeGen = /\beval\b|\bFunction\b(?!\s*\.\s*prototype\b)/;
+for (const [name, code] of [['hash worker', workerJs], ['multi-file page', mainMulti], ['single-file page', mainSingle], ['CLI', cliJs]]) {
+  if (codeGen.test(code)) throw new Error(`eval found in bundle: ${name}`);
+}
 
 // ---- sizes (NFR-3) --------------------------------------------------------------------------------------------
-const gz = gzipSync(Buffer.from(mainMulti + workerJs + css), { level: 9 }).length;
+const gz = gzipSync(Buffer.from(mainMulti + css), { level: 9 }).length;
 if (gz > 150 * 1024) throw new Error(`bundle is ${gz} bytes gzip, above the 150 KiB budget`);
 
 const crlf = (s) => Buffer.from(s.replace(/\r?\n/g, '\r\n'), 'utf8');
 const prefix = `unaltered-${version}`;
 const singleName = `${prefix}.html`;
+// `<prefix>.zip` is the Windows package (name kept for compatibility); the others carry their OS in the name.
+const archive = { windows: `${prefix}.zip`, linux: `${prefix}-linux.tar.gz`, macos: `${prefix}-macos.zip` };
 
 const readme = `Unaltered ${version} (build ${buildHash})
 =================================
@@ -132,18 +169,36 @@ const readme = `Unaltered ${version} (build ${buildHash})
 Prove a file existed, unchanged, at a point in time. Your file never leaves your computer.
 
 WINDOWS
-  1. Double-click "Open-Unaltered.cmd". It opens ${singleName} in your default browser. No installation, no internet needed for fingerprinting.
-  2. To check that your copy is genuine, right-click "Verify-Checksums.ps1" > Run with PowerShell, and compare the
-     values with the SHA256SUMS published with the release (signature: SHA256SUMS.sig).
-  3. Stamping and verifying need internet access to the OpenTimestamps calendar servers and two Bitcoin block explorers.
+  1. To check that your copy is genuine, check the zip you downloaded, not this folder: in PowerShell run
+     Get-FileHash ${archive.windows} and compare the value with the line for ${archive.windows} in the SHA256SUMS
+     published with the release (signature: SHA256SUMS.sig). Letter case does not matter.
+  2. Double-click "Open-Unaltered.cmd". It opens ${singleName} in your default browser. No installation, no internet needed for fingerprinting.
+  3. Browser stamping and explorer verification need internet access to calendars and two Bitcoin block explorers.
      Fingerprinting and cleaning pictures work completely offline.
+  "Verify-Checksums.ps1" (right-click > Run with PowerShell) only compares this folder with the SHA256SUMS inside the
+  same zip: it finds damaged or incomplete copies, not deliberate changes.
 
 LINUX / MACOS
-  Linux: run "sh open-unaltered.sh". macOS: right-click "Open-Unaltered.command" > Open (first time). Then run verify-checksums.sh to check this copy.
+  To check that your copy is genuine, compare the archive you downloaded with the SHA256SUMS published with the release
+  (signature: SHA256SUMS.sig): run sha256sum ${archive.linux} on Linux or shasum -a 256 ${archive.macos} on macOS.
+  Linux: run "sh open-unaltered.sh". macOS: right-click "Open-Unaltered.command" > Open (first time).
+  "verify-checksums.sh" only compares this folder with the SHA256SUMS inside the same archive: it finds damaged or
+  incomplete copies, not deliberate changes.
   Command line (Node 22+): node unaltered-cli-${version}.mjs verify <file> [receipt.ots]
 
+OFFLINE HEADER COMPARISON (Node 22+, all systems)
+  node unaltered-cli-${version}.mjs verify-offline <file> <receipt.ots> <height> <block-hash> <header.hex>
+  Supply a trusted height-to-hash mapping and an 80-byte Bitcoin header encoded as 160 hex characters in header.hex.
+  Result MATCHED_TRUSTED_HEADER compares the receipt with your evidence without any network access.
+  Chain membership and height remain trusted inputs; this command does not perform Bitcoin consensus verification.
+  Pending receipts still require calendar upgrade data. The normal verify command retains explorer-quorum checks.
+
 OTHER SYSTEMS
-  Open ${singleName} (single file) or index.html (multi-file site) in any current browser.
+  Open ${singleName} in any current browser.
+
+MULTI-FILE SITE
+  The files index.html, main.js and styles.css are the multi-file site for a web server: browsers refuse to run it when
+  index.html is opened from disk, because its integrity-checked script and style cannot be loaded from file://.
 
 PRIVACY
   Stamping is visible to the servers you contact. For sensitive use, use Tor Browser.
@@ -154,20 +209,36 @@ const launcher = `@echo off
 rem Opens the offline single-file build in the default browser.
 start "" "%~dp0${singleName}"
 `;
-const psVerify = `# Prints the SHA-256 of every file in this folder next to the value in SHA256SUMS.
+const psVerify = `# Compares every file listed in this folder's SHA256SUMS with that list. Prints OK, MISMATCH or MISSING per file.
+# This finds damaged or incomplete copies. It cannot show that the copy is genuine, because a changed copy can come with
+# a matching SHA256SUMS: for that, compare the downloaded zip with the SHA256SUMS published with the release.
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
-$sums = Get-Content -Path (Join-Path $here 'SHA256SUMS')
 $bad = 0
+$checked = 0
+$seen = @{}
+try { $sums = @(Get-Content -LiteralPath (Join-Path $here 'SHA256SUMS') -ErrorAction Stop) }
+catch { Write-Host 'Could not read SHA256SUMS.'; $bad++; $sums = @() }
 foreach ($line in $sums) {
   if ($line -match '^([0-9a-f]{64})\\s+\\*?(.+)$') {
     $expected = $Matches[1]; $name = $Matches[2]
+    # Packages contain flat, uniquely named files; never let an edited list escape this folder or expand wildcards.
+    if ($name -match '[\\\\/:]' -or $name -eq '.' -or $name -eq '..' -or $seen.ContainsKey($name)) {
+      Write-Host 'INVALID checksum entry'; $bad++; continue
+    }
+    $seen[$name] = $true
+    $checked++
     $path = Join-Path $here $name
-    if (-not (Test-Path $path)) { Write-Host "MISSING  $name"; $bad++; continue }
-    $actual = (Get-FileHash -Algorithm SHA256 -Path $path).Hash.ToLower()
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { Write-Host "MISSING  $name"; $bad++; continue }
+    try { $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $path -ErrorAction Stop).Hash.ToLowerInvariant() }
+    catch { Write-Host "MISSING  $name"; $bad++; continue }
     if ($actual -eq $expected) { Write-Host "OK       $name" } else { Write-Host "MISMATCH $name"; $bad++ }
-  }
+  } else { Write-Host 'INVALID checksum entry'; $bad++ }
 }
-if ($bad -eq 0) { Write-Host 'All files match.' } else { Write-Host "$bad problem(s). Do not use this copy." }
+if ($checked -eq 0) { Write-Host 'No checksum entries were checked.'; $bad++ }
+if ($bad -eq 0) {
+  Write-Host "All files match this folder's SHA256SUMS."
+  Write-Host 'This does not show that the copy is genuine: compare ${archive.windows} with the SHA256SUMS published with the release.'
+} else { Write-Host "$bad problem(s). Do not use this copy." }
 Read-Host 'Press Enter to close'
 `;
 
@@ -179,16 +250,41 @@ ${open}
 `;
 const linuxLauncher = shLauncher(`if command -v xdg-open >/dev/null 2>&1; then xdg-open "$dir/${singleName}"; else echo "Open $dir/${singleName} in a browser."; fi`);
 const macLauncher = shLauncher(`open "$dir/${singleName}"`);
-const shVerify = (sumCmd) => `#!/bin/sh
-# Checks every file in this folder against SHA256SUMS. Prints OK/FAILED per file.
+const shVerify = (sumCmd, name) => `#!/bin/sh
+# Compares every file listed in this folder's SHA256SUMS with that list. Prints OK/FAILED per file.
+# This finds damaged or incomplete copies. It cannot show that the copy is genuine, because a changed copy can come with
+# a matching SHA256SUMS: for that, compare the downloaded archive with the SHA256SUMS published with the release.
 cd "$(dirname "$0")" || exit 1
-if ${sumCmd}; then echo "All files match."; else echo "Problem(s) found. Do not use this copy." >&2; exit 1; fi
+# Validate the entire manifest independently: BSD/GNU checksum tools differ in
+# how --strict handles empty manifests and malformed lines.
+if ! awk '
+  {
+    hash = substr($0, 1, 64)
+    separator = substr($0, 65, 2)
+    filename = substr($0, 67)
+    if (length($0) < 67 || hash ~ /[^0-9a-f]/ || separator != "  " ||
+        filename == "" || filename == "." || filename == ".." ||
+        index(filename, "/") || index(filename, sprintf("%c", 92)) ||
+        seen[filename]++) invalid = 1
+    count++
+  }
+  END { if (count == 0 || invalid) exit 1 }
+' SHA256SUMS; then
+  echo "Invalid or empty SHA256SUMS." >&2
+  exit 1
+fi
+if ${sumCmd}; then
+  echo "All files match this folder's SHA256SUMS."
+  echo "This does not show that the copy is genuine: compare ${name} with the SHA256SUMS published with the release."
+else
+  echo "Problem(s) found. Do not use this copy." >&2
+  exit 1
+fi
 `;
 
 const common = [
   { name: 'index.html', data: Buffer.from(multiHtml) },
   { name: 'main.js', data: Buffer.from(mainMulti) },
-  { name: 'hasher.worker.js', data: Buffer.from(workerJs) },
   { name: 'styles.css', data: Buffer.from(css) },
   { name: singleName, data: Buffer.from(singleHtml) },
   { name: 'LICENSE', data: Buffer.from(read('LICENSE')) },
@@ -212,12 +308,12 @@ const windowsFiles = withSums([
 const linuxFiles = withSums([
   { name: 'README.txt', data: lf(readme) },
   { name: 'open-unaltered.sh', data: lf(linuxLauncher), mode: 0o755 },
-  { name: 'verify-checksums.sh', data: lf(shVerify('sha256sum -c SHA256SUMS')), mode: 0o755 },
+  { name: 'verify-checksums.sh', data: lf(shVerify('sha256sum --strict -c SHA256SUMS', archive.linux)), mode: 0o755 },
 ]);
 const macFiles = withSums([
   { name: 'README.txt', data: lf(readme) },
   { name: 'Open-Unaltered.command', data: lf(macLauncher), mode: 0o755 },
-  { name: 'verify-checksums.sh', data: lf(shVerify('shasum -a 256 -c SHA256SUMS')), mode: 0o755 },
+  { name: 'verify-checksums.sh', data: lf(shVerify('shasum -a 256 --strict -c SHA256SUMS', archive.macos)), mode: 0o755 },
 ]);
 
 rmSync(dist, { recursive: true, force: true });
@@ -225,14 +321,25 @@ mkdirSync(join(dist, 'web'), { recursive: true });
 for (const f of common) if (f.name !== singleName && f.name !== 'LICENSE' && f.name !== cliName) writeFileSync(join(dist, 'web', f.name), f.data);
 writeFileSync(join(dist, singleName), singleHtml);
 writeFileSync(join(dist, cliName), cliJs);
-// `<prefix>.zip` is the Windows package (name kept for compatibility); the others carry their OS in the name.
 const artefacts = [
-  [`${prefix}.zip`, makeZip(prefixed(windowsFiles))],
-  [`${prefix}-linux.tar.gz`, makeTarGz(prefixed(linuxFiles))],
-  [`${prefix}-macos.zip`, makeZip(prefixed(macFiles))],
+  [archive.windows, makeZip(prefixed(windowsFiles))],
+  [archive.linux, makeTarGz(prefixed(linuxFiles))],
+  [archive.macos, makeZip(prefixed(macFiles))],
 ];
 for (const [name, data] of artefacts) writeFileSync(join(dist, name), data);
 const outer = [[singleName, Buffer.from(singleHtml)], [cliName, Buffer.from(cliJs)], ...artefacts].map(([n, d]) => `${hex256(d)}  ${n}`).sort().join('\n') + '\n';
 writeFileSync(join(dist, 'SHA256SUMS'), outer);
+// The app's footer and About page ask users to compare the build code with the published checksums; the release workflow
+// uses this file as the draft release notes, so the code is published next to them (SPEC 13). Not an artefact itself.
+const notes = `# Unaltered ${version}
+
+Build code shown in the app footer: \`${buildHash}\`
+
+Check every file you download against \`SHA256SUMS\` (signature: \`SHA256SUMS.sig\`) before use. A page can copy the build code, so the checksums, not the code, show that a copy is genuine.
+
+\`\`\`
+${outer}\`\`\`
+`;
+writeFileSync(join(dist, 'RELEASE-NOTES.md'), notes);
 
 process.stdout.write(`built ${prefix} (build ${buildHash}); gzip ${(gz / 1024).toFixed(1)} KiB; single-file ${(singleHtml.length / 1024).toFixed(0)} KiB\n`);

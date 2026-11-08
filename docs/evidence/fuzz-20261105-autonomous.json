@@ -1,0 +1,75 @@
+{
+  "sourceCommit": "ccfdc3bcd1c3943dc52abd765bd8665c76b30dec",
+  "sourceDirty": false,
+  "targetSha256": "086010d4a6ef3df959e56f89a300d9b0ab3a45567b4fa7dcb097aa28558f1133",
+  "harnessSha256": {
+    "scripts/parser-fuzz.mjs": "a94c2c94a225bdc96a6633b268ba434213e550fd239f82154a5b6aa1abe20681",
+    "scripts/lib/fuzz-coverage.mjs": "7947ad3a3b4a6cd573ae2f4cf385d0ec5f69a4ff7b99c1052871a16ea59d2618",
+    "scripts/lib/fuzz-executor.mjs": "1995019661c1c3ff4a7f272c1b834fb5181bdb7cf241f6c6e4f537007b529cfb",
+    "scripts/lib/fuzz-worker.mjs": "a8803e73cd112fc5329cc0946296e11110103834cbacb320d8c06572c54f3624"
+  },
+  "seedFixtures": {
+    "count": 6,
+    "sha256": "59073f4f7af7ffaa5469053b58ab0ae147e4c348e34cd1b83483430faf50b91a"
+  },
+  "node": "v22.23.4",
+  "v8": "12.4.254.21-node.57",
+  "options": {
+    "iterations": 1000000,
+    "seconds": 300,
+    "seed": 20261105,
+    "out": "scratch/fuzz-20261105"
+  },
+  "limits": {
+    "maxInputBytes": 65536,
+    "maxCorpusPerTarget": 256,
+    "caseDeadlineMs": 1000,
+    "workerOldHeapMiB": 128
+  },
+  "status": "budget-complete",
+  "executed": 58924,
+  "mutations": 58888,
+  "targets": {
+    "proof": {
+      "accepted": 145,
+      "rejected": 9682,
+      "coveredOffsets": 15404,
+      "corpus": 26
+    },
+    "timestamp": {
+      "accepted": 289,
+      "rejected": 9536,
+      "coveredOffsets": 14304,
+      "corpus": 20
+    },
+    "jpeg": {
+      "accepted": 47,
+      "rejected": 9771,
+      "coveredOffsets": 8628,
+      "corpus": 33
+    },
+    "png": {
+      "accepted": 84,
+      "rejected": 9734,
+      "coveredOffsets": 5530,
+      "corpus": 14
+    },
+    "wav": {
+      "accepted": 84,
+      "rejected": 9734,
+      "coveredOffsets": 5331,
+      "corpus": 22
+    },
+    "mp3": {
+      "accepted": 256,
+      "rejected": 9562,
+      "coveredOffsets": 5750,
+      "corpus": 14
+    }
+  },
+  "output": "/workspaces/Unaltered/.development/consolidation-20261104/scratch/fuzz-20261105/campaign-OpP0lt",
+  "seedExecutions": 36,
+  "retainedSeeds": 32,
+  "elapsedMs": 300001,
+  "stopReason": "wall-clock"
+}

@@ -1,0 +1,109 @@
+{
+  "recordedAt": "2026-11-05T22:21:27.629174+00:00",
+  "sourceCheckpoint": "b45537bf01a62af6ed052df62db852277922921a",
+  "applicationSourceTree": "36bf4260c533776444c6aa7b04ad53bfc64fb651",
+  "buildCode": "b63394d9086f7bd9",
+  "completed": [
+    "release artifact contents validated for linux/windows/macos before draft creation",
+    "explicit offline trusted-header comparison; no VERIFIED/L2 claim; existing explorer quorum unchanged",
+    "receipt-bound bounded pending-calendar browser diagnostic",
+    "PR52 immutable captured base and fixed trusted Git API; Sonar green at295877e"
+  ],
+  "tests": {
+    "projectCheck": {
+      "unitPassed": 422,
+      "unitSkipped": 2,
+      "nodePassed": 127,
+      "nodeSkipped": 3,
+      "reference": "pinned Python0.4.5 enabled",
+      "status": "PASSED final stable integrated check"
+    },
+    "corsBrowser": {
+      "chromium": 7,
+      "firefox": 7,
+      "webkit": 7,
+      "retries": 0
+    },
+    "offlineFeatureCases": 18,
+    "relatedFocusedCases": 54,
+    "releaseGateCases": 15,
+    "noticeAndOfflinePackageCases": 24,
+    "automationGuard": {
+      "passed": 18,
+      "commit": "295877ef9edcda37282f7981b25b996808dc6e35",
+      "externalSonar": "SUCCESS/0openBUG+VULNERABILITY",
+      "review": "read-only independent agent review found no actionable blocker; not human audit"
+    }
+  },
+  "offlinePackagedAcceptance": {
+    "scope": "Real previously qualified Bob/Finney receipts, cached independently fetched headers, actual bundled NodeCLI with fetch disabled; no own-node/consensus claim",
+    "results": [
+      {
+        "calendar": "bob",
+        "height": 429355,
+        "blockHash": "000000000000000001a2d3983295ee55464c32cf0ce0b3fb8239e5bd0293ed9e",
+        "exit": 0,
+        "stdout": "file sha-256: efaa174f 68e59705 757460f4 f7d204bd 2b535cfd 194d9d94 54187321 29404ddb\nresult: MATCHED_TRUSTED_HEADER\ntrust: USER_SUPPLIED_HEADER\nThe file and receipt match the supplied header. Chain membership and height remain trusted inputs; Bitcoin consensus is not checked.\nsupplied header 429355, 000000000000000001a2d3983295ee55464c32cf0ce0b3fb8239e5bd0293ed9e, 2016-09-11T22:12:07Z (miner time)\n",
+        "receiptSha256": "a2b0bc80fe19e49062a8ddae936d469946660338b2e4121cde59e5ac55a71218",
+        "referenceTimeMatches": true
+      },
+      {
+        "calendar": "finney",
+        "height": 523367,
+        "blockHash": "00000000000000000016051dc6f002cf4b205ccf278096ff5fd99dc9f4362c31",
+        "exit": 0,
+        "stdout": "file sha-256: 397a0083 69798373 19bdd350 aa93bcc2 798e94e0 8ab00f32 f355e5eb e7837c2b\nresult: MATCHED_TRUSTED_HEADER\ntrust: USER_SUPPLIED_HEADER\nThe file and receipt match the supplied header. Chain membership and height remain trusted inputs; Bitcoin consensus is not checked.\nsupplied header 523367, 00000000000000000016051dc6f002cf4b205ccf278096ff5fd99dc9f4362c31, 2018-05-19T09:22:13Z (miner time)\n",
+        "receiptSha256": "8131fdf1d375c27362d1a727ba8481e935edd8e3b761f5c7eab0c1b90fa0a84e",
+        "referenceTimeMatches": true
+      }
+    ]
+  },
+  "artifactQualification": {
+    "twoBuildsIdentical": true,
+    "files": 10,
+    "publishedChecksumsPassed": 5,
+    "browserProgram": "main.js/styles.css byte-identical to qualified b9; index and standalone HTML differ only in footer build-code label",
+    "largeFileTrials": "Prior nine browser2GiB trials retained; not repeated for CLI/tooling-only changes",
+    "checksums": [
+      "50334dbfdfcb452480984e9f2101439c4a628a662c02b0eb437436cb55423ea4  dist/RELEASE-NOTES.md",
+      "5c1ddba5bb5b7e90f5a8d9d229f141bf8c9edb2714ad1bf5dd5f95615ee52214  dist/SHA256SUMS",
+      "832b2d24542049a6e8348dbf9471d3f35f6ebada9d5c8339c3f4fd876460c263  dist/unaltered-0.3.1-linux.tar.gz",
+      "a86d4391af06643a7024ae054d868ba29508eb312bd24ca1ddaf70252e6b83e0  dist/unaltered-0.3.1-macos.zip",
+      "847acba12ab0cc18c88cd282fc04cfe65645bbbc3d4e989c1f340208f28d2104  dist/unaltered-0.3.1.html",
+      "3e951e2eb7da9ebac14b840d9b1e598a50b272022db75dc85d4adeb2491dbb5b  dist/unaltered-0.3.1.zip",
+      "dbe6f23232c06008e2bd9ee261b2d18b12eada6f6236b1dfe07ee58a738ec6c5  dist/unaltered-cli-0.3.1.mjs",
+      "d3fa8b334f94e80fa1ded84143b64059121364f11647b0504ed295d2cd741079  dist/web/index.html",
+      "10be46c8fd673f8b56617e2ef0b96d2f8855c8feba05c558322f41f262445cc1  dist/web/main.js",
+      "a6615aedfd8aa0549a9d01c462ddefc2548d3908b9c306e8b0e232cad756d161  dist/web/styles.css"
+    ]
+  },
+  "networkResearch": "cors-continuation-20261105.md",
+  "ciAuthorization": {
+    "dispatchStatus": 403,
+    "response": "Resource not accessible by integration",
+    "acceptedPermission": "actions=write",
+    "settingsRead": "403 administration=read; repository restrictions not inspected",
+    "credentialsExposed": false
+  },
+  "remaining": [
+    "hosted/native CI and official Pages upload",
+    "operator-side pending404 CORS; no researched alternative qualified",
+    "independent audit/rebuild; human accessibility/Spanish/usability/Tor",
+    "release signing, operational/legal controls and explicit production authorization",
+    "automation spending/accounting/backoff/same-job isolation remains unqualified"
+  ],
+  "apiTelemetry": "unavailable; no cost/cache-hit/hard-budget claim",
+  "rawLogDigests": {
+    "check-offline-integrated.log": "ac12deb81cc17d480403785f73c5cf34c7566de5b1773400fed5d6302d83b416",
+    "offline-focused.log": "2d23efeba4debe0cf2a5ac46fa89d65ee309b9088a9f63738eb3eb42f47f69b1",
+    "cors-chromium.log": "520ddbb8d6115b5df1452bea50612aa0998a7418366f4a899e0bc6cac3c5c88c",
+    "cors-firefox.log": "0aad59bbc45250d396cd68ebe521518a4b3b629fc5b64fa247eadf8dcfd7301a",
+    "cors-webkit.log": "bf9672b4298bd2580193f37694cd5f22a18ed6fd69e1aab667dc2d9f2cc6a3ec",
+    "build-final1.sums": "8afbc33707fb3190942cc74b4b0a6bf1a972df3821388728d415c71f8020edc9",
+    "build-final2.sums": "8afbc33707fb3190942cc74b4b0a6bf1a972df3821388728d415c71f8020edc9",
+    "trusted-header-before.log": "b7c3ff02eedaab76cad1a84c4b80f6a3b825ccd32fc80681b786e22e54068017",
+    "cli-offline-before.log": "6223c703303a5ca71bb77622bd76129965d0e4dc38ffc63c026dc6ca18ca95d8",
+    "package-offline-help-before.log": "75a8c9b1d35a0a9a7330decb360616e7dc4408dfe17d8eef37d229a0a4f51a96",
+    "check-final.log": "28b3e3d70ff884e8b6d4df212d9689d73f66419fd954325a76e0093e85b6bb4d"
+  }
+}

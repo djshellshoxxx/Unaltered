@@ -1,0 +1,96 @@
+{
+  "recordedAtUtc": "2026-11-05T21:40:20.671606+00:00",
+  "status": "PASSED for the affected notice-build browser smoke scope; this does not certify production release readiness.",
+  "buildCode": "b9b13732e3ee856a",
+  "artifactSourceCommit": "e10929e46c433447ca2e95235b206c849ba57334",
+  "noticeSourceCommit": "e9d867f",
+  "appSourceTree": "1943fc021675d14b074a4458c5b27919533def20",
+  "appSourceAndManifestComparison": "src/, package.json and package-lock.json are byte-identical between the historical browser qualification checkout and parent artifact source.",
+  "lockfileSha256": "836f4e61ef6339339bbbf6f07692a31dadd141cbe3755ef5610f7980dff262df",
+  "artifactChange": "e10929e retains complete first-party and @noble/hashes MIT notices in JavaScript/worker/CLI banners. Reviewed build diff; other runtime bundler settings and app source are unchanged.",
+  "method": "Served the exact parent dist bytes through a temporary directory symlink. No rebuild, source edit, test edit or browser security-policy bypass. Artifact hashes matched before and after all runs.",
+  "artifacts": {
+    "dist/web/main.js": "10be46c8fd673f8b56617e2ef0b96d2f8855c8feba05c558322f41f262445cc1",
+    "dist/unaltered-0.3.1.html": "6aeec8adff618184c5d4da80f520c46709e09ca749715e2c8b837da9a63b6512",
+    "dist/SHA256SUMS": "1ff40da9ffb17de53c371906b8aa897fcd02fc896d7fc0d4f468f5532ae8f22c"
+  },
+  "releaseManifestCheck": {
+    "command": "sha256sum -c SHA256SUMS",
+    "passed": 5,
+    "failed": 0
+  },
+  "testCommand": {
+    "runner": "node node_modules/@playwright/test/cli.js test",
+    "files": [
+      "tests/e2e/app.spec.ts",
+      "tests/e2e/hash-worker-evidence.spec.ts",
+      "tests/e2e/pages-base-path.spec.ts",
+      "tests/e2e/reflow-preferences.spec.ts",
+      "tests/e2e/security-regressions.spec.ts"
+    ],
+    "grep": "full flow with the four|works offline|multi-file build|hashes in a Web Worker|accepts a real hash worker|Pages project path|reflow|reduced motion|the hash worker runs under",
+    "retries": 0,
+    "engineSelection": "UNALTERED_BROWSER=firefox or webkit; Chromium uses the pinned Chrome156 executable via CHROMIUM_PATH."
+  },
+  "environment": {
+    "node": "24.22.2",
+    "playwright": "1.64.1",
+    "chromium": "156.0.8078.4",
+    "firefox": "157.0",
+    "webkit": "27.2",
+    "chromiumContainerFlag": "--no-sandbox (existing repository configuration); CSP, CORS and TLS remain enforced."
+  },
+  "results": [
+    {
+      "engine": "chromium",
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0,
+      "retries": 0,
+      "unchangedResponsivenessAssertion": "PASSED: maximum measured main-thread timer gap remained below 50 ms.",
+      "logSha256": "edf7296903b5667ea2dd39b5fabdbc4bd122b1855f8d23875c14bc7455b9e243",
+      "skipReason": null
+    },
+    {
+      "engine": "firefox",
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0,
+      "retries": 0,
+      "unchangedResponsivenessAssertion": "PASSED: maximum measured main-thread timer gap remained below 50 ms.",
+      "logSha256": "a4ace45329ada233d7466df8a87199a1a8953e1b7ad3060d8d08e4d6ffe8e1e9",
+      "skipReason": null
+    },
+    {
+      "engine": "webkit",
+      "passed": 9,
+      "failed": 0,
+      "skipped": 1,
+      "retries": 0,
+      "unchangedResponsivenessAssertion": "PASSED: maximum measured main-thread timer gap remained below 50 ms.",
+      "logSha256": "0c0802504935d7f7e864158fa16dfc04c314b51217b7829ebae15d1cc29e8e6d",
+      "skipReason": "Playwright Worker.evaluate injection probe unsupported by WebKit; ordinary CSP/SRI, real worker completion and offline checks passed."
+    }
+  ],
+  "covered": [
+    "One mocked stamp/pending/upgrade/verify receipt lifecycle.",
+    "Offline single-file HTML with no external network requests.",
+    "Multi-file SRI and strict CSP; actual successful hash worker completion.",
+    "Nested /Unaltered/ Pages path and offline worker hashing.",
+    "640/320 CSS-px reflow equivalents with long Unicode filename and keyboard navigation; forced-colors/reduced-motion media matching.",
+    "One unchanged responsiveness assertion per engine, maximum timer gap strictly below 50 ms."
+  ],
+  "priorLargeFileEvidence": {
+    "buildCode": "85f5bc962b80d2c4",
+    "sourceCommit": "52da9e7f3f8b9fcf5ffe975f282c4b07ff4b5241",
+    "appSourceTree": "1943fc021675d14b074a4458c5b27919533def20",
+    "file": "browser-20261105-qualification.json",
+    "historicalTrials": "Real 2 GiB: 3/3 Chromium RSS, 3/3 Firefox completion, 3/3 WebKit completion.",
+    "newArtifactLargeFileStatus": "NOT_RERUN: parent requested affected smoke for the notice-only artifact delta. Historical nine trials remain evidence for their original build; app source and dependency manifests match."
+  },
+  "notClaimed": [
+    "A new complete regular suite or live-calendar qualification on this notice build.",
+    "A new 2 GiB benchmark or Firefox/WebKit RSS measurement on this notice build.",
+    "Actual browser zoom UI, OS high-contrast or human screen-reader review; WCAG certification; independent audit/signing; native Windows/macOS acceptance."
+  ]
+}

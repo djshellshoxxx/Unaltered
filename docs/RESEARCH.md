@@ -40,3 +40,19 @@ Compiled 2026-10-09 from web searches and primary-page fetches. Each finding sta
 - I did not verify current terms, CORS headers, or uptime of any calendar or explorer. R1 in the build plan.
 - I did not find, and did not invent, an official `.ots` format specification. The authoritative source is the reference implementation's code.
 - No legal research was done. Get legal advice before launch.
+
+## 2026-11-05 implementation checks
+
+The Bitcoin-attestation height guard follows `TimeAttestation.MAX_HEIGHT` in
+[python-opentimestamps v0.5.0, commit8c3dc6f](https://github.com/opentimestamps/python-opentimestamps/blob/8c3dc6fbdf6fcba054e78643e9df5eccd8c9fce4/opentimestamps/core/notary.py).
+That bound is newer than the pinned0.4.5 test oracle; it is not presented as an older-oracle incompatibility.
+Original parse/serialization and failure-preservation tests exercise the new unsigned32-bit limit.
+No upstream implementation code was copied; the upstream LGPL-3.0-or-later source remains a reference.
+
+The existing L2 instructions were checked against the official reference client's
+[README](https://github.com/opentimestamps/opentimestamps-client/blob/f3a9e92e4dcb89ed93396d71ec808b3290a438c4/README.md)
+and [verification implementation](https://github.com/opentimestamps/opentimestamps-client/blob/f3a9e92e4dcb89ed93396d71ec808b3290a438c4/otsclient/cmds.py).
+It checks Bitcoin attestations through the configured local Bitcoin RPC node; no explorer fallback was inferred.
+No UI change was necessary. This source check is not an own-node verification run.
+Actual Alice/Bob/Finney browser and same-receipt verification evidence is linked from NETWORK.md;
+third-party fetched reference headers remain L1 evidence.

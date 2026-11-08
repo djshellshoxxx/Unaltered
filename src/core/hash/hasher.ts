@@ -17,7 +17,10 @@ export interface HashOptions {
   noWorker?: boolean;
 }
 
-/** Injected by the build: URL of the worker script (multi-file) or inline source (single-file). */
+/**
+ * Injected by the build. Both shipped pages use the inline source, started from a blob: URL so the worker inherits the
+ * page's CSP and Trusted Types (a worker loaded from its own URL would not). The URL form is used by unit tests.
+ */
 declare const __WORKER_URL__: string | null;
 declare const __WORKER_INLINE__: string | null;
 
@@ -27,6 +30,8 @@ const MISMATCH = 'Internal error: two fingerprint calculations disagree. Do not 
 
 /** Input failures a working worker reports; retrying them on the main thread would re-read the whole file. */
 const WORKER_FAILURES: readonly ErrorCode[] = ['INPUT_INVALID', 'INPUT_UNREADABLE'];
+/** Worker initialization only; file reads and hashing have no overall deadline. */
+const WORKER_STARTUP_MS = 10_000;
 
 const nextTick = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
 
@@ -48,15 +53,24 @@ function workerPolicy(tt: TrustedTypesApi): { createScriptURL(s: string): string
   return policy;
 }
 
+/** The blob: URL each inline worker was started from; released once that worker has answered or been stopped. */
+const scriptUrls = new WeakMap<Worker, string>();
+function releaseScript(w: Worker): void {
+  const url = scriptUrls.get(w);
+  if (url === undefined) return;
+  scriptUrls.delete(w);
+  URL.revokeObjectURL(url);
+}
+
 function makeWorker(): Worker | null {
   if (typeof Worker === 'undefined') return null;
+  let blobUrl: string | null = null;
   try {
     const inline = typeof __WORKER_INLINE__ === 'string' ? __WORKER_INLINE__ : null;
     const url = typeof __WORKER_URL__ === 'string' ? __WORKER_URL__ : null;
     if (inline === null && url === null) return null;
     const tt = (globalThis as { trustedTypes?: TrustedTypesApi }).trustedTypes;
     let src: string;
-    let blobUrl: string | null = null;
     if (inline !== null) {
       blobUrl = URL.createObjectURL(new Blob([inline], { type: 'text/javascript' }));
       src = blobUrl;
@@ -68,9 +82,12 @@ function makeWorker(): Worker | null {
       src = workerPolicy(tt).createScriptURL(src);
     }
     const w = new Worker(src);
-    if (blobUrl) setTimeout(() => URL.revokeObjectURL(blobUrl as string), 10_000);
+    if (blobUrl) {
+      scriptUrls.set(w, blobUrl);
+    }
     return w;
   } catch {
+    if (blobUrl !== null) URL.revokeObjectURL(blobUrl);
     return null;
   }
 }
@@ -78,12 +95,21 @@ function makeWorker(): Worker | null {
 function hashInWorker(w: Worker, blob: Blob, opts: HashOptions): Promise<{ digest: Uint8Array; bytes: number; cross: string } | 'unavailable'> {
   return new Promise((resolve, reject) => {
     let settled = false;
+    let startupTimer: ReturnType<typeof setTimeout> | undefined;
+    const started = (): void => {
+      clearTimeout(startupTimer);
+      startupTimer = undefined;
+      releaseScript(w);
+    };
     const finish = (): void => {
       settled = true;
+      started();
       opts.signal?.removeEventListener('abort', abort);
       w.onmessage = null;
+      w.onmessageerror = null;
       w.onerror = null;
       w.terminate();
+      releaseScript(w);
     };
     const abort = (): void => {
       if (settled) return;
@@ -97,20 +123,34 @@ function hashInWorker(w: Worker, blob: Blob, opts: HashOptions): Promise<{ diges
     };
     if (opts.signal?.aborted) return abort();
     opts.signal?.addEventListener('abort', abort, { once: true });
-    w.onmessage = (ev: MessageEvent<{ type: string; done?: number; digest?: Uint8Array; bytes?: number; cross?: string; code?: string; message?: string }>) => {
+    w.onmessage = (ev: MessageEvent<unknown>) => {
       if (settled) return;
       if (opts.signal?.aborted) return abort();
-      const m = ev.data;
-      if (m.type === 'progress') opts.onProgress?.(m.done ?? 0);
+      if (typeof ev.data !== 'object' || ev.data === null || Array.isArray(ev.data)) return unavailable();
+      const m = ev.data as Record<string, unknown>;
+      if (m.type === 'ready') {
+        started();
+      } else if (m.type === 'progress') {
+        if (typeof m.done !== 'number' || !Number.isSafeInteger(m.done) || m.done < 0 || m.done > blob.size) return unavailable();
+        started();
+        opts.onProgress?.(m.done);
+      }
       else if (m.type === 'done') {
+        // A completion must describe the whole input and a SHA-256 digest before its cross-check is trusted.
+        if (!(m.digest instanceof Uint8Array) || m.digest.length !== 32 || m.bytes !== blob.size
+          || (m.cross !== 'ok' && m.cross !== 'mismatch' && m.cross !== 'skipped')) return unavailable();
         finish();
-        resolve({ digest: m.digest as Uint8Array, bytes: m.bytes as number, cross: m.cross ?? 'skipped' });
+        resolve({ digest: m.digest, bytes: blob.size, cross: m.cross });
       } else if (m.type === 'failed' && WORKER_FAILURES.includes(m.code as ErrorCode) && typeof m.message === 'string') {
         finish();
         reject(new UnalteredError(m.code as ErrorCode, m.message));
       } else unavailable();
     };
     w.onerror = unavailable;
+    w.onmessageerror = unavailable;
+    // The worker acknowledges initialization before reading the Blob. Waiting for file progress here would impose
+    // a deadline on a slow initial backend read; readiness instead bounds only a worker that never starts.
+    startupTimer = setTimeout(unavailable, WORKER_STARTUP_MS);
     try {
       w.postMessage({ type: 'start', blob, chunkSize: CHUNK_SIZE });
     } catch {

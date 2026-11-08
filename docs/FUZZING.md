@@ -11,10 +11,15 @@ npm run fuzz:parsers -- --iterations 250000 --seconds 300 --seed 20261028
 ```
 
 The driver bundles six synchronous entrypoints: detached OTS proof, bare calendar timestamp, JPEG, PNG, WAV and MP3 (WAV/MP3
-added 2026-10-28 continuation (f)). Initial cases come only from the repository's synthetic/reference fixtures. Unsupported
-Litecoin, RF64 WAV and free-format MP3 remain negative seeds. Mutations flip/replace/insert/delete/truncate bytes; half of PNG
-mutations repair surviving chunk CRCs and half of WAV mutations restore the RIFF length to reach deeper parser branches.
-Inputs reaching new positive-count V8 ranges are retained for further mutation. Coverage includes bundled parser/helpers and
+added 2026-10-28 continuation (f)). Initial cases come only from the repository's synthetic/reference fixtures. Every `.ots`
+file in `tests/fixtures/ots` must be tracked by Git: an untracked or ignored one stops the run before anything is fuzzed or
+written, so a local receipt left there is never fuzzed or copied into a corpus. Unsupported Litecoin, RF64 WAV and
+free-format MP3 remain negative seeds. Mutations flip/replace/insert/delete/truncate bytes; half of PNG mutations repair
+surviving chunk CRCs and half of WAV mutations restore the RIFF length to reach deeper parser branches.
+An input is retained for further mutation when it runs bundled source offsets that no earlier input for that target ran.
+V8 reports block counts in a minimal form: it leaves out a block that runs as often as its parent and joins neighbours with
+equal counts. So each offset takes the count of the innermost reported range around it. A new branch counts even when it
+runs as often as its function, and the same blocks run with other counts do not. Coverage includes bundled parser/helpers and
 oracle wrappers; it is not an edge-coverage percentage, native decoder/sanitizer coverage, or proof that every branch was tested.
 
 Normal parser rejection is allowed. Unexpected exceptions are findings. Once OTS parsing succeeds, canonical round-trip,
@@ -30,9 +35,16 @@ terminate a synchronous infinite loop; crashes, worker exits and timeouts fail t
 budgets both apply after startup. This small-input campaign does not replace full-size/count/depth boundary tests.
 
 Each run creates a fresh ignored `scratch/fuzz/campaign-*` directory. It retains coverage-growing bytes and a report with
-source SHA, bundled-target SHA256, Node/V8 versions, seed/budgets, outcomes and range/corpus counts. Every 1000 mutations
-updates the report. A finding additionally saves its exact bytes, digest and manifest and exits nonzero. Reports distinguish
-iteration completion, wall-clock exhaustion, replay success and findings; a bounded clean run is not an exhaustive audit.
+the source SHA; `sourceDirty`, true when `git status` shows tracked changes or untracked files, so the run may not match
+that SHA; the bundled-target SHA256; `harnessSha256` for the driver and its `scripts/lib/fuzz-*.mjs` modules;
+`seedFixtures`, the seed count and the SHA256 of the output of `cd tests/fixtures/ots && LC_ALL=C sha256sum *.ots`;
+Node/V8 versions, seed/budgets and outcomes; `coveredOffsets`, the bundled source offsets run at least once for that
+target; and corpus counts. Evidence recorded before 2026-11-04 has none of `sourceDirty`, `harnessSha256` or `seedFixtures`,
+and has `ranges` instead of `coveredOffsets`: the number of distinct positive-count V8 range shapes, which missed branches
+run as often as their function and counted count-only shape changes, so the two numbers cannot be compared. Every 1000
+mutations updates the report. A finding additionally saves its exact bytes, digest and manifest and exits nonzero. Reports
+distinguish iteration completion, wall-clock exhaustion, replay success and findings; a bounded clean run is not an
+exhaustive audit.
 
 ```sh
 npm run fuzz:parsers -- --replay scratch/fuzz/campaign-EXAMPLE/finding.json

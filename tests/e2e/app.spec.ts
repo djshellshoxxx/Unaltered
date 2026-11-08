@@ -136,7 +136,12 @@ test.describe('stamp, upgrade, verify (network mocked)', () => {
       const hosts = ['alice.btc.calendar.opentimestamps.org', 'bob.btc.calendar.opentimestamps.org', 'finney.calendar.eternitywall.com'];
       await expect.poll(async () => (await failures.allTextContents()).sort())
         .toEqual(hosts.map((host) => `✖ ${host} – ${scenario.error}`).sort());
-      await expect(page.locator('.upgrade-result a')).toHaveCount(0);
+      await expect(page.locator('.upgrade-result a[download]')).toHaveCount(0);
+      const links = page.locator('.upgrade-result a');
+      await expect(links).toHaveCount(scenario.transport ? 1 : 0);
+      if (scenario.transport) {
+        await expect(links).toHaveAttribute('href', 'https://github.com/opentimestamps/opentimestamps-client#installation');
+      }
       await expect(page.locator('.result-VERIFIED')).toHaveCount(0);
     });
   }

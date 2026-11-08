@@ -6,3 +6,5 @@ export { verify, verifyProof, defaultVerifyConfig } from './verify';
 export type { VerifyConfig, VerifyReport, VerifyState } from './verify';
 export { esploraSource, headerQuorum, parseHeader } from './bitcoin';
 export type { HeaderSource, BlockHeader } from './bitcoin';
+export { checkTrustedHeader, verifyWithTrustedHeader } from './trusted-header';
+export type { TrustedHeaderEvidence, TrustedHeaderReport, TrustedHeaderState } from './trusted-header';

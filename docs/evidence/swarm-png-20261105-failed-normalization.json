@@ -1,0 +1,440 @@
+{
+  "checkedAt": "2026-11-05T22:44:54.544Z",
+  "pngSourceSha256": "28ea12b6ec21ed3288b91d841b950a5bd3c51f0dd629d2074040053d205b9761",
+  "scope": "Independent browser decode of synthetic one-pixel PNGs; no product CSP or UI claim",
+  "source": "https://www.w3.org/TR/2025/REC-png-3-20250624/#11tRNS",
+  "results": [
+    {
+      "engine": "chromium",
+      "browserVersion": "156.0.8078.4",
+      "name": "truecolor8-transparent",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "156.0.8078.4",
+      "name": "truecolor8-opaque",
+      "original": [
+        99,
+        88,
+        77,
+        255
+      ],
+      "cleaned": [
+        99,
+        88,
+        77,
+        255
+      ],
+      "equal": true
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "156.0.8078.4",
+      "name": "greyscale1-transparent",
+      "original": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": false
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "156.0.8078.4",
+      "name": "greyscale2-transparent",
+      "original": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": false
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "156.0.8078.4",
+      "name": "greyscale4-transparent",
+      "original": [
+        255,
+        255,
+        255,
+        255
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": false
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "156.0.8078.4",
+      "name": "greyscale8-transparent",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "156.0.8078.4",
+      "name": "greyscale16-transparent",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "chromium",
+      "browserVersion": "156.0.8078.4",
+      "name": "truecolor16-transparent",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "firefox",
+      "browserVersion": "157.0",
+      "name": "truecolor8-transparent",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "firefox",
+      "browserVersion": "157.0",
+      "name": "truecolor8-opaque",
+      "original": [
+        99,
+        88,
+        77,
+        255
+      ],
+      "cleaned": [
+        99,
+        88,
+        77,
+        255
+      ],
+      "equal": true
+    },
+    {
+      "engine": "firefox",
+      "browserVersion": "157.0",
+      "name": "greyscale1-transparent",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "firefox",
+      "browserVersion": "157.0",
+      "name": "greyscale2-transparent",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "firefox",
+      "browserVersion": "157.0",
+      "name": "greyscale4-transparent",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "firefox",
+      "browserVersion": "157.0",
+      "name": "greyscale8-transparent",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "firefox",
+      "browserVersion": "157.0",
+      "name": "greyscale16-transparent",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "firefox",
+      "browserVersion": "157.0",
+      "name": "truecolor16-transparent",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "27.2",
+      "name": "truecolor8-transparent",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "27.2",
+      "name": "truecolor8-opaque",
+      "original": [
+        99,
+        88,
+        77,
+        255
+      ],
+      "cleaned": [
+        99,
+        88,
+        77,
+        255
+      ],
+      "equal": true
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "27.2",
+      "name": "greyscale1-transparent",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "27.2",
+      "name": "greyscale2-transparent",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "27.2",
+      "name": "greyscale4-transparent",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "27.2",
+      "name": "greyscale8-transparent",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "27.2",
+      "name": "greyscale16-transparent",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "27.2",
+      "name": "truecolor16-transparent",
+      "original": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleaned": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "equal": true
+    }
+  ]
+}

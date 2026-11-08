@@ -3,12 +3,28 @@ export type Child = Node | string | null | undefined | false;
 export type AttrValue = string | number | boolean | undefined | null | ((ev: Event) => void);
 
 const PROPS = new Set(['checked', 'disabled', 'hidden', 'value', 'indeterminate']);
+const URL_ATTRS = new Set(['href', 'src', 'action', 'formaction']);
+
+function isScriptUrl(value: string): boolean {
+  // Match browser URL preprocessing: remove TAB/LF/CR anywhere, then trim leading C0 controls and spaces.
+  // Other embedded controls are not removed by the URL parser and must not be treated as scheme characters.
+  const normalized = value.replace(/[\t\n\r]/g, '');
+  let start = 0;
+  while (start < normalized.length && normalized.charCodeAt(start) <= 0x20) start++;
+  return /^(javascript|data|vbscript):/i.test(normalized.slice(start));
+}
 
 export function el<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<string, AttrValue> = {}, ...kids: Child[]): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
     if (v === undefined || v === null || v === false) continue;
     if (k === 'style') continue; // inline styles are blocked by CSP; use classes
+    // Never create inline handlers, srcdoc or script URLs from strings (SR-4); only function listeners are wired.
+    if (/^on/i.test(k) || k.toLowerCase() === 'srcdoc') {
+      if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v as EventListener);
+      continue;
+    }
+    if (typeof v === 'string' && URL_ATTRS.has(k.toLowerCase()) && isScriptUrl(v)) continue;
     if (k === 'class') node.className = String(v);
     else if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v as EventListener);
     else if (PROPS.has(k)) (node as unknown as Record<string, unknown>)[k] = v === true ? true : v;
@@ -30,20 +46,69 @@ export function clear(node: Node): void {
 }
 
 export function setChildren(node: Node, ...kids: Child[]): void {
+  const path = focusPath(node);
   clear(node);
   append(node, kids);
+  if (path) restoreFocus(node, path);
+}
+
+// Re-rendering rebuilds controls; without this a keyboard user's focus falls back to the page (WCAG 2.4.3).
+// Each step is one ancestor at its own position. A row that can be removed or reordered carries `data-key`, so focus
+// never lands on a different row's control that happens to sit at the same position (Enter would then act on it).
+interface FocusStep { tag: string; id: string | null; key: string | null; at: number }
+
+function attr(n: Node | undefined, name: string): string | null {
+  const e = n as Element | undefined;
+  return e && typeof e.getAttribute === 'function' ? e.getAttribute(name) : null;
+}
+
+function focusPath(root: Node): FocusStep[] | null {
+  const active = typeof document === 'undefined' ? null : document.activeElement;
+  if (!active || active === root || !root.contains(active)) return null;
+  const steps: FocusStep[] = [];
+  for (let n: Node | null = active; n && n !== root; n = n.parentNode) {
+    const parent: Node | null = n.parentNode;
+    if (!parent) return null;
+    steps.unshift({ tag: (n as Element).tagName, id: attr(n, 'id'), key: attr(n, 'data-key'), at: Array.prototype.indexOf.call(parent.childNodes, n) });
+  }
+  return steps.length > 0 ? steps : null;
+}
+
+function restoreFocus(root: Node, steps: FocusStep[]): void {
+  const own = steps[steps.length - 1]!;
+  let target: Node | null = null;
+  if (own.id) {
+    // An id names one control; find it even if siblings before it were added or removed.
+    const byId = document.getElementById(own.id);
+    if (byId && byId !== root && root.contains(byId) && byId.tagName === own.tag) target = byId;
+  } else {
+    let cur: Node = root;
+    for (const step of steps) {
+      const next: Node | undefined = cur.childNodes[step.at];
+      if (!next || (next as Element).tagName !== step.tag || attr(next, 'id') !== step.id || attr(next, 'data-key') !== step.key) return;
+      cur = next;
+    }
+    target = cur;
+  }
+  const control = target as HTMLElement | null;
+  if (control && typeof control.focus === 'function' && !(control as { disabled?: boolean }).disabled) control.focus();
 }
 
 let liveRegion: HTMLElement | null = null;
+let announcementGeneration = 0;
 export function setLiveRegion(node: HTMLElement): void {
   liveRegion = node;
+  announcementGeneration++;
 }
-/** Polite screen-reader announcement. */
-export function announce(message: string): void {
-  if (!liveRegion) return;
-  liveRegion.textContent = '';
+/** Polite status: only the newest message from a still-visible owning view may be spoken. */
+export function announce(message: string, owner?: HTMLElement): void {
+  const active = (): boolean => !owner || (owner.isConnected && !owner.hidden);
+  if (!liveRegion || !active()) return;
+  const target = liveRegion;
+  const generation = ++announcementGeneration;
+  target.textContent = '';
   setTimeout(() => {
-    if (liveRegion) liveRegion.textContent = message;
+    if (generation === announcementGeneration && liveRegion === target && active()) target.textContent = message;
   }, 30);
 }
 
