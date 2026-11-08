@@ -1,5 +1,9 @@
 // Verify view (FR-7, FR-8, FR-11) and receipt upgrade (FR-6).
 import { fromHex, groupHex } from '../../core/bytes';
+import { createVerificationReportJson } from '../../core/reports/verification';
+import { createEvidenceZip } from '../../core/reports/evidence-zip';
+import { pairEvidenceFiles } from '../../core/reports/batch-pair';
+import { verifyBatch } from '../../core/reports/batch-verify';
 import { isAbort, safeMessage, UnalteredError } from '../../core/errors';
 import { hashBlob } from '../../core/hash/hasher';
 import { upgrade, type UpgradeResult } from '../../core/ots/calendar';
@@ -78,6 +82,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
   let upShown: Shown = null;
 
   function show(next: Shown): void {
+    if (next !== shown) revokeOwner(out);
     shown = next;
     setChildren(out, render(next));
   }
@@ -125,7 +130,25 @@ export function mountVerify(root: HTMLElement): VerifyView {
       actions,
       el('button', { type: 'button', class: 'button primary big', disabled: busy || !receipt || (!file && !prefill), onclick: () => void run() }, busy ? t('verify.checking') : t('verify.check')),
       busy ? el('button', { type: 'button', class: 'button', onclick: () => { resetVerification(); renderActions(); } }, t('common.cancel')) : null,
+      file && receipt && !busy ? el('button', { type: 'button', class: 'button', onclick: () => void downloadEvidenceBundle() }, t('evidence.downloadZip')) : null,
     );
+  }
+
+  async function downloadEvidenceBundle(): Promise<void> {
+    if (!file || !receipt || busy) return;
+    try {
+      if (file.size + receipt.size > 16 * 1024 * 1024) throw new Error(t('evidence.limit'));
+      const [original, proof] = await Promise.all([file.arrayBuffer(), receipt.arrayBuffer()]);
+      const archive = await createEvidenceZip(new Uint8Array(original), new Uint8Array(proof));
+      const blob = new Blob([archive as BlobPart], { type: 'application/zip' });
+      const url = URL.createObjectURL(blob);
+      const link = el('a', { href: url, download: 'unaltered-evidence.zip' });
+      link.click();
+      // Defer revocation until after the browser has consumed the click.
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (error) {
+      show({ kind: 'error', message: safeMessage(error) });
+    }
   }
 
   async function run(): Promise<void> {
@@ -222,7 +245,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
     if (!next) return null;
     if (next.kind === 'working') return el('p', { role: 'status' }, t('verify.working'));
     if (next.kind === 'error') return el('p', { class: 'error', role: 'alert' }, next.message);
-    if (next.kind === 'report') return renderReport(next.report, next.hex, next.fromLink);
+    if (next.kind === 'report') return renderReport(next.report, next.hex, next.fromLink, out);
     return null;
   }
 
@@ -247,6 +270,92 @@ export function mountVerify(root: HTMLElement): VerifyView {
     return kids;
   }
 
+  // Batch inputs are separate from the single-file Verify workflow. Never match by upload order.
+  const batchRoot = el('section', { class: 'batch-verify' });
+  let batchFiles: File[] = [];
+  let batchReceipts: File[] = [];
+  let batchBusy = false;
+  let batchController: AbortController | null = null;
+  let batchGeneration = 0;
+  const batchResults = el('div', { class: 'batch-results', 'aria-live': 'polite' });
+  const batchActions = el('div', { class: 'actions' });
+  function renderBatchActions(): void {
+    setChildren(batchActions,
+      el('p', {}, t('batch.selected', { files: batchFiles.length, receipts: batchReceipts.length })),
+      el('button', { type: 'button', class: 'button primary', disabled: batchBusy || !batchFiles.length || !batchReceipts.length,
+        onclick: () => void runBatch() }, t('batch.run')),
+      batchBusy ? el('button', { type: 'button', class: 'button', onclick: () => {
+        batchGeneration++;
+        batchController?.abort();
+        batchBusy = false;
+        renderBatchActions();
+      } }, t('common.cancel')) : null,
+    );
+  }
+  async function runBatch(): Promise<void> {
+    if (batchBusy) return;
+    const files = [...batchFiles];
+    const receipts = [...batchReceipts];
+    let pairs: ReturnType<typeof pairEvidenceFiles>;
+    try {
+      pairs = pairEvidenceFiles(files.map(f => f.name), receipts.map(f => f.name));
+    } catch {
+      setChildren(batchResults, el('p', { role: 'alert', class: 'error' }, t('batch.pairError')));
+      return;
+    }
+    const controller = new AbortController();
+    const generation = ++batchGeneration;
+    batchController = controller;
+    batchBusy = true;
+    renderBatchActions();
+    setChildren(batchResults, el('p', { role: 'status' }, t('batch.working')));
+    try {
+      const result = await verifyBatch(pairs, async pair => {
+        if (controller.signal.aborted) throw new UnalteredError('ABORTED', 'Cancelled');
+        const f = files.find(f => f.name === pair.fileName)!;
+        const receipt = receipts.find(f => f.name === pair.receiptName)!;
+        checkReceiptSize(receipt);
+        const hashed = await hashBlob(f, { signal: controller.signal });
+        if (controller.signal.aborted) throw new UnalteredError('ABORTED', 'Cancelled');
+        const proof = new Uint8Array(await receipt.arrayBuffer());
+        if (controller.signal.aborted) throw new UnalteredError('ABORTED', 'Cancelled');
+        return verify(hashed.digest, proof, verifyConfigFromSettings(controller.signal));
+      }, controller.signal);
+      if (generation !== batchGeneration || controller.signal.aborted) return;
+      setChildren(batchResults, el('ul', {}, ...result.map(item =>
+        el('li', {},
+          el('strong', {}, item.input.fileName + ': '),
+          el('span', {}, item.status === 'ERROR' ? t('batch.error') : item.status),
+          item.status !== 'ERROR' ? el('p', { class: 'muted' }, item.report.detail) : null,
+          item.status === 'VERIFIED' && item.report.bitcoin
+            ? el('p', {}, t('batch.block', { height: item.report.bitcoin.height })) : null,
+        ),
+      )));
+    } catch (error) {
+      if (generation === batchGeneration && !controller.signal.aborted)
+        setChildren(batchResults, el('p', { class: 'error', role: 'alert' }, safeMessage(error)));
+    } finally {
+      if (generation === batchGeneration) {
+        batchBusy = false;
+        batchController = null;
+        renderBatchActions();
+      }
+    }
+  }
+  function renderBatch(): void {
+    setChildren(batchRoot,
+      el('h3', {}, t('batch.title')),
+      el('p', { class: 'muted' }, t('batch.instructions')),
+      dropZone({ id: 'batch-files', label: t('batch.files'), hint: t('batch.fileHint'), multiple: true,
+        onFiles: files => { batchGeneration++; batchController?.abort(); batchBusy = false; batchFiles = files; setChildren(batchResults); renderBatchActions(); } }),
+      dropZone({ id: 'batch-receipts', label: t('batch.receipts'), hint: t('batch.receiptHint'), multiple: true, accept: '.ots',
+        onFiles: files => { batchGeneration++; batchController?.abort(); batchBusy = false; batchReceipts = files; setChildren(batchResults); renderBatchActions(); } }),
+      batchActions,
+      batchResults,
+    );
+    renderBatchActions();
+  }
+
   function renderFrame(): void {
     setChildren(
       root,
@@ -255,6 +364,8 @@ export function mountVerify(root: HTMLElement): VerifyView {
       inputs,
       actions,
       out,
+      el('hr'),
+      batchRoot,
       el('hr'),
       el('h3', {}, t('upgrade.title')),
       el('p', {}, t('upgrade.intro')),
@@ -268,6 +379,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
   renderInputs();
   renderActions();
   renderUpgrade();
+  renderBatch();
 
   return {
     setPrefill(hex) {
@@ -284,6 +396,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
       renderInputs();
       renderActions();
       renderUpgrade();
+      renderBatch();
       show(shown);
       showUpgrade(upShown);
     },
@@ -294,7 +407,7 @@ function reportTitleKey(state: VerifyState, fromLink: boolean): StringKey {
   return (fromLink ? LINK_TITLE[state] : undefined) ?? TITLE[state];
 }
 
-export function renderReport(r: VerifyReport, hex: string, fromLink: boolean): HTMLElement {
+export function renderReport(r: VerifyReport, hex: string, fromLink: boolean, owner?: object): HTMLElement {
   const title = reportTitleKey(r.state, fromLink);
   const linkBody = fromLink ? LINK_BODY[r.state] : undefined;
   const detailRows: Node[] = [
@@ -336,5 +449,8 @@ export function renderReport(r: VerifyReport, hex: string, fromLink: boolean): H
     );
   }
   if (r.state === 'PENDING') card.appendChild(el('p', { class: 'notice pending' }, t('copy.pendingNotProof')));
+  card.appendChild(downloadLink('Download verification report (JSON)', 'unaltered-verification-report.json',
+    new Blob([createVerificationReportJson(hex, r)], { type: 'application/json' }),
+    'application/json', undefined, owner ? { owner, key: 'verification-report' } : undefined));
   return card;
 }

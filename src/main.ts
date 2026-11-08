@@ -1,5 +1,6 @@
 // Wires the UI to core. No business logic here (SPEC 5.1).
 import { clear, el, setLiveRegion } from './ui/dom';
+import { networkCapabilityText } from './core/net/capability';
 import { VIEWS, parseHash } from './ui/router';
 import { detectLang, setLang, t } from './ui/strings';
 import { mountAbout } from './ui/views/about';
@@ -23,6 +24,13 @@ function frameBust(): boolean {
 function start(): void {
   if (frameBust()) return;
   setLang(detectLang(navigator.languages ?? [navigator.language]));
+  const indicator = document.getElementById('network-capability');
+  const refreshNetwork = (): void => {
+    if (indicator) indicator.textContent = networkCapabilityText(navigator.onLine);
+  };
+  refreshNetwork();
+  window.addEventListener('online', refreshNetwork);
+  window.addEventListener('offline', refreshNetwork);
   const live = document.getElementById('live');
   if (live) setLiveRegion(live);
 

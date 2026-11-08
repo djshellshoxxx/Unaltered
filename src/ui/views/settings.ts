@@ -1,5 +1,6 @@
 // Settings (FR-13), language (FR-14) and the opt-in local receipt list (FR-12).
 import { DEFAULT_CALENDARS, DEFAULT_EXPLORERS } from '../../core/net/allowlist';
+import { summarizeLocalReceipts } from '../../core/reports/receipt-dashboard';
 import { clear, el, setChildren } from '../dom';
 import { isDefault, restoreDefaults, settings } from '../state';
 import { isEnabled, loadReceipts, removeReceipt, setEnabled, storageAvailable } from '../store';
@@ -93,7 +94,15 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
     ];
     if (on) {
       const list = loadReceipts();
+      const summary = summarizeLocalReceipts(list);
       kids.push(
+        el('section', { class: 'receipt-health-summary', 'aria-label': t('dashboard.aria') },
+          el('h4', {}, t('dashboard.title')),
+          el('p', {}, t('dashboard.saved', { count: summary.saved })),
+          el('p', {}, summary.latestAddedUtc ? t('dashboard.latest', { date: summary.latestAddedUtc }) : t('dashboard.none')),
+          el('p', { class: 'muted' }, t('dashboard.unknown')),
+          el('a', { href: '#verify', class: 'button small' }, t('dashboard.openVerify')),
+        ),
         list.length === 0
           ? el('p', { class: 'muted' }, t('settings.receiptsEmpty'))
           : el(
