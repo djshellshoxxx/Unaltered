@@ -311,3 +311,12 @@ footer {
   .essential-guide, header, .network-capability, .card { box-shadow: none; border-width: 2px; }
   .drop { border-width: 3px; }
 }
+
+/* Accessible, CSP-compatible language dropdown and contextual explanations. */
+.help-text { font-size: .88rem; line-height: 1.6; margin: .35rem 0 .8rem; max-width: 75ch; }
+.language-picker { max-width: 27rem; padding: .75rem 1rem; }
+.language-menu { position: relative; }
+.language-menu summary { cursor: pointer; min-height: 44px; padding: .65rem .9rem; border: 1px solid var(--line); border-radius: .65rem; background: var(--surface-soft); font-weight: 600; }
+.language-menu[open] summary { border-color: var(--primary); }
+.language-options { display: grid; gap: .2rem; padding: .5rem .75rem; border: 1px solid var(--line); border-radius: .65rem; margin-top: .35rem; background: var(--card); }
+.language-options .check { padding: .4rem .2rem; }
