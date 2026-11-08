@@ -1,5 +1,5 @@
-import { recoverReceiptFrames } from '../../core/archive/frames';
-import { el } from '../dom';
+import { recoverReceiptFrames } from '../core/archive/frames';
+import { el } from './dom';
 
 /**
  * Offline recovery of raw binary QR payloads. A QR image scanner will be
