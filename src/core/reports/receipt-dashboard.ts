@@ -10,7 +10,7 @@ export interface ReceiptDashboardSummary {
 export function summarizeLocalReceipts(records: readonly ReceiptRec[]): ReceiptDashboardSummary {
   const validDates = records.map(r => r.createdAtUtc).filter(date => {
     const n = Date.parse(date);
-    return Number.isFinite(n) && new Date(n).toISOString() === date;
+    return Number.isFinite(n) && new Date(n).toISOString().replace('.000Z', 'Z') === date || new Date(n).toISOString() === date;
   });
   return {
     saved: records.length,
