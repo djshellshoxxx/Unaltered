@@ -21,6 +21,17 @@ describe('bounded batch verification', () => {
     })).rejects.toThrow();
     expect(called).toBe(false);
   });
+  it('stops scheduling new items after cancellation', async () => {
+    const controller = new AbortController();
+    const visited: number[] = [];
+    const result = await verifyBatch([1, 2, 3], async n => {
+      visited.push(n);
+      if (n === 1) controller.abort();
+      return { state: 'PENDING' as const, detail: '' };
+    }, controller.signal);
+    expect(visited).toEqual([1]);
+    expect(result).toHaveLength(1);
+  });
   it('rejects an empty batch', async () => {
     await expect(verifyBatch([], async () => ({ state: 'PENDING' as const, detail: '' }))).rejects.toThrow();
   });
