@@ -134,18 +134,25 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
     setChildren(receipts, ...kids);
   }
 
-  // Native selection preserves keyboard navigation and avoids custom popup script.
-  // Only languages with complete translated string tables are selectable.
-  const languageChoices = el('div', { class: 'field', id: 'lang' },
-    el('label', { for: 'language-choice', title: t('help.language') }, t('settings.language')),
+  // A disclosure-style dropdown avoids WebKit's native-select style-src-attr CSP violation.
+  // Radio options retain keyboard semantics; no popup JavaScript or inline styles.
+  const languageChoices = el('fieldset', { id: 'lang', class: 'language-picker' },
+    el('legend', {}, t('settings.language')),
     el('p', { class: 'muted help-text' }, t('help.language')),
-    el('select', { id: 'language-choice', name: 'language', title: t('help.language'),
-      onchange: (event: Event) => {
-        const value = (event.target as HTMLSelectElement).value;
-        const selected = LANGS.find(l => l.code === value);
-        if (selected) { setLang(selected.code); onLangChange(); }
-      },
-    }, ...LANGS.map(l => el('option', { value: l.code, selected: l.code === getLang() }, l.name))),
+    el('details', { class: 'language-menu' },
+      el('summary', { title: t('help.language') }, LANGS.find(l => l.code === getLang())?.name ?? 'English'),
+      el('div', { class: 'language-options' }, ...LANGS.map(l =>
+        el('label', { class: 'check', title: l.name },
+          el('input', { type: 'radio', name: 'language', value: l.code,
+            checked: l.code === getLang(),
+            onchange: (event: Event) => {
+              if ((event.target as HTMLInputElement).checked) { setLang(l.code); onLangChange(); }
+            },
+          }),
+          el('span', {}, l.name),
+        ),
+      )),
+    ),
   );
   clear(root);
   setChildren(
