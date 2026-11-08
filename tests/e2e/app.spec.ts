@@ -74,10 +74,10 @@ test.describe('archival certificate preview (network mocked)', () => {
     expect(frameBytes.subarray(0, 8).toString('ascii')).toBe('UOTSQR01');
     expect(frameBytes.length).toBeGreaterThan(80);
     await expect(page.getByRole('button', { name: /^Save QR image 1\// })).toBeVisible();
-    const pngButton = page.getByRole('button', { name: /^Save QR image 1\\// });
+    const pngButton = page.getByRole('button', { name: /^Save QR image 1\// });
     const [pngDownload] = await Promise.all([page.waitForEvent('download'), pngButton.click()]);
     const pngBytes = readFileSync((await pngDownload.path())!);
-    expect(pngDownload.suggestedFilename()).toMatch(/^archival-qr-0001-of-\\d{4}\\.png$/);
+    expect(pngDownload.suggestedFilename()).toMatch(/^archival-qr-0001-of-\d{4}\.png$/);
     expect(pngBytes.subarray(0, 8)).toEqual(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
 
     const canvases = sheet.locator('canvas');
