@@ -2,6 +2,13 @@
 // To add a language: copy `en`, translate every value, register it in LANGS. A unit test enforces identical keys.
 
 export const en = {
+  'dashboard.title': 'Receipt overview',
+  'dashboard.aria': 'Local receipt overview',
+  'dashboard.saved': 'Saved fingerprints: {count}',
+  'dashboard.latest': 'Latest saved entry: {date}',
+  'dashboard.none': 'No dated entries saved.',
+  'dashboard.unknown': 'Verification status: unknown. This list stores fingerprints only, not receipts or Bitcoin confirmation. Recheck using the original file and its .ots receipt in Verify.',
+  'dashboard.openVerify': 'Open Verify',
   'guide.start.title': 'Start here: three steps',
   'guide.start.one': 'Choose the exact file you want to prove existed. If you clean metadata, download and keep the cleaned version.',
   'guide.start.two': 'Create and download the .ots receipt. Your original file is not uploaded.',
@@ -198,6 +205,13 @@ export type Lang = 'en' | 'es';
 type Table = Record<StringKey, string>;
 
 const es: Table = {
+  'dashboard.title': 'Resumen de recibos',
+  'dashboard.aria': 'Resumen de recibos locales',
+  'dashboard.saved': 'Huellas guardadas: {count}',
+  'dashboard.latest': 'Última entrada guardada: {date}',
+  'dashboard.none': 'No hay entradas guardadas con fecha.',
+  'dashboard.unknown': 'Estado de verificación: desconocido. Esta lista guarda solo huellas, no recibos ni confirmaciones de Bitcoin. Vuelve a comprobar con el archivo original y su recibo .ots en Verificar.',
+  'dashboard.openVerify': 'Abrir Verificar',
   'guide.start.title': 'Empieza aquí: tres pasos',
   'guide.start.one': 'Elige el archivo exacto cuya existencia quieres demostrar. Si eliminas metadatos, descarga y conserva la versión limpiada.',
   'guide.start.two': 'Crea y descarga el recibo .ots. Tu archivo original no se sube.',
