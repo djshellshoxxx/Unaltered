@@ -22,11 +22,17 @@ const dist = join(root, 'dist');
 const read = (p) => readFileSync(join(root, p), 'utf8').replace(/\r\n?/g, '\n');
 const pkg = JSON.parse(read('package.json'));
 const version = pkg.version;
+const faviconBase64 = read('src/assets/favicon.png.b64').trim();
+const faviconPng = Buffer.from(faviconBase64, 'base64');
+if (faviconPng.toString('base64') !== faviconBase64 || faviconPng.length > 16_384 ||
+    faviconPng.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a') throw new Error('invalid local favicon');
 // Loose HTML/JS/CLI downloads must retain both MIT notices, without relying on a neighbouring archive LICENSE.
 // Use the installed, lockfile-pinned package's actual notice rather than reconstructing its permission text.
 const noble = JSON.parse(read('node_modules/@noble/hashes/package.json'));
 if (noble.version !== pkg.dependencies['@noble/hashes']) throw new Error('installed hash dependency differs from its exact manifest pin');
-const notices = `Unaltered\n${read('LICENSE')}\n@noble/hashes ${noble.version}\n${read('node_modules/@noble/hashes/LICENSE')}`;
+const qr = JSON.parse(read('node_modules/jsqr/package.json'));
+if (qr.version !== pkg.dependencies.jsqr) throw new Error('installed QR decoder differs from its exact pin');
+const notices = `Unaltered\n${read('LICENSE')}\n@noble/hashes ${noble.version}\n${read('node_modules/@noble/hashes/LICENSE')}\njsQR ${qr.version}\n${read('node_modules/jsqr/LICENSE')}\nProject Nayuki QR generator\n${read('src/vendor/qrcodegen-LICENSE.txt')}`;
 if (notices.includes('*/')) throw new Error('a license notice cannot be embedded safely in a JavaScript comment');
 const licenseBanner = `/*! Unaltered and dependency licenses\n\n${notices}\n*/`;
 
@@ -82,13 +88,14 @@ async function bundle(entry, define) {
 // loaded from its own URL would take its CSP only from HTTP headers, which static hosts do not send, and
 // `new Worker(url)` has no integrity check (SR-1, SR-3).
 const workerJs = await bundle('src/core/hash/hasher.worker.ts', {});
-const mainSingle = await bundle('src/main.ts', { __WORKER_URL__: 'null', __WORKER_INLINE__: JSON.stringify(workerJs) });
+const qrWorkerJs = await bundle('src/core/archive/qr-scan.worker.ts', {});
+const mainSingle = await bundle('src/main.ts', { __WORKER_URL__: 'null', __WORKER_INLINE__: JSON.stringify(workerJs), __FAVICON_BASE64__: JSON.stringify(faviconBase64), __QR_WORKER_INLINE__: JSON.stringify(qrWorkerJs) });
 const mainMulti = mainSingle;
 const cliJs = (
   await build({ absWorkingDir: root, entryPoints: ['src/cli/main.ts'], bundle: true, write: false, format: 'esm', target: 'node22', platform: 'node', minify: true, legalComments: 'none', charset: 'ascii', logLevel: 'error', banner: { js: `#!/usr/bin/env node\n${licenseBanner}` } })
 ).outputFiles[0].text;
 const cliName = `unaltered-cli-${version}.mjs`;
-const css = read('src/styles.css');
+const css = read('src/styles.css') + read('src/core/archive/qr-print.css');
 const template = read('src/index.html');
 // Only the builder may insert script/style/link tags: their bytes are SRI- or CSP-hash-pinned below. Searching generated
 // HTML for a src-like substring confuses attribute values with attributes, and HTML accepts `/` after a tag name.
@@ -108,15 +115,16 @@ const buildHash = hex256(Buffer.from(cliJs + '\0' + mainMulti + '\0' + workerJs 
 
 // One pass with a replacer function: string replacements would expand `$&`, `$'` and similar patterns inside the
 // bundle or CSS, and sequential passes would fill a token that an earlier value happened to contain.
-function fill(html, { cspValue, styles, script }) {
-  const values = { CSP: cspValue, STYLES: styles, SCRIPT: script, VERSION: version, BUILD: buildHash };
-  return html.replace(/\{\{(CSP|STYLES|SCRIPT|VERSION|BUILD)\}\}/g, (_, key) => values[key]);
+function fill(html, { cspValue, styles, script, favicon = '' }) {
+  const values = { CSP: cspValue, STYLES: styles, SCRIPT: script, VERSION: version, BUILD: buildHash, FAVICON: favicon };
+  return html.replace(/\{\{(CSP|STYLES|SCRIPT|VERSION|BUILD|FAVICON)\}\}/g, (_, key) => values[key]);
 }
 
 // Multi-file page: SRI on every script/stylesheet (SR-3).
 const sri = (text) => `sha384-${sha(Buffer.from(text), 'sha384', 'base64')}`;
 const multiHtml = fill(template, {
   cspValue: multiCsp,
+  favicon: '<link rel="icon" type="image/png" sizes="64x64" href="./favicon.png">',
   styles: `<link rel="stylesheet" href="./styles.css" integrity="${sri(css)}">`,
   script: `<script src="./main.js" defer integrity="${sri(mainMulti)}"></script>`,
 });
@@ -283,6 +291,7 @@ fi
 `;
 
 const common = [
+  { name: 'favicon.png', data: faviconPng },
   { name: 'index.html', data: Buffer.from(multiHtml) },
   { name: 'main.js', data: Buffer.from(mainMulti) },
   { name: 'styles.css', data: Buffer.from(css) },

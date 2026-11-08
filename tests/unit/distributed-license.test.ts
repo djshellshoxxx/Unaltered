@@ -9,7 +9,7 @@ import { createScanner, LanguageVariant, ScriptTarget, SyntaxKind } from 'typesc
 import { afterAll, beforeAll, expect, it } from 'vitest';
 
 const repo = fileURLToPath(new URL('../..', import.meta.url));
-const licenses = ['LICENSE', 'node_modules/@noble/hashes/LICENSE'].map((path) => ({
+const licenses = ['LICENSE', 'node_modules/@noble/hashes/LICENSE', 'node_modules/jsqr/LICENSE', 'src/vendor/qrcodegen-LICENSE.txt'].map((path) => ({
   path, notice: readFileSync(join(repo, path), 'utf8').replace(/\r\n?/g, '\n'),
 }));
 function requireNotices(value: string, where: string): void {

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { el, setChildren } from '../../src/ui/dom';
+import { el, setChildren, dropZone } from '../../src/ui/dom';
 import { doc, FElement, installFakeDom } from './ui-fake-dom';
 
 let restore: () => void;
@@ -140,4 +140,14 @@ describe('focus restoration follows each ancestor at its own position', () => {
     expect(doc.activeElement!.textContent).toBe('Remove b');
     expect(root.all()).toContain(doc.activeElement);
   });
+});
+
+
+it('clears file selection before consumers can throw or replace the input', () => {
+  const root = dropZone({ id: 'repeat', label: 'Choose', hint: '', onFiles: () => { throw new Error('consumer failed'); } }) as unknown as FElement;
+  const input = root.querySelector('input')!;
+  input.value = 'selected-file';
+  input.files = [{ name: 'same.txt' }];
+  expect(() => input.dispatch('change')).toThrow('consumer failed');
+  expect(input.value).toBe('');
 });

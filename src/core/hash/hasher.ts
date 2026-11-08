@@ -62,12 +62,12 @@ function releaseScript(w: Worker): void {
   URL.revokeObjectURL(url);
 }
 
-function makeWorker(): Worker | null {
+function makeWorker(injectedInline?: string | null, injectedUrl?: string | null): Worker | null {
   if (typeof Worker === 'undefined') return null;
   let blobUrl: string | null = null;
   try {
-    const inline = typeof __WORKER_INLINE__ === 'string' ? __WORKER_INLINE__ : null;
-    const url = typeof __WORKER_URL__ === 'string' ? __WORKER_URL__ : null;
+    const inline = injectedInline !== undefined ? injectedInline : typeof __WORKER_INLINE__ === 'string' ? __WORKER_INLINE__ : null;
+    const url = injectedUrl !== undefined ? injectedUrl : typeof __WORKER_URL__ === 'string' ? __WORKER_URL__ : null;
     if (inline === null && url === null) return null;
     const tt = (globalThis as { trustedTypes?: TrustedTypesApi }).trustedTypes;
     let src: string;
@@ -90,6 +90,15 @@ function makeWorker(): Worker | null {
     if (blobUrl !== null) URL.revokeObjectURL(blobUrl);
     return null;
   }
+}
+
+/** Uses the same exact-URL Trusted Types policy as hashing; callers cannot supply script source. */
+declare const __QR_WORKER_INLINE__: string | null;
+export function makeQrWorker(): { worker: Worker; dispose(): void } | null {
+  const source = typeof __QR_WORKER_INLINE__ === 'string' ? __QR_WORKER_INLINE__ : null;
+  if (!source) return null;
+  const worker = makeWorker(source, null);
+  return worker ? { worker, dispose() { worker.terminate(); releaseScript(worker); } } : null;
 }
 
 function hashInWorker(w: Worker, blob: Blob, opts: HashOptions): Promise<{ digest: Uint8Array; bytes: number; cross: string } | 'unavailable'> {
