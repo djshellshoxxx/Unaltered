@@ -96,12 +96,12 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
       const list = loadReceipts();
       const summary = summarizeLocalReceipts(list);
       kids.push(
-        el('section', { class: 'receipt-health-summary', 'aria-label': 'Local receipt overview' },
-          el('h4', {}, 'Receipt overview'),
-          el('p', {}, `Saved fingerprints: ${summary.saved}`),
-          el('p', {}, summary.latestAddedUtc ? `Latest saved entry: ${summary.latestAddedUtc}` : 'No dated entries saved.'),
-          el('p', { class: 'muted' }, 'Verification status: unknown. This list stores fingerprints only, not receipts or Bitcoin confirmation. Recheck using the original file and its .ots receipt in Verify.'),
-          el('a', { href: '#verify', class: 'button small' }, 'Open Verify'),
+        el('section', { class: 'receipt-health-summary', 'aria-label': t('dashboard.aria') },
+          el('h4', {}, t('dashboard.title')),
+          el('p', {}, t('dashboard.saved', { count: summary.saved })),
+          el('p', {}, summary.latestAddedUtc ? t('dashboard.latest', { date: summary.latestAddedUtc }) : t('dashboard.none')),
+          el('p', { class: 'muted' }, t('dashboard.unknown')),
+          el('a', { href: '#verify', class: 'button small' }, t('dashboard.openVerify')),
         ),
         list.length === 0
           ? el('p', { class: 'muted' }, t('settings.receiptsEmpty'))
