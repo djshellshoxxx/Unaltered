@@ -299,7 +299,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
     let pairs: ReturnType<typeof pairEvidenceFiles>;
     try {
       pairs = pairEvidenceFiles(files.map(f => f.name), receipts.map(f => f.name));
-    } catch (error) {
+    } catch {
       setChildren(batchResults, el('p', { role: 'alert', class: 'error' }, t('batch.pairError')));
       return;
     }
