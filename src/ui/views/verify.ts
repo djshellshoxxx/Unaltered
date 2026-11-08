@@ -1,6 +1,7 @@
 // Verify view (FR-7, FR-8, FR-11) and receipt upgrade (FR-6).
 import { fromHex, groupHex } from '../../core/bytes';
 import { createVerificationReportJson } from '../../core/reports/verification';
+import { createEvidenceZip } from '../../core/reports/evidence-zip';
 import { isAbort, safeMessage, UnalteredError } from '../../core/errors';
 import { hashBlob } from '../../core/hash/hasher';
 import { upgrade, type UpgradeResult } from '../../core/ots/calendar';
@@ -127,7 +128,25 @@ export function mountVerify(root: HTMLElement): VerifyView {
       actions,
       el('button', { type: 'button', class: 'button primary big', disabled: busy || !receipt || (!file && !prefill), onclick: () => void run() }, busy ? t('verify.checking') : t('verify.check')),
       busy ? el('button', { type: 'button', class: 'button', onclick: () => { resetVerification(); renderActions(); } }, t('common.cancel')) : null,
+      file && receipt && !busy ? el('button', { type: 'button', class: 'button', onclick: () => void downloadEvidenceBundle() }, 'Download evidence ZIP (16 MiB max)') : null,
     );
+  }
+
+  async function downloadEvidenceBundle(): Promise<void> {
+    if (!file || !receipt || busy) return;
+    try {
+      if (file.size + receipt.size > 16 * 1024 * 1024) throw new Error('Evidence ZIP supports at most 16 MiB combined');
+      const [original, proof] = await Promise.all([file.arrayBuffer(), receipt.arrayBuffer()]);
+      const archive = await createEvidenceZip(new Uint8Array(original), new Uint8Array(proof));
+      const blob = new Blob([archive as BlobPart], { type: 'application/zip' });
+      const url = URL.createObjectURL(blob);
+      const link = el('a', { href: url, download: 'unaltered-evidence.zip' });
+      link.click();
+      // Defer revocation until after the browser has consumed the click.
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (error) {
+      show({ kind: 'error', message: safeMessage(error) });
+    }
   }
 
   async function run(): Promise<void> {
