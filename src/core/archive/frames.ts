@@ -2,6 +2,8 @@
 const HEADER = 80;
 const MAX_RECEIPT = 16 * 1024 * 1024;
 const MAX_FRAMES = 4096;
+// QR Model 2, version 40-L maximum byte-mode capacity (including frame header).
+const MAX_QR_BYTES = 2953;
 const MAGIC = new TextEncoder().encode('UOTSQR01');
 const DOMAIN = new TextEncoder().encode('UNALTERED-OTS-QR/1\0');
 
@@ -20,7 +22,7 @@ async function proofId(data: Uint8Array): Promise<Uint8Array> {
 }
 export async function encodeReceiptFrames(receipt: Uint8Array, maxFrameBytes: number): Promise<Uint8Array[]> {
   if (receipt.length < 1 || receipt.length > MAX_RECEIPT) fail('receipt length');
-  if (!Number.isSafeInteger(maxFrameBytes) || maxFrameBytes <= HEADER) fail('frame capacity');
+  if (!Number.isSafeInteger(maxFrameBytes) || maxFrameBytes <= HEADER || maxFrameBytes > MAX_QR_BYTES) fail('frame capacity');
   const capacity = maxFrameBytes - HEADER;
   const total = Math.ceil(receipt.length / capacity);
   if (total > MAX_FRAMES) fail('too many frames');
@@ -53,7 +55,7 @@ export async function recoverReceiptFrames(frames: readonly Uint8Array[]): Promi
   let total = 0;
   let length = 0;
   for (const frame of frames) {
-    if (frame.length <= HEADER || !equal(frame.subarray(0, 8), MAGIC)) fail('magic or empty payload');
+    if (frame.length <= HEADER || frame.length > MAX_QR_BYTES || !equal(frame.subarray(0, 8), MAGIC)) fail('magic or empty payload');
     if (frame[8] !== 1 || frame[9] !== 0 || frame[10] !== 0 || frame[11] !== 0) fail('version, flags or compression');
     const view = new DataView(frame.buffer, frame.byteOffset, frame.byteLength);
     const index = view.getUint32(28);
