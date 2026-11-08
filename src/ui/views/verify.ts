@@ -128,14 +128,14 @@ export function mountVerify(root: HTMLElement): VerifyView {
       actions,
       el('button', { type: 'button', class: 'button primary big', disabled: busy || !receipt || (!file && !prefill), onclick: () => void run() }, busy ? t('verify.checking') : t('verify.check')),
       busy ? el('button', { type: 'button', class: 'button', onclick: () => { resetVerification(); renderActions(); } }, t('common.cancel')) : null,
-      file && receipt && !busy ? el('button', { type: 'button', class: 'button', onclick: () => void downloadEvidenceBundle() }, 'Download evidence ZIP (16 MiB max)') : null,
+      file && receipt && !busy ? el('button', { type: 'button', class: 'button', onclick: () => void downloadEvidenceBundle() }, t('evidence.downloadZip')) : null,
     );
   }
 
   async function downloadEvidenceBundle(): Promise<void> {
     if (!file || !receipt || busy) return;
     try {
-      if (file.size + receipt.size > 16 * 1024 * 1024) throw new Error('Evidence ZIP supports at most 16 MiB combined');
+      if (file.size + receipt.size > 16 * 1024 * 1024) throw new Error(t('evidence.limit'));
       const [original, proof] = await Promise.all([file.arrayBuffer(), receipt.arrayBuffer()]);
       const archive = await createEvidenceZip(new Uint8Array(original), new Uint8Array(proof));
       const blob = new Blob([archive as BlobPart], { type: 'application/zip' });
