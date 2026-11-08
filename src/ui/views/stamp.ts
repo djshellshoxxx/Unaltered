@@ -1,5 +1,8 @@
 // Stamp view (FR-1..FR-5, FR-10, FR-11, FR-12): pick file(s), optionally clean, fingerprint, create receipt.
 import { groupHex } from '../../core/bytes';
+import { encodeArchivalQr } from '../../core/archive/qr-encode';
+import { createArchivalPrintSheet } from '../../core/archive/qr-print';
+import type { QrPreference, QrPaper } from '../../core/archive/qr-plan';
 import { isAbort, safeMessage, UnalteredError } from '../../core/errors';
 import { hashBlob, type HashResult } from '../../core/hash/hasher';
 import { calendarsOf, stampBatch, type CalendarResult } from '../../core/ots/calendar';
@@ -50,6 +53,7 @@ export function mountStamp(root: HTMLElement): StampView {
   let stampAbort: AbortController | null = null;
   let lastCalendars: CalendarResult[] | null = null;
   let stampError: string | null = null;
+  let archivalDownloadOwner: object | null = null;
 
   const list = el('div', { class: 'items', role: 'list' });
   const actions = el('div', { class: 'actions' });
@@ -226,6 +230,7 @@ export function mountStamp(root: HTMLElement): StampView {
           { class: 'notice ok' },
           downloadLink(t('stamp.downloadReceipt', { name }), name, it.proof, 'application/octet-stream', undefined, { owner: it, key: 'receipt' }),
           el('p', { class: 'muted' }, t('stamp.receiptName')),
+          archivalControls(it),
           shareRow(it),
           labelRow(it),
         ),
@@ -235,6 +240,100 @@ export function mountStamp(root: HTMLElement): StampView {
     // Cancel/cleaning controls may disappear during a transition. Never leave focus on a detached control or move it
     // to an unrelated row action that happens to occupy the same position.
     if (hadFocus && !it.card.contains(document.activeElement)) root.querySelector<HTMLElement>('#stamp-file')?.focus();
+  }
+
+  function archivalControls(it: Item): HTMLElement {
+    const wrap = el('div', { class: 'archival-controls' });
+    const levels: readonly QrPreference[] = ['auto', 'L', 'M', 'Q', 'H'];
+    const descriptions = ['Automatic (recommended)', 'L — 7%', 'M — 15%', 'Q — 25%', 'H — 30% (maximum)'];
+    const papers: readonly QrPaper[] = ['a4', 'letter'];
+    let levelIndex = 0;
+    let paperIndex = 0;
+    const correction = el('button', { type: 'button', class: 'button small',
+      'aria-label': 'Archival QR error correction: Automatic (recommended)' }, 'QR correction: Automatic (recommended)');
+    correction.addEventListener('click', () => {
+      levelIndex = (levelIndex + 1) % levels.length;
+      correction.textContent = 'QR correction: ' + descriptions[levelIndex]!;
+      correction.setAttribute('aria-label', 'Archival QR error correction: ' + descriptions[levelIndex]!);
+    });
+    const paper = el('button', { type: 'button', class: 'button small',
+      'aria-label': 'Archival QR paper size: A4' }, 'Paper: A4');
+    paper.addEventListener('click', () => {
+      paperIndex = (paperIndex + 1) % papers.length;
+      const label = papers[paperIndex] === 'a4' ? 'A4' : 'US Letter';
+      paper.textContent = 'Paper: ' + label;
+      paper.setAttribute('aria-label', 'Archival QR paper size: ' + label);
+    });
+    const preview = el('button', { type: 'button', class: 'button small', onclick: () => {
+      void showArchiveSheet(it, levels[levelIndex]!, papers[paperIndex]!);
+    } }, 'Preview archival QR certificate');
+    wrap.appendChild(correction);
+    wrap.appendChild(paper);
+    wrap.appendChild(preview);
+    return wrap;
+  }
+
+  async function showArchiveSheet(it: Item, preference: QrPreference, paper: QrPaper): Promise<void> {
+    if (!it.proof) return;
+    if (archivalDownloadOwner) revokeOwner(archivalDownloadOwner);
+    archivalDownloadOwner = null;
+    root.querySelector('.archival-qr-frame-downloads')?.remove();
+    root.querySelector('.archival-qr-png-exports')?.remove();
+    root.querySelector('.archival-qr-preview-summary')?.remove();
+    root.querySelector('.archival-qr-preview-close')?.remove();
+    root.querySelector('.archival-qr-print')?.remove();
+    const previous = root.querySelector('.unaltered-archival-sheet');
+    previous?.remove();
+    const existingStatus = root.querySelector('.archival-qr-status');
+    existingStatus?.remove();
+    const status = el('p', { class: 'archival-qr-status', role: 'status' }, 'Preparing QR certificate preview…');
+    root.append(status);
+    try {
+      const { symbols, plan } = await encodeArchivalQr(it.proof, { preference, paper });
+      if (!items.includes(it) || !it.proof) { status.remove(); return; }
+      const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', Uint8Array.from(it.proof)));
+      const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+      const sheet = createArchivalPrintSheet(symbols, hex, it.proof.length, plan.paper);
+      const summary = el('p', { class: 'archival-qr-preview-summary' }, `QR preview: ${symbols.length} symbols, correction ${plan.level}, estimated ${plan.pages} pages. Print layout requires qualification.`);
+      const owner = {};
+      archivalDownloadOwner = owner;
+      const frameDownloads = el('div', { class: 'archival-qr-frame-downloads' });
+      frameDownloads.appendChild(el('p', {}, 'Optional: download the raw binary payload for each QR symbol to test offline recovery. These are not QR images.'));
+      for (const symbol of symbols) {
+        const filename = `archival-frame-${String(symbol.index + 1).padStart(4, '0')}-of-${String(symbol.total).padStart(4, '0')}.bin`;
+        frameDownloads.appendChild(downloadLink(`Frame ${symbol.index + 1}/${symbol.total}`, filename,
+          symbol.frame, 'application/octet-stream', undefined, { owner, key: filename }));
+      }
+      const print = el('button', { type: 'button', class: 'button small archival-qr-print', onclick: () => window.print() }, 'Print archival certificate / Save as PDF');
+      const pngExports = el('div', { class: 'archival-qr-png-exports' });
+      pngExports.appendChild(el('p', {}, 'Export QR symbol images as PNG for independent scanning. Keep every symbol.'));
+      const canvases = sheet.querySelectorAll('canvas[data-archival-frame]');
+      for (const [index, canvas] of Array.from(canvases).entries()) {
+        const exportButton = el('button', { type: 'button', class: 'button small' }, `Save QR image ${index + 1}/${symbols.length} (PNG)`);
+        exportButton.addEventListener('click', () => {
+          if (!(canvas instanceof HTMLCanvasElement)) return;
+          canvas.toBlob((blob) => {
+            if (!blob) return;
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = `archival-qr-${String(index + 1).padStart(4, '0')}-of-${String(symbols.length).padStart(4, '0')}.png`;
+            anchor.click();
+            setTimeout(() => URL.revokeObjectURL(url), 60000);
+          }, 'image/png');
+        });
+        pngExports.appendChild(exportButton);
+      }
+      const close = el('button', { type: 'button', class: 'button small archival-qr-preview-close', onclick: () => {
+        sheet.remove(); summary.remove(); frameDownloads.remove(); pngExports.remove(); print.remove(); close.remove(); status.remove();
+        revokeOwner(owner);
+        if (archivalDownloadOwner === owner) archivalDownloadOwner = null;
+      } }, 'Close QR preview');
+      status.textContent = 'Archival QR preview ready. Use browser Print / Save as PDF after checking the layout.';
+      root.append(summary, print, close, frameDownloads, pngExports, sheet);
+    } catch (error) {
+      status.textContent = 'Unable to prepare QR certificate: ' + safeMessage(error);
+    }
   }
 
   function shareRow(it: Item): Node | null {

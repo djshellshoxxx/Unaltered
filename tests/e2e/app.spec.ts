@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { concat, fromHex, groupHex } from '../../src/core/bytes';
+import { encodeReceiptFrames } from '../../src/core/archive/frames';
 import { serializeTree } from '../../src/core/ots/codec';
 import { makeJpeg } from '../helpers/images';
 import { bytesOf, cspViolations, installNetwork, sha256hex, watchViolations } from './helpers';
@@ -30,6 +31,106 @@ async function stampNote(page: Page, name = 'note.txt', content: Buffer = NOTE):
   expect(dl.suggestedFilename()).toBe(`${name}.ots`);
   return readFileSync((await dl.path())!);
 }
+
+test.describe('offline archival receipt recovery', () => {
+  test('recovers an exact .ots file from shuffled binary QR frame payloads', async ({ page, context }) => {
+    await installNetwork(context);
+    await watchViolations(page);
+    const original = await stampNote(page);
+    const frames = await encodeReceiptFrames(new Uint8Array(original), 160);
+    await page.goto('/index.html#verify');
+    await page.getByLabel('Decoded QR binary payload files').setInputFiles(
+      frames.reverse().map((frame, index) => ({
+        name: `frame-${index}.bin`,
+        mimeType: 'application/octet-stream',
+        buffer: Buffer.from(frame),
+      })),
+    );
+    await page.getByRole('button', { name: 'Recover .ots receipt' }).click();
+    const link = page.getByRole('link', { name: 'Download reconstructed .ots receipt' });
+    await expect(link).toBeVisible();
+    const [download] = await Promise.all([page.waitForEvent('download'), link.click()]);
+    expect(readFileSync((await download.path())!)).toEqual(original);
+    expect(await cspViolations(page)).toEqual([]);
+  });
+});
+
+test.describe('archival certificate preview (network mocked)', () => {
+  test('creates an offline, labelled QR certificate and closes without CSP violations', async ({ page, context }) => {
+    await installNetwork(context);
+    await watchViolations(page);
+    await stampNote(page);
+    await page.getByRole('button', { name: 'Preview archival QR certificate' }).click();
+    const sheet = page.locator('.unaltered-archival-sheet');
+    await expect(sheet).toBeVisible();
+    await expect(sheet).toContainText('Archival Receipt (Unverified)');
+    await expect(sheet).toContainText('Receipt SHA-256:');
+    await expect(sheet).toContainText('UNALTERED-OTS-QR/1');
+    await expect(page.getByRole('button', { name: 'Print archival certificate / Save as PDF' })).toBeVisible();
+    const frameLink = page.getByRole('link', { name: /^Frame 1\// }).first();
+    await expect(frameLink).toBeVisible();
+    const [frameDownload] = await Promise.all([page.waitForEvent('download'), frameLink.click()]);
+    const frameBytes = readFileSync((await frameDownload.path())!);
+    expect(frameBytes.subarray(0, 8).toString('ascii')).toBe('UOTSQR01');
+    expect(frameBytes.length).toBeGreaterThan(80);
+    await expect(page.getByRole('button', { name: /^Save QR image 1\// })).toBeVisible();
+    const pngButton = page.getByRole('button', { name: /^Save QR image 1\// });
+    const [pngDownload] = await Promise.all([page.waitForEvent('download'), pngButton.click()]);
+    const pngBytes = readFileSync((await pngDownload.path())!);
+    expect(pngDownload.suggestedFilename()).toMatch(/^archival-qr-0001-of-\d{4}\.png$/);
+    expect(pngBytes.subarray(0, 8)).toEqual(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+
+    const canvases = sheet.locator('canvas');
+    expect(await canvases.count()).toBeGreaterThan(0);
+    const first = canvases.first();
+    const image = await first.evaluate((canvas) => {
+      const c = canvas as HTMLCanvasElement;
+      const ctx = c.getContext('2d');
+      if (!ctx) return null;
+      const pixels = ctx.getImageData(0, 0, c.width, c.height).data;
+      let black = 0;
+      let white = 0;
+      for (let i = 0; i < pixels.length; i += 4) {
+        if (pixels[i] === 0 && pixels[i + 1] === 0 && pixels[i + 2] === 0) black++;
+        if (pixels[i] === 255 && pixels[i + 1] === 255 && pixels[i + 2] === 255) white++;
+      }
+      return { width: c.width, height: c.height, black, white };
+    });
+    expect(image).not.toBeNull();
+    expect(image!.width).toBe(image!.height);
+    expect(image!.black).toBeGreaterThan(0);
+    expect(image!.white).toBeGreaterThan(0);
+    expect(await cspViolations(page)).toEqual([]);
+    await page.emulateMedia({ media: 'print' });
+    const printState = await page.evaluate(() => ({
+      sheetVisible: getComputedStyle(document.querySelector('.unaltered-archival-sheet')!).visibility,
+      canvasVisible: getComputedStyle(document.querySelector('.unaltered-archival-sheet canvas')!).visibility,
+      navigationVisible: getComputedStyle(document.querySelector('nav')!).visibility,
+    }));
+    expect(printState.sheetVisible).toBe('visible');
+    expect(printState.canvasVisible).toBe('visible');
+    expect(printState.navigationVisible).toBe('hidden');
+    await page.emulateMedia({ media: 'screen' });
+    await page.getByRole('button', { name: 'Close QR preview' }).click();
+    await expect(sheet).toHaveCount(0);
+  });
+});
+
+test.describe('archival QR controls (network mocked)', () => {
+  test('automatic default and manual H selection do not trigger CSP violations', async ({ page, context }) => {
+    await installNetwork(context);
+    await watchViolations(page);
+    await stampNote(page);
+    const correction = page.getByRole('button', { name: /Archival QR error correction:/ });
+    const paper = page.getByRole('button', { name: /Archival QR paper size:/ });
+    await expect(correction).toHaveAttribute('aria-label', 'Archival QR error correction: Automatic (recommended)');
+    for (let i = 0; i < 4; i++) await correction.click();
+    await expect(correction).toHaveAttribute('aria-label', /H — 30%/);
+    await paper.click();
+    await expect(paper).toHaveAttribute('aria-label', 'Archival QR paper size: US Letter');
+    expect(await cspViolations(page)).toEqual([]);
+  });
+});
 
 test.describe('stamp, upgrade, verify (network mocked)', () => {
   test('full flow with the four mandatory trust behaviours', async ({ page, context }) => {

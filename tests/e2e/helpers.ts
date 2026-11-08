@@ -79,7 +79,10 @@ export async function watchViolations(page: Page): Promise<{ list: string[] }> {
   const state = { list: [] as string[] };
   await page.addInitScript(() => {
     (window as unknown as { __csp: string[] }).__csp = [];
-    document.addEventListener('securitypolicyviolation', (e) => (window as unknown as { __csp: string[] }).__csp.push(`${e.violatedDirective} ${e.blockedURI}`));
+    document.addEventListener('securitypolicyviolation', (e) => {
+      const target = e.target instanceof Element ? `${e.target.tagName.toLowerCase()}${e.target.id ? '#' + e.target.id : ''}${e.target.className && typeof e.target.className === 'string' ? '.' + e.target.className.trim().replace(/\s+/g, '.') : ''}` : 'unknown';
+      (window as unknown as { __csp: string[] }).__csp.push(`${e.violatedDirective} ${e.blockedURI} target=${target} sample=${e.sample}`);
+    });
   });
   page.on('pageerror', (e) => state.list.push(`pageerror: ${e.message}`));
   return state;

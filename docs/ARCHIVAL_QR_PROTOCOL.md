@@ -44,3 +44,16 @@ A printed QR's metadata label is **not** sufficient to recover missing or damage
 ## Future versioning
 
 Compression (for example, deterministic DEFLATE), QR selection, pagination, PDF creation and offline image scanning are subsequent phases. They must not reinterpret compression=0 frames. Any incompatible framing change requires a new version. The final specification must include independent golden vectors and third-party decoder verification before a production release.
+
+## Independent reference decoder
+
+`scripts/recover-archival-qr.py` reconstructs a standard receipt from raw QR byte-mode payload files without using Unaltered's TypeScript implementation or any third-party Python packages.
+
+Example (after extracting raw QR payload bytes to files):
+
+```sh
+python3 scripts/recover-archival-qr.py frame-000.bin frame-001.bin -o recovered.ots
+python3 -m unittest discover -s tests/archival -p 'test_*.py'
+```
+
+The reference script does not decode QR images, does not verify the Bitcoin timestamp, and does not replace an independent OpenTimestamps client. Before release, create cross-language golden vectors from the TypeScript encoder and verify that the Python decoder reconstructs them byte-for-byte; the current Python tests construct frames independently.

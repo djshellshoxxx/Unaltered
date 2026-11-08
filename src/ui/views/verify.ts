@@ -1,5 +1,6 @@
 // Verify view (FR-7, FR-8, FR-11) and receipt upgrade (FR-6).
 import { fromHex, groupHex } from '../../core/bytes';
+import { archivalRecoveryPanel } from '../archival-recovery';
 import { isAbort, safeMessage, UnalteredError } from '../../core/errors';
 import { hashBlob } from '../../core/hash/hasher';
 import { upgrade, type UpgradeResult } from '../../core/ots/calendar';
@@ -261,6 +262,8 @@ export function mountVerify(root: HTMLElement): VerifyView {
       upInputs,
       upActions,
       upOut,
+      el('hr'),
+      archivalRecoveryPanel(),
     );
   }
 

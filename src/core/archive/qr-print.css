@@ -1,0 +1,13 @@
+/* Print styles for the archival sheet; include in the host document stylesheet. */
+.unaltered-archival-sheet { color:#111; background:#fff; font: 12pt/1.4 system-ui,sans-serif; padding:15mm; }
+.unaltered-archival-sheet h1 { font-size:20pt; }
+.unaltered-archival-sheet h2 { font-size:12pt; }
+.unaltered-archival-sheet p { overflow-wrap:anywhere; }
+.unaltered-archival-symbol { display:inline-block; vertical-align:top; width:80mm; max-width:100%; padding:3mm; break-inside:avoid; page-break-inside:avoid; }
+.unaltered-archival-symbol canvas { display:block; width:100%; height:auto; image-rendering:pixelated; }
+.unaltered-archival-symbol p { font-size:8pt; }
+@media print {
+  body:has(.unaltered-archival-sheet) > :not(.unaltered-archival-sheet) { display:none !important; }
+  .unaltered-archival-sheet { padding:0; }
+  .unaltered-archival-symbol { break-inside:avoid; page-break-inside:avoid; }
+}
