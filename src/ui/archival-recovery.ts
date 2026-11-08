@@ -18,6 +18,12 @@ export function archivalRecoveryPanel(): HTMLElement {
   const status = el('p', { role: 'status' }, 'Select one or more binary QR frame files.');
   const button = el('button', { type: 'button', class: 'button small' }, 'Recover .ots receipt') as HTMLButtonElement;
   const download = el('div', {});
+  let activeUrl: string | null = null;
+  const clearDownload = (): void => {
+    if (activeUrl) URL.revokeObjectURL(activeUrl);
+    activeUrl = null;
+    download.replaceChildren();
+  };
   button.disabled = true;
   input.addEventListener('change', () => {
     button.disabled = !input.files?.length;
@@ -29,7 +35,7 @@ export function archivalRecoveryPanel(): HTMLElement {
       const files = Array.from(input.files ?? []);
       if (!files.length || files.length > 4096) { status.textContent = 'Invalid frame count.'; return; }
       button.disabled = true;
-      download.replaceChildren();
+      clearDownload();
       status.textContent = 'Checking frames and reconstructing receipt…';
       try {
         const frames: Uint8Array[] = [];
@@ -40,11 +46,12 @@ export function archivalRecoveryPanel(): HTMLElement {
         const receipt = await recoverReceiptFrames(frames);
         const blob = new Blob([Uint8Array.from(receipt)], { type:'application/octet-stream' });
         const url = URL.createObjectURL(blob);
+        activeUrl = url;
         const anchor = document.createElement('a');
         anchor.href = url;
         anchor.download = 'recovered.ots';
         anchor.textContent = 'Download reconstructed .ots receipt';
-        anchor.addEventListener('click', () => { setTimeout(() => URL.revokeObjectURL(url), 60000); }, { once:true });
+        anchor.addEventListener('click', () => { setTimeout(() => { if (activeUrl === url) clearDownload(); }, 60000); }, { once:true });
         download.append(anchor);
         status.textContent = `Recovered ${receipt.length} bytes. SHA-256 and frame identifiers match. This does not verify the Bitcoin timestamp.`;
       } catch (error) {
