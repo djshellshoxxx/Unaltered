@@ -65,6 +65,13 @@ test.describe('stamp, upgrade, verify (network mocked)', () => {
     await page.setInputFiles('#verify-receipt', { name: 'note.txt.ots', mimeType: 'application/octet-stream', buffer: pending });
     await page.getByRole('button', { name: 'Check', exact: true }).click();
     await expect(page.locator('.result-PENDING')).toContainText('Not yet confirmed');
+    const reportLink = page.getByRole('link', { name: 'Download verification report (JSON)' });
+    await expect(reportLink).toBeVisible();
+    const [reportDownload] = await Promise.all([page.waitForEvent('download'), reportLink.click()]);
+    const exportedReport = JSON.parse(readFileSync((await reportDownload.path())!, 'utf8'));
+    expect(exportedReport.status).toBe('PENDING');
+    expect(exportedReport.bitcoin).toBeNull();
+
     await expect(page.locator('.result-VERIFIED')).toHaveCount(0);
 
     // upgrade while calendars still answer 404
