@@ -278,6 +278,7 @@ export function mountStamp(root: HTMLElement): StampView {
     if (archivalDownloadOwner) revokeOwner(archivalDownloadOwner);
     archivalDownloadOwner = null;
     root.querySelector('.archival-qr-frame-downloads')?.remove();
+    root.querySelector('.archival-qr-png-exports')?.remove();
     root.querySelector('.archival-qr-preview-summary')?.remove();
     root.querySelector('.archival-qr-preview-close')?.remove();
     root.querySelector('.archival-qr-print')?.remove();
@@ -304,13 +305,32 @@ export function mountStamp(root: HTMLElement): StampView {
           symbol.frame, 'application/octet-stream', undefined, { owner, key: filename }));
       }
       const print = el('button', { type: 'button', class: 'button small archival-qr-print', onclick: () => window.print() }, 'Print archival certificate / Save as PDF');
+      const pngExports = el('div', { class: 'archival-qr-png-exports' });
+      pngExports.appendChild(el('p', {}, 'Export QR symbol images as PNG for independent scanning. Keep every symbol.'));
+      const canvases = sheet.querySelectorAll('canvas[data-archival-frame]');
+      for (const [index, canvas] of Array.from(canvases).entries()) {
+        const exportButton = el('button', { type: 'button', class: 'button small' }, `Save QR image ${index + 1}/${symbols.length} (PNG)`);
+        exportButton.addEventListener('click', () => {
+          if (!(canvas instanceof HTMLCanvasElement)) return;
+          canvas.toBlob((blob) => {
+            if (!blob) return;
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = `archival-qr-${String(index + 1).padStart(4, '0')}-of-${String(symbols.length).padStart(4, '0')}.png`;
+            anchor.click();
+            setTimeout(() => URL.revokeObjectURL(url), 60000);
+          }, 'image/png');
+        });
+        pngExports.appendChild(exportButton);
+      }
       const close = el('button', { type: 'button', class: 'button small archival-qr-preview-close', onclick: () => {
-        sheet.remove(); summary.remove(); frameDownloads.remove(); print.remove(); close.remove(); status.remove();
+        sheet.remove(); summary.remove(); frameDownloads.remove(); pngExports.remove(); print.remove(); close.remove(); status.remove();
         revokeOwner(owner);
         if (archivalDownloadOwner === owner) archivalDownloadOwner = null;
       } }, 'Close QR preview');
       status.textContent = 'Archival QR preview ready. Use browser Print / Save as PDF after checking the layout.';
-      root.append(summary, print, close, frameDownloads, sheet);
+      root.append(summary, print, close, frameDownloads, pngExports, sheet);
     } catch (error) {
       status.textContent = 'Unable to prepare QR certificate: ' + safeMessage(error);
     }
