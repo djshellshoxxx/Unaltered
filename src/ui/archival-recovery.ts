@@ -28,7 +28,7 @@ export function archivalRecoveryPanel(): HTMLElement {
   input.addEventListener('change', () => {
     button.disabled = !input.files?.length;
     status.textContent = input.files?.length ? `${input.files.length} QR payload files selected.` : 'Select QR payload files.';
-    download.replaceChildren();
+    clearDownload();
   });
   button.addEventListener('click', () => {
     void (async () => {
