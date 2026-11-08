@@ -2,6 +2,8 @@
 // To add a language: copy `en`, translate every value, register it in LANGS. A unit test enforces identical keys.
 
 export const en = {
+  'evidence.downloadZip': 'Download evidence ZIP (16 MiB max)',
+  'evidence.limit': 'Evidence ZIP supports at most 16 MiB combined',
   'dashboard.title': 'Receipt overview',
   'dashboard.aria': 'Local receipt overview',
   'dashboard.saved': 'Saved fingerprints: {count}',
@@ -205,6 +207,8 @@ export type Lang = 'en' | 'es';
 type Table = Record<StringKey, string>;
 
 const es: Table = {
+  'evidence.downloadZip': 'Descargar ZIP de pruebas (máximo 16 MiB)',
+  'evidence.limit': 'El ZIP de pruebas admite un máximo de 16 MiB en total',
   'dashboard.title': 'Resumen de recibos',
   'dashboard.aria': 'Resumen de recibos locales',
   'dashboard.saved': 'Huellas guardadas: {count}',
