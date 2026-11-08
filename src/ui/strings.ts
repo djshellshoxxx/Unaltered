@@ -2,6 +2,18 @@
 // To add a language: copy `en`, translate every value, register it in LANGS. A unit test enforces identical keys.
 
 export const en = {
+  'about.sources.title': 'Origins, source code and independent technologies',
+  'about.sources.intro': 'Unaltered is an independent client-side interface using the open OpenTimestamps receipt format. OpenTimestamps was created by Peter Todd; Bitcoin was introduced under the name Satoshi Nakamoto. These projects are separate from Unaltered.',
+  'about.sources.ots': 'OpenTimestamps protocol and project',
+  'about.sources.client': 'Original OpenTimestamps reference client',
+  'about.sources.server': 'OpenTimestamps reference server',
+  'about.sources.bitcoin': 'Bitcoin project',
+  'about.sources.bitcoinCore': 'Bitcoin Core source code',
+  'about.sources.unaltered': 'Unaltered source repository',
+  'about.sources.explorers': 'Independent Bitcoin explorer services',
+  'about.onion.title': 'Tor and onion service status',
+  'about.onion.body': 'No official Unaltered onion service is published or verified by this application. Tor Browser may help route network requests through Tor, but an ordinary HTTPS site is not an onion service. Never trust an unverified onion address claiming to be Unaltered.',
+  'about.onion.future': 'A future onion mirror would require a maintained Tor service, an authenticated published address, and separately verified calendar and explorer routing. The current build makes no onion-service availability claim.',
   'help.calendars': 'Selecting several calendar servers improves availability if one is unreachable. Each selected server can observe your timestamp submission; choose only services you trust. One server reduces the number of services contacted but creates a single point of failure.',
   'help.calendarChoice': 'Calendar {host}: choose based on operator trust, network availability and privacy. There is no verified ranking of reliability or privacy between these servers.',
   'help.minCalendars': 'This many selected calendar servers must accept the submission. Higher values require more successful responses and may cause stamping to fail if a server is down.',
@@ -230,6 +242,18 @@ export type Lang = 'en' | 'es';
 type Table = Record<StringKey, string>;
 
 const es: Table = {
+  'about.sources.title': 'Orígenes, código fuente y tecnologías independientes',
+  'about.sources.intro': 'Unaltered es una interfaz independiente que utiliza el formato abierto de recibos OpenTimestamps. OpenTimestamps fue creado por Peter Todd; Bitcoin se presentó bajo el nombre Satoshi Nakamoto. Son proyectos independientes de Unaltered.',
+  'about.sources.ots': 'Protocolo y proyecto OpenTimestamps',
+  'about.sources.client': 'Cliente de referencia original de OpenTimestamps',
+  'about.sources.server': 'Servidor de referencia de OpenTimestamps',
+  'about.sources.bitcoin': 'Proyecto Bitcoin',
+  'about.sources.bitcoinCore': 'Código fuente de Bitcoin Core',
+  'about.sources.unaltered': 'Repositorio de código de Unaltered',
+  'about.sources.explorers': 'Servicios independientes de exploración de Bitcoin',
+  'about.onion.title': 'Estado de Tor y del servicio onion',
+  'about.onion.body': 'Esta aplicación no publica ni verifica ningún servicio onion oficial de Unaltered. Tor Browser puede ayudar a enrutar solicitudes por Tor, pero un sitio HTTPS normal no es un servicio onion. No confíes en direcciones onion no verificadas que afirmen ser Unaltered.',
+  'about.onion.future': 'Un futuro espejo onion necesitaría un servicio Tor mantenido, una dirección publicada y autenticada, y rutas de calendario y exploradores verificadas por separado. La versión actual no afirma disponer de un servicio onion.',
   'help.calendars': 'Elegir varios servidores de calendario mejora la disponibilidad si uno no responde. Cada servidor seleccionado puede observar tu envío; elige solo servicios de confianza. Uno solo contacta menos servicios, pero crea un punto único de fallo.',
   'help.calendarChoice': 'Calendario {host}: elige según la confianza en el operador, la disponibilidad y la privacidad. No existe una clasificación verificada de fiabilidad o privacidad.',
   'help.minCalendars': 'Este número de calendarios seleccionados debe aceptar el envío. Un valor más alto exige más respuestas correctas y puede impedir el sellado si un servidor falla.',
