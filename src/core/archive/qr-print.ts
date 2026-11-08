@@ -22,10 +22,10 @@ export function createArchivalPrintSheet(
   root.className = 'unaltered-archival-sheet';
   root.dataset.paper = paper;
   const title = document.createElement('h1');
-  title.textContent = 'UNALTERED — Archival Timestamp Proof';
+  title.textContent = 'UNALTERED — Archival Receipt (Unverified)';
   root.append(title);
   const description = document.createElement('p');
-  description.textContent = 'Prove it existed. Prove it is unchanged. This sheet preserves an OpenTimestamps .ots receipt, not the original file. Independent verification also requires the original file.';
+  description.textContent = 'This sheet archives an OpenTimestamps .ots receipt, not the original file. A QR receipt is NOT evidence of a confirmed Bitcoin timestamp by itself. Independent verification requires the original file and proof verification.';
   root.append(description);
   const checksum = document.createElement('p');
   checksum.textContent = 'Receipt SHA-256: ' + receiptSha256.toLowerCase();
