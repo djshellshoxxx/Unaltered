@@ -42,6 +42,12 @@ test.describe('archival certificate preview (network mocked)', () => {
     await expect(sheet).toContainText('Archival Receipt (Unverified)');
     await expect(sheet).toContainText('Receipt SHA-256:');
     await expect(sheet).toContainText('UNALTERED-OTS-QR/1');
+    const frameLink = page.getByRole('link', { name: /^Frame 1\\// }).first();
+    await expect(frameLink).toBeVisible();
+    const [frameDownload] = await Promise.all([page.waitForEvent('download'), frameLink.click()]);
+    const frameBytes = readFileSync((await frameDownload.path())!);
+    expect(frameBytes.subarray(0, 8).toString('ascii')).toBe('UOTSQR01');
+    expect(frameBytes.length).toBeGreaterThan(80);
     const canvases = sheet.locator('canvas');
     expect(await canvases.count()).toBeGreaterThan(0);
     const first = canvases.first();
