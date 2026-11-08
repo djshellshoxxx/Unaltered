@@ -83,7 +83,7 @@ function start(): void {
     mountAbout(sections.about);
     mountSettings(sections.settings, onLang);
     route(false);
-    sections.settings.querySelector<HTMLElement>('#language-choice')?.focus();
+    sections.settings.querySelector<HTMLElement>('#lang summary')?.focus();
   }
 
   function route(focus = true): void {
