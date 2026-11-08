@@ -1,3 +1,5 @@
+/* Vendored MIT-licensed Project Nayuki QR generator. Original notice below. */
+// @ts-nocheck -- upstream namespace implementation predates strict noUncheckedIndexedAccess.
 /* 
  * QR Code generator library (TypeScript)
  * 
@@ -24,7 +26,7 @@
 "use strict";
 
 
-export namespace qrcodegen {
+namespace qrcodegen {
 	
 	type bit  = number;
 	type byte = number;
@@ -988,3 +990,5 @@ namespace qrcodegen.QrSegment {
 		
 	}
 }
+
+export { qrcodegen };
