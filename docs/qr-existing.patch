@@ -1,0 +1,322 @@
+diff --git a/docs/DEPENDENCIES.md b/docs/DEPENDENCIES.md
+index 2145cba..9644272 100644
+--- a/docs/DEPENDENCIES.md
++++ b/docs/DEPENDENCIES.md
+@@ -172,3 +172,11 @@ No dependency or lockfile changed, and building requires no network request. Art
+ tests compare complete notice text, decode the actual embedded worker source and check
+ the generated integrity values. This packaging correction is not a new cryptographic
+ audit or an audited-version comparison.
++
++## Archival QR completion — 2026-11-08
++
++- Runtime QR decoder: `jsqr` **1.4.0**, Apache-2.0, exact version and npm SHA-512 integrity pinned in `package-lock.json`. Official source: https://github.com/cozmo/jsQR . The downloaded package's integrity was checked against npm's version-specific `dist.integrity` before local testing. It has no runtime package dependencies. The application uses `binaryData`, not its Unicode `data` string, and runs image decoding in a locally bundled, cancellable worker; no CDN fetch occurs.
++- QR encoder: Project Nayuki's MIT TypeScript implementation carried from the reviewed archival branch at Unaltered commit `cb703a4703dc49ec20c65f19f90bbcc6e68b27cf`, `src/vendor/qrcodegen.ts`. Original source: https://github.com/nayuki/QR-Code-generator . The inherited adaptation exports the namespace and isolates legacy vendor typing/linting. The integration does not rewrite QR error correction or placement.
++- Complete decoder, encoder and existing hash-library license notices are embedded in the distributed browser/worker/offline/CLI copies by `scripts/build.mjs`; regression tests check the emitted bytes. The notice text is not stripped from distribution by minification.
++- Favicon: the owner's existing monochrome Unaltered U/checkmark artwork, converted to a metadata-free 64×64 PNG on the CDL dark background. A base64 source asset allows deterministic binary emission without adding a remote origin. No font files are embedded or redistributed.
++- Qualification-only external tool: Poppler's `pdfinfo`/`pdftoppm` from the Ubuntu runner package repository rasterize browser PDFs for tests. Poppler is not shipped to users or used by the application. Physical printing and camera capture require separate hardware testing; simulated scans do not establish universal scan reliability.
+diff --git a/package-lock.json b/package-lock.json
+index fe84aff..4508679 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -9,7 +9,8 @@
+       "version": "0.3.1",
+       "license": "MIT",
+       "dependencies": {
+-        "@noble/hashes": "2.4.0"
++        "@noble/hashes": "2.4.0",
++        "jsqr": "1.4.0"
+       },
+       "devDependencies": {
+         "@axe-core/playwright": "4.14.0",
+@@ -2023,6 +2024,12 @@
+       "dev": true,
+       "license": "MIT"
+     },
++    "node_modules/jsqr": {
++      "version": "1.4.0",
++      "resolved": "https://registry.npmjs.org/jsqr/-/jsqr-1.4.0.tgz",
++      "integrity": "sha512-dxLob7q65Xg2DvstYkRpkYtmKm2sPJ9oFhrhmudT1dZvNFFTlroai3AWSpLey/w5vMcLBXRgOJsbXpdN9HzU/A==",
++      "license": "Apache-2.0"
++    },
+     "node_modules/keyv": {
+       "version": "5.6.0",
+       "resolved": "https://registry.npmjs.org/keyv/-/keyv-5.6.0.tgz",
+diff --git a/package.json b/package.json
+index c8552ce..cc2c318 100644
+--- a/package.json
++++ b/package.json
+@@ -34,6 +34,7 @@
+     "vitest": "5.0.5"
+   },
+   "dependencies": {
+-    "@noble/hashes": "2.4.0"
++    "@noble/hashes": "2.4.0",
++    "jsqr": "1.4.0"
+   }
+ }
+diff --git a/scripts/build.mjs b/scripts/build.mjs
+index e7f6a38..3fa84fa 100644
+--- a/scripts/build.mjs
++++ b/scripts/build.mjs
+@@ -22,11 +22,17 @@ const dist = join(root, 'dist');
+ const read = (p) => readFileSync(join(root, p), 'utf8').replace(/\r\n?/g, '\n');
+ const pkg = JSON.parse(read('package.json'));
+ const version = pkg.version;
++const faviconBase64 = read('src/assets/favicon.png.b64').trim();
++const faviconPng = Buffer.from(faviconBase64, 'base64');
++if (faviconPng.toString('base64') !== faviconBase64 || faviconPng.length > 16_384 ||
++    faviconPng.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a') throw new Error('invalid local favicon');
+ // Loose HTML/JS/CLI downloads must retain both MIT notices, without relying on a neighbouring archive LICENSE.
+ // Use the installed, lockfile-pinned package's actual notice rather than reconstructing its permission text.
+ const noble = JSON.parse(read('node_modules/@noble/hashes/package.json'));
+ if (noble.version !== pkg.dependencies['@noble/hashes']) throw new Error('installed hash dependency differs from its exact manifest pin');
+-const notices = `Unaltered\n${read('LICENSE')}\n@noble/hashes ${noble.version}\n${read('node_modules/@noble/hashes/LICENSE')}`;
++const qr = JSON.parse(read('node_modules/jsqr/package.json'));
++if (qr.version !== pkg.dependencies.jsqr) throw new Error('installed QR decoder differs from its exact pin');
++const notices = `Unaltered\n${read('LICENSE')}\n@noble/hashes ${noble.version}\n${read('node_modules/@noble/hashes/LICENSE')}\njsQR ${qr.version}\n${read('node_modules/jsqr/LICENSE')}\nProject Nayuki QR generator\n${read('src/vendor/qrcodegen-LICENSE.txt')}`;
+ if (notices.includes('*/')) throw new Error('a license notice cannot be embedded safely in a JavaScript comment');
+ const licenseBanner = `/*! Unaltered and dependency licenses\n\n${notices}\n*/`;
+ 
+@@ -82,13 +88,14 @@ async function bundle(entry, define) {
+ // loaded from its own URL would take its CSP only from HTTP headers, which static hosts do not send, and
+ // `new Worker(url)` has no integrity check (SR-1, SR-3).
+ const workerJs = await bundle('src/core/hash/hasher.worker.ts', {});
+-const mainSingle = await bundle('src/main.ts', { __WORKER_URL__: 'null', __WORKER_INLINE__: JSON.stringify(workerJs) });
++const qrWorkerJs = await bundle('src/core/archive/qr-scan.worker.ts', {});
++const mainSingle = await bundle('src/main.ts', { __WORKER_URL__: 'null', __WORKER_INLINE__: JSON.stringify(workerJs), __FAVICON_BASE64__: JSON.stringify(faviconBase64), __QR_WORKER_INLINE__: JSON.stringify(qrWorkerJs) });
+ const mainMulti = mainSingle;
+ const cliJs = (
+   await build({ absWorkingDir: root, entryPoints: ['src/cli/main.ts'], bundle: true, write: false, format: 'esm', target: 'node22', platform: 'node', minify: true, legalComments: 'none', charset: 'ascii', logLevel: 'error', banner: { js: `#!/usr/bin/env node\n${licenseBanner}` } })
+ ).outputFiles[0].text;
+ const cliName = `unaltered-cli-${version}.mjs`;
+-const css = read('src/styles.css');
++const css = read('src/styles.css') + read('src/core/archive/qr-print.css');
+ const template = read('src/index.html');
+ // Only the builder may insert script/style/link tags: their bytes are SRI- or CSP-hash-pinned below. Searching generated
+ // HTML for a src-like substring confuses attribute values with attributes, and HTML accepts `/` after a tag name.
+@@ -108,15 +115,16 @@ const buildHash = hex256(Buffer.from(cliJs + '\0' + mainMulti + '\0' + workerJs
+ 
+ // One pass with a replacer function: string replacements would expand `$&`, `$'` and similar patterns inside the
+ // bundle or CSS, and sequential passes would fill a token that an earlier value happened to contain.
+-function fill(html, { cspValue, styles, script }) {
+-  const values = { CSP: cspValue, STYLES: styles, SCRIPT: script, VERSION: version, BUILD: buildHash };
+-  return html.replace(/\{\{(CSP|STYLES|SCRIPT|VERSION|BUILD)\}\}/g, (_, key) => values[key]);
++function fill(html, { cspValue, styles, script, favicon = '' }) {
++  const values = { CSP: cspValue, STYLES: styles, SCRIPT: script, VERSION: version, BUILD: buildHash, FAVICON: favicon };
++  return html.replace(/\{\{(CSP|STYLES|SCRIPT|VERSION|BUILD|FAVICON)\}\}/g, (_, key) => values[key]);
+ }
+ 
+ // Multi-file page: SRI on every script/stylesheet (SR-3).
+ const sri = (text) => `sha384-${sha(Buffer.from(text), 'sha384', 'base64')}`;
+ const multiHtml = fill(template, {
+   cspValue: multiCsp,
++  favicon: '<link rel="icon" type="image/png" sizes="64x64" href="./favicon.png">',
+   styles: `<link rel="stylesheet" href="./styles.css" integrity="${sri(css)}">`,
+   script: `<script src="./main.js" defer integrity="${sri(mainMulti)}"></script>`,
+ });
+@@ -283,6 +291,7 @@ fi
+ `;
+ 
+ const common = [
++  { name: 'favicon.png', data: faviconPng },
+   { name: 'index.html', data: Buffer.from(multiHtml) },
+   { name: 'main.js', data: Buffer.from(mainMulti) },
+   { name: 'styles.css', data: Buffer.from(css) },
+diff --git a/src/core/hash/hasher.ts b/src/core/hash/hasher.ts
+index 5a5c414..d57d2f9 100644
+--- a/src/core/hash/hasher.ts
++++ b/src/core/hash/hasher.ts
+@@ -62,12 +62,12 @@ function releaseScript(w: Worker): void {
+   URL.revokeObjectURL(url);
+ }
+ 
+-function makeWorker(): Worker | null {
++function makeWorker(injectedInline?: string | null, injectedUrl?: string | null): Worker | null {
+   if (typeof Worker === 'undefined') return null;
+   let blobUrl: string | null = null;
+   try {
+-    const inline = typeof __WORKER_INLINE__ === 'string' ? __WORKER_INLINE__ : null;
+-    const url = typeof __WORKER_URL__ === 'string' ? __WORKER_URL__ : null;
++    const inline = injectedInline !== undefined ? injectedInline : typeof __WORKER_INLINE__ === 'string' ? __WORKER_INLINE__ : null;
++    const url = injectedUrl !== undefined ? injectedUrl : typeof __WORKER_URL__ === 'string' ? __WORKER_URL__ : null;
+     if (inline === null && url === null) return null;
+     const tt = (globalThis as { trustedTypes?: TrustedTypesApi }).trustedTypes;
+     let src: string;
+@@ -92,6 +92,15 @@ function makeWorker(): Worker | null {
+   }
+ }
+ 
++/** Uses the same exact-URL Trusted Types policy as hashing; callers cannot supply script source. */
++declare const __QR_WORKER_INLINE__: string | null;
++export function makeQrWorker(): { worker: Worker; dispose(): void } | null {
++  const source = typeof __QR_WORKER_INLINE__ === 'string' ? __QR_WORKER_INLINE__ : null;
++  if (!source) return null;
++  const worker = makeWorker(source, null);
++  return worker ? { worker, dispose() { worker.terminate(); releaseScript(worker); } } : null;
++}
++
+ function hashInWorker(w: Worker, blob: Blob, opts: HashOptions): Promise<{ digest: Uint8Array; bytes: number; cross: string } | 'unavailable'> {
+   return new Promise((resolve, reject) => {
+     let settled = false;
+diff --git a/src/index.html b/src/index.html
+index 497ebf9..beadbb9 100644
+--- a/src/index.html
++++ b/src/index.html
+@@ -13,6 +13,7 @@
+   <meta http-equiv="Content-Security-Policy" content="{{CSP}}">
+   <meta name="referrer" content="no-referrer">
+   <meta name="color-scheme" content="light dark">
++  {{FAVICON}}
+   {{STYLES}}
+ </head>
+ <body>
+diff --git a/src/main.ts b/src/main.ts
+index 8fe2572..1128fd5 100644
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -1,5 +1,7 @@
++import { mountArchiveTools } from './ui/archive-tools';
+ // Wires the UI to core. No business logic here (SPEC 5.1).
+ import { clear, el, setLiveRegion } from './ui/dom';
++import { installOfflineFavicon } from './ui/favicon';
+ import { networkCapabilityText } from './core/net/capability';
+ import { VIEWS, parseHash } from './ui/router';
+ import { detectLang, setLang, t } from './ui/strings';
+@@ -23,6 +25,7 @@ function frameBust(): boolean {
+ 
+ function start(): void {
+   if (frameBust()) return;
++  installOfflineFavicon();
+   setLang(detectLang(navigator.languages ?? [navigator.language]));
+   const indicator = document.getElementById('network-capability');
+   const refreshNetwork = (): void => {
+@@ -69,6 +72,7 @@ function start(): void {
+     renderChrome();
+     stampView = mountStamp(sections.stamp);
+     verifyView = mountVerify(sections.verify);
++    mountArchiveTools(sections.verify);
+     if (pendingPrefill) verifyView.setPrefill(pendingPrefill);
+     mountAbout(sections.about);
+     mountSettings(sections.settings, onLang);
+@@ -80,6 +84,7 @@ function start(): void {
+     renderChrome();
+     stampView?.relabel();
+     verifyView?.relabel();
++    mountArchiveTools(sections.verify);
+     mountAbout(sections.about);
+     mountSettings(sections.settings, onLang);
+     route(false);
+diff --git a/src/ui/dom.ts b/src/ui/dom.ts
+index 8a3b866..a31f771 100644
+--- a/src/ui/dom.ts
++++ b/src/ui/dom.ts
+@@ -128,8 +128,9 @@ export function dropZone(o: DropZoneOptions): HTMLElement {
+   const wrap = el('div', { class: 'drop-wrap' }, input, zone);
+   input.addEventListener('change', () => {
+     const files = input.files ? Array.from(input.files) : [];
+-    if (files.length > 0) o.onFiles(files);
++    // Reset before consumers can replace the input or throw, so the same file can be chosen again.
+     input.value = '';
++    if (files.length > 0) o.onFiles(o.multiple ? files : files.slice(0, 1));
+   });
+   wrap.addEventListener('dragover', (e) => {
+     e.preventDefault();
+diff --git a/src/ui/views/stamp.ts b/src/ui/views/stamp.ts
+index ec25955..092fe80 100644
+--- a/src/ui/views/stamp.ts
++++ b/src/ui/views/stamp.ts
+@@ -1,4 +1,5 @@
+ // Stamp view (FR-1..FR-5, FR-10, FR-11, FR-12): pick file(s), optionally clean, fingerprint, create receipt.
++import { archivalCertificateControls } from '../archival-certificate';
+ import { groupHex } from '../../core/bytes';
+ import { isAbort, safeMessage, UnalteredError } from '../../core/errors';
+ import { hashBlob, type HashResult } from '../../core/hash/hasher';
+@@ -226,6 +227,10 @@ export function mountStamp(root: HTMLElement): StampView {
+           { class: 'notice ok' },
+           downloadLink(t('stamp.downloadReceipt', { name }), name, it.proof, 'application/octet-stream', undefined, { owner: it, key: 'receipt' }),
+           el('p', { class: 'muted' }, t('stamp.receiptName')),
++          archivalCertificateControls(async () => {
++            if (!it.proof) throw new Error('Receipt no longer available');
++            return it.proof;
++          }),
+           shareRow(it),
+           labelRow(it),
+         ),
+diff --git a/tests/e2e/serve.mjs b/tests/e2e/serve.mjs
+index 9fbc679..bb23af8 100644
+--- a/tests/e2e/serve.mjs
++++ b/tests/e2e/serve.mjs
+@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
+ import { extname, resolve, sep } from 'node:path';
+ 
+ const root = resolve('dist', 'web');
+-const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' };
++const types = { '.png': 'image/png', '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' };
+ createServer(async (req, res) => {
+   try {
+     // The loopback base only parses relative request URLs; constructing a URL makes no network request.
+diff --git a/tests/toolkit/build-output.test.mjs b/tests/toolkit/build-output.test.mjs
+index d46fa7d..f9afb1f 100644
+--- a/tests/toolkit/build-output.test.mjs
++++ b/tests/toolkit/build-output.test.mjs
+@@ -143,8 +143,8 @@ for (const [label, newline] of [['CRLF', '\r\n'], ['CR', '\r']]) {
+ }
+ 
+ test('web and portable artifacts contain only declared runtime and distribution files', () => {
+-  assert.deepEqual([...web.keys()].sort(), ['index.html', 'main.js', 'styles.css']);
+-  const common = ['index.html', 'main.js', 'styles.css', `${prefix}.html`, `unaltered-cli-${version}.mjs`, 'LICENSE', 'README.txt', 'SHA256SUMS'];
++  assert.deepEqual([...web.keys()].sort(), ['favicon.png', 'index.html', 'main.js', 'styles.css']);
++  const common = ['favicon.png', 'index.html', 'main.js', 'styles.css', `${prefix}.html`, `unaltered-cli-${version}.mjs`, 'LICENSE', 'README.txt', 'SHA256SUMS'];
+   for (const [i, launcher] of ['Open-Unaltered.cmd', 'open-unaltered.sh', 'Open-Unaltered.command'].entries()) {
+     const p = packages[i];
+     assert.deepEqual([...p.files.keys()].sort(), [...common, p.helper, launcher].sort(), p.archive);
+diff --git a/tests/unit/distributed-license.test.ts b/tests/unit/distributed-license.test.ts
+index d78ba91..9ee9edd 100644
+--- a/tests/unit/distributed-license.test.ts
++++ b/tests/unit/distributed-license.test.ts
+@@ -9,7 +9,7 @@ import { createScanner, LanguageVariant, ScriptTarget, SyntaxKind } from 'typesc
+ import { afterAll, beforeAll, expect, it } from 'vitest';
+ 
+ const repo = fileURLToPath(new URL('../..', import.meta.url));
+-const licenses = ['LICENSE', 'node_modules/@noble/hashes/LICENSE'].map((path) => ({
++const licenses = ['LICENSE', 'node_modules/@noble/hashes/LICENSE', 'node_modules/jsqr/LICENSE', 'src/vendor/qrcodegen-LICENSE.txt'].map((path) => ({
+   path, notice: readFileSync(join(repo, path), 'utf8').replace(/\r\n?/g, '\n'),
+ }));
+ function requireNotices(value: string, where: string): void {
+diff --git a/tests/unit/main-routing.test.ts b/tests/unit/main-routing.test.ts
+index 64155e8..9b6a2ae 100644
+--- a/tests/unit/main-routing.test.ts
++++ b/tests/unit/main-routing.test.ts
+@@ -1,6 +1,7 @@
+ import { afterEach, describe, expect, it, vi } from 'vitest';
+ 
+ const views = vi.hoisted(() => ({ setPrefill: vi.fn(), relabel: vi.fn() }));
++vi.mock('../../src/ui/archive-tools', () => ({ mountArchiveTools() {} }));
+ vi.mock('../../src/ui/views/verify', () => ({ mountVerify: () => views }));
+ vi.mock('../../src/ui/views/stamp', () => ({ mountStamp: () => ({ relabel() {} }) }));
+ vi.mock('../../src/ui/views/about', () => ({ mountAbout() {} }));
+diff --git a/tests/unit/ui-dom.test.ts b/tests/unit/ui-dom.test.ts
+index 95c0094..e364fbd 100644
+--- a/tests/unit/ui-dom.test.ts
++++ b/tests/unit/ui-dom.test.ts
+@@ -1,5 +1,5 @@
+ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+-import { el, setChildren } from '../../src/ui/dom';
++import { el, setChildren, dropZone } from '../../src/ui/dom';
+ import { doc, FElement, installFakeDom } from './ui-fake-dom';
+ 
+ let restore: () => void;
+@@ -141,3 +141,13 @@ describe('focus restoration follows each ancestor at its own position', () => {
+     expect(root.all()).toContain(doc.activeElement);
+   });
+ });
++
++
++it('clears file selection before consumers can throw or replace the input', () => {
++  const root = dropZone({ id: 'repeat', label: 'Choose', hint: '', onFiles: () => { throw new Error('consumer failed'); } }) as unknown as FElement;
++  const input = root.querySelector('input')!;
++  input.value = 'selected-file';
++  input.files = [{ name: 'same.txt' }];
++  expect(() => input.dispatch('change')).toThrow('consumer failed');
++  expect(input.value).toBe('');
++});

@@ -1,0 +1,50 @@
+name: Archival QR print and scan qualification
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qr-qualification-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  print-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+      - name: Record the exact source used for qualification
+        run: git archive HEAD --format=tar.gz -o qualification-source.tgz
+      - run: npm ci --ignore-scripts
+      - run: node_modules/.bin/playwright install --with-deps chromium
+      - name: Install PDF rasterizer for print qualification
+        run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends poppler-utils
+      - run: npm run build
+      - name: Verify independent Python frame recovery
+        run: python3 -m unittest discover -s tests/archival -p 'test_*.py'
+      - name: Verify actual PDF to raster to receipt round trips
+        run: node_modules/.bin/playwright test --config=playwright.qr.config.ts --retries=0
+        env:
+          CI: "true"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: archival-qr-qualification
+          path: |
+            qualification-source.tgz
+            test-results/qr-qualification/
+            test-results/**/error-context.md
+          retention-days: 7
+          if-no-files-found: error

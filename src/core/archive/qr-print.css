@@ -1,0 +1,39 @@
+
+/* Archival certificate: local, fixed physical QR dimensions; no inline style or remote asset. */
+.archival-preview { margin: 1rem auto; max-width: 100%; padding: 1rem; color: #111; background: #fff; }
+.archival-preview > h2, .archival-preview > p { max-width: 60rem; margin: .6rem auto; }
+.archival-toolbar { max-width: 60rem; margin: 1rem auto; display: flex; flex-wrap: wrap; gap: .5rem; }
+.archival-toolbar .button, .archival-toolbar button { background: #fff; color: #111; border-color: #555; }
+.unaltered-archival-sheet { color: #111; background: #fff; font: 9pt/1.4 Arial, sans-serif; }
+.archival-page { width: 190mm; max-width: 100%; margin: 1rem auto; padding: 4mm; border: 1px solid #aaa; background: #fff; color: #111; }
+.archival-page[data-paper='letter'] { width: 195.9mm; }
+.archival-page h1 { font-size: 22pt; margin: 2mm 0; }
+.archival-page h2 { font-size: 11pt; line-height: 1.25; margin: 2mm 0; max-width: none; }
+.archival-page p { margin: 2mm 0; color: #111; }
+.archival-page-id, .archival-footer { font: 7pt/1.4 monospace; overflow-wrap: anywhere; }
+.archival-hash { font: 8pt/1.4 monospace; overflow-wrap: anywhere; }
+.archival-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4mm; }
+.unaltered-archival-symbol { break-inside: avoid; page-break-inside: avoid; min-width: 0; margin: 0; }
+.unaltered-archival-symbol canvas { display: block; width: 72mm; height: 72mm; max-width: 100%; object-fit: contain; image-rendering: pixelated; }
+.unaltered-archival-symbol p { font: 7pt/1.35 monospace; overflow-wrap: anywhere; max-width: 86mm; }
+.archival-spec { white-space: pre-wrap; overflow-wrap: anywhere; font: 8pt/1.4 monospace; color: #111; background: #fff; margin: 3mm 0; }
+.archival-page ol { padding-inline-start: 5mm; }
+.archival-page li { margin-bottom: 2mm; }
+.archival-controls, .archival-recovery { max-width: 100%; min-width: 0; }
+.archival-controls fieldset { display: flex; flex-wrap: wrap; gap: .6rem; }
+.archival-controls input[type='file'], .archival-recovery input[type='file'] { max-width: 100%; }
+@media screen and (max-width: 650px) { .archival-grid { grid-template-columns: 1fr; } }
+@page archival-a4 { size: A4 portrait; margin: 10mm; }
+@page archival-letter { size: letter portrait; margin: 10mm; }
+@media print {
+  body:has(> .archival-preview) { background: #fff; }
+  body:has(> .archival-preview) > :not(.archival-preview) { display: none !important; }
+  .archival-preview { margin: 0; padding: 0; width: auto; max-width: none; background: #fff; }
+  .archival-preview > :not(.unaltered-archival-sheet) { display: none !important; }
+  .archival-page { margin: 0; padding: 0; border: 0; width: auto; max-width: none; break-after: page; break-inside: avoid; }
+  .archival-page:last-child { break-after: auto; }
+  .archival-page[data-paper='a4'] { page: archival-a4; }
+  .archival-page[data-paper='letter'] { page: archival-letter; width: auto; }
+  .archival-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .unaltered-archival-symbol canvas { max-width: none; print-color-adjust: exact; }
+}
