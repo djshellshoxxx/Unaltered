@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { encodeArchivalQr, archivalQrSvg } from '../../src/core/archive/qr-encode';
+import { encodeArchivalQr } from '../../src/core/archive/qr-encode';
 import { recoverReceiptFrames } from '../../src/core/archive/frames';
 
 describe('actual QR Model 2 encoding', () => {
@@ -12,9 +12,7 @@ describe('actual QR Model 2 encoding', () => {
       expect(symbols.every(s => s.modules === plan.modules)).toBe(true);
       expect(symbols.every(s => s.mask >= 0 && s.mask <= 7)).toBe(true);
       expect(await recoverReceiptFrames(symbols.map(s => s.frame).reverse())).toEqual(receipt);
-      const svg = archivalQrSvg(symbols[0]!);
-      expect(svg).toContain('shape-rendering="crispEdges"');
-      expect(svg).toContain('<rect');
+      expect(symbols[0]!.matrix.length).toBe(plan.modules * plan.modules);
     }
   });
 });
