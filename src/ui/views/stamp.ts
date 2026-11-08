@@ -280,6 +280,7 @@ export function mountStamp(root: HTMLElement): StampView {
     root.querySelector('.archival-qr-frame-downloads')?.remove();
     root.querySelector('.archival-qr-preview-summary')?.remove();
     root.querySelector('.archival-qr-preview-close')?.remove();
+    root.querySelector('.archival-qr-print')?.remove();
     const previous = root.querySelector('.unaltered-archival-sheet');
     previous?.remove();
     const existingStatus = root.querySelector('.archival-qr-status');
@@ -302,13 +303,14 @@ export function mountStamp(root: HTMLElement): StampView {
         frameDownloads.appendChild(downloadLink(`Frame ${symbol.index + 1}/${symbol.total}`, filename,
           symbol.frame, 'application/octet-stream', undefined, { owner, key: filename }));
       }
+      const print = el('button', { type: 'button', class: 'button small archival-qr-print', onclick: () => window.print() }, 'Print archival certificate / Save as PDF');
       const close = el('button', { type: 'button', class: 'button small archival-qr-preview-close', onclick: () => {
-        sheet.remove(); summary.remove(); frameDownloads.remove(); close.remove(); status.remove();
+        sheet.remove(); summary.remove(); frameDownloads.remove(); print.remove(); close.remove(); status.remove();
         revokeOwner(owner);
         if (archivalDownloadOwner === owner) archivalDownloadOwner = null;
       } }, 'Close QR preview');
       status.textContent = 'Archival QR preview ready. Use browser Print / Save as PDF after checking the layout.';
-      root.append(summary, close, frameDownloads, sheet);
+      root.append(summary, print, close, frameDownloads, sheet);
     } catch (error) {
       status.textContent = 'Unable to prepare QR certificate: ' + safeMessage(error);
     }
