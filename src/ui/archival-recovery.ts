@@ -19,6 +19,7 @@ export function archivalRecoveryPanel(): HTMLElement {
   const button = el('button', { type: 'button', class: 'button small' }, 'Recover .ots receipt') as HTMLButtonElement;
   const download = el('div', {});
   let activeUrl: string | null = null;
+  let generation = 0;
   const clearDownload = (): void => {
     if (activeUrl) URL.revokeObjectURL(activeUrl);
     activeUrl = null;
@@ -26,6 +27,7 @@ export function archivalRecoveryPanel(): HTMLElement {
   };
   button.disabled = true;
   input.addEventListener('change', () => {
+    generation++;
     button.disabled = !input.files?.length;
     status.textContent = input.files?.length ? `${input.files.length} QR payload files selected.` : 'Select QR payload files.';
     clearDownload();
@@ -35,6 +37,7 @@ export function archivalRecoveryPanel(): HTMLElement {
       const files = Array.from(input.files ?? []);
       if (!files.length || files.length > 4096) { status.textContent = 'Invalid frame count.'; return; }
       button.disabled = true;
+      const currentGeneration = ++generation;
       clearDownload();
       status.textContent = 'Checking frames and reconstructing receipt…';
       try {
@@ -44,6 +47,7 @@ export function archivalRecoveryPanel(): HTMLElement {
           frames.push(new Uint8Array(await file.arrayBuffer()));
         }
         const receipt = await recoverReceiptFrames(frames);
+        if (generation !== currentGeneration) return;
         const blob = new Blob([Uint8Array.from(receipt)], { type:'application/octet-stream' });
         const url = URL.createObjectURL(blob);
         activeUrl = url;
@@ -55,9 +59,10 @@ export function archivalRecoveryPanel(): HTMLElement {
         download.appendChild(anchor);
         status.textContent = `Recovered ${receipt.length} bytes. SHA-256 and frame identifiers match. This does not verify the Bitcoin timestamp.`;
       } catch (error) {
+        if (generation !== currentGeneration) return;
         status.textContent = 'Recovery failed: ' + (error instanceof Error ? error.message : 'Invalid input');
       } finally {
-        button.disabled = !input.files?.length;
+        if (generation === currentGeneration) button.disabled = !input.files?.length;
       }
     })();
   });
