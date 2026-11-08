@@ -4,7 +4,7 @@ import type { QrPaper } from './qr-plan';
 /**
  * Offline printable archival sheet. Uses DOM construction rather than HTML
  * injection. Browser Print / Save as PDF is the current PDF export path.
- * This is a developer integration primitive, not yet wired into the app UI.
+ * Integrated into the stamp preview; no remote calls or HTML injection.
  */
 export function createArchivalPrintSheet(
   symbols: readonly ArchivalQrSymbol[],
@@ -18,6 +18,14 @@ export function createArchivalPrintSheet(
     throw new Error('Invalid receipt length');
   if (paper !== 'a4' && paper !== 'letter')
     throw new Error('Unsupported paper size');
+  if (symbols.length > 4096 || symbols.some((symbol, index) =>
+    symbol.index !== index || symbol.total !== symbols.length ||
+    symbol.frame.length < 81 || symbol.frame.length > 2953 ||
+    symbol.modules !== symbol.version * 4 + 17 ||
+    symbol.matrix.length !== symbol.modules * symbol.modules ||
+    !['L', 'M', 'Q', 'H'].includes(symbol.level) ||
+    symbol.mask < 0 || symbol.mask > 7))
+    throw new Error('Inconsistent archival QR symbol metadata');
   const root = document.createElement('section');
   root.className = 'unaltered-archival-sheet';
   root.dataset.paper = paper;
