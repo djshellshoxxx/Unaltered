@@ -57,6 +57,27 @@ test.describe('browser connectivity notice', () => {
   });
 });
 
+test.describe('local evidence bundle', () => {
+  test('exports a ZIP with original bytes, receipt and manifest', async ({ page }) => {
+    await page.goto('/index.html#verify');
+    await page.locator('#verify-file input[type=file]').setInputFiles({
+      name: 'evidence.txt', mimeType: 'text/plain', buffer: Buffer.from('evidence'),
+    });
+    await page.locator('#verify-receipt input[type=file]').setInputFiles({
+      name: 'evidence.ots', mimeType: 'application/octet-stream', buffer: Buffer.from([0, 1, 2]),
+    });
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'Download evidence ZIP (16 MiB max)' }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe('unaltered-evidence.zip');
+    const bytes = readFileSync((await download.path())!);
+    expect(bytes.subarray(0, 4).toString('hex')).toBe('504b0304');
+    expect(bytes.includes(Buffer.from('manifest.json'))).toBe(true);
+    expect(bytes.includes(Buffer.from('receipt.ots'))).toBe(true);
+  });
+});
+
 test.describe('receipt overview', () => {
   test('does not mislabel saved fingerprints as verified receipts', async ({ page }) => {
     await page.goto('/index.html#settings');
