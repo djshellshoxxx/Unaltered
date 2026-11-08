@@ -258,17 +258,17 @@ cd "$(dirname "$0")" || exit 1
 # Validate the entire manifest independently: BSD/GNU checksum tools differ in
 # how --strict handles empty manifests and malformed lines.
 if ! awk '
-  length($0) < 67 { exit 1 }
   {
     hash = substr($0, 1, 64)
     separator = substr($0, 65, 2)
     filename = substr($0, 67)
-    if (hash ~ /[^0-9a-f]/ || separator != "  " ||
+    if (length($0) < 67 || hash ~ /[^0-9a-f]/ || separator != "  " ||
         filename == "" || filename == "." || filename == ".." ||
-        filename ~ /[\\\\\/]/ || seen[filename]++) exit 1
+        index(filename, "/") || index(filename, sprintf("%c", 92)) ||
+        seen[filename]++) invalid = 1
     count++
   }
-  END { if (count == 0) exit 1 }
+  END { if (count == 0 || invalid) exit 1 }
 ' SHA256SUMS; then
   echo "Invalid or empty SHA256SUMS." >&2
   exit 1
