@@ -320,7 +320,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
         const proof = new Uint8Array(await receipt.arrayBuffer());
         if (controller.signal.aborted) throw new UnalteredError('ABORTED', 'Cancelled');
         return verify(hashed.digest, proof, verifyConfigFromSettings(controller.signal));
-      });
+      }, controller.signal);
       if (generation !== batchGeneration || controller.signal.aborted) return;
       setChildren(batchResults, el('ul', {}, ...result.map(item =>
         el('li', {}, item.input.fileName + ': ' + (item.status === 'ERROR' ? t('batch.error') : item.status)),
