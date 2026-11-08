@@ -66,6 +66,7 @@ test.describe('archival certificate preview (network mocked)', () => {
     await expect(sheet).toContainText('Archival Receipt (Unverified)');
     await expect(sheet).toContainText('Receipt SHA-256:');
     await expect(sheet).toContainText('UNALTERED-OTS-QR/1');
+    await expect(page.getByRole('button', { name: 'Print archival certificate / Save as PDF' })).toBeVisible();
     const frameLink = page.getByRole('link', { name: /^Frame 1\// }).first();
     await expect(frameLink).toBeVisible();
     const [frameDownload] = await Promise.all([page.waitForEvent('download'), frameLink.click()]);
