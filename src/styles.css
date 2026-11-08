@@ -129,3 +129,19 @@ footer { padding-top: 1rem; padding-bottom: 2rem; border-top: 1px solid var(--li
   .item-head .button { margin-left: 0; }
 }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+
+/* Archival QR preview and browser print stylesheet (prototype). */
+.unaltered-archival-sheet { background:#fff; color:#111; padding:15mm; font:12pt/1.4 system-ui,sans-serif; }
+.unaltered-archival-sheet h1 { font-size:20pt; }
+.unaltered-archival-sheet h2 { font-size:12pt; }
+.unaltered-archival-sheet p { overflow-wrap:anywhere; }
+.unaltered-archival-symbol { display:inline-block; vertical-align:top; width:80mm; max-width:100%; padding:3mm; break-inside:avoid; page-break-inside:avoid; }
+.unaltered-archival-symbol canvas { display:block; width:100%; height:auto; image-rendering:pixelated; }
+.unaltered-archival-symbol p { font-size:8pt; }
+@media print {
+  body:has(.unaltered-archival-sheet) * { visibility:hidden !important; }
+  body:has(.unaltered-archival-sheet) .unaltered-archival-sheet,
+  body:has(.unaltered-archival-sheet) .unaltered-archival-sheet * { visibility:visible !important; }
+  body:has(.unaltered-archival-sheet) .unaltered-archival-sheet { position:absolute; top:0; left:0; width:100%; padding:0; }
+  .unaltered-archival-symbol { break-inside:avoid; page-break-inside:avoid; }
+}
