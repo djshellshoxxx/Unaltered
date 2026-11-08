@@ -2,6 +2,16 @@
 // To add a language: copy `en`, translate every value, register it in LANGS. A unit test enforces identical keys.
 
 export const en = {
+  'batch.title': 'Verify multiple files',
+  'batch.instructions': 'Choose up to 50 original files and their receipts. Each receipt must be named exactly ORIGINAL_FILENAME.ots. Results are checked individually; no files are uploaded.',
+  'batch.files': 'Choose original files',
+  'batch.fileHint': 'Multiple files; 50 maximum',
+  'batch.receipts': 'Choose matching .ots receipts',
+  'batch.receiptHint': 'One receipt per original file',
+  'batch.selected': '{files} files and {receipts} receipts selected',
+  'batch.run': 'Verify batch',
+  'batch.working': 'Verifying files one at a time…',
+  'batch.error': 'Could not verify',
   'evidence.downloadZip': 'Download evidence ZIP (16 MiB max)',
   'evidence.limit': 'Evidence ZIP supports at most 16 MiB combined',
   'dashboard.title': 'Receipt overview',
@@ -207,6 +217,16 @@ export type Lang = 'en' | 'es';
 type Table = Record<StringKey, string>;
 
 const es: Table = {
+  'batch.title': 'Verificar varios archivos',
+  'batch.instructions': 'Elige hasta 50 archivos originales y sus recibos. Cada recibo debe llamarse exactamente NOMBRE_ORIGINAL.ots. Cada resultado se verifica por separado; no se suben archivos.',
+  'batch.files': 'Elegir archivos originales',
+  'batch.fileHint': 'Varios archivos; máximo 50',
+  'batch.receipts': 'Elegir recibos .ots correspondientes',
+  'batch.receiptHint': 'Un recibo por archivo original',
+  'batch.selected': '{files} archivos y {receipts} recibos seleccionados',
+  'batch.run': 'Verificar lote',
+  'batch.working': 'Verificando los archivos uno por uno…',
+  'batch.error': 'No se pudo verificar',
   'evidence.downloadZip': 'Descargar ZIP de pruebas (máximo 16 MiB)',
   'evidence.limit': 'El ZIP de pruebas admite un máximo de 16 MiB en total',
   'dashboard.title': 'Resumen de recibos',
