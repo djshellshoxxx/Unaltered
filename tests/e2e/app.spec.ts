@@ -57,6 +57,23 @@ test.describe('browser connectivity notice', () => {
   });
 });
 
+test.describe('contextual help and language selector', () => {
+  test('explains calendar and explorer tradeoffs and offers translated flag options', async ({ page }) => {
+    await page.goto('/index.html#settings');
+    await expect(page.getByText('Selecting several calendar servers improves availability', { exact: false })).toBeVisible();
+    await expect(page.getByText('Select at least two independent block explorers', { exact: false })).toBeVisible();
+    await expect(page.locator('#language-choice')).toHaveCount(1);
+    await expect(page.locator('#language-choice option')).toHaveCount(2);
+    await page.locator('#language-choice').selectOption('es');
+    await expect(page.locator('#language-choice')).toHaveValue('es');
+  });
+  test('explains original file versus .ots receipt on Verify', async ({ page }) => {
+    await page.goto('/index.html#verify');
+    await expect(page.getByText('Choose the exact original file', { exact: false })).toBeVisible();
+    await expect(page.getByText('Choose the .ots receipt downloaded', { exact: false })).toBeVisible();
+  });
+});
+
 test.describe('batch verification', () => {
   test('renders individual results with status and guidance', async ({ page }) => {
     await page.goto('/index.html#verify');
