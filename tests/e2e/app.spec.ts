@@ -46,6 +46,17 @@ test.describe('essential landing-page guidance', () => {
   });
 });
 
+test.describe('browser connectivity notice', () => {
+  test('distinguishes browser offline from server availability', async ({ page, context }) => {
+    await page.goto('/index.html#stamp');
+    await expect(page.locator('#network-capability')).toContainText('not a server health check');
+    await context.setOffline(true);
+    await expect(page.locator('#network-capability')).toContainText('Browser reports offline');
+    await expect(page.locator('#network-capability')).toContainText('Hashing');
+    await context.setOffline(false);
+  });
+});
+
 test.describe('receipt overview', () => {
   test('does not mislabel saved fingerprints as verified receipts', async ({ page }) => {
     await page.goto('/index.html#settings');
