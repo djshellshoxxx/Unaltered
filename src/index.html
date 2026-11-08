@@ -12,7 +12,7 @@
   -->
   <meta http-equiv="Content-Security-Policy" content="{{CSP}}">
   <meta name="referrer" content="no-referrer">
-  <meta name="color-scheme" content="light dark">
+  <meta name="color-scheme" content="dark">
   {{STYLES}}
 </head>
 <body>
@@ -20,15 +20,22 @@
   <noscript><p class="error">Unaltered needs JavaScript to fingerprint files on your device. Nothing is uploaded.</p></noscript>
 
   <header>
-    <p class="brand">Unaltered</p>
+    <p class="brand"><span class="brand-symbol" aria-hidden="true">U✓</span> Unaltered</p>
     <nav aria-label="Main">
-      <a id="nav-stamp" href="#stamp">Stamp</a>
-      <a id="nav-verify" href="#verify">Verify</a>
-      <a id="nav-about" href="#about">About</a>
-      <a id="nav-settings" href="#settings">Settings</a>
+      <a id="nav-stamp" href="#stamp" title="Create a standard OpenTimestamps receipt for a file">Stamp</a>
+      <a id="nav-verify" href="#verify" title="Verify a file and receipt, or upgrade a pending proof">Verify</a>
+      <a id="nav-about" href="#about" title="Detailed help, limitations and independent verification instructions">About</a>
+      <a id="nav-settings" href="#settings" title="Change language and local preferences">Settings</a>
     </nav>
   </header>
 
+  <div class="landing-intro">
+    <p class="beta-label">EXPERIMENTAL BETA · UNAUDITED</p>
+    <h1>Unaltered</h1>
+    <p class="tagline">Prove it existed. Prove it’s unchanged.</p>
+    <p class="lead">Timestamp a file using Bitcoin-backed OpenTimestamps proofs. Your browser fingerprints the file locally; you keep the standard, independently verifiable receipt. No installation, account or application backend required.</p>
+    <p class="intro-links"><a href="#stamp" title="Start timestamping a file">Stamp a file</a> · <a href="#verify" title="Check or upgrade a timestamp receipt">Verify or upgrade</a> · <a href="#about" title="Read the detailed help and independent verification guide">Detailed help</a></p>
+  </div>
   <main id="app" tabindex="-1">
     <!-- Views are rendered by src/main.ts using textContent / DOM APIs only (no innerHTML). -->
     <section id="stamp" aria-labelledby="stamp-h"><h2 id="stamp-h" tabindex="-1">Prove this file existed, unchanged.</h2><p id="nojs">Loading…</p></section>
@@ -37,6 +44,28 @@
     <section id="settings" aria-labelledby="settings-h" hidden><h2 id="settings-h" tabindex="-1">Settings</h2></section>
   </main>
 
+  <section class="learn" aria-labelledby="learn-heading">
+    <h2 id="learn-heading">How it works</h2>
+    <p>Stamp a file now, keep its downloaded <code>.ots</code> receipt, then return to upgrade and verify it once a Bitcoin block confirms the commitment.</p>
+    <ol class="process-flow" aria-label="Timestamping process">
+      <li><strong>Choose a file</strong><span>The original remains on your device.</span></li>
+      <li><strong>Hash locally</strong><span>Your browser computes its SHA-256 fingerprint.</span></li>
+      <li><strong>Submit commitment</strong><span>Calendar servers receive timestamp commitment data, not your file.</span></li>
+      <li><strong>Bitcoin anchoring</strong><span>A calendar commits batches of timestamps to Bitcoin.</span></li>
+      <li><strong>Keep and upgrade receipt</strong><span>Download the .ots file; a pending receipt needs later upgrading.</span></li>
+      <li><strong>Verify independently</strong><span>Compare the original file and upgraded receipt against Bitcoin evidence.</span></li>
+    </ol>
+    <h3>Step-by-step instructions</h3>
+    <p><strong>Stamp:</strong> choose your file, review optional metadata cleaning and its limitations, and create a receipt. Save the <code>.ots</code> download and, if cleaning was selected, the cleaned file. A pending receipt is not yet proof of Bitcoin confirmation.</p>
+    <p><strong>Upgrade:</strong> after anchoring, open Verify and upgrade the pending <code>.ots</code> receipt. Keep the upgraded copy. Some calendar servers do not expose browser-readable pending responses; the reference command-line client offers an independent fallback.</p>
+    <p><strong>Verify:</strong> supply the exact file and receipt. A valid receipt establishes that the matching bytes existed before the anchoring block, not who authored the file or whether its contents are true.</p>
+    <p><a href="#about" title="Open detailed help, independent command-line instructions and limitations">Read the complete help and verification guide</a></p>
+    <h3>Origins and independent tools</h3>
+    <p>Unaltered builds on <a href="https://opentimestamps.org/" rel="noreferrer noopener" target="_blank">OpenTimestamps</a>, originally developed by <a href="https://petertodd.org/" rel="noreferrer noopener" target="_blank">Peter Todd</a>, and on <a href="https://bitcoin.org/" rel="noreferrer noopener" target="_blank">Bitcoin</a>. Explore the <a href="https://github.com/opentimestamps/opentimestamps-client" rel="noreferrer noopener" target="_blank">OpenTimestamps command-line client (ots)</a> and the <a href="https://github.com/opentimestamps" rel="noreferrer noopener" target="_blank">original open-source tools</a>. Unaltered is an independent interface, not an official OpenTimestamps service.</p>
+    <h3>Privacy and beta limitations</h3>
+    <p>Unaltered runs the application in your browser, with no application server, accounts or installation. The file itself is not uploaded for stamping. Timestamp commitments and verification requests contact external calendar and Bitcoin explorer services, which can observe your network address. Standard stamping does <strong>not</strong> create signing keys in the browser; it computes a file hash and uses OpenTimestamps commitments.</p>
+    <p class="beta-notice"><strong>Experimental beta:</strong> unaudited and unsigned. Network services may be unavailable, pending receipts may require the reference client, and a timestamp is not proof of authorship, accuracy or an exact creation time. Preserve the original file and receipt; independently verify important evidence.</p>
+  </section>
   <div id="live" class="sr-only" aria-live="polite" role="status"></div>
 
   <footer>
