@@ -1,5 +1,7 @@
 // Stamp view (FR-1..FR-5, FR-10, FR-11, FR-12): pick file(s), optionally clean, fingerprint, create receipt.
 import { groupHex } from '../../core/bytes';
+import { encodeArchivalQr } from '../../core/archive/qr-encode';
+import { createArchivalPrintSheet } from '../../core/archive/qr-print';
 import { isAbort, safeMessage, UnalteredError } from '../../core/errors';
 import { hashBlob, type HashResult } from '../../core/hash/hasher';
 import { calendarsOf, stampBatch, type CalendarResult } from '../../core/ots/calendar';
@@ -226,6 +228,7 @@ export function mountStamp(root: HTMLElement): StampView {
           { class: 'notice ok' },
           downloadLink(t('stamp.downloadReceipt', { name }), name, it.proof, 'application/octet-stream', undefined, { owner: it, key: 'receipt' }),
           el('p', { class: 'muted' }, t('stamp.receiptName')),
+          el('button', { type: 'button', class: 'button small', onclick: () => { void showArchiveSheet(it); } }, 'Preview archival QR certificate'),
           shareRow(it),
           labelRow(it),
         ),
@@ -235,6 +238,29 @@ export function mountStamp(root: HTMLElement): StampView {
     // Cancel/cleaning controls may disappear during a transition. Never leave focus on a detached control or move it
     // to an unrelated row action that happens to occupy the same position.
     if (hadFocus && !it.card.contains(document.activeElement)) root.querySelector<HTMLElement>('#stamp-file')?.focus();
+  }
+
+  async function showArchiveSheet(it: Item): Promise<void> {
+    if (!it.proof) return;
+    const previous = root.querySelector('.unaltered-archival-sheet');
+    previous?.remove();
+    const existingStatus = root.querySelector('.archival-qr-status');
+    existingStatus?.remove();
+    const status = el('p', { class: 'archival-qr-status', role: 'status' }, 'Preparing QR certificate preview…');
+    root.append(status);
+    try {
+      const { symbols, plan } = await encodeArchivalQr(it.proof);
+      if (!items.includes(it) || !it.proof) { status.remove(); return; }
+      const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', Uint8Array.from(it.proof)));
+      const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+      const sheet = createArchivalPrintSheet(symbols, hex, it.proof.length, plan.paper);
+      const summary = el('p', {}, `QR preview: ${symbols.length} symbols, correction ${plan.level}, estimated ${plan.pages} pages. Print layout requires qualification.`);
+      const close = el('button', { type: 'button', class: 'button small', onclick: () => { sheet.remove(); summary.remove(); close.remove(); status.remove(); } }, 'Close QR preview');
+      status.textContent = 'Archival QR preview ready. Use browser Print / Save as PDF after checking the layout.';
+      root.append(summary, close, sheet);
+    } catch (error) {
+      status.textContent = 'Unable to prepare QR certificate: ' + safeMessage(error);
+    }
   }
 
   function shareRow(it: Item): Node | null {
