@@ -1,5 +1,6 @@
 // Verify view (FR-7, FR-8, FR-11) and receipt upgrade (FR-6).
 import { fromHex, groupHex } from '../../core/bytes';
+import { createVerificationReportJson } from '../../core/reports/verification';
 import { isAbort, safeMessage, UnalteredError } from '../../core/errors';
 import { hashBlob } from '../../core/hash/hasher';
 import { upgrade, type UpgradeResult } from '../../core/ots/calendar';
@@ -78,6 +79,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
   let upShown: Shown = null;
 
   function show(next: Shown): void {
+    if (next !== shown) revokeOwner(out);
     shown = next;
     setChildren(out, render(next));
   }
@@ -336,5 +338,8 @@ export function renderReport(r: VerifyReport, hex: string, fromLink: boolean): H
     );
   }
   if (r.state === 'PENDING') card.appendChild(el('p', { class: 'notice pending' }, t('copy.pendingNotProof')));
+  card.appendChild(downloadLink('Download verification report (JSON)', 'unaltered-verification-report.json',
+    new Blob([createVerificationReportJson(hex, r)], { type: 'application/json' }),
+    'application/json', undefined, { owner: out, key: 'verification-report' }));
   return card;
 }
