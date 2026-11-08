@@ -40,7 +40,7 @@ export function archivalRecoveryPanel(): HTMLElement {
       try {
         const frames: Uint8Array[] = [];
         for (const file of files) {
-          if (file.size < 81 || file.size > 3033) throw new Error('Frame file size is invalid');
+          if (file.size < 81 || file.size > 2953) throw new Error('Frame file size is invalid');
           frames.push(new Uint8Array(await file.arrayBuffer()));
         }
         const receipt = await recoverReceiptFrames(frames);
