@@ -2,6 +2,7 @@
 import { groupHex } from '../../core/bytes';
 import { encodeArchivalQr } from '../../core/archive/qr-encode';
 import { createArchivalPrintSheet } from '../../core/archive/qr-print';
+import type { QrPreference, QrPaper } from '../../core/archive/qr-plan';
 import { isAbort, safeMessage, UnalteredError } from '../../core/errors';
 import { hashBlob, type HashResult } from '../../core/hash/hasher';
 import { calendarsOf, stampBatch, type CalendarResult } from '../../core/ots/calendar';
@@ -228,7 +229,7 @@ export function mountStamp(root: HTMLElement): StampView {
           { class: 'notice ok' },
           downloadLink(t('stamp.downloadReceipt', { name }), name, it.proof, 'application/octet-stream', undefined, { owner: it, key: 'receipt' }),
           el('p', { class: 'muted' }, t('stamp.receiptName')),
-          el('button', { type: 'button', class: 'button small', onclick: () => { void showArchiveSheet(it); } }, 'Preview archival QR certificate'),
+          archivalControls(it),
           shareRow(it),
           labelRow(it),
         ),
@@ -240,7 +241,23 @@ export function mountStamp(root: HTMLElement): StampView {
     if (hadFocus && !it.card.contains(document.activeElement)) root.querySelector<HTMLElement>('#stamp-file')?.focus();
   }
 
-  async function showArchiveSheet(it: Item): Promise<void> {
+  function archivalControls(it: Item): HTMLElement {
+    const wrap = el('div', { class: 'archival-controls' });
+    const correction = el('select', { 'aria-label': 'Archival QR error correction' }) as HTMLSelectElement;
+    for (const [value, label] of [
+      ['auto', 'Automatic (recommended)'], ['L', 'L — 7%'], ['M', 'M — 15%'],
+      ['Q', 'Q — 25%'], ['H', 'H — 30% (maximum)'],
+    ]) correction.append(el('option', { value }, label));
+    const paper = el('select', { 'aria-label': 'Archival QR paper size' }) as HTMLSelectElement;
+    paper.append(el('option', { value: 'a4' }, 'A4'), el('option', { value: 'letter' }, 'US Letter'));
+    const button = el('button', { type: 'button', class: 'button small', onclick: () => {
+      void showArchiveSheet(it, correction.value as QrPreference, paper.value as QrPaper);
+    } }, 'Preview archival QR certificate');
+    wrap.append(el('label', {}, 'QR error correction ', correction), el('label', {}, 'Paper size ', paper), button);
+    return wrap;
+  }
+
+  async function showArchiveSheet(it: Item, preference: QrPreference, paper: QrPaper): Promise<void> {
     if (!it.proof) return;
     const previous = root.querySelector('.unaltered-archival-sheet');
     previous?.remove();
@@ -249,7 +266,7 @@ export function mountStamp(root: HTMLElement): StampView {
     const status = el('p', { class: 'archival-qr-status', role: 'status' }, 'Preparing QR certificate preview…');
     root.append(status);
     try {
-      const { symbols, plan } = await encodeArchivalQr(it.proof);
+      const { symbols, plan } = await encodeArchivalQr(it.proof, { preference, paper });
       if (!items.includes(it) || !it.proof) { status.remove(); return; }
       const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', Uint8Array.from(it.proof)));
       const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
