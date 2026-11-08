@@ -243,20 +243,32 @@ export function mountStamp(root: HTMLElement): StampView {
 
   function archivalControls(it: Item): HTMLElement {
     const wrap = el('div', { class: 'archival-controls' });
-    const correction = el('select', { 'aria-label': 'Archival QR error correction' }) as HTMLSelectElement;
-    for (const [value, label] of [
-      ['auto', 'Automatic (recommended)'], ['L', 'L — 7%'], ['M', 'M — 15%'],
-      ['Q', 'Q — 25%'], ['H', 'H — 30% (maximum)'],
-    ]) correction.appendChild(el('option', { value }, label));
-    const paper = el('select', { 'aria-label': 'Archival QR paper size' }) as HTMLSelectElement;
-    paper.appendChild(el('option', { value: 'a4' }, 'A4'));
-    paper.appendChild(el('option', { value: 'letter' }, 'US Letter'));
-    const button = el('button', { type: 'button', class: 'button small', onclick: () => {
-      void showArchiveSheet(it, correction.value as QrPreference, paper.value as QrPaper);
+    const levels: readonly QrPreference[] = ['auto', 'L', 'M', 'Q', 'H'];
+    const descriptions = ['Automatic (recommended)', 'L — 7%', 'M — 15%', 'Q — 25%', 'H — 30% (maximum)'];
+    const papers: readonly QrPaper[] = ['a4', 'letter'];
+    let levelIndex = 0;
+    let paperIndex = 0;
+    const correction = el('button', { type: 'button', class: 'button small',
+      'aria-label': 'Archival QR error correction: Automatic (recommended)' }, 'QR correction: Automatic (recommended)');
+    correction.addEventListener('click', () => {
+      levelIndex = (levelIndex + 1) % levels.length;
+      correction.textContent = 'QR correction: ' + descriptions[levelIndex]!;
+      correction.setAttribute('aria-label', 'Archival QR error correction: ' + descriptions[levelIndex]!);
+    });
+    const paper = el('button', { type: 'button', class: 'button small',
+      'aria-label': 'Archival QR paper size: A4' }, 'Paper: A4');
+    paper.addEventListener('click', () => {
+      paperIndex = (paperIndex + 1) % papers.length;
+      const label = papers[paperIndex] === 'a4' ? 'A4' : 'US Letter';
+      paper.textContent = 'Paper: ' + label;
+      paper.setAttribute('aria-label', 'Archival QR paper size: ' + label);
+    });
+    const preview = el('button', { type: 'button', class: 'button small', onclick: () => {
+      void showArchiveSheet(it, levels[levelIndex]!, papers[paperIndex]!);
     } }, 'Preview archival QR certificate');
-    wrap.appendChild(el('label', {}, 'QR error correction ', correction));
-    wrap.appendChild(el('label', {}, 'Paper size ', paper));
-    wrap.appendChild(button);
+    wrap.appendChild(correction);
+    wrap.appendChild(paper);
+    wrap.appendChild(preview);
     return wrap;
   }
 
