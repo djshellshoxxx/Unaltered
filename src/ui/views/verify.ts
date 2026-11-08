@@ -224,7 +224,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
     if (!next) return null;
     if (next.kind === 'working') return el('p', { role: 'status' }, t('verify.working'));
     if (next.kind === 'error') return el('p', { class: 'error', role: 'alert' }, next.message);
-    if (next.kind === 'report') return renderReport(next.report, next.hex, next.fromLink);
+    if (next.kind === 'report') return renderReport(next.report, next.hex, next.fromLink, out);
     return null;
   }
 
@@ -296,7 +296,7 @@ function reportTitleKey(state: VerifyState, fromLink: boolean): StringKey {
   return (fromLink ? LINK_TITLE[state] : undefined) ?? TITLE[state];
 }
 
-export function renderReport(r: VerifyReport, hex: string, fromLink: boolean): HTMLElement {
+export function renderReport(r: VerifyReport, hex: string, fromLink: boolean, owner?: object): HTMLElement {
   const title = reportTitleKey(r.state, fromLink);
   const linkBody = fromLink ? LINK_BODY[r.state] : undefined;
   const detailRows: Node[] = [
@@ -340,6 +340,6 @@ export function renderReport(r: VerifyReport, hex: string, fromLink: boolean): H
   if (r.state === 'PENDING') card.appendChild(el('p', { class: 'notice pending' }, t('copy.pendingNotProof')));
   card.appendChild(downloadLink('Download verification report (JSON)', 'unaltered-verification-report.json',
     new Blob([createVerificationReportJson(hex, r)], { type: 'application/json' }),
-    'application/json', undefined, { owner: out, key: 'verification-report' }));
+    'application/json', undefined, owner ? { owner, key: 'verification-report' } : undefined));
   return card;
 }
