@@ -61,6 +61,11 @@ export function archivalRecoveryPanel(): HTMLElement {
       }
     })();
   });
-  section.append(heading, help, input, button, status, download);
+  section.appendChild(heading);
+  section.appendChild(help);
+  section.appendChild(input);
+  section.appendChild(button);
+  section.appendChild(status);
+  section.appendChild(download);
   return section;
 }
