@@ -31,6 +31,21 @@ async function stampNote(page: Page, name = 'note.txt', content: Buffer = NOTE):
   return readFileSync((await dl.path())!);
 }
 
+test.describe('essential landing-page guidance', () => {
+  test('shows three expandable guides without changing stamping behaviour', async ({ page }) => {
+    await page.goto('/index.html#stamp');
+    const guides = page.locator('.essential-guides details');
+    await expect(guides).toHaveCount(3);
+    await page.getByText('Start here: three steps').click();
+    await expect(guides.nth(0)).toContainText('Create and download the .ots receipt');
+    await page.getByText('Understand your verification result').click();
+    await expect(guides.nth(1)).toContainText('Pending:');
+    await page.getByText('Evidence backup checklist').click();
+    await expect(guides.nth(2)).toContainText('two independent locations');
+    await expect(page.locator('#stamp-file')).toHaveCount(1);
+  });
+});
+
 test.describe('stamp, upgrade, verify (network mocked)', () => {
   test('full flow with the four mandatory trust behaviours', async ({ page, context }) => {
     const chain = await installNetwork(context);
