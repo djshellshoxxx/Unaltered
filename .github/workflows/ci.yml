@@ -74,6 +74,8 @@ jobs:
           npm run typecheck
           npm run lint
           npm run test
+      - name: Independent Python archival recovery and golden vector tests
+        run: python3 -m unittest discover -s tests/archival -p 'test_*.py'
       - name: Build twice and compare (reproducibility gate, SR-6)
         run: |
           npm run build
