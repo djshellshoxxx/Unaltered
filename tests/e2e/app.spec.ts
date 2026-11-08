@@ -60,10 +60,10 @@ test.describe('browser connectivity notice', () => {
 test.describe('local evidence bundle', () => {
   test('exports a ZIP with original bytes, receipt and manifest', async ({ page }) => {
     await page.goto('/index.html#verify');
-    await page.locator('#verify-file input[type=file]').setInputFiles({
+    await page.locator('#verify-file').setInputFiles({
       name: 'evidence.txt', mimeType: 'text/plain', buffer: Buffer.from('evidence'),
     });
-    await page.locator('#verify-receipt input[type=file]').setInputFiles({
+    await page.locator('#verify-receipt').setInputFiles({
       name: 'evidence.ots', mimeType: 'application/octet-stream', buffer: Buffer.from([0, 1, 2]),
     });
     const [download] = await Promise.all([
