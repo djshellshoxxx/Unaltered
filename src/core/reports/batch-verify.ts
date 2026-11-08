@@ -12,11 +12,13 @@ export type BatchResult<T> =
 export async function verifyBatch<T>(
   inputs: readonly T[],
   verifyOne: (input: T) => Promise<VerifyReport>,
+  signal?: AbortSignal,
 ): Promise<BatchResult<T>[]> {
   if (inputs.length === 0 || inputs.length > 50)
     throw new Error('Batch must contain between 1 and 50 items');
   const results: BatchResult<T>[] = [];
   for (const input of inputs) {
+    if (signal?.aborted) break;
     try {
       const report = await verifyOne(input);
       results.push({ input, status: report.state, report });
