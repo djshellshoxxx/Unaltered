@@ -31,6 +31,43 @@ async function stampNote(page: Page, name = 'note.txt', content: Buffer = NOTE):
   return readFileSync((await dl.path())!);
 }
 
+test.describe('archival certificate preview (network mocked)', () => {
+  test('creates an offline, labelled QR certificate and closes without CSP violations', async ({ page, context }) => {
+    await installNetwork(context);
+    await watchViolations(page);
+    await stampNote(page);
+    await page.getByRole('button', { name: 'Preview archival QR certificate' }).click();
+    const sheet = page.locator('.unaltered-archival-sheet');
+    await expect(sheet).toBeVisible();
+    await expect(sheet).toContainText('Archival Receipt (Unverified)');
+    await expect(sheet).toContainText('Receipt SHA-256:');
+    await expect(sheet).toContainText('UNALTERED-OTS-QR/1');
+    const canvases = sheet.locator('canvas');
+    expect(await canvases.count()).toBeGreaterThan(0);
+    const first = canvases.first();
+    const image = await first.evaluate((canvas) => {
+      const c = canvas as HTMLCanvasElement;
+      const ctx = c.getContext('2d');
+      if (!ctx) return null;
+      const pixels = ctx.getImageData(0, 0, c.width, c.height).data;
+      let black = 0;
+      let white = 0;
+      for (let i = 0; i < pixels.length; i += 4) {
+        if (pixels[i] === 0 && pixels[i + 1] === 0 && pixels[i + 2] === 0) black++;
+        if (pixels[i] === 255 && pixels[i + 1] === 255 && pixels[i + 2] === 255) white++;
+      }
+      return { width: c.width, height: c.height, black, white };
+    });
+    expect(image).not.toBeNull();
+    expect(image!.width).toBe(image!.height);
+    expect(image!.black).toBeGreaterThan(0);
+    expect(image!.white).toBeGreaterThan(0);
+    expect(await cspViolations(page)).toEqual([]);
+    await page.getByRole('button', { name: 'Close QR preview' }).click();
+    await expect(sheet).toHaveCount(0);
+  });
+});
+
 test.describe('archival QR controls (network mocked)', () => {
   test('automatic default and manual H selection do not trigger CSP violations', async ({ page, context }) => {
     await installNetwork(context);
