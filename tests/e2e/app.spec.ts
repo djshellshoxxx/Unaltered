@@ -46,6 +46,23 @@ test.describe('essential landing-page guidance', () => {
   });
 });
 
+test.describe('receipt overview', () => {
+  test('does not mislabel saved fingerprints as verified receipts', async ({ page }) => {
+    await page.goto('/index.html#settings');
+    await page.evaluate(() => {
+      localStorage.setItem('unaltered.receipts.enabled', '1');
+      localStorage.setItem('unaltered.receipts.v1', JSON.stringify([
+        { digestHex: 'a'.repeat(64), createdAtUtc: '2026-11-01T00:00:00Z', label: 'example' },
+      ]));
+    });
+    await page.reload();
+    const overview = page.locator('.receipt-health-summary');
+    await expect(overview).toContainText('Saved fingerprints: 1');
+    await expect(overview).toContainText('Verification status: unknown');
+    await expect(overview.getByRole('link', { name: 'Open Verify' })).toHaveAttribute('href', '#verify');
+  });
+});
+
 test.describe('stamp, upgrade, verify (network mocked)', () => {
   test('full flow with the four mandatory trust behaviours', async ({ page, context }) => {
     const chain = await installNetwork(context);
