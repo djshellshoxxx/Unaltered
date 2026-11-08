@@ -2,6 +2,17 @@
 // To add a language: copy `en`, translate every value, register it in LANGS. A unit test enforces identical keys.
 
 export const en = {
+  'help.calendars': 'Selecting several calendar servers improves availability if one is unreachable. Each selected server can observe your timestamp submission; choose only services you trust. One server reduces the number of services contacted but creates a single point of failure.',
+  'help.calendarChoice': 'Calendar {host}: choose based on operator trust, network availability and privacy. There is no verified ranking of reliability or privacy between these servers.',
+  'help.minCalendars': 'This many selected calendar servers must accept the submission. Higher values require more successful responses and may cause stamping to fail if a server is down.',
+  'help.explorers': 'Select at least two independent block explorers so Bitcoin block headers can be cross-checked. Using only one cannot satisfy the default independent-source verification policy.',
+  'help.explorerChoice': 'Explorer {host}: use independent sources to compare Bitcoin block data. Selecting a provider also reveals requests to that operator. No provider is assumed more trustworthy.',
+  'help.verifyFile': 'Choose the exact original file that was timestamped. If you removed metadata before stamping, select the downloaded cleaned copy instead. Unaltered hashes it locally.',
+  'help.verifyReceipt': 'Choose the .ots receipt downloaded when that exact file was stamped, or its upgraded .ots copy. This is proof data, not the original file.',
+  'help.upgradeReceipt': 'Choose a pending .ots receipt to ask its calendar servers for a Bitcoin attestation. You do not need to upload the original file for this step.',
+  'help.batchFiles': 'Choose up to 50 original files. The app hashes them locally and pairs each one with a receipt using the exact filename.',
+  'help.batchReceipts': 'Choose the matching .ots receipts. Each receipt filename must equal the original filename plus .ots.',
+  'help.language': 'Choose the interface language. A language is offered only when its full interface translation is available.',
   'batch.block': 'Bitcoin block: {height}',
   'batch.title': 'Verify multiple files',
   'batch.instructions': 'Choose up to 50 original files and their receipts. Each receipt must be named exactly ORIGINAL_FILENAME.ots. Results are checked individually; no files are uploaded.',
@@ -219,6 +230,17 @@ export type Lang = 'en' | 'es';
 type Table = Record<StringKey, string>;
 
 const es: Table = {
+  'help.calendars': 'Elegir varios servidores de calendario mejora la disponibilidad si uno no responde. Cada servidor seleccionado puede observar tu envío; elige solo servicios de confianza. Uno solo contacta menos servicios, pero crea un punto único de fallo.',
+  'help.calendarChoice': 'Calendario {host}: elige según la confianza en el operador, la disponibilidad y la privacidad. No existe una clasificación verificada de fiabilidad o privacidad.',
+  'help.minCalendars': 'Este número de calendarios seleccionados debe aceptar el envío. Un valor más alto exige más respuestas correctas y puede impedir el sellado si un servidor falla.',
+  'help.explorers': 'Selecciona al menos dos exploradores independientes para contrastar las cabeceras de bloques de Bitcoin. Uno solo no cumple la política de verificación independiente.',
+  'help.explorerChoice': 'Explorador {host}: usa fuentes independientes para comparar los datos de bloques. Las consultas son visibles para el operador. No se supone que un proveedor sea más fiable.',
+  'help.verifyFile': 'Elige el archivo original exacto que sellaste. Si quitaste metadatos, selecciona la copia limpia descargada. Unaltered calcula su huella localmente.',
+  'help.verifyReceipt': 'Elige el recibo .ots descargado al sellar ese archivo, o su copia actualizada. Contiene la prueba, no el archivo original.',
+  'help.upgradeReceipt': 'Elige un recibo .ots pendiente para consultar a los calendarios sobre su confirmación en Bitcoin. No necesitas subir el archivo original.',
+  'help.batchFiles': 'Elige hasta 50 archivos originales. La aplicación los procesa localmente y los empareja por nombre exacto.',
+  'help.batchReceipts': 'Elige los recibos .ots correspondientes. Cada nombre debe ser el del archivo original seguido de .ots.',
+  'help.language': 'Elige el idioma de la interfaz. Solo se ofrecen idiomas con traducción completa.',
   'batch.block': 'Bloque de Bitcoin: {height}',
   'batch.title': 'Verificar varios archivos',
   'batch.instructions': 'Elige hasta 50 archivos originales y sus recibos. Cada recibo debe llamarse exactamente NOMBRE_ORIGINAL.ots. Cada resultado se verifica por separado; no se suben archivos.',
@@ -436,8 +458,8 @@ const es: Table = {
 
 const tables: Record<Lang, Table> = { en, es };
 export const LANGS: readonly { code: Lang; name: string }[] = [
-  { code: 'en', name: 'English' },
-  { code: 'es', name: 'Español' },
+  { code: 'en', name: '🇬🇧 English' },
+  { code: 'es', name: '🇪🇸 Español' },
 ];
 export const TABLES = tables;
 
