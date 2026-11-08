@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const views = vi.hoisted(() => ({ setPrefill: vi.fn(), relabel: vi.fn() }));
+vi.mock('../../src/ui/archive-tools', () => ({ mountArchiveTools() {} }));
 vi.mock('../../src/ui/views/verify', () => ({ mountVerify: () => views }));
 vi.mock('../../src/ui/views/stamp', () => ({ mountStamp: () => ({ relabel() {} }) }));
 vi.mock('../../src/ui/views/about', () => ({ mountAbout() {} }));

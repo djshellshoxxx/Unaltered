@@ -143,8 +143,8 @@ for (const [label, newline] of [['CRLF', '\r\n'], ['CR', '\r']]) {
 }
 
 test('web and portable artifacts contain only declared runtime and distribution files', () => {
-  assert.deepEqual([...web.keys()].sort(), ['index.html', 'main.js', 'styles.css']);
-  const common = ['index.html', 'main.js', 'styles.css', `${prefix}.html`, `unaltered-cli-${version}.mjs`, 'LICENSE', 'README.txt', 'SHA256SUMS'];
+  assert.deepEqual([...web.keys()].sort(), ['favicon.png', 'index.html', 'main.js', 'styles.css']);
+  const common = ['favicon.png', 'index.html', 'main.js', 'styles.css', `${prefix}.html`, `unaltered-cli-${version}.mjs`, 'LICENSE', 'README.txt', 'SHA256SUMS'];
   for (const [i, launcher] of ['Open-Unaltered.cmd', 'open-unaltered.sh', 'Open-Unaltered.command'].entries()) {
     const p = packages[i];
     assert.deepEqual([...p.files.keys()].sort(), [...common, p.helper, launcher].sort(), p.archive);
