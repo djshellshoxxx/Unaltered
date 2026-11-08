@@ -145,3 +145,17 @@ footer { padding-top: 1rem; padding-bottom: 2rem; border-top: 1px solid var(--li
   body:has(.unaltered-archival-sheet) .unaltered-archival-sheet { position:absolute; top:0; left:0; width:100%; padding:0; }
   .unaltered-archival-symbol { break-inside:avoid; page-break-inside:avoid; }
 }
+
+/* Archival controls must reflow at 320 CSS pixels and high browser zoom. */
+.archival-controls { display:flex; flex-wrap:wrap; align-items:end; gap:.5rem; min-width:0; max-width:100%; }
+.archival-controls label { display:flex; flex-direction:column; gap:.25rem; min-width:0; max-width:100%; overflow-wrap:anywhere; }
+.archival-controls select { max-width:100%; min-width:0; width:min(100%, 17rem); }
+.archival-controls button { max-width:100%; white-space:normal; }
+.archival-recovery { min-width:0; max-width:100%; overflow-wrap:anywhere; }
+.archival-recovery input[type="file"] { max-width:100%; }
+.unaltered-archival-sheet { max-width:100%; overflow-wrap:anywhere; }
+@media (max-width:480px) {
+  .archival-controls { flex-direction:column; align-items:stretch; }
+  .archival-controls label, .archival-controls select, .archival-controls button { width:100%; }
+  .unaltered-archival-symbol { width:100%; box-sizing:border-box; }
+}
