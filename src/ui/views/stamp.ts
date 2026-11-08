@@ -402,12 +402,34 @@ export function mountStamp(root: HTMLElement): StampView {
     setChildren(result, ...res);
   }
 
+  function essentialGuides(): HTMLElement {
+    const guides = el('aside', { class: 'essential-guides', 'aria-label': t('guide.start.title') });
+    const entries: readonly [string, string, string, string][] = [
+      ['guide.start.title', 'guide.start.one', 'guide.start.two', 'guide.start.three'],
+      ['guide.status.title', 'guide.status.pending', 'guide.status.verified', 'guide.status.other'],
+      ['guide.backup.title', 'guide.backup.file', 'guide.backup.receipt', 'guide.backup.copies'],
+    ];
+    for (const [heading, first, second, third] of entries) {
+      const details = el('details', { class: 'essential-guide' },
+        el('summary', {}, t(heading as Parameters<typeof t>[0])),
+        el('ol', {},
+          el('li', {}, t(first as Parameters<typeof t>[0])),
+          el('li', {}, t(second as Parameters<typeof t>[0])),
+          el('li', {}, t(third as Parameters<typeof t>[0])),
+        ),
+      );
+      guides.appendChild(details);
+    }
+    return guides;
+  }
+
   function renderFrame(): void {
     setChildren(
       root,
       el('h2', { id: 'stamp-h', tabindex: -1 }, t('stamp.title')),
       el('p', { class: 'lead' }, t('copy.stays')),
       el('p', {}, t('copy.notTrue')),
+      essentialGuides(),
       dropZone({ id: 'stamp-file', label: t('stamp.drop'), hint: t('stamp.dropHint'), multiple: true, onFiles: add }),
       list,
       actions,
