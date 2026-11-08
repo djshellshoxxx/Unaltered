@@ -8,6 +8,15 @@ import { serializeTree } from '../../src/core/ots/codec';
 import { makeJpeg } from '../helpers/images';
 import { bytesOf, cspViolations, installNetwork, sha256hex, watchViolations } from './helpers';
 
+test('same file can be selected again without reloading the page', async ({ page }) => {
+  await page.goto('/index.html#stamp');
+  const file = { name: 'repeat.txt', mimeType: 'text/plain', buffer: Buffer.from('repeat test') };
+  await page.locator('#stamp-file').setInputFiles(file);
+  await expect(page.locator('.item')).toHaveCount(1);
+  await page.locator('#stamp-file').setInputFiles(file);
+  await expect(page.locator('.item')).toHaveCount(2);
+});
+
 const NOTE = bytesOf('hello e2e');
 const NOTE_HEX = sha256hex(NOTE);
 // Pin the accepted trust wording independently of the string table. An unreadable calendar reply cannot
