@@ -40,15 +40,3 @@ export async function encodeArchivalQr(receipt: Uint8Array, options: QrPlanningO
   return { symbols, plan };
 }
 
-/** Print-safe, monochrome vector SVG. The mandatory 4-module quiet zone is included. */
-export function archivalQrSvg(symbol: ArchivalQrSymbol, modulePx = 4): string {
-  if (!Number.isInteger(modulePx) || modulePx < 1 || modulePx > 32)
-    throw new Error('Invalid QR module size');
-  const side = symbol.modules + 8;
-  const path: string[] = [];
-  for (let y = 0; y < symbol.modules; y++)
-    for (let x = 0; x < symbol.modules; x++)
-      if (symbol.matrix[y * symbol.modules + x] === 1)
-        path.push(`M${x + 4},${y + 4}h1v1h-1z`);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${side * modulePx}" height="${side * modulePx}" viewBox="0 0 ${side} ${side}" shape-rendering="crispEdges"><rect width="${side}" height="${side}" fill="white"/><path d="${path.join('')}" fill="black"/></svg>`;
-}
