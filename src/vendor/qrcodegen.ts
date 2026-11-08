@@ -5,7 +5,7 @@
  * QR Code generator library (TypeScript)
  * 
  * Copyright (c) Project Nayuki. (MIT License)
- * https://www.nayuki.io/page/qr-code-generator-library
+ * Project Nayuki QR Code generator library (upstream attribution)
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
