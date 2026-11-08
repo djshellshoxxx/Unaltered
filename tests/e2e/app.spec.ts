@@ -57,6 +57,15 @@ test.describe('browser connectivity notice', () => {
   });
 });
 
+test.describe('technology credits and onion status', () => {
+  test('links original technologies and does not advertise a nonexistent onion endpoint', async ({ page }) => {
+    await page.goto('/index.html#about');
+    await expect(page.getByText('OpenTimestamps was created by Peter Todd', { exact: false })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Original OpenTimestamps reference client' })).toHaveAttribute('href', 'https://github.com/opentimestamps/opentimestamps-client');
+    await expect(page.getByText('No official Unaltered onion service', { exact: false })).toBeVisible();
+  });
+});
+
 test.describe('contextual help and language selector', () => {
   test('explains calendar and explorer tradeoffs and offers translated flag options', async ({ page }) => {
     await page.goto('/index.html#settings');
