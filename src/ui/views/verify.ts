@@ -300,7 +300,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
     try {
       pairs = pairEvidenceFiles(files.map(f => f.name), receipts.map(f => f.name));
     } catch (error) {
-      setChildren(batchResults, el('p', { role: 'alert', class: 'error' }, safeMessage(error)));
+      setChildren(batchResults, el('p', { role: 'alert', class: 'error' }, t('batch.pairError')));
       return;
     }
     const controller = new AbortController();
