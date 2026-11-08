@@ -247,13 +247,16 @@ export function mountStamp(root: HTMLElement): StampView {
     for (const [value, label] of [
       ['auto', 'Automatic (recommended)'], ['L', 'L — 7%'], ['M', 'M — 15%'],
       ['Q', 'Q — 25%'], ['H', 'H — 30% (maximum)'],
-    ]) correction.append(el('option', { value }, label));
+    ]) correction.appendChild(el('option', { value }, label));
     const paper = el('select', { 'aria-label': 'Archival QR paper size' }) as HTMLSelectElement;
-    paper.append(el('option', { value: 'a4' }, 'A4'), el('option', { value: 'letter' }, 'US Letter'));
+    paper.appendChild(el('option', { value: 'a4' }, 'A4'));
+    paper.appendChild(el('option', { value: 'letter' }, 'US Letter'));
     const button = el('button', { type: 'button', class: 'button small', onclick: () => {
       void showArchiveSheet(it, correction.value as QrPreference, paper.value as QrPaper);
     } }, 'Preview archival QR certificate');
-    wrap.append(el('label', {}, 'QR error correction ', correction), el('label', {}, 'Paper size ', paper), button);
+    wrap.appendChild(el('label', {}, 'QR error correction ', correction));
+    wrap.appendChild(el('label', {}, 'Paper size ', paper));
+    wrap.appendChild(button);
     return wrap;
   }
 
