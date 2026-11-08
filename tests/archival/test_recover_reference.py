@@ -30,6 +30,13 @@ def make_frames(receipt: bytes, chunk_size: int = 53) -> list[bytes]:
 
 
 class RecoveryTests(unittest.TestCase):
+    def test_cross_language_golden_vector(self):
+        lines = (ROOT / 'tests/archival/golden-v1.hex').read_text().splitlines()
+        frame = bytes.fromhex(''.join(line for line in lines if not line.startswith('#')))
+        receipt = bytes([0, 255, 1, 128, 42, 10])
+        self.assertEqual(make_frames(receipt), [frame])
+        self.assertEqual(module.recover([frame]), receipt)
+
     def test_roundtrip_and_reordering(self):
         for length in (1, 80, 200, 1000):
             receipt = bytes((i * 31 + 7) % 256 for i in range(length))
