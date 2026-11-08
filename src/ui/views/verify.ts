@@ -323,7 +323,13 @@ export function mountVerify(root: HTMLElement): VerifyView {
       }, controller.signal);
       if (generation !== batchGeneration || controller.signal.aborted) return;
       setChildren(batchResults, el('ul', {}, ...result.map(item =>
-        el('li', {}, item.input.fileName + ': ' + (item.status === 'ERROR' ? t('batch.error') : item.status)),
+        el('li', {},
+          el('strong', {}, item.input.fileName + ': '),
+          el('span', {}, item.status === 'ERROR' ? t('batch.error') : item.status),
+          item.status !== 'ERROR' ? el('p', { class: 'muted' }, item.report.detail) : null,
+          item.status === 'VERIFIED' && item.report.bitcoin
+            ? el('p', {}, t('batch.block', { height: item.report.bitcoin.height })) : null,
+        ),
       )));
     } catch (error) {
       if (generation === batchGeneration && !controller.signal.aborted)
