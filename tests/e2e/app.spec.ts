@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { concat, fromHex, groupHex } from '../../src/core/bytes';
+import { encodeReceiptFrames } from '../../src/core/archive/frames';
 import { serializeTree } from '../../src/core/ots/codec';
 import { makeJpeg } from '../helpers/images';
 import { bytesOf, cspViolations, installNetwork, sha256hex, watchViolations } from './helpers';
@@ -30,6 +31,29 @@ async function stampNote(page: Page, name = 'note.txt', content: Buffer = NOTE):
   expect(dl.suggestedFilename()).toBe(`${name}.ots`);
   return readFileSync((await dl.path())!);
 }
+
+test.describe('offline archival receipt recovery', () => {
+  test('recovers an exact .ots file from shuffled binary QR frame payloads', async ({ page, context }) => {
+    await installNetwork(context);
+    await watchViolations(page);
+    const original = await stampNote(page);
+    const frames = await encodeReceiptFrames(new Uint8Array(original), 160);
+    await page.goto('/index.html#verify');
+    await page.getByLabel('Decoded QR binary payload files').setInputFiles(
+      frames.reverse().map((frame, index) => ({
+        name: `frame-${index}.bin`,
+        mimeType: 'application/octet-stream',
+        buffer: Buffer.from(frame),
+      })),
+    );
+    await page.getByRole('button', { name: 'Recover .ots receipt' }).click();
+    const link = page.getByRole('link', { name: 'Download reconstructed .ots receipt' });
+    await expect(link).toBeVisible();
+    const [download] = await Promise.all([page.waitForEvent('download'), link.click()]);
+    expect(readFileSync((await download.path())!)).toEqual(original);
+    expect(await cspViolations(page)).toEqual([]);
+  });
+});
 
 test.describe('archival certificate preview (network mocked)', () => {
   test('creates an offline, labelled QR certificate and closes without CSP violations', async ({ page, context }) => {
