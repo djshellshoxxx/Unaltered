@@ -109,8 +109,10 @@ const buildHash = hex256(Buffer.from(cliJs + '\0' + mainMulti + '\0' + workerJs 
 // One pass with a replacer function: string replacements would expand `$&`, `$'` and similar patterns inside the
 // bundle or CSS, and sequential passes would fill a token that an earlier value happened to contain.
 function fill(html, { cspValue, styles, script }) {
-  const values = { CSP: cspValue, STYLES: styles, SCRIPT: script, VERSION: version, BUILD: buildHash };
-  return html.replace(/\{\{(CSP|STYLES|SCRIPT|VERSION|BUILD)\}\}/g, (_, key) => values[key]);
+  const values = { CSP: cspValue, STYLES: styles, SCRIPT: script, VERSION: version, BUILD: buildHash,
+    SITE_URL: 'https://djshellshoxxx.github.io/Unaltered/',
+    SEO_CANONICAL: '<link rel="canonical" href="https://djshellshoxxx.github.io/Unaltered/">' };
+  return html.replace(/\{\{(CSP|STYLES|SCRIPT|VERSION|BUILD|SITE_URL|SEO_CANONICAL)\}\}/g, (_, key) => values[key]);
 }
 
 // Multi-file page: SRI on every script/stylesheet (SR-3).
