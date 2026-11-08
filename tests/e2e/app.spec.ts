@@ -94,6 +94,16 @@ test.describe('archival certificate preview (network mocked)', () => {
     expect(image!.black).toBeGreaterThan(0);
     expect(image!.white).toBeGreaterThan(0);
     expect(await cspViolations(page)).toEqual([]);
+    await page.emulateMedia({ media: 'print' });
+    const printState = await page.evaluate(() => ({
+      sheetVisible: getComputedStyle(document.querySelector('.unaltered-archival-sheet')!).visibility,
+      canvasVisible: getComputedStyle(document.querySelector('.unaltered-archival-sheet canvas')!).visibility,
+      navigationVisible: getComputedStyle(document.querySelector('nav')!).visibility,
+    }));
+    expect(printState.sheetVisible).toBe('visible');
+    expect(printState.canvasVisible).toBe('visible');
+    expect(printState.navigationVisible).toBe('hidden');
+    await page.emulateMedia({ media: 'screen' });
     await page.getByRole('button', { name: 'Close QR preview' }).click();
     await expect(sheet).toHaveCount(0);
   });
