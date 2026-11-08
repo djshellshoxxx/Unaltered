@@ -52,7 +52,7 @@ export function archivalRecoveryPanel(): HTMLElement {
         anchor.download = 'recovered.ots';
         anchor.textContent = 'Download reconstructed .ots receipt';
         anchor.addEventListener('click', () => { setTimeout(() => { if (activeUrl === url) clearDownload(); }, 60000); }, { once:true });
-        download.append(anchor);
+        download.appendChild(anchor);
         status.textContent = `Recovered ${receipt.length} bytes. SHA-256 and frame identifiers match. This does not verify the Bitcoin timestamp.`;
       } catch (error) {
         status.textContent = 'Recovery failed: ' + (error instanceof Error ? error.message : 'Invalid input');
