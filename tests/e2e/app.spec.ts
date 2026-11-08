@@ -62,10 +62,11 @@ test.describe('contextual help and language selector', () => {
     await page.goto('/index.html#settings');
     await expect(page.getByText('Selecting several calendar servers improves availability', { exact: false })).toBeVisible();
     await expect(page.getByText('Select at least two independent block explorers', { exact: false })).toBeVisible();
-    await expect(page.locator('#language-choice')).toHaveCount(1);
-    await expect(page.locator('#language-choice option')).toHaveCount(2);
-    await page.locator('#language-choice').selectOption('es');
-    await expect(page.locator('#language-choice')).toHaveValue('es');
+    await expect(page.locator('#lang summary')).toHaveCount(1);
+    await page.locator('#lang summary').click();
+    await expect(page.locator('#lang input[type=radio]')).toHaveCount(2);
+    await page.locator('#lang input[value=es]').check();
+    await expect(page.locator('#lang summary')).toContainText('Español');
   });
   test('explains original file versus .ots receipt on Verify', async ({ page }) => {
     await page.goto('/index.html#verify');
