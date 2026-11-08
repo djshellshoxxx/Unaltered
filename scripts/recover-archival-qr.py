@@ -24,7 +24,7 @@ def recover(frames: list[bytes]) -> bytes:
     parts: dict[int, bytes] = {}
     expected = None
     for frame in frames:
-        if len(frame) <= HEADER or frame[:8] != MAGIC:
+        if len(frame) <= HEADER or len(frame) > 2953 or frame[:8] != MAGIC:
             raise ValueError("Invalid frame header or empty payload")
         if frame[8:12] != b"\x01\x00\x00\x00":
             raise ValueError("Unsupported protocol version, flags or compression")
@@ -66,7 +66,7 @@ def main() -> None:
         parser.error("Too many input frames")
     frames = []
     for path in args.frames:
-        if path.stat().st_size > 3033:
+        if path.stat().st_size > 2953:
             parser.error(f"Frame too large: {path}")
         frames.append(path.read_bytes())
     receipt = recover(frames)
