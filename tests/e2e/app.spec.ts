@@ -31,6 +31,22 @@ async function stampNote(page: Page, name = 'note.txt', content: Buffer = NOTE):
   return readFileSync((await dl.path())!);
 }
 
+test.describe('archival QR controls (network mocked)', () => {
+  test('automatic default and manual H selection do not trigger CSP violations', async ({ page, context }) => {
+    await installNetwork(context);
+    await watchViolations(page);
+    await stampNote(page);
+    const correction = page.getByRole('button', { name: /Archival QR error correction:/ });
+    const paper = page.getByRole('button', { name: /Archival QR paper size:/ });
+    await expect(correction).toHaveAttribute('aria-label', 'Archival QR error correction: Automatic (recommended)');
+    for (let i = 0; i < 4; i++) await correction.click();
+    await expect(correction).toHaveAttribute('aria-label', /H — 30%/);
+    await paper.click();
+    await expect(paper).toHaveAttribute('aria-label', 'Archival QR paper size: US Letter');
+    expect(await cspViolations(page)).toEqual([]);
+  });
+});
+
 test.describe('stamp, upgrade, verify (network mocked)', () => {
   test('full flow with the four mandatory trust behaviours', async ({ page, context }) => {
     const chain = await installNetwork(context);
