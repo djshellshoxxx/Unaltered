@@ -2,6 +2,8 @@
 import { fromHex, groupHex } from '../../core/bytes';
 import { createVerificationReportJson } from '../../core/reports/verification';
 import { createEvidenceZip } from '../../core/reports/evidence-zip';
+import { pairEvidenceFiles } from '../../core/reports/batch-pair';
+import { verifyBatch } from '../../core/reports/batch-verify';
 import { isAbort, safeMessage, UnalteredError } from '../../core/errors';
 import { hashBlob } from '../../core/hash/hasher';
 import { upgrade, type UpgradeResult } from '../../core/ots/calendar';
@@ -268,6 +270,86 @@ export function mountVerify(root: HTMLElement): VerifyView {
     return kids;
   }
 
+  // Batch inputs are separate from the single-file Verify workflow. Never match by upload order.
+  const batchRoot = el('section', { class: 'batch-verify' });
+  let batchFiles: File[] = [];
+  let batchReceipts: File[] = [];
+  let batchBusy = false;
+  let batchController: AbortController | null = null;
+  let batchGeneration = 0;
+  const batchResults = el('div', { class: 'batch-results', 'aria-live': 'polite' });
+  const batchActions = el('div', { class: 'actions' });
+  function renderBatchActions(): void {
+    setChildren(batchActions,
+      el('p', {}, t('batch.selected', { files: batchFiles.length, receipts: batchReceipts.length })),
+      el('button', { type: 'button', class: 'button primary', disabled: batchBusy || !batchFiles.length || !batchReceipts.length,
+        onclick: () => void runBatch() }, t('batch.run')),
+      batchBusy ? el('button', { type: 'button', class: 'button', onclick: () => {
+        batchGeneration++;
+        batchController?.abort();
+        batchBusy = false;
+        renderBatchActions();
+      } }, t('common.cancel')) : null,
+    );
+  }
+  async function runBatch(): Promise<void> {
+    if (batchBusy) return;
+    const files = [...batchFiles];
+    const receipts = [...batchReceipts];
+    let pairs: ReturnType<typeof pairEvidenceFiles>;
+    try {
+      pairs = pairEvidenceFiles(files.map(f => f.name), receipts.map(f => f.name));
+    } catch (error) {
+      setChildren(batchResults, el('p', { role: 'alert', class: 'error' }, safeMessage(error)));
+      return;
+    }
+    const controller = new AbortController();
+    const generation = ++batchGeneration;
+    batchController = controller;
+    batchBusy = true;
+    renderBatchActions();
+    setChildren(batchResults, el('p', { role: 'status' }, t('batch.working')));
+    try {
+      const result = await verifyBatch(pairs, async pair => {
+        if (controller.signal.aborted) throw new UnalteredError('ABORTED', 'Cancelled');
+        const f = files.find(f => f.name === pair.fileName)!;
+        const receipt = receipts.find(f => f.name === pair.receiptName)!;
+        checkReceiptSize(receipt);
+        const hashed = await hashBlob(f, { signal: controller.signal });
+        if (controller.signal.aborted) throw new UnalteredError('ABORTED', 'Cancelled');
+        const proof = new Uint8Array(await receipt.arrayBuffer());
+        if (controller.signal.aborted) throw new UnalteredError('ABORTED', 'Cancelled');
+        return verify(hashed.digest, proof, verifyConfigFromSettings(controller.signal));
+      });
+      if (generation !== batchGeneration || controller.signal.aborted) return;
+      setChildren(batchResults, el('ul', {}, ...result.map(item =>
+        el('li', {}, item.input.fileName + ': ' + (item.status === 'ERROR' ? t('batch.error') : item.status)),
+      )));
+    } catch (error) {
+      if (generation === batchGeneration && !controller.signal.aborted)
+        setChildren(batchResults, el('p', { class: 'error', role: 'alert' }, safeMessage(error)));
+    } finally {
+      if (generation === batchGeneration) {
+        batchBusy = false;
+        batchController = null;
+        renderBatchActions();
+      }
+    }
+  }
+  function renderBatch(): void {
+    setChildren(batchRoot,
+      el('h3', {}, t('batch.title')),
+      el('p', { class: 'muted' }, t('batch.instructions')),
+      dropZone({ id: 'batch-files', label: t('batch.files'), hint: t('batch.fileHint'), multiple: true,
+        onFiles: files => { batchGeneration++; batchController?.abort(); batchBusy = false; batchFiles = files; setChildren(batchResults); renderBatchActions(); } }),
+      dropZone({ id: 'batch-receipts', label: t('batch.receipts'), hint: t('batch.receiptHint'), multiple: true, accept: '.ots',
+        onFiles: files => { batchGeneration++; batchController?.abort(); batchBusy = false; batchReceipts = files; setChildren(batchResults); renderBatchActions(); } }),
+      batchActions,
+      batchResults,
+    );
+    renderBatchActions();
+  }
+
   function renderFrame(): void {
     setChildren(
       root,
@@ -276,6 +358,8 @@ export function mountVerify(root: HTMLElement): VerifyView {
       inputs,
       actions,
       out,
+      el('hr'),
+      batchRoot,
       el('hr'),
       el('h3', {}, t('upgrade.title')),
       el('p', {}, t('upgrade.intro')),
@@ -289,6 +373,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
   renderInputs();
   renderActions();
   renderUpgrade();
+  renderBatch();
 
   return {
     setPrefill(hex) {
@@ -305,6 +390,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
       renderInputs();
       renderActions();
       renderUpgrade();
+      renderBatch();
       show(shown);
       showUpgrade(upShown);
     },
