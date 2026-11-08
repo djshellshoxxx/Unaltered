@@ -58,6 +58,14 @@ test.describe('browser connectivity notice', () => {
 });
 
 test.describe('batch verification', () => {
+  test('renders individual results with status and guidance', async ({ page }) => {
+    await page.goto('/index.html#verify');
+    await page.locator('#batch-files').setInputFiles({ name: 'evidence.txt', mimeType: 'text/plain', buffer: Buffer.from('evidence') });
+    await page.locator('#batch-receipts').setInputFiles({ name: 'evidence.txt.ots', mimeType: 'application/octet-stream', buffer: Buffer.from([0, 1, 2]) });
+    await page.getByRole('button', { name: 'Verify batch' }).click();
+    await expect(page.locator('.batch-results')).toContainText('evidence.txt');
+    await expect(page.locator('.batch-results')).toContainText('INVALID_PROOF');
+  });
   test('rejects missing matching receipts before verification', async ({ page }) => {
     await page.goto('/index.html#verify');
     await page.locator('#batch-files').setInputFiles({ name: 'a.txt', mimeType: 'text/plain', buffer: Buffer.from('a') });
