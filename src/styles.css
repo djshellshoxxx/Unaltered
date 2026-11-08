@@ -311,3 +311,61 @@ footer {
   .essential-guide, header, .network-capability, .card { box-shadow: none; border-width: 2px; }
   .drop { border-width: 3px; }
 }
+
+
+/* CDL Crypto Libertarian wing palette and typography. Preserve the modern layout,
+   focus visibility, native controls, local assets and CSP boundaries. */
+:root {
+  --bg: #0e1116;
+  --fg: #e6e8ec;
+  --muted: #b8c0ca;
+  --line: #34404a;
+  --card: #171b22;
+  --primary: #4fb6c4;
+  --primary-fg: #0e1116;
+  --focus: #4fb6c4;
+  --surface-elevated: #171b22;
+  --surface-soft: #12161c;
+  --shadow: 0 14px 42px rgba(0, 0, 0, .18);
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1116;
+    --fg: #e6e8ec;
+    --muted: #b8c0ca;
+    --line: #34404a;
+    --card: #171b22;
+    --primary: #4fb6c4;
+    --primary-fg: #0e1116;
+    --focus: #4fb6c4;
+    --surface-elevated: #171b22;
+    --surface-soft: #12161c;
+    --shadow: 0 14px 42px rgba(0, 0, 0, .18);
+  }
+}
+body {
+  font-family: Arial, 'Segoe UI', sans-serif;
+  background: radial-gradient(ellipse 68rem 30rem at 50% -12rem, rgba(79,182,196,.07), transparent 75%), var(--bg);
+}
+.brand, nav, .network-capability, .essential-guide summary, .drop-hint, footer, .button, button {
+  font-family: Consolas, 'Liberation Mono', monospace;
+}
+.brand { letter-spacing: .025em; }
+.brand::after {
+  content: ' / CRYPTO LIBERTARIAN';
+  display: inline-block;
+  margin-left: .8rem;
+  font: 600 .6rem/1.5 Consolas, monospace;
+  letter-spacing: .1em;
+  color: #4fb6c4;
+  vertical-align: middle;
+}
+main > section > h2 { font-weight: 600; }
+nav a[aria-current='page'] { border-color: #4fb6c4; }
+.drop { border-color: #4fb6c4; }
+.essential-guide { border-color: #34404a; }
+.essential-guide summary::after { color: #e8532a; }
+.cdl-affiliation a { color: #4fb6c4; text-underline-offset: .3rem; }
+.cdl-affiliation a:hover { color: #e8532a; }
+@media (max-width: 480px) { .brand::after { display: block; margin: .35rem 0 0; } }
