@@ -2,6 +2,7 @@
 // To add a language: copy `en`, translate every value, register it in LANGS. A unit test enforces identical keys.
 
 export const en = {
+  'batch.block': 'Bitcoin block: {height}',
   'batch.title': 'Verify multiple files',
   'batch.instructions': 'Choose up to 50 original files and their receipts. Each receipt must be named exactly ORIGINAL_FILENAME.ots. Results are checked individually; no files are uploaded.',
   'batch.files': 'Choose original files',
@@ -218,6 +219,7 @@ export type Lang = 'en' | 'es';
 type Table = Record<StringKey, string>;
 
 const es: Table = {
+  'batch.block': 'Bloque de Bitcoin: {height}',
   'batch.title': 'Verificar varios archivos',
   'batch.instructions': 'Elige hasta 50 archivos originales y sus recibos. Cada recibo debe llamarse exactamente NOMBRE_ORIGINAL.ots. Cada resultado se verifica por separado; no se suben archivos.',
   'batch.files': 'Elegir archivos originales',
