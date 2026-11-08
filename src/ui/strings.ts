@@ -2,6 +2,18 @@
 // To add a language: copy `en`, translate every value, register it in LANGS. A unit test enforces identical keys.
 
 export const en = {
+  'guide.start.title': 'Start here: three steps',
+  'guide.start.one': 'Choose the exact file you want to prove existed. If you clean metadata, download and keep the cleaned version.',
+  'guide.start.two': 'Create and download the .ots receipt. Your original file is not uploaded.',
+  'guide.start.three': 'Later, use Verify with the same file and receipt. Calendar confirmation can take time.',
+  'guide.status.title': 'Understand your verification result',
+  'guide.status.pending': 'Pending: the receipt exists, but a Bitcoin confirmation has not yet been established.',
+  'guide.status.verified': 'Verified: the file matches the receipt and the available Bitcoin evidence passed verification.',
+  'guide.status.other': 'Mismatch, invalid proof, unavailable sources or disagreement: do not treat the file as verified.',
+  'guide.backup.title': 'Evidence backup checklist',
+  'guide.backup.file': 'Keep the exact original file (or the cleaned file that was stamped).',
+  'guide.backup.receipt': 'Keep the downloaded .ots receipt and any later upgraded copy.',
+  'guide.backup.copies': 'Store copies in two independent locations. A receipt alone cannot reconstruct your original file.',
   'lang.code': 'en',
   'common.copy': 'Copy',
   'common.copied': 'Copied',
@@ -186,6 +198,18 @@ export type Lang = 'en' | 'es';
 type Table = Record<StringKey, string>;
 
 const es: Table = {
+  'guide.start.title': 'Empieza aquí: tres pasos',
+  'guide.start.one': 'Elige el archivo exacto cuya existencia quieres demostrar. Si eliminas metadatos, descarga y conserva la versión limpiada.',
+  'guide.start.two': 'Crea y descarga el recibo .ots. Tu archivo original no se sube.',
+  'guide.start.three': 'Más adelante, usa Verificar con el mismo archivo y recibo. La confirmación del calendario puede tardar.',
+  'guide.status.title': 'Comprende el resultado de verificación',
+  'guide.status.pending': 'Pendiente: el recibo existe, pero todavía no se ha establecido una confirmación de Bitcoin.',
+  'guide.status.verified': 'Verificado: el archivo coincide con el recibo y las pruebas de Bitcoin disponibles han superado la verificación.',
+  'guide.status.other': 'Diferencia, prueba inválida, fuentes no disponibles o desacuerdo: no consideres el archivo verificado.',
+  'guide.backup.title': 'Lista de respaldo de pruebas',
+  'guide.backup.file': 'Conserva el archivo original exacto (o el archivo limpiado que se selló).',
+  'guide.backup.receipt': 'Conserva el recibo .ots descargado y cualquier copia actualizada posteriormente.',
+  'guide.backup.copies': 'Guarda copias en dos ubicaciones independientes. Un recibo por sí solo no puede reconstruir el archivo original.',
   'lang.code': 'es',
   'common.copy': 'Copiar',
   'common.copied': 'Copiado',
