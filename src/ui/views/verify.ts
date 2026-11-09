@@ -1,4 +1,5 @@
 // Verify view (FR-7, FR-8, FR-11) and receipt upgrade (FR-6).
+import { archivalCertificateControls, type ArchivalCertificateView } from '../archival-certificate';
 import { fromHex, groupHex } from '../../core/bytes';
 import { createVerificationReportJson } from '../../core/reports/verification';
 import { createEvidenceZip } from '../../core/reports/evidence-zip';
@@ -57,7 +58,7 @@ export interface VerifyView {
 // What an output area shows, kept as data so a language switch can render it again without repeating the work.
 type Shown =
   | { kind: 'working' }
-  | { kind: 'report'; report: VerifyReport; hex: string; fromLink: boolean }
+  | { kind: 'report'; report: VerifyReport; hex: string; fromLink: boolean; certificate: ArchivalCertificateView }
   | { kind: 'upgraded'; result: UpgradeResult; fileName: string }
   | { kind: 'error'; message: string }
   | null;
@@ -82,7 +83,10 @@ export function mountVerify(root: HTMLElement): VerifyView {
   let upShown: Shown = null;
 
   function show(next: Shown): void {
-    if (next !== shown) revokeOwner(out);
+    if (next !== shown) {
+      if (shown?.kind === 'report') shown.certificate.dispose();
+      revokeOwner(out);
+    }
     shown = next;
     setChildren(out, render(next));
   }
@@ -180,7 +184,18 @@ export function mountVerify(root: HTMLElement): VerifyView {
       if (!current()) return;
       const report = await verify(digest, bytes, verifyConfigFromSettings(controller.signal));
       if (!current()) return;
-      show({ kind: 'report', report, hex, fromLink: selectedFile === null });
+      const receiptSha256 = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)),
+        b => b.toString(16).padStart(2, '0')).join('');
+      if (!current()) return;
+      const certificate = archivalCertificateControls(async () => bytes, report.state === 'VERIFIED' && report.bitcoin ? {
+        receiptSha256, fileSha256: hex, bitcoin: {
+          height: report.bitcoin.height,
+          blockHash: report.bitcoin.blockHash,
+          blockTimeUtc: report.bitcoin.blockTimeUtc,
+          sourcesAgreeing: report.bitcoin.sourcesAgreeing,
+        },
+      } : undefined);
+      show({ kind: 'report', report, hex, fromLink: selectedFile === null, certificate });
       announce(t(reportTitleKey(report.state, selectedFile === null)), root);
     } catch (e) {
       if (current()) show(isAbort(e) ? null : { kind: 'error', message: safeMessage(e) });
@@ -245,7 +260,11 @@ export function mountVerify(root: HTMLElement): VerifyView {
     if (!next) return null;
     if (next.kind === 'working') return el('p', { role: 'status' }, t('verify.working'));
     if (next.kind === 'error') return el('p', { class: 'error', role: 'alert' }, next.message);
-    if (next.kind === 'report') return renderReport(next.report, next.hex, next.fromLink, out);
+    if (next.kind === 'report') {
+      const reportCard = renderReport(next.report, next.hex, next.fromLink, out);
+      reportCard.appendChild(next.certificate.root);
+      return reportCard;
+    }
     return null;
   }
 
@@ -397,7 +416,8 @@ export function mountVerify(root: HTMLElement): VerifyView {
       renderActions();
       renderUpgrade();
       renderBatch();
-      show(shown);
+      if (shown?.kind === 'report') shown.certificate.relabel();
+      setChildren(out, render(shown));
       showUpgrade(upShown);
     },
   };
