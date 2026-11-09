@@ -5,10 +5,10 @@ import { el } from '../../ui/dom';
 
 export interface CertificateContext {
   /** Optional, user-approved display label; never part of the receipt or QR payload. */
-  documentLabel?: string;
+  documentLabel?: string | undefined;
   generatedAt?: string;
   verificationStatus?: 'not-checked' | 'pending' | 'verified';
-  verifiedBitcoin?: { height: number; blockHash: string; blockTimeUtc: string; sourcesAgreeing: readonly string[] };
+  verifiedBitcoin?: { height: number; blockHash: string; blockTimeUtc: string; sourcesAgreeing: readonly string[] } | undefined;
   appVersion?: string;
   buildId?: string;
 }
