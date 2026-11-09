@@ -12,7 +12,7 @@ describe('portable verification report', () => {
     expect(report.warning).toContain('not');
   });
   it('includes independently checkable block evidence only for verified results', () => {
-    const report = JSON.parse(createVerificationReportJson(digest, { state: 'VERIFIED', detail: 'Confirmed', bitcoin: { height: 100, blockTimeUtc: '2020-01-01T00:00:00Z', sourcesAgreeing: ['mempool.space', 'blockstream.info'] } }));
+    const report = JSON.parse(createVerificationReportJson(digest, { state: 'VERIFIED', detail: 'Confirmed', bitcoin: { height: 100, blockHash: 'b'.repeat(64), blockTimeUtc: '2020-01-01T00:00:00Z', sourcesAgreeing: ['mempool.space', 'blockstream.info'] } }));
     expect(report.bitcoin.height).toBe(100);
     expect(report.bitcoin.sourcesAgreeing).toHaveLength(2);
   });
