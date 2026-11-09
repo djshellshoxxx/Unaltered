@@ -43,12 +43,25 @@ async function switchLanguage(page: Page, language: 'English' | 'Español'): Pro
   await page.goto('/index.html#verify');
 }
 
+async function watchRevocations(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const revoked: string[] = [];
+    (window as unknown as { __revokedCertificateUrls: string[] }).__revokedCertificateUrls = revoked;
+    const revoke = URL.revokeObjectURL.bind(URL);
+    URL.revokeObjectURL = (url: string): void => { revoked.push(url); revoke(url); };
+  });
+}
+
+const revokedUrls = (page: Page): Promise<string[]> =>
+  page.evaluate(() => (window as unknown as { __revokedCertificateUrls: string[] }).__revokedCertificateUrls);
+
 test('certificate input, options and prepared QR pixels survive language changes without rereading', async ({ page }) => {
   const errors = await watchViolations(page);
+  const original = Buffer.from(archivalReceiptFixture(100));
   await page.goto('/index.html#verify');
   await watchWork(page);
   await page.getByLabel('Choose a .ots receipt for a QR certificate').setInputFiles({
-    name: 'kept.ots', mimeType: 'application/octet-stream', buffer: Buffer.from(archivalReceiptFixture(100)),
+    name: 'kept.ots', mimeType: 'application/octet-stream', buffer: original,
   });
   await page.locator('.archival-import summary').click();
   await page.locator('.archival-import input[value="H"]').check();
@@ -61,14 +74,30 @@ test('certificate input, options and prepared QR pixels survive language changes
   expect((await workCounts(page)).reads).toEqual([]);
   await page.getByRole('button', { name: 'Vista previa del certificado QR', exact: true }).click();
   await expect(page.locator('.archival-preview')).toBeVisible();
+  await expect(page.locator('.archival-preview > .archival-digital-guidance strong')).toHaveText('Guarda el recibo digital .ots siempre que sea posible.');
+  await expect(page.locator('.archival-preview > .archival-digital-guidance')).toContainText('los bytes exactos del archivo de recibo original');
+  const digitalReceipt = page.locator('.archival-toolbar a[download]');
+  await expect(digitalReceipt).toHaveText('Guardar recibo digital (.ots)');
+  const href = await digitalReceipt.getAttribute('href');
   const pixels = await page.locator('.archival-preview canvas').evaluateAll(canvases => canvases.map(canvas => (canvas as HTMLCanvasElement).toDataURL()));
 
   await switchLanguage(page, 'English');
   await expect(page.getByRole('button', { name: 'Print certificate / Save as PDF', exact: true })).toBeVisible();
   await expect(page.locator('.archival-preview')).toHaveCount(1);
   await expect(page.locator('.archival-preview .archival-page').first()).toHaveAttribute('data-paper', 'letter');
+  await expect(page.locator('.archival-preview > .archival-digital-guidance strong')).toHaveText('Save the digital .ots receipt whenever possible.');
+  await expect(page.locator('.archival-preview > .archival-digital-guidance')).toContainText('the exact bytes of the original receipt file');
+  await expect(page.locator('.unaltered-archival-sheet .archival-digital-guidance strong')).toHaveText('Save the digital .ots receipt whenever possible. ');
+  await expect(digitalReceipt).toHaveText('Save digital receipt (.ots)');
+  await expect(digitalReceipt).toHaveAttribute('href', href!);
+  const [download] = await Promise.all([page.waitForEvent('download'), digitalReceipt.click()]);
+  expect(readFileSync((await download.path())!)).toEqual(original);
   expect(await page.locator('.archival-preview canvas').evaluateAll(canvases => canvases.map(canvas => (canvas as HTMLCanvasElement).toDataURL()))).toEqual(pixels);
   expect((await workCounts(page)).reads).toEqual(['kept.ots']);
+  await watchRevocations(page);
+  await page.getByRole('button', { name: 'Close certificate preview', exact: true }).click();
+  await expect(digitalReceipt).toHaveCount(0);
+  expect(await revokedUrls(page)).toContain(href);
   expect(await cspViolations(page)).toEqual([]);
   expect(errors.list).toEqual([]);
 });
@@ -155,8 +184,11 @@ test('Stamp retains certificate choices across relabel and removes its preview w
   await page.goto('/index.html#stamp');
   await expect(page.getByRole('button', { name: 'Close certificate preview', exact: true })).toBeVisible();
   expect(chain.digestPosts).toHaveLength(3);
+  const href = await page.getByRole('link', { name: 'Save digital receipt (.ots)', exact: true }).getAttribute('href');
+  await watchRevocations(page);
   await page.locator('.item').getByRole('button', { name: 'Remove', exact: true }).click();
   await expect(page.locator('.archival-preview')).toHaveCount(0);
+  expect(await revokedUrls(page)).toContain(href);
   expect(await cspViolations(page)).toEqual([]);
   expect(errors.list).toEqual([]);
 });

@@ -2,15 +2,30 @@ import { archivalCertificateImport } from './archival-certificate';
 import { archivalRecoveryPanel } from './archival-recovery';
 import { el } from './dom';
 
-let disposeActive: (() => void) | null = null;
+export interface ArchiveToolsView {
+  relabel(): void;
+  dispose(): void;
+}
 
-/** Mounted after Verify renders; a re-mount (language switch) disposes the previous recovery panel first. */
-export function mountArchiveTools(root: HTMLElement): void {
-  disposeActive?.();
+/** Keep user work in the same panels when Verify rebuilds its presentation. */
+export function mountArchiveTools(root: HTMLElement): ArchiveToolsView {
+  const certificate = archivalCertificateImport();
   const recovery = archivalRecoveryPanel();
-  disposeActive = recovery.dispose;
-  root.appendChild(el('hr'));
-  root.appendChild(archivalCertificateImport());
-  root.appendChild(el('hr'));
-  root.appendChild(recovery.root);
+  const beforeCertificate = el('hr');
+  const beforeRecovery = el('hr');
+  const attach = (): void => { root.append(beforeCertificate, certificate.root, beforeRecovery, recovery.root); };
+  attach();
+  return {
+    relabel() {
+      certificate.relabel();
+      recovery.relabel();
+      attach();
+    },
+    dispose() {
+      certificate.dispose();
+      recovery.dispose();
+      beforeCertificate.remove();
+      beforeRecovery.remove();
+    },
+  };
 }

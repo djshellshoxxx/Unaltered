@@ -1,5 +1,5 @@
 // Stamp view (FR-1..FR-5, FR-10, FR-11, FR-12): pick file(s), optionally clean, fingerprint, create receipt.
-import { archivalCertificateControls } from '../archival-certificate';
+import { archivalCertificateControls, type ArchivalCertificateView } from '../archival-certificate';
 import { groupHex } from '../../core/bytes';
 import { isAbort, safeMessage, UnalteredError } from '../../core/errors';
 import { hashBlob, type HashResult } from '../../core/hash/hasher';
@@ -25,6 +25,7 @@ interface Item {
   ackHidden: boolean;
   ackOrientation: boolean;
   proof: Uint8Array | null;
+  certificate: { receipt: Uint8Array; view: ArchivalCertificateView } | null;
   label: string;
   savedToList: boolean | null;
   abort: AbortController;
@@ -220,6 +221,12 @@ export function mountStamp(root: HTMLElement): StampView {
     }
 
     if (it.proof) {
+      if (it.certificate?.receipt !== it.proof) {
+        it.certificate?.view.dispose();
+        const receipt = it.proof;
+        it.certificate = { receipt, view: archivalCertificateControls(async () => receipt) };
+      }
+      it.certificate.view.relabel();
       const name = receiptName(c ? cleanedName(it.file.name, c.format) : it.file.name);
       kids.push(
         el(
@@ -227,14 +234,14 @@ export function mountStamp(root: HTMLElement): StampView {
           { class: 'notice ok' },
           downloadLink(t('stamp.downloadReceipt', { name }), name, it.proof, 'application/octet-stream', undefined, { owner: it, key: 'receipt' }),
           el('p', { class: 'muted' }, t('stamp.receiptName')),
-          archivalCertificateControls(async () => {
-            if (!it.proof) throw new Error('Receipt no longer available');
-            return it.proof;
-          }),
+          it.certificate.view.root,
           shareRow(it),
           labelRow(it),
         ),
       );
+    } else {
+      it.certificate?.view.dispose();
+      it.certificate = null;
     }
     setChildren(it.card, ...kids);
     // Cancel/cleaning controls may disappear during a transition. Never leave focus on a detached control or move it
@@ -300,6 +307,7 @@ export function mountStamp(root: HTMLElement): StampView {
     const hadFocus = it.card.contains(document.activeElement);
     it.abort.abort();
     revokeOwner(it);
+    it.certificate?.view.dispose();
     items.splice(items.indexOf(it), 1);
     it.card.remove();
     if (items.length === 0) {
@@ -327,6 +335,7 @@ export function mountStamp(root: HTMLElement): StampView {
         ackHidden: false,
         ackOrientation: false,
         proof: null,
+        certificate: null,
         label: '',
         savedToList: null,
         abort: new AbortController(),
