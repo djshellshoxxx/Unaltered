@@ -57,3 +57,14 @@ test('Stamp offers the certificate after a receipt and handles a second selectio
   await expect(page.locator('.item')).toHaveCount(2);
   await expect(page.locator('.item').nth(1).locator('.digest')).toBeVisible();
 });
+
+test('a language switch re-renders exactly one translated set of QR archive tools', async ({ page }) => {
+  await page.goto('/index.html#settings');
+  await page.getByRole('radio', { name: 'Español', exact: true }).check();
+  await page.getByRole('radio', { name: 'English', exact: true }).check();
+  await page.getByRole('radio', { name: 'Español', exact: true }).check();
+  await page.goto('/index.html#verify');
+  await expect(page.locator('.archival-import')).toHaveCount(1);
+  await expect(page.locator('.archival-recovery')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Cancelar escaneo QR', exact: true })).toBeDisabled();
+});

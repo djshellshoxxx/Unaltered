@@ -3,6 +3,8 @@ import { UnalteredError } from '../errors';
 import { MAX_QR_IMAGE_PIXELS, MAX_QR_IMAGE_SIDE, MAX_QR_SYMBOLS_PER_IMAGE } from './qr-limits';
 import { MAX_QR_IMAGE_BYTES, qrImageDimensions } from './qr-image';
 
+/** Bounded but generous: a 16-megapixel text-heavy page with retry scales can take tens of seconds on slow devices. */
+export const QR_SCAN_TIMEOUT_MS = 120_000;
 type ScannerFactory = () => { worker: Worker; dispose(): void } | null;
 const unreadable = (): UnalteredError => new UnalteredError('INPUT_UNREADABLE', 'The QR image could not be read. Try a clear PNG or JPEG, with each complete QR and its white border visible.');
 
@@ -28,7 +30,7 @@ export function scanQrPixels(data: Uint8ClampedArray, width: number, height: num
       if (error) reject(error); else resolve(frames ?? []);
     };
     const abort = (): void => finish(new UnalteredError('ABORTED', 'Cancelled.'));
-    const timer = setTimeout(() => finish(unreadable()), 45_000);
+    const timer = setTimeout(() => finish(unreadable()), QR_SCAN_TIMEOUT_MS);
     signal?.addEventListener('abort', abort, { once: true });
     worker.onmessage = event => {
       const value: unknown = event.data;

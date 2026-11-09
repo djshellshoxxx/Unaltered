@@ -23,6 +23,28 @@ The dedicated `Archival QR print and scan qualification` workflow builds real Ch
 
 The temporary snapshot and patch-transfer workflows have been removed from the integration tree. The retained qualification workflow has read-only repository permissions. No Pages publication permissions, review gates or runtime network allowlist were loosened.
 
+## Local Chromium qualification on 2026-11-09
+
+This session's preinstalled Chromium could run the browser suites the earlier session could not. The first run exposed
+three defects, now fixed with regression tests:
+
+1. **Printed certificates did not recover.** The planner chose QR version 38 (0.41 mm modules). jsQR misjudges the
+   module grid of large versions at non-integer print/scan scales, so A4 and Letter PDFs at 150 DPI recovered nothing.
+   The planner now requires 0.62 mm modules (version 23 or lower) and the decoder retries a missed region at two
+   area-averaged scales. `tests/unit/archival-qr-print-scale.test.ts` covers 141 to 300 DPI and fails before the fix.
+   Largest printable receipt: about 24 KiB at H and 64 KiB at L within the 64-symbol limit; larger receipts stay digital.
+2. **Symbols below the page header were missed.** Fixed half/quadrant/third search windows cut through symbols on
+   continuation pages. The decoder now first locates dense, square ink blobs and keeps the windows as a fallback.
+3. **Two "Cancel" buttons on Verify.** The QR scan's Cancel shared its accessible name with Verify's Cancel and broke
+   three existing Verify e2e tests. It is now "Cancel QR scan" / "Cancelar escaneo QR".
+
+Audit follow-ups: a language switch now disposes the replaced recovery panel (stops its worker and releases its
+download URL), and the per-image decode timeout is 120 s instead of 45 s (a 16-megapixel text page took 24.5 s here).
+
+Results at the final local tree: `npm run check` passed (571 Vitest passed, 5 skipped; 128 Node passed, 2 skipped);
+Chromium e2e 110 passed, 1 skipped; `playwright.qr.config.ts` A4 and Letter print to PDF, rasterize at 150 DPI, decode and
+offline in-app recovery passed with byte-exact receipts. Firefox and WebKit were not available locally and remain for CI.
+
 ## Limitations retained
 
 - Physical paper printing and camera capture have not been tested here. PDF rasterization is not a claim of universal hardware scanning reliability.

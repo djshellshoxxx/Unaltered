@@ -27,7 +27,7 @@ const LEVELS: readonly QrLevel[] = ['L', 'M', 'Q', 'H'];
  * One complete recovery-specification appendix is always included in the page count.
  */
 export function planArchivalQr(receiptBytes: number, options: QrPlanningOptions = {}): QrPlan {
-  const { preference = 'auto', paper = 'a4', minModuleMm = .35, maxPages = 18 } = options;
+  const { preference = 'auto', paper = 'a4', minModuleMm = .62, maxPages = 18 } = options;
   if (!Number.isSafeInteger(receiptBytes) || receiptBytes < 1 || receiptBytes > 16 * 1024 * 1024)
     throw new Error('Invalid receipt byte length');
   if (!['auto', ...LEVELS].includes(preference) || !['a4', 'letter'].includes(paper))

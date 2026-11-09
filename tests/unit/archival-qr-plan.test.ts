@@ -15,7 +15,7 @@ describe('archival QR print planning', () => {
   });
   it('plans more symbols for larger receipts and respects page limits', () => {
     const small = planArchivalQr(100, { preference:'H' });
-    const large = planArchivalQr(60000, { preference:'H' });
+    const large = planArchivalQr(20000, { preference:'H' });
     expect(large.symbols).toBeGreaterThan(small.symbols);
     expect(large.pages).toBeGreaterThanOrEqual(small.pages);
     expect(() => planArchivalQr(16*1024*1024, { maxPages:1 })).toThrow();

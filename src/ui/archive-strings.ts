@@ -1,7 +1,7 @@
 import { getLang } from './strings';
 
 const en = {
-  'common.cancel': 'Cancel',
+  'archive.cancelScan': 'Cancel QR scan',
   "archive.options": "QR certificate options",
   "archive.correction": "QR error correction",
   "archive.paper": "Paper size",
@@ -36,7 +36,7 @@ const en = {
 } as const;
 type Key = keyof typeof en;
 const es: Record<Key, string> = {
-  'common.cancel': 'Cancelar',
+  'archive.cancelScan': 'Cancelar escaneo QR',
   "archive.options": "Opciones del certificado QR",
   "archive.correction": "Corrección de errores QR",
   "archive.paper": "Tamaño de papel",

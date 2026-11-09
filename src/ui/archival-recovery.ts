@@ -8,7 +8,7 @@ import { downloadLink, revokeOwner } from './download';
 import { archiveText as t } from './archive-strings';
 
 /** Scans stay local. Selection changes/cancellation terminate the active decoder worker. */
-export function archivalRecoveryPanel(): HTMLElement {
+export function archivalRecoveryPanel(): { root: HTMLElement; dispose(): void } {
   let files: File[] = [];
   let generation = 0;
   let controller: AbortController | null = null;
@@ -23,7 +23,7 @@ export function archivalRecoveryPanel(): HTMLElement {
     status.textContent = t('archive.cancelled'); clear();
   };
   const run = el('button', { type: 'button', class: 'button', disabled: true, onclick: () => { void recover(); } }, t('archive.recover'));
-  const stop = el('button', { type: 'button', class: 'button', disabled: true, onclick: cancel }, t('common.cancel'));
+  const stop = el('button', { type: 'button', class: 'button', disabled: true, onclick: cancel }, t('archive.cancelScan'));
   input.addEventListener('change', () => {
     cancel(); files = Array.from(input.files ?? []); input.value = '';
     run.disabled = !files.length;
@@ -69,5 +69,7 @@ export function archivalRecoveryPanel(): HTMLElement {
   root.appendChild(el('h3', {}, t('archive.recoveryTitle')));
   root.appendChild(el('p', { class: 'muted' }, t('archive.recoveryIntro')));
   root.appendChild(input); root.appendChild(run); root.appendChild(stop); root.appendChild(status); root.appendChild(result);
-  return root;
+  // A re-render (language switch) replaces the panel: stop its decoder worker and release its download URL.
+  const dispose = (): void => { generation++; controller?.abort(); controller = null; files = []; clear(); };
+  return { root, dispose };
 }
