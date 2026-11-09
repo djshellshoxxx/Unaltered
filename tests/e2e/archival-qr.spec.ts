@@ -68,3 +68,13 @@ test('a language switch re-renders exactly one translated set of QR archive tool
   await expect(page.locator('.archival-recovery')).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Cancelar escaneo QR', exact: true })).toBeDisabled();
 });
+
+// Regression: WebKit sizes a plain file input at ~34 average characters plus its button, so the certificate
+// input overflowed a 320 CSS px viewport (document 363 px). Force that intrinsic width in any engine.
+test('QR archive file inputs stay inside a 320 CSS px column at WebKit intrinsic width', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.goto('/index.html#verify');
+  await page.locator('.archival-import input[type=file], .archival-recovery input[type=file]')
+    .evaluateAll(inputs => { for (const input of inputs) (input as HTMLElement).style.setProperty('width', '347px'); });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+});

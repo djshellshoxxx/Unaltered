@@ -21,7 +21,8 @@
 .archival-page li { margin-bottom: 2mm; }
 .archival-controls, .archival-recovery { max-width: 100%; min-width: 0; }
 .archival-controls fieldset { display: flex; flex-wrap: wrap; gap: .6rem; }
-.archival-controls input[type='file'], .archival-recovery input[type='file'] { max-width: 100%; }
+/* WebKit sizes a plain file input at ~34 average characters plus its button (~340 px); cap it to the column. */
+.archival-import, .archival-controls input[type='file'], .archival-import input[type='file'], .archival-recovery input[type='file'] { max-width: 100%; min-width: 0; }
 @media screen and (max-width: 650px) { .archival-grid { grid-template-columns: 1fr; } }
 @page archival-a4 { size: A4 portrait; margin: 10mm; }
 @page archival-letter { size: letter portrait; margin: 10mm; }
