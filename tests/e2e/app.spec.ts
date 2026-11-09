@@ -166,6 +166,15 @@ test.describe('stamp, upgrade, verify (network mocked)', () => {
     await expect(page.locator('.result-VERIFIED')).toContainText('Trust level L1');
     await expect(page.locator('.result-VERIFIED')).toContainText('no later than about');
     await expect(page.locator('.result-VERIFIED')).toContainText('mempool.space');
+    // A verified certificate is tied to the uploaded original and the exact upgraded receipt.
+    await expect(page.locator('.result-VERIFIED .archival-controls')).toBeVisible();
+    await page.locator('.result-VERIFIED .archival-controls').getByRole('button', { name: 'Preview QR certificate' }).click();
+    const certificate = page.locator('.unaltered-archival-sheet');
+    await expect(certificate).toContainText('Verified against matching original file');
+    await expect(certificate).toContainText('Bitcoin block hash:');
+    await expect(certificate).toContainText('Independent header sources agreeing:');
+    await page.getByRole('button', { name: 'Close certificate preview' }).click();
+
 
     // mutated file -> NO_MATCH
     await page.setInputFiles('#verify-file', { name: 'note.txt', mimeType: 'text/plain', buffer: bytesOf('hello e2f') });
