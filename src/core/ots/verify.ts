@@ -23,7 +23,7 @@ export const defaultVerifyConfig = (net?: Partial<NetPolicy>): VerifyConfig => (
 
 export interface VerifyReport {
   state: VerifyState;
-  bitcoin?: { height: number; blockTimeUtc: string; sourcesAgreeing: string[] };
+  bitcoin?: { height: number; blockTimeUtc: string; blockHash: string; sourcesAgreeing: string[] };
   detail: string;
   /** Calendars named in still-pending attestations. */
   pendingCalendars?: string[];
@@ -86,7 +86,7 @@ async function verifyParsed(fileDigest: Uint8Array, proof: DetachedProof, cfg: V
     } else {
       rep = {
         state: 'VERIFIED',
-        bitcoin: { height: attestation.height, blockTimeUtc: iso(q.header.time), sourcesAgreeing: q.agreeing },
+        bitcoin: { height: attestation.height, blockTimeUtc: iso(q.header.time), blockHash: q.header.hashHex, sourcesAgreeing: q.agreeing },
         detail: 'The file matches the receipt and the receipt is anchored in the Bitcoin blockchain.',
       };
     }
