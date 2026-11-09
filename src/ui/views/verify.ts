@@ -1,6 +1,7 @@
+import { sha256 } from '@noble/hashes/sha2.js';
 // Verify view (FR-7, FR-8, FR-11) and receipt upgrade (FR-6).
 import { archivalCertificateControls, type ArchivalCertificateView } from '../archival-certificate';
-import { fromHex, groupHex } from '../../core/bytes';
+import { fromHex, groupHex, toHex } from '../../core/bytes';
 import { createVerificationReportJson } from '../../core/reports/verification';
 import { createEvidenceZip } from '../../core/reports/evidence-zip';
 import { pairEvidenceFiles } from '../../core/reports/batch-pair';
@@ -184,8 +185,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
       if (!current()) return;
       const report = await verify(digest, bytes, verifyConfigFromSettings(controller.signal));
       if (!current()) return;
-      const receiptSha256 = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)),
-        b => b.toString(16).padStart(2, '0')).join('');
+      const receiptSha256 = toHex(sha256(bytes));
       if (!current()) return;
       const certificate = archivalCertificateControls(async () => bytes, selectedFile !== null && report.state === 'VERIFIED' && report.bitcoin ? {
         receiptSha256, fileSha256: hex, bitcoin: {
