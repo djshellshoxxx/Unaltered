@@ -1,4 +1,5 @@
 // Stamp view (FR-1..FR-5, FR-10, FR-11, FR-12): pick file(s), optionally clean, fingerprint, create receipt.
+import { archivalCertificateControls } from '../archival-certificate';
 import { groupHex } from '../../core/bytes';
 import { isAbort, safeMessage, UnalteredError } from '../../core/errors';
 import { hashBlob, type HashResult } from '../../core/hash/hasher';
@@ -226,6 +227,10 @@ export function mountStamp(root: HTMLElement): StampView {
           { class: 'notice ok' },
           downloadLink(t('stamp.downloadReceipt', { name }), name, it.proof, 'application/octet-stream', undefined, { owner: it, key: 'receipt' }),
           el('p', { class: 'muted' }, t('stamp.receiptName')),
+          archivalCertificateControls(async () => {
+            if (!it.proof) throw new Error('Receipt no longer available');
+            return it.proof;
+          }),
           shareRow(it),
           labelRow(it),
         ),

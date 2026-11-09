@@ -128,8 +128,9 @@ export function dropZone(o: DropZoneOptions): HTMLElement {
   const wrap = el('div', { class: 'drop-wrap' }, input, zone);
   input.addEventListener('change', () => {
     const files = input.files ? Array.from(input.files) : [];
-    if (files.length > 0) o.onFiles(files);
+    // Reset before consumers can replace the input or throw, so the same file can be chosen again.
     input.value = '';
+    if (files.length > 0) o.onFiles(o.multiple ? files : files.slice(0, 1));
   });
   wrap.addEventListener('dragover', (e) => {
     e.preventDefault();

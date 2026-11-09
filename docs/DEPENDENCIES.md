@@ -172,3 +172,11 @@ No dependency or lockfile changed, and building requires no network request. Art
 tests compare complete notice text, decode the actual embedded worker source and check
 the generated integrity values. This packaging correction is not a new cryptographic
 audit or an audited-version comparison.
+
+## Archival QR completion — 2026-11-08
+
+- Runtime QR decoder: `jsqr` **1.4.0**, Apache-2.0, exact version and npm SHA-512 integrity pinned in `package-lock.json`. Official source: https://github.com/cozmo/jsQR . The downloaded package's integrity was checked against npm's version-specific `dist.integrity` before local testing. It has no runtime package dependencies. The application uses `binaryData`, not its Unicode `data` string, and runs image decoding in a locally bundled, cancellable worker; no CDN fetch occurs.
+- QR encoder: Project Nayuki's MIT TypeScript implementation carried from the reviewed archival branch at Unaltered commit `cb703a4703dc49ec20c65f19f90bbcc6e68b27cf`, `src/vendor/qrcodegen.ts`. Original source: https://github.com/nayuki/QR-Code-generator . The inherited adaptation exports the namespace and isolates legacy vendor typing/linting. The integration does not rewrite QR error correction or placement.
+- Complete decoder, encoder and existing hash-library license notices are embedded in the distributed browser/worker/offline/CLI copies by `scripts/build.mjs`; regression tests check the emitted bytes. The notice text is not stripped from distribution by minification.
+- Favicon: the owner's existing monochrome Unaltered U/checkmark artwork, converted to a metadata-free 64×64 PNG on the CDL dark background. A base64 source asset allows deterministic binary emission without adding a remote origin. No font files are embedded or redistributed.
+- Qualification-only external tool: Poppler's `pdfinfo`/`pdftoppm` from the Ubuntu runner package repository rasterize browser PDFs for tests. Poppler is not shipped to users or used by the application. Physical printing and camera capture require separate hardware testing; simulated scans do not establish universal scan reliability.
