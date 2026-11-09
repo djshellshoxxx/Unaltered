@@ -3,6 +3,10 @@ import { getLang } from './strings';
 const en = {
   'archive.cancelScan': 'Cancel QR scan',
   "archive.options": "QR certificate options",
+  "archive.includeLabel": "Include an optional document title or filename on the certificate",
+  "archive.documentLabel": "Document title or filename",
+  "archive.documentLabelPlaceholder": "Optional document title or filename",
+  "archive.labelHelp": "Off by default. This label is supplied by you, is not authenticated by the receipt, and appears on printed/PDF certificates only. Do not include private names unless you intend to share them.",
   "archive.correction": "QR error correction",
   "archive.paper": "Paper size",
   "archive.auto": "Automatic (recommended)",
@@ -41,6 +45,10 @@ type Key = keyof typeof en;
 const es: Record<Key, string> = {
   'archive.cancelScan': 'Cancelar escaneo QR',
   "archive.options": "Opciones del certificado QR",
+  "archive.includeLabel": "Incluir un título o nombre de archivo opcional en el certificado",
+  "archive.documentLabel": "Título del documento o nombre de archivo",
+  "archive.documentLabelPlaceholder": "Título o nombre de archivo opcional",
+  "archive.labelHelp": "Desactivado por defecto. Tú proporcionas esta etiqueta; el recibo no la autentica. Solo aparece en el certificado impreso o PDF. Evita nombres privados si vas a compartirlo.",
   "archive.correction": "Corrección de errores QR",
   "archive.paper": "Tamaño de papel",
   "archive.auto": "Automática (recomendada)",
