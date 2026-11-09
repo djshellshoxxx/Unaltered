@@ -47,6 +47,7 @@ export const en = {
   'nav.settings': 'Settings',
   'nav.skip': 'Skip to content',
   'footer.version': 'Version',
+  'footer.cdl': 'Circuit Drift Labs · Crypto Libertarian wing',
   'footer.build': 'build',
   'footer.note': 'Compare the build code with the published checksums. Beware of copies of this page on other sites.',
 
@@ -264,6 +265,7 @@ const es: Table = {
   'nav.settings': 'Ajustes',
   'nav.skip': 'Saltar al contenido',
   'footer.version': 'Versión',
+  'footer.cdl': 'Circuit Drift Labs · área Crypto Libertarian',
   'footer.build': 'compilación',
   'footer.note': 'Compara el código de compilación con las sumas de verificación publicadas. Cuidado con copias de esta página en otros sitios.',
 

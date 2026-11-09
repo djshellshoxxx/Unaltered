@@ -124,6 +124,7 @@ details.l2 { margin: 0.75rem 0; }
 details.l2 summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 600; }
 hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 footer { padding-top: 1rem; padding-bottom: 2rem; border-top: 1px solid var(--line); color: var(--muted); }
+#footer-cdl { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }
 @media (max-width: 480px) {
   dl.details { grid-template-columns: 1fr; }
   .item-head .button { margin-left: 0; }

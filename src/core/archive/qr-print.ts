@@ -48,7 +48,9 @@ export function createArchivalPrintSheet(symbols: readonly ArchivalQrSymbol[], r
   let sheet = page(1);
   sheet.appendChild(el('h1', {}, 'UNALTERED'));
   sheet.appendChild(el('h2', {}, 'Archival receipt certificate — not independently verified'));
-  sheet.appendChild(el('p', {}, 'This paper preserves an OpenTimestamps .ots receipt, not the original document. A receipt or printed certificate alone does not establish Bitcoin confirmation. Keep the exact original file and verify both independently.'));
+  sheet.appendChild(el('p', { class: 'archival-digital-guidance' },
+    el('strong', {}, 'Save the digital .ots receipt whenever possible. '),
+    'These QR codes represent its exact original bytes as an extra backup. Keep the original document separately for verification. A receipt or printed certificate alone does not establish Bitcoin confirmation.'));
   if (fileSha256) sheet.appendChild(el('p', { class: 'archival-hash' }, 'File SHA-256 recorded in receipt: ' + fileSha256));
   sheet.appendChild(el('p', { class: 'archival-hash' }, 'Receipt SHA-256: ' + receiptSha256.toLowerCase()));
   sheet.appendChild(el('p', {}, `${receiptBytes} receipt bytes · ${symbols.length} symbols · All ${totalPages} pages belong to this certificate. Print at 100% scale with browser headers/footers disabled.`));

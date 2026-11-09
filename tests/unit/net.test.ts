@@ -5,11 +5,15 @@ import { ALLOWED_HOSTS, ENDPOINTS } from '../../src/core/net/allowlist';
 import { netFetch } from '../../src/core/net/fetch';
 import { bin, routerFetch, text } from '../helpers/chain';
 
+const projectWing = 'https://djshellshoxxx.github.io/circuitdriftlabs/development/crypto-libertarian/';
+
 describe('core/net (SPEC 9)', () => {
   const ok = routerFetch(() => text('hi'));
 
   it('blocks non-allowlisted hosts, http, credentials and odd ports', async () => {
     await expect(netFetch('https://evil.example/x', {}, { fetchImpl: ok })).rejects.toMatchObject({ code: 'NET_BLOCKED' });
+    // The owner-requested footer link is navigation only, never permission for background requests.
+    await expect(netFetch(projectWing, {}, { fetchImpl: ok })).rejects.toMatchObject({ code: 'NET_BLOCKED' });
     await expect(netFetch('http://mempool.space/x', {}, { fetchImpl: ok })).rejects.toMatchObject({ code: 'NET_BLOCKED' });
     await expect(netFetch(`https://user:secret${'@'}mempool.space/x`, {}, { fetchImpl: ok })).rejects.toMatchObject({ code: 'NET_BLOCKED' });
     await expect(netFetch('https://mempool.space:8443/x', {}, { fetchImpl: ok })).rejects.toMatchObject({ code: 'NET_BLOCKED' });
@@ -67,7 +71,9 @@ describe('architecture guards', () => {
   it('no third-party origins are referenced outside the allowlist (SR-2)', () => {
     const urls = src.flatMap((f) => (readFileSync(f, 'utf8').match(/https?:\/\/[^\s'"`)<>]+/g) ?? []).map((u) => [f, u] as const));
     const allowedPrefixes = ['http://ns.adobe.com/', 'https://github.com/', 'https://opentimestamps.org', 'https://pypi.org/', 'https://bitcoin.org/', 'https://docs.github.com', 'http://localhost', 'https://${', 'https://x', 'https://evil.example'];
-    const bad = urls.filter(([, u]) => !allowedPrefixes.some((p) => u.startsWith(p)) && ![...ALLOWED_HOSTS].some((h) => u.startsWith(`https://${h}`)));
+    // Permit this exact static project link only in the HTML template, not in scripts or styles.
+    const bad = urls.filter(([file, u]) => !(file === 'src/index.html' && u === projectWing) &&
+      !allowedPrefixes.some((p) => u.startsWith(p)) && ![...ALLOWED_HOSTS].some((h) => u.startsWith(`https://${h}`)));
     expect(bad).toEqual([]);
   });
 });

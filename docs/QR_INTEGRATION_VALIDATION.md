@@ -4,6 +4,43 @@
 
 This integration consolidates the protocol and encoder work from PRs #59 and #60 with current main without replacing the modern layout or the existing evidence/batch features. It adds a binary-preserving local QR image decoder, bounded cancellable scan workers, browser Print/Save as PDF certificates with a complete paper recovery specification, and a favicon derived from the existing Unaltered U/checkmark artwork. It also includes the repeat-file-input reset fix with a failing-before/fixed-after regression test.
 
+## Merged and deployed baseline, independently checked 2026-11-09
+
+PR [#67](https://github.com/djshellshoxxx/Unaltered/pull/67) merged as
+`22a8d7e41a092982ea9fb303eb2d2352994cff03`. Its exact main commit passed
+[CI](https://github.com/djshellshoxxx/Unaltered/actions/runs/42575009142), including Chromium,
+Firefox and WebKit, and the separate [PDF-to-scan qualification](https://github.com/djshellshoxxx/Unaltered/actions/runs/42575009251).
+[Pages publication](https://github.com/djshellshoxxx/Unaltered/actions/runs/42575032906) succeeded.
+The public page served build `97ab320ffd62b7de`, matching a fresh local build of that commit.
+These observed results supersede the earlier pre-merge qualification status below.
+
+The follow-up review found that language changes remounted the QR tools, losing selected receipts,
+settings, recovered downloads and active scans. The owner-accepted
+[language contract](proposals/LANGUAGE_SWITCH.md) requires preserving this work. Four added browser
+regressions failed on the baseline in [CI run 42583369171](https://github.com/djshellshoxxx/Unaltered/actions/runs/42583369171);
+the existing PDF qualification still passed. The same selection loss was reproduced through the live UI.
+
+The follow-up retains and relabels certificate/recovery controls, keeps the active decoder and download
+ownership intact, and disposes previews when their actual receipt is removed or replaced. It also adds
+ten bounded property tests (1,190 generated cases with fixed seeds) for frame reconstruction and image
+header parsing, records ADR-013, and corrects the documented scan timeout to 120 seconds.
+The owner's follow-up request adds prominent guidance to prefer the digital `.ots` receipt and identifies
+the QR certificate as an additional representation/backup of those same receipt bytes.
+
+Local baseline validation: OPSEC, TypeScript and lint passed; 571 Vitest tests passed (5 skipped),
+126 Node tests passed (4 environment-dependent skips), and 4 independent Python recovery tests passed.
+The follow-up local tree passed the same checks with 581 Vitest tests, 126 Node tests and 4 Python
+tests, with the same skips. After the footer touch-target correction, its build code is `4b63d88e60d422e4`. The footer now links to the existing
+Circuit Drift Labs Crypto Libertarian wing, whose live page already links back to Unaltered. This is
+explicit navigation only; the application fetch allowlist and CSP remain unchanged, and a regression
+asserts that `netFetch` still blocks the wing URL.
+The first fixed commit `8002f68ccec6231e755573905f2ada79830b2a84` passed all four new
+state/download regressions in Chromium. The existing mobile accessibility test caught the new footer
+link's 14-pixel target; the link now has a minimum 44-pixel target without changing that test.
+Local Chromium launch failed before browser test execution because the executor denied `socket()`;
+the browser policy was not changed. Final browser/PDF acceptance and publication are tracked against
+the current source commit in [PR #68](https://github.com/djshellshoxxx/Unaltered/pull/68).
+
 ## Local checks on 2026-11-08
 
 - `npm run typecheck`: passed.
