@@ -30,13 +30,16 @@ the QR certificate as an additional representation/backup of those same receipt 
 Local baseline validation: OPSEC, TypeScript and lint passed; 571 Vitest tests passed (5 skipped),
 126 Node tests passed (4 environment-dependent skips), and 4 independent Python recovery tests passed.
 The follow-up local tree passed the same checks with 581 Vitest tests, 126 Node tests and 4 Python
-tests, with the same skips; its build code is `f9dd405e4ec00b90`. The footer now links to the existing
+tests, with the same skips. After the footer touch-target correction, its build code is `4b63d88e60d422e4`. The footer now links to the existing
 Circuit Drift Labs Crypto Libertarian wing, whose live page already links back to Unaltered. This is
 explicit navigation only; the application fetch allowlist and CSP remain unchanged, and a regression
 asserts that `netFetch` still blocks the wing URL.
+The first fixed commit `8002f68ccec6231e755573905f2ada79830b2a84` passed all four new
+state/download regressions in Chromium. The existing mobile accessibility test caught the new footer
+link's 14-pixel target; the link now has a minimum 44-pixel target without changing that test.
 Local Chromium launch failed before browser test execution because the executor denied `socket()`;
-the browser policy was not changed. Browser acceptance for the follow-up uses hosted CI and must be
-recorded against its final source commit before completion is claimed.
+the browser policy was not changed. Final browser/PDF acceptance and publication are tracked against
+the current source commit in [PR #68](https://github.com/djshellshoxxx/Unaltered/pull/68).
 
 ## Local checks on 2026-11-08
 
