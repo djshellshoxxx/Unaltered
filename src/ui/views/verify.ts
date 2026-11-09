@@ -187,7 +187,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
       const receiptSha256 = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)),
         b => b.toString(16).padStart(2, '0')).join('');
       if (!current()) return;
-      const certificate = archivalCertificateControls(async () => bytes, report.state === 'VERIFIED' && report.bitcoin ? {
+      const certificate = archivalCertificateControls(async () => bytes, selectedFile !== null && report.state === 'VERIFIED' && report.bitcoin ? {
         receiptSha256, fileSha256: hex, bitcoin: {
           height: report.bitcoin.height,
           blockHash: report.bitcoin.blockHash,
