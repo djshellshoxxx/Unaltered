@@ -22,7 +22,7 @@ export function createArchivalPrintSheet(symbols: readonly ArchivalQrSymbol[], r
       !Number.isSafeInteger(receiptBytes) || receiptBytes < 1 || !['a4', 'letter'].includes(paper) ||
       (fileSha256 !== undefined && !/^[0-9a-f]{64}$/i.test(fileSha256))) throw new Error('Invalid archival certificate data');
   if (context.documentLabel !== undefined && (context.documentLabel.length > 160 ||
-      /[\x00-\x1f\x7f]/.test(context.documentLabel))) throw new Error('Invalid certificate label');
+      Array.from(context.documentLabel).some(char => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127))) throw new Error('Invalid certificate label');
   if (context.verificationStatus === 'verified' && (!context.verifiedBitcoin ||
       !Number.isSafeInteger(context.verifiedBitcoin.height) || context.verifiedBitcoin.height < 0 ||
       !/^[0-9a-f]{64}$/i.test(context.verifiedBitcoin.blockHash) ||
