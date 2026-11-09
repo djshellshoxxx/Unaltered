@@ -438,6 +438,8 @@ export function renderReport(r: VerifyReport, hex: string, fromLink: boolean, ow
     detailRows.push(
       el('dt', {}, t('verify.d.block')),
       el('dd', {}, String(r.bitcoin.height)),
+      el('dt', {}, 'Bitcoin block hash'),
+      el('dd', {}, el('code', { class: 'digest' }, r.bitcoin.blockHash)),
       el('dt', {}, t('verify.d.time')),
       el('dd', {}, t(fromLink ? 'verify.d.noLater.link' : 'verify.d.noLater', { time: r.bitcoin.blockTimeUtc })),
       el('dt', {}, t('verify.d.sources')),
