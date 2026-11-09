@@ -25,6 +25,8 @@ export function archivalCertificateControls(readReceipt: () => Promise<Uint8Arra
   let preference: QrPreference = 'auto';
   let paper: QrPaper = 'a4';
   let operation = 0;
+  let includeLabel = false;
+  let documentLabel = '';
   let busy = false;
   let disposed = false;
   let ownPreview: CertificatePreview | null = null;
@@ -54,11 +56,22 @@ export function archivalCertificateControls(readReceipt: () => Promise<Uint8Arra
   }
   advanced.appendChild(ecc); advanced.appendChild(paperChoices);
   advanced.appendChild(help);
+  const labelInput = el('input', { type: 'text', maxlength: 160, disabled: true,
+    'aria-label': t('archive.documentLabel'), placeholder: t('archive.documentLabelPlaceholder'),
+    oninput: (event: Event) => { documentLabel = (event.target as HTMLInputElement).value; } });
+  const labelCheckbox = el('input', { type: 'checkbox', onchange: (event: Event) => {
+    includeLabel = (event.target as HTMLInputElement).checked;
+    labelInput.disabled = !includeLabel;
+  } });
+  const labelText = el('span', {}, t('archive.includeLabel'));
+  const labelOption = el('label', { class: 'check' }, labelCheckbox, labelText);
+  const labelHelp = el('p', { class: 'muted' }, t('archive.labelHelp'));
   const button = el('button', { type: 'button', class: 'button small', title: t('archive.previewHelp'), onclick: () => { void preview(); } }, t('archive.preview'));
   async function preview(): Promise<void> {
     if (busy || disposed) return;
     const generation = ++operation;
     const selected = { preference, paper };
+    const approvedLabel = includeLabel ? documentLabel.trim() : '';
     busy = true; button.disabled = true; show('archive.preparing');
     try {
       const bytes = (await readReceipt()).slice();
@@ -70,7 +83,13 @@ export function archivalCertificateControls(readReceipt: () => Promise<Uint8Arra
       const { symbols, plan } = await encodeArchivalQr(bytes, selected);
       const sha = toHex(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)));
       if (generation !== operation || !root.isConnected) return;
-      const sheet = createArchivalPrintSheet(symbols, sha, bytes.length, plan.paper, toHex(proof.digest));
+      const sheet = createArchivalPrintSheet(symbols, sha, bytes.length, plan.paper, toHex(proof.digest), {
+        documentLabel: approvedLabel || undefined,
+        generatedAt: new Date().toISOString(),
+        verificationStatus: 'not-checked',
+        appVersion: document.getElementById('version')?.textContent?.trim() || 'unknown',
+        buildId: document.getElementById('build-hash')?.textContent?.trim() || 'unknown',
+      });
       activePreview?.close(false);
       const heading = el('h2', { tabindex: -1 }, t('archive.previewTitle'));
       const previewRoot = el('section', { class: 'archival-preview', 'aria-label': t('archive.previewTitle') });
@@ -133,11 +152,16 @@ export function archivalCertificateControls(readReceipt: () => Promise<Uint8Arra
       if (generation === operation) { busy = false; button.disabled = false; }
     }
   }
-  root.appendChild(advanced); root.appendChild(button); root.appendChild(status);
+  root.appendChild(advanced); root.appendChild(labelOption); root.appendChild(labelInput);
+  root.appendChild(labelHelp); root.appendChild(button); root.appendChild(status);
   return {
     root,
     relabel() {
       summary.textContent = t('archive.options');
+      labelText.textContent = t('archive.includeLabel');
+      labelInput.setAttribute('aria-label', t('archive.documentLabel'));
+      labelInput.placeholder = t('archive.documentLabelPlaceholder');
+      labelHelp.textContent = t('archive.labelHelp');
       correctionLegend.textContent = t('archive.correction');
       paperLegend.textContent = t('archive.paper');
       automatic.textContent = t('archive.auto');
