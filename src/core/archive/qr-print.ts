@@ -3,14 +3,25 @@ import type { QrPaper } from './qr-plan';
 import { MAX_QR_PRINT_SYMBOLS } from './qr-limits';
 import { el } from '../../ui/dom';
 
+export interface CertificateContext {
+  /** Optional, user-approved display label; never part of the receipt or QR payload. */
+  documentLabel?: string;
+  generatedAt?: string;
+  verificationStatus?: 'not-checked' | 'pending';
+  appVersion?: string;
+  buildId?: string;
+}
+
 const hex = (bytes: Uint8Array): string => Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
 
 /** Printable transport of exact .ots bytes, not an unsigned claim of Bitcoin verification. */
 export function createArchivalPrintSheet(symbols: readonly ArchivalQrSymbol[], receiptSha256: string,
-  receiptBytes: number, paper: QrPaper = 'a4', fileSha256?: string): HTMLElement {
+  receiptBytes: number, paper: QrPaper = 'a4', fileSha256?: string, context: CertificateContext = {}): HTMLElement {
   if (!symbols.length || symbols.length > MAX_QR_PRINT_SYMBOLS || !/^[0-9a-f]{64}$/i.test(receiptSha256) ||
       !Number.isSafeInteger(receiptBytes) || receiptBytes < 1 || !['a4', 'letter'].includes(paper) ||
       (fileSha256 !== undefined && !/^[0-9a-f]{64}$/i.test(fileSha256))) throw new Error('Invalid archival certificate data');
+  if (context.documentLabel !== undefined && (context.documentLabel.length > 160 ||
+      /[\\x00-\\x1f\\x7f]/.test(context.documentLabel))) throw new Error('Invalid certificate label');
   for (const [index, symbol] of symbols.entries()) {
     if (symbol.index !== index || symbol.total !== symbols.length || !Number.isInteger(symbol.version) ||
         symbol.version < 1 || symbol.version > 40 || symbol.modules !== symbol.version * 4 + 17 ||
@@ -51,6 +62,13 @@ export function createArchivalPrintSheet(symbols: readonly ArchivalQrSymbol[], r
   sheet.appendChild(el('p', { class: 'archival-digital-guidance' },
     el('strong', {}, 'Save the digital .ots receipt whenever possible. '),
     'These QR codes represent its exact original bytes as an extra backup. Keep the original document separately for verification. A receipt or printed certificate alone does not establish Bitcoin confirmation.'));
+  if (context.documentLabel) sheet.appendChild(el('p', {}, 'Document label (user supplied, not authenticated): ' + context.documentLabel));
+  sheet.appendChild(el('p', {}, 'Certificate generated (device clock, UTC): ' + (context.generatedAt ?? new Date().toISOString())));
+  sheet.appendChild(el('p', {}, 'Verification at certificate generation: ' +
+    (context.verificationStatus === 'pending' ? 'Pending; no Bitcoin confirmation established' : 'Not independently checked; no Bitcoin confirmation established')));
+  if (context.appVersion || context.buildId) sheet.appendChild(el('p', {},
+    'Unaltered version: ' + (context.appVersion ?? 'unknown') + ' · build: ' + (context.buildId ?? 'unknown')));
+  sheet.appendChild(el('p', {}, 'Bitcoin block height, block hash and block time: not available — no independently verified Bitcoin anchor was supplied.'));
   if (fileSha256) sheet.appendChild(el('p', { class: 'archival-hash' }, 'File SHA-256 recorded in receipt: ' + fileSha256));
   sheet.appendChild(el('p', { class: 'archival-hash' }, 'Receipt SHA-256: ' + receiptSha256.toLowerCase()));
   sheet.appendChild(el('p', {}, `${receiptBytes} receipt bytes · ${symbols.length} symbols · All ${totalPages} pages belong to this certificate. Print at 100% scale with browser headers/footers disabled.`));
