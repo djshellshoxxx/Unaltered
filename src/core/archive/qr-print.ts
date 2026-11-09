@@ -7,7 +7,8 @@ export interface CertificateContext {
   /** Optional, user-approved display label; never part of the receipt or QR payload. */
   documentLabel?: string;
   generatedAt?: string;
-  verificationStatus?: 'not-checked' | 'pending';
+  verificationStatus?: 'not-checked' | 'pending' | 'verified';
+  verifiedBitcoin?: { height: number; blockHash: string; blockTimeUtc: string; sourcesAgreeing: readonly string[] };
   appVersion?: string;
   buildId?: string;
 }
@@ -22,6 +23,12 @@ export function createArchivalPrintSheet(symbols: readonly ArchivalQrSymbol[], r
       (fileSha256 !== undefined && !/^[0-9a-f]{64}$/i.test(fileSha256))) throw new Error('Invalid archival certificate data');
   if (context.documentLabel !== undefined && (context.documentLabel.length > 160 ||
       /[\\x00-\\x1f\\x7f]/.test(context.documentLabel))) throw new Error('Invalid certificate label');
+  if (context.verificationStatus === 'verified' && (!context.verifiedBitcoin ||
+      !Number.isSafeInteger(context.verifiedBitcoin.height) || context.verifiedBitcoin.height < 0 ||
+      !/^[0-9a-f]{64}$/i.test(context.verifiedBitcoin.blockHash) ||
+      !Number.isFinite(Date.parse(context.verifiedBitcoin.blockTimeUtc)) ||
+      context.verifiedBitcoin.sourcesAgreeing.length < 2)) throw new Error('Verified certificate requires validated block evidence');
+  if (context.verifiedBitcoin && context.verificationStatus !== 'verified') throw new Error('Unverified certificate cannot claim block evidence');
   for (const [index, symbol] of symbols.entries()) {
     if (symbol.index !== index || symbol.total !== symbols.length || !Number.isInteger(symbol.version) ||
         symbol.version < 1 || symbol.version > 40 || symbol.modules !== symbol.version * 4 + 17 ||
@@ -65,10 +72,16 @@ export function createArchivalPrintSheet(symbols: readonly ArchivalQrSymbol[], r
   if (context.documentLabel) sheet.appendChild(el('p', {}, 'Document label (user supplied, not authenticated): ' + context.documentLabel));
   sheet.appendChild(el('p', {}, 'Certificate generated (device clock, UTC): ' + (context.generatedAt ?? new Date().toISOString())));
   sheet.appendChild(el('p', {}, 'Verification at certificate generation: ' +
-    (context.verificationStatus === 'pending' ? 'Pending; no Bitcoin confirmation established' : 'Not independently checked; no Bitcoin confirmation established')));
+    (context.verificationStatus === 'verified' ? 'Verified against matching original file and independent Bitcoin header quorum' :
+      context.verificationStatus === 'pending' ? 'Pending; no Bitcoin confirmation established' : 'Not independently checked; no Bitcoin confirmation established')));
   if (context.appVersion || context.buildId) sheet.appendChild(el('p', {},
     'Unaltered version: ' + (context.appVersion ?? 'unknown') + ' · build: ' + (context.buildId ?? 'unknown')));
-  sheet.appendChild(el('p', {}, 'Bitcoin block height, block hash and block time: not available — no independently verified Bitcoin anchor was supplied.'));
+  if (context.verifiedBitcoin) {
+    sheet.appendChild(el('p', {}, 'Bitcoin block height: ' + context.verifiedBitcoin.height));
+    sheet.appendChild(el('p', { class: 'archival-hash' }, 'Bitcoin block hash: ' + context.verifiedBitcoin.blockHash));
+    sheet.appendChild(el('p', {}, 'Bitcoin block header time (UTC, miner supplied; not file creation time): ' + context.verifiedBitcoin.blockTimeUtc));
+    sheet.appendChild(el('p', {}, 'Independent header sources agreeing: ' + context.verifiedBitcoin.sourcesAgreeing.join(', ')));
+  } else sheet.appendChild(el('p', {}, 'Bitcoin block height, block hash and block time: unavailable — no independently verified Bitcoin anchor was supplied.'));
   if (fileSha256) sheet.appendChild(el('p', { class: 'archival-hash' }, 'File SHA-256 recorded in receipt: ' + fileSha256));
   sheet.appendChild(el('p', { class: 'archival-hash' }, 'Receipt SHA-256: ' + receiptSha256.toLowerCase()));
   sheet.appendChild(el('p', {}, `${receiptBytes} receipt bytes · ${symbols.length} symbols · All ${totalPages} pages belong to this certificate. Print at 100% scale with browser headers/footers disabled.`));
