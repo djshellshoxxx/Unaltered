@@ -14,6 +14,7 @@ export function createVerificationReportJson(fileSha256: string, report: VerifyR
     status: report.state,
     bitcoin: bitcoin ? {
       height: bitcoin.height,
+      blockHash: bitcoin.blockHash,
       blockTimeUtc: bitcoin.blockTimeUtc,
       sourcesAgreeing: [...bitcoin.sourcesAgreeing],
     } : null,
