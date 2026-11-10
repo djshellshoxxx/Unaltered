@@ -1,16 +1,49 @@
-# Developer Guide
+# Developer Guide — Unaltered
 
-## Layout
+[Wiki Home](Home.md) · [User Guide](User-Guide.md) · [Contribution policy](https://github.com/djshellshoxxx/Unaltered/blob/main/CONTRIBUTING.md)
 
-Scripts live in `shared/scripts/`. Skills live in `skills/<name>/SKILL.md` with optional `scripts/`, `templates/` and `references/` folders. Third-party licence files are under `skills/_third_party_licenses/`.
+## Architecture and boundaries
 
-## Checks
+- **Static client only:** no application backend, accounts, analytics or application database. Vanilla TypeScript renders four hash-routed views: Stamp, Verify (including Upgrade), About and Settings.
+- `src/core/hash/` computes file fingerprints; `src/core/ots/` parses, constructs, upgrades and verifies standard OpenTimestamps receipts; `src/core/net/` is the controlled network layer; `src/core/strip/` implements bounded allowlist metadata cleaning; `src/core/reports/` handles local evidence, verification reports and batch operations; `src/core/archive/` implements experimental QR receipt transport.
+- `src/ui/` contains browser flows, `src/cli/` the Node command-line verifier. `scripts/build.mjs` emits the deployable and offline artifacts. `tests/` contains unit, differential, fuzz, browser and qualification tests.
+- The unrelated JUCE helper toolkit is in `shared/scripts/` and `skills/`: consult the [Toolkit Developer Guide](Toolkit-Developer-Guide.md).
 
-The repository has no automated test suite. The checks run in the verification pass were:
+[Architecture decisions](https://github.com/djshellshoxxx/Unaltered/blob/main/docs/DECISIONS.md) and [SPEC](https://github.com/djshellshoxxx/Unaltered/blob/main/docs/SPEC.md) govern code behavior; [threat model](https://github.com/djshellshoxxx/Unaltered/blob/main/docs/THREAT_MODEL.md) governs verification, privacy, and adversarial input assumptions.
+
+## Local setup and development
+
+Requires Node.js **22+**, npm and Git; Chromium/Playwright browser tests require the Playwright browser binary. Optional reference-differential tests use a separately pinned Python OpenTimestamps environment documented in the handoffs.
 
 ```sh
-for f in shared/scripts/*.py; do python3 -m py_compile "$f"; done
-python3 shared/scripts/create_project.py --help
+git clone https://github.com/djshellshoxxx/Unaltered.git
+cd Unaltered
+npm ci --ignore-scripts
+npm run typecheck
+npm run lint
+npm run check
+npm run build
+npm run test:e2e
 ```
 
-Remove any `__pycache__` folders created by these checks before committing.
+`npm run check` runs the OPSEC gate, type checking, lint, Vitest and Node tests. `npm run test:e2e` builds and runs the configured Playwright suite; other browser/OS, large-file and reference-client qualification gates may require separate environments. Do not claim an unrun gate passed. See [fuzz testing](https://github.com/djshellshoxxx/Unaltered/blob/main/docs/FUZZING.md), [network checks](https://github.com/djshellshoxxx/Unaltered/blob/main/docs/NETWORK.md), and [CI qualification](https://github.com/djshellshoxxx/Unaltered/blob/main/docs/CI_QUALIFICATION_20261106.md).
+
+## CLI and APIs
+
+Build first, then run `node dist/unaltered-cli-0.3.1.mjs hash <file>`, `verify <file> [receipt.ots]`, or the documented `verify-offline` mode. See [offline comparison](https://github.com/djshellshoxxx/Unaltered/blob/main/docs/OFFLINE_VERIFICATION.md). **Draft, not on main:** extra CLI commands and JSON output in [PR #71](https://github.com/djshellshoxxx/Unaltered/pull/71), with its [proposed CLI guide](https://github.com/djshellshoxxx/Unaltered/blob/claude/great-darwin-elcc18/docs/CLI.md).
+
+The reusable source-level interfaces live in `src/core/`. Do not introduce unreviewed network calls, unsafe script execution, or hidden upload endpoints. Respect receipt interoperability, exact digest/receipt binding, and verification levels. API/schema changes need tests and corresponding specification/ADR updates.
+
+## Contribution, security, debugging
+
+Read [CONTRIBUTING.md](https://github.com/djshellshoxxx/Unaltered/blob/main/CONTRIBUTING.md), [SECURITY.md](https://github.com/djshellshoxxx/Unaltered/blob/main/SECURITY.md), [OPSEC.md](https://github.com/djshellshoxxx/Unaltered/blob/main/docs/OPSEC.md), and [dependency policy](https://github.com/djshellshoxxx/Unaltered/blob/main/docs/DEPENDENCIES.md). Avoid `eval`, `innerHTML`, inline event handlers, telemetry, third-party scripts/CDNs, and new runtime dependencies without an accepted ADR. Use synthetic fixtures rather than actual sensitive evidence.
+
+For unexpected verification outcomes: first establish file/receipt identity, parser status, local versus explorer-backed operation, whether sources agree, and the precise error state. Capture only sanitized reproductions. For browser faults: verify CSP, file URL versus served `dist/web/`, and installed browser engines. For network faults: distinguish external CORS/unreachability from Bitcoin verification failure.
+
+## CI, releases, and engineering backlog
+
+Pull requests should be isolated, tested, and reviewed. Required CI is not equivalent to independent audit, real-world print/camera testing, signing, or publication. Release artifacts, multi-OS reproducibility, checksums, signatures and deployment approval are controlled by [RELEASE.md](https://github.com/djshellshoxxx/Unaltered/blob/main/docs/RELEASE.md) and [PAGES.md](https://github.com/djshellshoxxx/Unaltered/blob/main/docs/PAGES.md). **Do not deploy or release based on a passing unit test alone.**
+
+For active requirements, accepted decisions, outstanding defects and owner-held acceptance gates consult [TODO](https://github.com/djshellshoxxx/Unaltered/blob/main/docs/TODO.md), [COMPLETION_STATUS](https://github.com/djshellshoxxx/Unaltered/blob/main/docs/COMPLETION_STATUS.md), [HANDOFF](https://github.com/djshellshoxxx/Unaltered/blob/main/HANDOFF.md), and [open PRs](https://github.com/djshellshoxxx/Unaltered/pulls). Older handoffs are historical snapshots; inspect actual branch heads and checks before treating any claim as current.
+
+Current branch distinction (2026-11-10): main `556fc2d49a4bbc005babd0094c9233ae4ad418ad`; [PR #70](https://github.com/djshellshoxxx/Unaltered/pull/70) is a draft continuation specification; [PR #71](https://github.com/djshellshoxxx/Unaltered/pull/71) is a separate Claude-authored draft implementing certificate-source checks and CLI parity. Neither is part of main unless later merged.
