@@ -14,4 +14,13 @@ describe('local receipt dashboard', () => {
     expect(result.latestAddedUtc).toBeNull();
     expect(result.verified).toBeNull();
   });
+  it('orders canonical UTC timestamps by instant, not timestamp text representation', () => {
+    const records = [
+      { digestHex: 'a'.repeat(64), createdAtUtc: '2026-11-02T00:00:00Z', label: 'earlier' },
+      { digestHex: 'b'.repeat(64), createdAtUtc: '2026-11-02T00:00:00.001Z', label: 'later' },
+    ];
+    expect(summarizeLocalReceipts(records).latestAddedUtc).toBe('2026-11-02T00:00:00.001Z');
+    expect(summarizeLocalReceipts([...records].reverse()).latestAddedUtc).toBe('2026-11-02T00:00:00.001Z');
+  });
+
 });
