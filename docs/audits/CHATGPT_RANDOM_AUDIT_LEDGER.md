@@ -105,3 +105,25 @@
 **Related CI, not an audit run:** [PR #74](https://github.com/djshellshoxxx/Unaltered/pull/74) evidence ZIP head `aa2382bfeff2ea376dca7c96cc65b62447dd3ce7` passed Linux typecheck/lint/unit/reproducible build, Windows, Chromium/Firefox/WebKit, QR qualification and other listed checks in [CI #42841449237](https://github.com/djshellshoxxx/Unaltered/actions/runs/42841449237), but macOS was cancelled, cross-OS checksum jobs skipped, and the *informational* live calendar/CORS probe failed. The cancelled macOS job was individually rerun in this continuation and was queued when this audit note was prepared. Do not declare exact-head full cross-platform qualification yet.
 
 **Next rotation:** inspect a newly selected, unaudited source path with callers/tests; preserve this audit branch's isolation and record only demonstrated findings. No merges, releases, wiki publication or security gate changes.
+
+
+---
+## Sixth rotation — 2026-11-10 — network destination allowlist and request boundary
+
+**Source:** `main` `556fc2d49a4bbc005babd0094c9233ae4ad418ad`. This was a distinct **sequential read-only review**, not a second concurrent worker. No Codex, external scanner, paid API, local repository test suite or live network request was used.
+
+**Reproducible selection:** exclude five previously inspected paths, in ledger order: `src/core/strip/png.ts`, `src/core/ots/calendar.ts`, `src/core/archive/frames.ts`, `src/core/reports/evidence-zip.ts`, `src/core/archive/qr-decode.ts`. Enumerate and sort actual `.ts` source paths under `src/core/{archive,hash,net,ots,reports,strip}/`, excluding `*.worker.ts` and those five paths. **28 eligible files** remained. FNV-1a 32-bit seed `556fc2d49a4bbc005babd0094c9233ae4ad418ad|src/core/strip/png.ts|src/core/ots/calendar.ts|src/core/archive/frames.ts|src/core/reports/evidence-zip.ts|src/core/archive/qr-decode.ts|2026-11-10|rotation-6` yielded `2352986449`; index `9` of 28 selected `src/core/net/allowlist.ts`. Exclude this sixth path on the next rotation.
+
+**Inspected source and trust boundaries (main-branch line references):**
+- `src/core/net/allowlist.ts:1-24`: single endpoint source lists three OTS calendars, two Bitcoin explorers, and minimum quorum counts of two. Build CSP derives from this file; changing allowed origins would be a security-policy change requiring review.
+- `src/core/net/fetch.ts:28-43`: URL parsing restricts HTTPS, credentials, ports and the exact `url.host` allowlist before a request. Test seam `allowInsecure` is not production configuration.
+- `src/core/net/fetch.ts:48-78`: declared and streamed response-size caps and cancel-on-oversize behavior. `src/core/net/fetch.ts:80-118`: safe-integer size/timer bounds, no credentials/referrer/cache, `redirect:'error'`, request abort and timeout-to-safe-error mapping.
+- `src/core/net/capability.ts`: browser network status describes capability, never claims calendar/explorer reachability or Bitcoin confirmation.
+- Existing tests **read, not executed**: `tests/unit/net.test.ts` (host, userinfo, port, redirect, secret/referrer, byte caps, fetch-only architecture and origin references); `tests/unit/net-policy-bounds.test.ts` (invalid caps/timeouts rejected before transport); `tests/unit/network-capability.test.ts` (honest online/offline claims).
+- `docs/THREAT_MODEL.md` sets IP/metadata and false-VERIFIED boundaries; `docs/NETWORK.md` documents pending-404 CORS behavior and separately qualified historical confirmed paths.
+
+**Result:** No newly *reproduced* correctness, privacy or security defect was established. Passing a custom `NetPolicy` or request headers from an untrusted future caller would require separate review, but the inspected source does not establish that an untrusted user controls these options today. Do not file speculative findings or weaken URL/CORS/verification checks. This does not constitute an independent security audit.
+
+**CI reconciliation relevant to this audit (not executed by the auditor):** PR #74 exact-head `aa2382bfeff2ea376dca7c96cc65b62447dd3ce7` CI [42841449237](https://github.com/djshellshoxxx/Unaltered/actions/runs/42841449237) now shows **12 passed, one skipped, one failed informational calendar/explorer live check** after the previously cancelled macOS job succeeded on retry; cross-platform byte-identical build job also succeeded. PR #72 exact-head `4ba1eb29a1dca07d5d5b8cc3dcf28eecf7d04f93` CI [42850661317](https://github.com/djshellshoxxx/Unaltered/actions/runs/42850661317) and PR #73 previous exact-head `c034dbede9f90b150d80872281dce5980782a419` CI [42850146627](https://github.com/djshellshoxxx/Unaltered/actions/runs/42850146627) each report the same 12/1/1 composition; the workflows' overall conclusion is success, **not** an assertion that every job passed.
+
+**Next audit:** select an unaudited core path with the updated exclusion ledger and inspect callers, actual trust boundaries and regression tests. The audit branch contains only the ledger; no production code, other owner's branch, main, deployment or release was touched. This ledger edit itself requires fresh exact-head CI qualification.
