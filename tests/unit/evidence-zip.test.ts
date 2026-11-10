@@ -46,4 +46,36 @@ describe('portable evidence ZIP', () => {
   it('rejects excessive in-memory inputs before creating the ZIP', async () => {
     await expect(createEvidenceZip(new Uint8Array(16 * 1024 * 1024 + 1), Uint8Array.of(1))).rejects.toThrow();
   });
+  it('captures caller-owned input bytes before asynchronous hashing and ZIP assembly', async () => {
+    const original = Uint8Array.from([0, 1, 2, 3]);
+    const receipt = Uint8Array.from([4, 5, 6]);
+    const originalAtCall = Uint8Array.from(original);
+    const receiptAtCall = Uint8Array.from(receipt);
+    const pending = createEvidenceZip(original, receipt);
+    // The caller may reuse/mutate buffers while the promise is pending.
+    original.fill(0xee);
+    receipt.fill(0xdd);
+    const zip = await pending;
+    const view = new DataView(zip.buffer, zip.byteOffset, zip.byteLength);
+    const entries = new Map<string, Uint8Array>();
+    let offset = 0;
+    while (offset + 30 <= zip.length && view.getUint32(offset, true) === 0x04034b50) {
+      const length = view.getUint32(offset + 18, true);
+      const nameLength = view.getUint16(offset + 26, true);
+      const extraLength = view.getUint16(offset + 28, true);
+      const name = new TextDecoder().decode(zip.subarray(offset + 30, offset + 30 + nameLength));
+      const start = offset + 30 + nameLength + extraLength;
+      entries.set(name, zip.slice(start, start + length));
+      offset = start + length;
+    }
+    expect(entries.get('original.bin')).toEqual(originalAtCall);
+    expect(entries.get('receipt.ots')).toEqual(receiptAtCall);
+    const manifestBytes = entries.get('manifest.json');
+    expect(manifestBytes).toBeDefined();
+    const manifest = JSON.parse(new TextDecoder().decode(manifestBytes));
+    const hash = async (bytes: Uint8Array) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', Uint8Array.from(bytes))), b => b.toString(16).padStart(2, '0')).join('');
+    expect(manifest.original.sha256).toBe(await hash(entries.get('original.bin')!));
+    expect(manifest.receipt.sha256).toBe(await hash(entries.get('receipt.ots')!));
+    expect(manifest.verification).toBe('NOT_PERFORMED');
+  });
 });
