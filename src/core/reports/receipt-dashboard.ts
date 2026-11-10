@@ -16,7 +16,7 @@ export function summarizeLocalReceipts(records: readonly ReceiptRec[]): ReceiptD
   });
   return {
     saved: records.length,
-    latestAddedUtc: validDates.length ? validDates.sort().at(-1)! : null,
+    latestAddedUtc: validDates.length ? validDates.sort((a, b) => Date.parse(a) - Date.parse(b)).at(-1)! : null,
     verified: null,
     pending: null,
   };
