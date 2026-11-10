@@ -73,7 +73,7 @@ describe('portable evidence ZIP', () => {
     const manifestBytes = entries.get('manifest.json');
     expect(manifestBytes).toBeDefined();
     const manifest = JSON.parse(new TextDecoder().decode(manifestBytes));
-    const hash = async (bytes: Uint8Array) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), b => b.toString(16).padStart(2, '0')).join('');
+    const hash = async (bytes: Uint8Array) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', Uint8Array.from(bytes))), b => b.toString(16).padStart(2, '0')).join('');
     expect(manifest.original.sha256).toBe(await hash(entries.get('original.bin')!));
     expect(manifest.receipt.sha256).toBe(await hash(entries.get('receipt.ots')!));
     expect(manifest.verification).toBe('NOT_PERFORMED');
