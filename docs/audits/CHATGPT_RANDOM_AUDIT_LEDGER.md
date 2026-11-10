@@ -46,3 +46,22 @@
 **Result:** No new reproducible correctness, privacy, or security defect established by source inspection. The bounded-but-parallel upgrade fan-out and real-host pending-404 CORS behavior merit continued qualification; neither is filed as a vulnerability without a concrete failing case. The latter is already documented in `docs/NETWORK.md`, including a 2026-11-05 Chromium confirmed-path test and remaining pending-404 limitation. Do not convert an HTTP 404 lacking ACAO into a positive verification result.
 
 **Next audit:** rotate to another not-yet-inspected area (e.g., QR decoder, hash streaming, evidence ZIP), inspect callers and exact regression tests, and only propose a fix after independent reproduction. This PR changes only the audit ledger. No live network requests, CI reruns, merges or security-gate changes.
+
+---
+## Third rotation — 2026-11-10 — archival binary QR frame integrity
+
+**Read-only, sequential phase:** no independent second ChatGPT worker/subagent was available; no paid API, Codex, or execution agents used. **Inspected source:** unchanged `main` `556fc2d49a4bbc005babd0094c9233ae4ad418ad` (the review is not a standalone cryptographic audit).
+
+**Reproducible selection:** exclude previously sampled `src/core/strip/png.ts` and `src/core/ots/calendar.ts`. Sort all remaining `.ts` files in `src/core/archive`, `hash`, `net`, `ots`, `reports` and `strip`, excluding `.worker.ts`. 31 files remain. FNV-1a 32-bit hash of `556fc2d49a4bbc005babd0094c9233ae4ad418ad|src/core/strip/png.ts|src/core/ots/calendar.ts|2026-11-10|rotation-3` yields **622937467**; `622937467 % 31 = 0`, selecting `src/core/archive/frames.ts`. Exclude all three inspected paths next rotation.
+
+### Inspected code and surrounding boundaries
+
+- `src/core/archive/frames.ts`: fixed 80-byte magic/version/length header, maximum 16 MiB receipt and 4096 frames; encoding snapshots source bytes before asynchronous hashing; SHA-256 and domain-separated 16-byte proof identifier; recovery checks nonzero/bounded indices and sizes, consistent metadata, duplicate conflicts, exact partition length, digest and identifier.
+- `src/core/archive/qr-encode.ts` and `qr-plan.ts`: frame bytes flow into the QR encoder; print planning enforces 64-symbol and max-page limits, stronger than the raw transport maximum.
+- `src/core/archive/qr-decode.ts`, `qr-scan.worker.ts`, `qr-scan.ts` and `qr-limits.ts`: browser scan uses bounded image dimensions, a decoding worker and frame byte-length checks; QR text/URL is not executed.
+- `src/core/archive/qr-print.ts`: printed appendix describes protocol framing, digital receipt preservation, and independent verification requirement. Certificate display metadata is not proof of Bitcoin anchoring; PR #71 separately owns the distinct-source check.
+- Existing tests **read, not executed:** `tests/unit/archival-qr-frames.test.ts`, `archival-qr-properties.test.ts`, `archival-qr-encode.test.ts`, `archival-qr-decode.test.ts`; they cover independent golden bytes, permutation/duplicates, corrupted metadata/payload, mixed frames, and pixel decoder round trips.
+
+**Finding disposition:** no reproducible new correctness, integrity, privacy or security defect established. The raw 4096-frame/16-MiB transport limit must not be conflated with the 64-symbol print/scan workflow. Header checks and SHA-256 protect recovery against tampered, incomplete or cross-proof frame sets in inspected code; this review did not prove memory bounds or printed-media resilience universally. Avoid inventing a vulnerability from speculative asynchronous input mutation without a concrete failing trace.
+
+**Tests:** no local npm, Vitest, fuzz, QR camera/print, browser or runtime tests executed in this audit phase; earlier exact-head CI is reported separately, not attributed to this audit. **Next:** choose an unaudited core path from the updated ledger, inspect caller/test paths and reproduce any claim before proposing a fix. No branch other than this audit PR changed.
