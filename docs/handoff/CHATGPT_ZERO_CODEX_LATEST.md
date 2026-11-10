@@ -29,3 +29,13 @@
 4. Collaboration/maintenance lane is deferred because primary CI and audit/docs qualification remain actionable; no speculative Discussions, Projects, repo settings or public security issues were created.
 
 This handoff is branch-local. It shares its path with other draft continuation PRs and requires explicit conflict reconciliation during any separately authorized integration.
+
+---
+## Follow-up on the eighth checkpoint: test-first RED proven, minimal fix committed
+
+- **Executed hosted RED baseline** was the test+handoff head `2d1dfc5a99c7979c1bb4a7a214e389f007ba6364` on [CI #42882931529](https://github.com/djshellshoxxx/Unaltered/actions/runs/42882931529): Linux [job 130063814427](https://github.com/djshellshoxxx/Unaltered/actions/runs/42882931529/job/130063814427) failed **exactly** the new `tests/unit/batch-pair.test.ts:19` unnamed-pairing regression (`expected [Function] to throw an error`), with **581 other Vitest tests passed and 7 skipped**. macOS [job 130063814520](https://github.com/djshellshoxxx/Unaltered/actions/runs/42882931529/job/130063814520) independently failed the same regression, with 576 other tests passed and 12 skipped. These failures establish a real negative repository baseline, not merely the separate Node reproduction. Other jobs were still active at the moment these logs were inspected, so do not claim a completed full RED workflow.
+- Prior test-only [CI #42881925363](https://github.com/djshellshoxxx/Unaltered/actions/runs/42881925363) was **cancelled** after the handoff-only push due to workflow concurrency, so it establishes no Vitest verdict. Its QR [#42881925359](https://github.com/djshellshoxxx/Unaltered/actions/runs/42881925359) succeeded.
+- **Minimal production correction:** commit `134153168f28438d6204e3bf272ec520afc75238` adds one input validation guard to `src/core/reports/batch-pair.ts` before exact set matching: any empty original or receipt name now throws a clear non-empty requirement error. It retains the 1–50 bound, duplicate handling, strict case/Unicode identity and order-independent pairing. Tests remain unchanged from test-first commit `fb3b5f97ca5742b87b1b2b329887fd9cb3d07f8b`. No OTS/Bitcoin verification, CLI, network, crypto, QR, privacy policy or release behavior was touched.
+- **Green qualification is not yet claimed**. Inspect GitHub Actions at this corrected implementation and the later handoff-only head separately; confirm Linux/Windows/macOS, browser engines, differential, provenance, QR and informational CORS result. No local Vitest was run. The next continuation must not start a new product slice until final exact-head CI is reconciled.
+
+This branch remains draft and unmerged. No deployment, signing, release or published Wiki change.
