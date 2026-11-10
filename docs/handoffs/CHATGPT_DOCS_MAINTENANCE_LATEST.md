@@ -5,7 +5,7 @@
 ## Current GitHub state
 
 - [PR #70](https://github.com/djshellshoxxx/Unaltered/pull/70), draft, proposes the no-Codex continuation specification; not merged.
-- [PR #71](https://github.com/djshellshoxxx/Unaltered/pull/71), draft, Claude-owned, proposes CLI parity and a certificate quorum-source guard. At inspected head `c4e43c7b9ca0704bd0526a5317e49ff3749125e0`, GitHub reported CI run 42761293145 and archival QR qualification run 42761293438 **completed successfully**. This is GitHub-reported evidence, not testing executed by ChatGPT.
+- [PR #71](https://github.com/djshellshoxxx/Unaltered/pull/71), draft, Claude-owned, proposes CLI parity and a certificate quorum-source guard. At inspected head `c4e43c7b9ca0704bd0526a5317e49ff3749125e0`, GitHub reported CI run 42761293145 **completed with 13 successful jobs, one skipped and one failed informational live-network job**; archival QR qualification run 42761293438 succeeded. The failed live check is not evidence of a failed local/unit/CLI test; see the exact CI reconciliation below. This is GitHub-reported evidence, not testing executed by ChatGPT.
 - Main currently provides a Node CLI with `hash`, `verify`, `verify-offline`. PR #71's `inspect`, `batch`, `evidence` and `--json` work is explicitly marked **draft/unmerged** in the Developer and User guides.
 
 ## Changes in this isolated docs branch
@@ -33,3 +33,20 @@
 5. Maintain separate audit and development branch ownership; no release or deployment authorized.
 
 **Last verified docs-edit commit before this ledger:** `94bc759b824714bf6f637265c0f7d2eefb9e6d08`.
+
+---
+## Exact-head CI reconciliation — 2026-11-10 13:00 UTC
+
+Main still `556fc2d49a4bbc005babd0094c9233ae4ad418ad`. These values come from GitHub's check-runs API, not local npm or browser execution.
+
+| Draft PR | Head SHA | Exact-head jobs | Outcome / gate |
+|---|---|---|---|
+| [#71](https://github.com/djshellshoxxx/Unaltered/pull/71) Claude-owned certificate and CLI work | `c4e43c7b9ca0704bd0526a5317e49ff3749125e0` | 15: 13 passed, 1 skipped, 1 failed | [CI 42761293145](https://github.com/djshellshoxxx/Unaltered/actions/runs/42761293145) failure is the **informational live check**; [QR qualification 42761293438](https://github.com/djshellshoxxx/Unaltered/actions/runs/42761293438) passed. |
+| [#72](https://github.com/djshellshoxxx/Unaltered/pull/72) this documentation branch before this update | `547151f90208d71cb69474e46ae723e0dd33d9ad` | 15: 13 passed, 1 skipped, 1 failed | [CI 42813668482](https://github.com/djshellshoxxx/Unaltered/actions/runs/42813668482) same informational live-check failure; [QR 42813668387](https://github.com/djshellshoxxx/Unaltered/actions/runs/42813668387) passed. |
+| [#73](https://github.com/djshellshoxxx/Unaltered/pull/73) audit branch before audit-ledger rotation | `39f92868ef414d5ed2aabdf626dc66b5507ef451` | 15: 12 passed, 1 skipped, 1 failed, 1 cancelled | [CI 42813674505](https://github.com/djshellshoxxx/Unaltered/actions/runs/42813674505): informational live check failed; WebKit job cancelled during its Playwright WebKit dependency installation, **not** a demonstrated WebKit application test failure; [QR 42813674209](https://github.com/djshellshoxxx/Unaltered/actions/runs/42813674209) passed. |
+
+**Live check diagnosis:** downloaded job logs [#71](https://github.com/djshellshoxxx/Unaltered/actions/runs/42761293145/job/129649586816) and [#72](https://github.com/djshellshoxxx/Unaltered/actions/runs/42813668482/job/129821179973) show `GET /timestamp/<hex>` returning HTTP 404 **without Access-Control-Allow-Origin** from Alice, Bob and Finney. The script expects pending 404s but marks the missing CORS header as FAIL. This matches the documented external limitation in `docs/NETWORK.md`; keep the verification state conservative. Do not weaken the check or claim all jobs passed.
+
+**WebKit cancellation:** [#73 WebKit job](https://github.com/djshellshoxxx/Unaltered/actions/runs/42813674505/job/129821201155) was cancelled while downloading `playwright install --with-deps webkit` system packages; the log shows `The operation was canceled`, without a completed WebKit test verdict. A new, authorized exact-head CI result is needed before claiming full three-engine qualification of #73.
+
+**Documentation action:** continue treating #70/#71/#72/#73 as unmerged drafts. The user/developer wiki navigation is version-controlled source, not a live wiki publication. The original README's toolkit-wiki pointer conflicts with active #71 README ownership; leave it for post-integration coordination. No new repo settings, workflows, release or Pages publication undertaken.
