@@ -10,6 +10,18 @@ Current publication addendum: [final handoff and raw evidence](FINAL_HANDOFF_202
 Legend: `[ ]` open, `[x]` done. IDs map to milestones in `BUILD_PLAN.md` and requirements in `SPEC.md`.
 Do tasks in order within a milestone unless marked parallel.
 
+## CLI parity and certificate evidence — 2026-11-10
+
+Branch `claude/great-darwin-elcc18` from main `556fc2d`. Priority 1 and 2 of the continuation queue (PR70).
+
+- [x] **CLI-1** `inspect [--json]`: offline receipt summary; `verification: NOT_PERFORMED`; exit 0 is not a verification.
+- [x] **CLI-2** `verify --json`: browser `UNALTERED-VERIFICATION-REPORT/1`; same exit codes; `--` ends options.
+- [x] **CLI-3** `batch [--json]`: 1-50 files, each against `<file>.ots`; independent results; exit 0/2/8/1.
+- [x] **CLI-4** `evidence`: browser evidence ZIP; refuses invalid receipt (4), other file (3), >16 MiB, overwrite.
+- [x] **CERT-1** A verified certificate needs two distinct agreeing hosts (one host twice, or an empty name, is refused).
+- [ ] CLI stamp/upgrade: out of ADR-011 scope; needs a new ADR before work starts.
+- [ ] Physical print/camera QR qualification and human review of certificate wording remain open.
+
 ## Authoritative integration status — 2026-11-04
 
 - Candidate: draft [PR47](https://github.com/djshellshoxxx/Unaltered/pull/47), branch `claude/funny-lamport-2jfc0e`.

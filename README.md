@@ -52,6 +52,7 @@ npm run build        # dist/: single-file offline HTML, multi-file site, zip, SH
 | [docs/AUDIT.md](docs/AUDIT.md) | Feature and code audit against the spec |
 | [docs/NETWORK.md](docs/NETWORK.md) | Calendar and explorer API facts, live-check status |
 | [docs/UX.md](docs/UX.md) | Screens and mandatory copy |
+| [docs/CLI.md](docs/CLI.md) | Command-line verifier: commands, JSON formats, exit codes |
 | [docs/RELEASE.md](docs/RELEASE.md) | Build artefacts, Windows distribution, release procedure |
 | [SECURITY.md](SECURITY.md) | How to report vulnerabilities |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution rules (dependencies and security are strict) |
