@@ -32,6 +32,12 @@ npm run test:e2e
 
 Build first, then run `node dist/unaltered-cli-0.3.1.mjs hash <file>`, `verify <file> [receipt.ots]`, or the documented `verify-offline` mode. See [offline comparison](https://github.com/djshellshoxxx/Unaltered/blob/main/docs/OFFLINE_VERIFICATION.md). **Draft, not on main:** extra CLI commands and JSON output in [PR #71](https://github.com/djshellshoxxx/Unaltered/pull/71), with its [proposed CLI guide](https://github.com/djshellshoxxx/Unaltered/blob/claude/great-darwin-elcc18/docs/CLI.md).
 
+### Receipt and batch-verification API status
+
+The **merged main source** provides `src/core/reports/batch-pair.ts` for exact `FILENAME` ↔ `FILENAME.ots` pairing (1–50 entries, rejecting missing or duplicate filenames) and `batch-verify.ts` for sequential per-item results. These library functions do **not** by themselves establish a released CLI or independent Bitcoin verification; callers remain responsible for actually hashing and verifying the selected bytes and receipt. `AbortSignal` stops new items from being scheduled, and a partial array is not a complete batch verdict.
+
+**Unmerged draft [PR #75](https://github.com/djshellshoxxx/Unaltered/pull/75)** proposes omitting a cancelled in-flight item when its verifier rejects after abort, instead of mislabeling cancellation as an `ERROR` verification result. That behavior is **not on main** and must not be documented as shipped until reviewed and integrated. Existing verified/pending/error states remain separately meaningful.
+
 The reusable source-level interfaces live in `src/core/`. Do not introduce unreviewed network calls, unsafe script execution, or hidden upload endpoints. Respect receipt interoperability, exact digest/receipt binding, and verification levels. API/schema changes need tests and corresponding specification/ADR updates.
 
 ## Contribution, security, debugging
