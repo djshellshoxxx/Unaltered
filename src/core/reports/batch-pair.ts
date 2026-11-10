@@ -5,6 +5,8 @@ export function pairEvidenceFiles(
 ): { fileName: string; receiptName: string }[] {
   if (fileNames.length === 0 || fileNames.length > 50 || receiptNames.length !== fileNames.length)
     throw new Error('Select between 1 and 50 files and exactly one .ots receipt per file');
+  if (fileNames.some(name => name.length === 0) || receiptNames.some(name => name.length === 0))
+    throw new Error('Original filenames and receipt names must be non-empty');
   const files = new Set(fileNames);
   const receipts = new Set(receiptNames);
   if (files.size !== fileNames.length || receipts.size !== receiptNames.length)
