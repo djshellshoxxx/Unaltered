@@ -1,0 +1,11 @@
+# Unaltered ChatGPT zero-Codex continuation — 2026-11-10
+
+- **Inspected main:** `556fc2d49a4bbc005babd0094c9233ae4ad418ad` (PR #69 verified certificate and optional metadata merged).
+- **Current continuation specification:** [draft PR #70](https://github.com/djshellshoxxx/Unaltered/pull/70), head `5b03393f90e7b37141832b4470c44f67f0384707`. Read from that branch, not main.
+- **Related active implementation:** [draft PR #71](https://github.com/djshellshoxxx/Unaltered/pull/71), head `c4e43c7b9ca0704bd0526a5317e49ff3749125e0`; Claude-owned, covers distinct-source certificate check and CLI inspect/JSON/batch/evidence. GitHub-reported PR CI [42761293145](https://github.com/djshellshoxxx/Unaltered/actions/runs/42761293145) and archival QR qualification [42761293438](https://github.com/djshellshoxxx/Unaltered/actions/runs/42761293438) concluded **success**; no local CI execution this run.
+- **Primary lane:** deferred independent implementation of the same certificate/CLI paths to avoid duplicating active PR #71. No code changes, merges, releases, deployments, or cross-agent branch mutations.
+- **Docs lane:** isolated `chatgpt/zero-codex/docs-wiki-20261110`, based on main, updates wiki source and creates explicit Unaltered User/Developer top-level documentation while retaining unrelated toolkit docs separately. See `docs/handoffs/CHATGPT_DOCS_MAINTENANCE_LATEST.md`. The live GitHub wiki has **not** been published.
+- **Read-only audit lane:** isolated `chatgpt/zero-codex/audit-png-20261110` from main, with `docs/audits/CHATGPT_RANDOM_AUDIT_LEDGER.md` recording source inspection of PNG parsing. No confirmed finding; no executed tests. No independent concurrent worker available.
+- **Testing this run:** existing source/tests read, relative wiki links checked. No npm/unit/browser/build or Python verification tests executed. Do not attribute tests in PR #71 to this run.
+- **Other open PRs:** older QR/UI documentation and UX branches exist; left untouched.
+- **Next step:** qualify PR #71 for integration without rewriting its branch; if still draft or incomplete, avoid duplicate CLI/certificate implementation. Then continue receipt/batch tasks on a newly isolated ChatGPT feature branch, checking main and PR status first. In parallel, review documentation PR and audit ledger, then stage live wiki publication only via supported authorized means.
