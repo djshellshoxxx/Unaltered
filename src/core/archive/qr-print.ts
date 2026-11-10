@@ -13,7 +13,12 @@ export interface CertificateContext {
   buildId?: string;
 }
 
-const hex = (bytes: Uint8Array): string => Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+/** A header quorum needs two different hosts; one host listed twice (in any letter case) is a single source. */
+const distinctSources = (sources: readonly string[]): boolean =>
+  sources.every(source => typeof source === 'string' && source.length > 0) &&
+  new Set(sources.map(source => source.toLowerCase())).size >= 2;
+
+const hex = (bytes: Uint8Array): string =>Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
 
 /** Printable transport of exact .ots bytes, not an unsigned claim of Bitcoin verification. */
 export function createArchivalPrintSheet(symbols: readonly ArchivalQrSymbol[], receiptSha256: string,
@@ -27,7 +32,7 @@ export function createArchivalPrintSheet(symbols: readonly ArchivalQrSymbol[], r
       !Number.isSafeInteger(context.verifiedBitcoin.height) || context.verifiedBitcoin.height < 0 ||
       !/^[0-9a-f]{64}$/i.test(context.verifiedBitcoin.blockHash) ||
       !Number.isFinite(Date.parse(context.verifiedBitcoin.blockTimeUtc)) ||
-      context.verifiedBitcoin.sourcesAgreeing.length < 2)) throw new Error('Verified certificate requires validated block evidence');
+      !distinctSources(context.verifiedBitcoin.sourcesAgreeing))) throw new Error('Verified certificate requires validated block evidence');
   if (context.verifiedBitcoin && context.verificationStatus !== 'verified') throw new Error('Unverified certificate cannot claim block evidence');
   for (const [index, symbol] of symbols.entries()) {
     if (symbol.index !== index || symbol.total !== symbols.length || !Number.isInteger(symbol.version) ||
