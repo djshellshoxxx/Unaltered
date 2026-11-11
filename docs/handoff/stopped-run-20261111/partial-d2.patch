@@ -1,0 +1,670 @@
+diff --git a/tests/qualification/robustness-corpus.py b/tests/qualification/robustness-corpus.py
+new file mode 100644
+index 0000000..da24e90
+--- /dev/null
++++ b/tests/qualification/robustness-corpus.py
+@@ -0,0 +1,458 @@
++#!/usr/bin/env python3
++"""Seeded distortion corpus for printed archival QR certificates, and its third-party measurement.
++
++Test tooling only, never shipped. Needs the pinned packages of robustness-requirements.txt (Pillow, zxing-cpp).
++Driven by robustness-corpus.spec.ts; every subcommand can also be run by hand (see robustness-README.md).
++
++  generate  master page rasters -> distorted scan/photo variants + manifest.json (same seed, same bytes)
++  check     recompute the SHA-256 of every corpus file against the manifest
++  decode    third-party decoder (zxing-cpp) on every variant; frames go to scripts/recover-archival-qr.py
++  report    compact results JSON from the manifest, the third-party results and the in-app results
++
++The corpus models captures of clean printed pages. It is not a substitute for real printers, scanners or phone
++cameras: those remain human evidence.
++"""
++import argparse
++import hashlib
++import importlib.util
++import json
++import math
++import random
++import sys
++import time
++from importlib.metadata import version
++from pathlib import Path
++
++import zxingcpp
++from PIL import Image, ImageChops, ImageDraw, ImageFilter
++
++ROOT = Path(__file__).resolve().parents[2]
++MAGIC = b"UOTSQR01"
++DEFAULT_SEED = 20261111
++OUTCOMES = ("recovered", "wrong", "rejected", "timeout")
++
++# A capture with these values is a clean, straight, evenly lit 200 DPI scan saved as PNG.
++NEUTRAL = {
++    "dpi": 200,         # sampling resolution of the capture, pixels per inch of paper
++    "angle": 0.0,       # page rotation in degrees, positive = clockwise in the image
++    "keystone": 0.0,    # perspective: each end of one page edge moves inward by this fraction of the edge length
++    "axis": "v",        # "v": the top edge is the shortened one, "h": the left edge
++    "blur_mm": 0.0,     # Gaussian blur, standard deviation in millimetres on paper
++    "jpeg": 0,          # JPEG quality (4:2:0 chroma); 0 = lossless PNG
++    "gamma": 1.0,       # tone curve out = in ** gamma (below 1 brightens, above 1 darkens)
++    "light": 1.0,       # uneven lighting: brightness falls linearly to this fraction across the frame
++    "black": 0,         # contrast range: paper black is captured as this grey level ...
++    "white": 255,       # ... and paper white as this one
++    "noise": 0.0,       # sensor noise, standard deviation in grey levels
++    "occlusion": 0.0,   # one symbol is covered by an opaque blob of this fraction of its area
++    "tone": "dark",     # blob tone: "dark" (ink, grey 16) or "light" (tape or glare, grey 250)
++    "surround": 235,    # grey level around the page where a rotated or tilted capture shows it
++}
++# Tag order of a variant ID. The dpi tag is always present; every other tag appears when it differs from NEUTRAL.
++TAGS = (
++    ("angle", lambda p: f"rot{p['angle']:+g}"),
++    ("keystone", lambda p: f"persp-{p['axis']}{p['keystone']:g}"),
++    ("blur_mm", lambda p: f"blur{p['blur_mm']:g}"),
++    ("jpeg", lambda p: f"jpeg{p['jpeg']}"),
++    ("gamma", lambda p: f"gamma{p['gamma']:g}"),
++    ("light", lambda p: f"light{p['light']:g}"),
++    ("black", lambda p: f"contrast{p['black']}-{p['white']}"),
++    ("noise", lambda p: f"noise{p['noise']:g}"),
++    ("occlusion", lambda p: f"occ{p['occlusion']:g}-{p['tone']}"),
++    ("surround", lambda p: f"sur{p['surround']}"),
++)
++FRAME_MARGIN_MM = 6.0   # rotated or tilted captures show this much surround beyond the page's bounding box
++COMBINED_DRAWS = 12
++
++
++def seeded(seed: int, *parts: object) -> random.Random:
++    """Independent stream per purpose, so one variant never depends on the generation order of another."""
++    text = "|".join(str(part) for part in (seed, *parts))
++    return random.Random(int.from_bytes(hashlib.sha256(text.encode()).digest(), "big"))
++
++
++def combined_draw(seed: int, index: int) -> dict:
++    """One camera-like capture: every distortion at once, drawn from the ranges of the single-factor classes."""
++    rng = seeded(seed, "combined", index)
++    return {
++        "dpi": rng.randint(100, 300),
++        "angle": round(rng.uniform(-10.0, 10.0), 1),
++        "keystone": round(rng.uniform(0.0, 0.08), 3),
++        "axis": rng.choice(("v", "h")),
++        "blur_mm": round(rng.uniform(0.0, 0.25), 2),
++        "jpeg": rng.randint(30, 90),
++        "gamma": round(math.exp(rng.uniform(math.log(0.5), math.log(2.0))), 2),
++        "light": round(rng.uniform(0.4, 1.0), 2),
++        "noise": round(rng.uniform(0.0, 4.0), 1),
++        "surround": rng.choice((96, 235)),
++    }
++
++
++def class_grid(seed: int) -> dict:
++    """The corpus definition. Fixed before any recovery was measured; never tune it to move a result."""
++    tones = ("dark", "light")
++    return {
++        "dpi": [{"dpi": v} for v in (100, 110, 120, 130, 150, 175, 200, 250, 300)],
++        "rotation": [{"angle": v} for v in (1.0, -2.0, 3.0, -5.0, 7.5, -10.0)],
++        "perspective": [{"keystone": k, "axis": a, "surround": 96} for k in (0.02, 0.04, 0.06, 0.08) for a in ("v", "h")],
++        "blur": [{"blur_mm": v} for v in (0.10, 0.15, 0.20, 0.25, 0.30, 0.35)],
++        "jpeg": [{"jpeg": v} for v in (90, 80, 70, 60, 50, 40, 30)],
++        "lighting": [{"gamma": v} for v in (0.5, 0.67, 1.5, 2.0)] + [{"light": v} for v in (0.7, 0.5, 0.35, 0.25)]
++        + [{"gamma": 0.67, "light": 0.5}, {"gamma": 1.5, "light": 0.35}]
++        + [{"black": 64, "white": 192}, {"black": 96, "white": 160}],
++        "occlusion": [{"occlusion": v, "tone": tones[i % 2]} for i, v in enumerate((0.02, 0.04, 0.06, 0.08, 0.10, 0.12, 0.16, 0.20))],
++        "combined": [combined_draw(seed, index) for index in range(COMBINED_DRAWS)],
++    }
++
++
++def variant_key(parameters: dict) -> str:
++    tags = [f"dpi{parameters['dpi']}"]
++    tags += [render(parameters) for name, render in TAGS if parameters[name] != NEUTRAL[name]]
++    return "-".join(tags)
++
++
++def sha256_file(path: Path) -> str:
++    digest = hashlib.sha256()
++    with path.open("rb") as handle:
++        for block in iter(lambda: handle.read(1 << 20), b""):
++            digest.update(block)
++    return digest.hexdigest()
++
++
++def reference_recover():
++    spec = importlib.util.spec_from_file_location("archival_recovery", ROOT / "scripts/recover-archival-qr.py")
++    assert spec and spec.loader
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    return module.recover
++
++
++def read_symbols(image: Image.Image) -> list:
++    """Third-party decoding with the library defaults (rotation, downscaling and inversion attempts enabled)."""
++    return [code for code in zxingcpp.read_barcodes(image, formats=zxingcpp.BarcodeFormat.QRCode) if code.valid]
++
++
++def solve(matrix: list, vector: list) -> list:
++    """Gaussian elimination with partial pivoting (8 unknowns of a perspective transform)."""
++    n = len(vector)
++    rows = [list(row) + [value] for row, value in zip(matrix, vector)]
++    for column in range(n):
++        pivot = max(range(column, n), key=lambda r: abs(rows[r][column]))
++        rows[column], rows[pivot] = rows[pivot], rows[column]
++        for r in range(column + 1, n):
++            factor = rows[r][column] / rows[column][column]
++            for c in range(column, n + 1):
++                rows[r][c] -= factor * rows[column][c]
++    result = [0.0] * n
++    for r in range(n - 1, -1, -1):
++        result[r] = (rows[r][n] - sum(rows[r][c] * result[c] for c in range(r + 1, n))) / rows[r][r]
++    return result
++
++
++def perspective_coefficients(frame_points: list, page_points: list) -> list:
++    """Coefficients for Image.transform: frame (output) coordinates -> page (input) coordinates."""
++    matrix, vector = [], []
++    for (x, y), (u, v) in zip(frame_points, page_points):
++        matrix.append([x, y, 1, 0, 0, 0, -u * x, -u * y]); vector.append(u)
++        matrix.append([0, 0, 0, x, y, 1, -v * x, -v * y]); vector.append(v)
++    return solve(matrix, vector)
++
++
++def warp(page: Image.Image, parameters: dict, master_dpi: int) -> Image.Image:
++    """Rotation and keystone as one projective map into a frame that shows the surround."""
++    if parameters["angle"] == 0.0 and parameters["keystone"] == 0.0:
++        return page
++    width, height = page.size
++    k = parameters["keystone"]
++    corners = [(0.0, 0.0), (float(width), 0.0), (float(width), float(height)), (0.0, float(height))]  # TL TR BR BL
++    if parameters["axis"] == "v":
++        placed = [(k * width, 0.0), (width - k * width, 0.0), corners[2], corners[3]]
++    else:
++        placed = [(0.0, k * height), corners[1], corners[2], (0.0, height - k * height)]
++    theta = math.radians(parameters["angle"])
++    cx, cy = width / 2, height / 2
++    placed = [(cx + (x - cx) * math.cos(theta) - (y - cy) * math.sin(theta),
++               cy + (x - cx) * math.sin(theta) + (y - cy) * math.cos(theta)) for x, y in placed]
++    margin = FRAME_MARGIN_MM / 25.4 * master_dpi
++    left = min(x for x, _ in placed) - margin
++    top = min(y for _, y in placed) - margin
++    placed = [(x - left, y - top) for x, y in placed]
++    size = (math.ceil(max(x for x, _ in placed) + margin), math.ceil(max(y for _, y in placed) + margin))
++    return page.transform(size, Image.Transform.PERSPECTIVE, perspective_coefficients(placed, corners),
++                          resample=Image.Resampling.BICUBIC, fillcolor=parameters["surround"])
++
++
++def lighting_field(size: tuple, floor: float, rng: random.Random) -> Image.Image:
++    """Linear brightness ramp from `floor` to 1 along a seeded direction, as an 8-bit multiplier image."""
++    direction = rng.uniform(0.0, 2.0 * math.pi)
++    dx, dy = math.cos(direction), math.sin(direction)
++    span = abs(dx) + abs(dy)
++    cells = 64
++    values = bytearray()
++    for y in range(cells):
++        for x in range(cells):
++            t = 0.5 + ((x / (cells - 1) - 0.5) * dx + (y / (cells - 1) - 0.5) * dy) / span
++            values.append(round(255 * (floor + (1.0 - floor) * t)))
++    return Image.frombytes("L", (cells, cells), bytes(values)).resize(size, Image.Resampling.BICUBIC)
++
++
++def noise_field(size: tuple, sigma: float, rng: random.Random) -> Image.Image:
++    """Zero-mean noise around grey 128: the mean of four uniform byte fields is close to Gaussian."""
++    count = size[0] * size[1]
++    fields = [Image.frombytes("L", size, rng.randbytes(count)) for _ in range(4)]
++    mean = ImageChops.add(ImageChops.add(fields[0], fields[1], scale=2), ImageChops.add(fields[2], fields[3], scale=2), scale=2)
++    spread = 255 / math.sqrt(12) / 2  # standard deviation of that mean
++    return mean.point([max(0, min(255, round(128 + (v - 127.5) * sigma / spread))) for v in range(256)])
++
++
++def occlude(page: Image.Image, quad: list, parameters: dict, rng: random.Random) -> Image.Image:
++    xs, ys = [x for x, _ in quad], [y for _, y in quad]
++    x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
++    area = parameters["occlusion"] * (x1 - x0) * (y1 - y0)
++    aspect = rng.uniform(0.6, 1 / 0.6)
++    rx, ry = math.sqrt(area * aspect / math.pi), math.sqrt(area / (aspect * math.pi))
++    cx, cy = rng.uniform(x0 + rx, x1 - rx), rng.uniform(y0 + ry, y1 - ry)
++    covered = page.copy()
++    ImageDraw.Draw(covered).ellipse((cx - rx, cy - ry, cx + rx, cy + ry), fill=16 if parameters["tone"] == "dark" else 250)
++    return covered
++
++
++def capture(page: Image.Image, parameters: dict, master_dpi: int, rng: random.Random) -> Image.Image:
++    """Paper -> pose -> optics -> sampling -> light, exposure, noise and tone curve. Encoding is done by the caller."""
++    image = warp(page, parameters, master_dpi)
++    if parameters["blur_mm"] > 0:
++        image = image.filter(ImageFilter.GaussianBlur(parameters["blur_mm"] / 25.4 * master_dpi))
++    ratio = master_dpi / parameters["dpi"]
++    # A capture grid is never aligned with the print: start at a seeded sub-pixel phase, then average areas.
++    ox, oy = rng.randrange(max(1, int(ratio))), rng.randrange(max(1, int(ratio)))
++    size = (int((image.width - ox) / ratio), int((image.height - oy) / ratio))
++    image = image.resize(size, Image.Resampling.BOX, box=(ox, oy, ox + size[0] * ratio, oy + size[1] * ratio))
++    if parameters["light"] < 1.0:
++        image = ImageChops.multiply(image, lighting_field(size, parameters["light"], rng))
++    black, white = parameters["black"], parameters["white"]
++    if (black, white) != (0, 255):
++        image = image.point([round(black + v * (white - black) / 255) for v in range(256)])
++    if parameters["noise"] > 0:
++        image = ImageChops.add(image, noise_field(size, parameters["noise"], rng), scale=1, offset=-128)
++    if parameters["gamma"] != 1.0:
++        image = image.point([round(255 * (v / 255) ** parameters["gamma"]) for v in range(256)])
++    return image
++
++
++def tool_versions() -> dict:
++    return {"python": sys.version.split()[0], "pillow": version("pillow"), "zxing-cpp": version("zxing-cpp")}
++
++
++def generate(args: argparse.Namespace) -> None:
++    base, out = Path(args.base), Path(args.out)
++    described = json.loads((base / "base.json").read_text())
++    master_dpi = described["masterDpi"]
++    grid = class_grid(args.seed)
++    recover = reference_recover()
++    out.mkdir(parents=True, exist_ok=False)
++    documents, variants = [], []
++    for document in described["documents"]:
++        original = (base / document["receipt"]).read_bytes()
++        pages = [Image.open(base / path).convert("L") for path in document["pages"]]
++        # Locate the symbols on the clean master (needed to place an occlusion) and confirm that the third-party
++        # decoder plus the reference reassembly return the original receipt before anything is distorted.
++        located = []
++        for index, page in enumerate(pages):
++            for code in read_symbols(page.reduce(3)):
++                if code.bytes[:8] == MAGIC:
++                    position = code.position
++                    quad = [(point.x * 3, point.y * 3) for point in (position.top_left, position.top_right, position.bottom_right, position.bottom_left)]
++                    located.append((int.from_bytes(code.bytes[28:32], "big"), index, quad, bytes(code.bytes)))
++        located.sort()
++        if len(located) != document["symbols"] or recover([frame for *_, frame in located]) != original:
++            raise SystemExit(f"master pages of {document['id']} do not decode to the original receipt")
++        documents.append({**{key: document[key] for key in ("id", "paper", "correction", "version", "level", "symbols", "receiptBytes", "receiptSha256")},
++                          "masters": [{"sha256": sha256_file(base / path), "width": page.width, "height": page.height} for path, page in zip(document["pages"], pages)],
++                          "frameSha256": [hashlib.sha256(frame).hexdigest() for *_, frame in located]})
++        for group, settings in grid.items():
++            for setting in settings:
++                parameters = {**NEUTRAL, **setting}
++                key = variant_key(parameters)
++                identifier = f"{document['id']}/{group}/{key}"
++                target = None
++                if parameters["occlusion"] > 0:
++                    target = located[seeded(args.seed, identifier, "symbol").randrange(len(located))]
++                files = []
++                for index, page in enumerate(pages):
++                    if target and target[1] == index:
++                        page = occlude(page, target[2], parameters, seeded(args.seed, identifier, "blob"))
++                    image = capture(page, parameters, master_dpi, seeded(args.seed, identifier, index))
++                    relative = f"{document['id']}/{group}/{key}-p{index + 1}.{'jpg' if parameters['jpeg'] else 'png'}"
++                    (out / relative).parent.mkdir(parents=True, exist_ok=True)
++                    if parameters["jpeg"]:
++                        image.convert("RGB").save(out / relative, "JPEG", quality=parameters["jpeg"], subsampling="4:2:0")
++                    else:
++                        image.save(out / relative, "PNG", compress_level=6)
++                    files.append({"path": relative, "sha256": sha256_file(out / relative), "bytes": (out / relative).stat().st_size,
++                                  "width": image.width, "height": image.height})
++                variants.append({"id": identifier, "document": document["id"], "class": group, "parameters": parameters, "files": files})
++        print(f"{document['id']}: {sum(1 for v in variants if v['document'] == document['id'])} variants", flush=True)
++    if len({variant["id"] for variant in variants}) != len(variants):
++        raise SystemExit("variant IDs are not unique")
++    manifest = {
++        "schema": "unaltered-qr-robustness-corpus/1", "seed": args.seed, "masterDpi": master_dpi,
++        "generator": {"path": "tests/qualification/robustness-corpus.py", "sha256": sha256_file(Path(__file__))},
++        "tools": {**tool_versions(), **described.get("tools", {})}, "build": described.get("build", "unknown"),
++        "neutral": NEUTRAL, "frameMarginMm": FRAME_MARGIN_MM, "classes": grid, "documents": documents, "variants": variants,
++    }
++    (out / "manifest.json").write_text(json.dumps(manifest, indent=1, sort_keys=True) + "\n")
++    print(f"{len(variants)} variants, {sum(len(v['files']) for v in variants)} files")
++
++
++def check(args: argparse.Namespace) -> None:
++    corpus = Path(args.corpus)
++    manifest = json.loads((corpus / "manifest.json").read_text())
++    listed = {file["path"]: file["sha256"] for variant in manifest["variants"] for file in variant["files"]}
++    on_disk = {path.relative_to(corpus).as_posix() for path in corpus.rglob("*") if path.is_file()} - {"manifest.json"}
++    if on_disk != set(listed):
++        raise SystemExit("corpus files differ from the manifest")
++    wrong = [path for path, digest in listed.items() if sha256_file(corpus / path) != digest]
++    if wrong:
++        raise SystemExit(f"{len(wrong)} corpus files do not match their manifest hash, first: {wrong[0]}")
++    print(f"{len(listed)} files match the manifest")
++
++
++def decode(args: argparse.Namespace) -> None:
++    base, corpus = Path(args.base), Path(args.corpus)
++    manifest = json.loads((corpus / "manifest.json").read_text())
++    described = {document["id"]: document for document in json.loads((base / "base.json").read_text())["documents"]}
++    expected = {document["id"]: set(document["frameSha256"]) for document in manifest["documents"]}
++    recover = reference_recover()
++    results = []
++    for variant in manifest["variants"]:
++        original = (base / described[variant["document"]]["receipt"]).read_bytes()
++        started = time.perf_counter()
++        frames = []
++        for file in variant["files"]:
++            with Image.open(corpus / file["path"]) as image:
++                frames += [bytes(code.bytes) for code in read_symbols(image.convert("L")) if code.bytes[:8] == MAGIC]
++        try:
++            outcome = "recovered" if recover(frames) == original else "wrong"
++        except ValueError:
++            outcome = "rejected"
++        genuine = sum(1 for frame in frames if hashlib.sha256(frame).hexdigest() in expected[variant["document"]])
++        results.append({"id": variant["id"], "outcome": outcome, "frames": len(frames), "framesGenuine": genuine,
++                        "ms": round((time.perf_counter() - started) * 1000)})
++    Path(args.out).write_text(json.dumps({
++        "decoder": f"zxing-cpp {version('zxing-cpp')}",
++        "options": "read_barcodes(image, formats=QRCode), library defaults: try_rotate, try_downscale, try_invert, binarizer LocalAverage",
++        "reassembly": "scripts/recover-archival-qr.py", "tools": tool_versions(), "variants": results}, indent=1) + "\n")
++    print(f"third party: {sum(1 for r in results if r['outcome'] == 'recovered')}/{len(results)} recovered")
++
++
++def tally(outcomes: list) -> dict:
++    """outcomes: [(variant id, outcome)]."""
++    counted = {name: sum(1 for _, outcome in outcomes if outcome == name) for name in OUTCOMES}
++    return {"tried": len(outcomes), **counted, "failing": sorted(identifier for identifier, outcome in outcomes if outcome != "recovered")}
++
++
++def report(args: argparse.Namespace) -> None:
++    corpus = Path(args.corpus)
++    manifest_bytes = (corpus / "manifest.json").read_bytes()
++    manifest = json.loads(manifest_bytes)
++    third = json.loads(Path(args.third_party).read_text())
++    third_by_id = {item["id"]: item["outcome"] for item in third["variants"]}
++    order = [variant["id"] for variant in manifest["variants"]]
++    if set(third_by_id) != set(order):
++        raise SystemExit("third-party results do not cover the manifest")
++    labels = args.labels.split(",") if args.labels else sorted(path.name for path in Path(args.in_app).iterdir() if path.is_dir())
++    runs = {}
++    for label in labels:
++        measured, builds = {}, set()
++        for path in sorted((Path(args.in_app) / label).glob("*.json")):
++            part = json.loads(path.read_text())
++            builds.add(part["build"])
++            for item in part["variants"]:
++                measured[item["id"]] = item
++        if set(measured) != set(order):
++            raise SystemExit(f"in-app run '{label}' covers {len(measured)} of {len(order)} variants")
++        runs[label] = {"build": sorted(builds), "measured": measured}
++    groups = []
++    for document in manifest["documents"]:
++        for group in manifest["classes"]:
++            ids = [v["id"] for v in manifest["variants"] if v["document"] == document["id"] and v["class"] == group]
++            groups.append((document["id"], group, ids))
++
++    def in_app(label: str, ids: list) -> dict:
++        measured = runs[label]["measured"]
++        times = [time_ms for identifier in ids for time_ms in measured[identifier]["imageMs"]]
++        return {**tally([(identifier, measured[identifier]["outcome"]) for identifier in ids]), "slowestImageMs": max(times, default=0)}
++
++    def block(ids: list) -> dict:
++        return {"tried": len(ids), "thirdParty": tally([(identifier, third_by_id[identifier]) for identifier in ids]),
++                "inApp": {label: in_app(label, ids) for label in labels}}
++
++    def gap(label: str) -> list:
++        measured = runs[label]["measured"]
++        return [identifier for identifier in order if third_by_id[identifier] == "recovered" and measured[identifier]["outcome"] != "recovered"]
++
++    summary = {
++        "schema": "unaltered-qr-robustness/1",
++        "note": "Synthetic captures of clean Chromium PDF pages. Not evidence for real printers, scanners or phone cameras.",
++        "seed": manifest["seed"],
++        "generator": {**manifest["generator"], "masterDpi": manifest["masterDpi"], "frameMarginMm": manifest["frameMarginMm"],
++                      "neutral": manifest["neutral"], "classes": manifest["classes"]},
++        "tools": {**manifest["tools"], "corpusBuild": manifest["build"]},
++        "documents": [{key: value for key, value in document.items() if key not in ("masters", "frameSha256")} for document in manifest["documents"]],
++        "corpus": {"variants": len(order), "files": sum(len(v["files"]) for v in manifest["variants"]),
++                   "manifestSha256": hashlib.sha256(manifest_bytes).hexdigest(),
++                   "determinism": json.loads(Path(args.determinism).read_text()) if args.determinism else None},
++        "thirdParty": {key: third[key] for key in ("decoder", "options", "reassembly")},
++        "inApp": {"path": "built app in Chromium: recovery file input, scan worker (jsQR), frame reassembly, downloaded .ots compared byte for byte",
++                  "runs": [{"label": label, "build": runs[label]["build"]} for label in labels]},
++        "outcomes": "recovered = byte-identical receipt; wrong = a receipt was returned that differs (must be 0); rejected = no receipt; timeout = an image hit the 120 s scan deadline",
++        "totals": block(order),
++        "byClass": {group: block([identifier for _, g, ids in groups if g == group for identifier in ids]) for group in manifest["classes"]},
++        "byDocumentAndClass": [{"document": document, "class": group, **block(ids)} for document, group, ids in groups],
++        "thirdPartyRecoversInAppDoesNot": {label: gap(label) for label in labels},
++    }
++    for totals in [summary["totals"], *summary["byClass"].values()]:
++        totals["thirdParty"].pop("failing"); [run.pop("failing") for run in totals["inApp"].values()]
++    if len(labels) >= 2:
++        first, last = runs[labels[0]]["measured"], runs[labels[-1]]["measured"]
++        summary["change"] = {"from": labels[0], "to": labels[-1],
++                             "stoppedRecovering": [i for i in order if first[i]["outcome"] == "recovered" and last[i]["outcome"] != "recovered"],
++                             "startedRecovering": [i for i in order if first[i]["outcome"] != "recovered" and last[i]["outcome"] == "recovered"]}
++    Path(args.out).write_text(json.dumps(summary, indent=1) + "\n")
++    print(f"{'class':<12} {'tried':>5} {'third party':>11} " + " ".join(f"{'in-app ' + label:>16}" for label in labels))
++    for group, totals in [*summary["byClass"].items(), ("all", summary["totals"])]:
++        print(f"{group:<12} {totals['tried']:>5} {totals['thirdParty']['recovered']:>11} " + " ".join(f"{totals['inApp'][label]['recovered']:>16}" for label in labels))
++    wrong = summary["totals"]["thirdParty"]["wrong"] + sum(run["wrong"] for run in summary["totals"]["inApp"].values())
++    print(f"decoded but wrong: {wrong}")
++
++
++def main() -> None:
++    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
++    commands = parser.add_subparsers(dest="command", required=True)
++    command = commands.add_parser("generate")
++    command.add_argument("--base", required=True, help="directory with base.json, receipts and master page rasters")
++    command.add_argument("--out", required=True, help="new directory for the corpus")
++    command.add_argument("--seed", type=int, default=DEFAULT_SEED)
++    command.set_defaults(run=generate)
++    command = commands.add_parser("check")
++    command.add_argument("--corpus", required=True)
++    command.set_defaults(run=check)
++    command = commands.add_parser("decode")
++    command.add_argument("--base", required=True)
++    command.add_argument("--corpus", required=True)
++    command.add_argument("--out", required=True)
++    command.set_defaults(run=decode)
++    command = commands.add_parser("report")
++    command.add_argument("--corpus", required=True)
++    command.add_argument("--third-party", required=True)
++    command.add_argument("--in-app", required=True, help="directory with one sub-directory of results per in-app run label")
++    command.add_argument("--labels", help="comma-separated run labels in order (default: all, sorted)")
++    command.add_argument("--determinism")
++    command.add_argument("--out", required=True)
++    command.set_defaults(run=report)
++    args = parser.parse_args()
++    args.run(args)
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/tests/qualification/robustness-corpus.spec.ts b/tests/qualification/robustness-corpus.spec.ts
+new file mode 100644
+index 0000000..e3281c1
+--- /dev/null
++++ b/tests/qualification/robustness-corpus.spec.ts
+@@ -0,0 +1,200 @@
++// Opt-in measurement of printed-certificate recovery from camera-like images. See robustness-README.md.
++//
++// Skipped unless UNALTERED_QR_ROBUSTNESS_PYTHON names a Python interpreter that has the pinned packages of
++// robustness-requirements.txt. CI runs this directory with Chromium and poppler-utils only, so there it is skipped.
++//
++// The in-app result is the path a user takes: the built app in Chromium, the image files given to the recovery
++// file input, decoded by the scan worker, frames reassembled, the downloaded receipt compared byte for byte.
++import { execFileSync, spawnSync } from 'node:child_process';
++import { createHash } from 'node:crypto';
++import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
++import { resolve } from 'node:path';
++import { expect, test, type Page } from '@playwright/test';
++import { archivalReceiptFixture } from '../helpers/archival-receipt';
++import { cspViolations, watchViolations } from '../e2e/helpers';
++
++const python = process.env.UNALTERED_QR_ROBUSTNESS_PYTHON ?? '';
++const work = resolve(process.env.UNALTERED_QR_ROBUSTNESS_DIR ?? 'test-results/qr-robustness');
++const label = process.env.UNALTERED_QR_ROBUSTNESS_LABEL ?? 'current';
++const seed = process.env.UNALTERED_QR_ROBUSTNESS_SEED ?? '20261111';
++const tool = resolve('tests/qualification/robustness-corpus.py');
++const MASTER_DPI = 600;
++/** The scan worker's per-image deadline (QR_SCAN_TIMEOUT_MS); an image that takes this long was terminated. */
++const IMAGE_DEADLINE_MS = 120_000;
++
++/** Certificates printed with the default (automatic) correction. Together they cover L, M, Q and H, the cover
++ * layout (two symbols) and a continuation page (three symbols), on both paper sizes. The expected plan is asserted,
++ * so a planner change cannot silently change what the corpus measures.
++ */
++const DOCUMENTS = [
++  { id: 'h2', payloadBytes: 400, paper: 'a4', version: 20, level: 'H', symbols: 2, symbolPages: 1 },
++  { id: 'q2', payloadBytes: 800, paper: 'letter', version: 22, level: 'Q', symbols: 2, symbolPages: 1 },
++  { id: 'l2', payloadBytes: 1700, paper: 'a4', version: 22, level: 'L', symbols: 2, symbolPages: 1 },
++  { id: 'm5', payloadBytes: 3000, paper: 'letter', version: 21, level: 'M', symbols: 5, symbolPages: 2 },
++] as const;
++/** Variant classes of the generator, in its order. Checked against the generated manifest. */
++const CLASSES = ['dpi', 'rotation', 'perspective', 'blur', 'jpeg', 'lighting', 'occlusion', 'combined'] as const;
++
++interface Variant { id: string; document: string; class: string; files: { path: string; sha256: string }[] }
++interface Manifest { seed: number; variants: Variant[] }
++type Outcome = 'recovered' | 'wrong' | 'rejected' | 'timeout';
++interface Measured { id: string; outcome: Outcome; ms: number; imageMs: number[] }
++
++const sha256 = (bytes: Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
++const run = (args: string[]): string => execFileSync(python, ['-I', tool, ...args], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
++const manifest = (): Manifest => JSON.parse(readFileSync(resolve(work, 'corpus/manifest.json'), 'utf8')) as Manifest;
++
++test.describe.configure({ mode: 'serial' });
++test.skip(!python, 'Opt-in corpus measurement: set UNALTERED_QR_ROBUSTNESS_PYTHON to a Python interpreter with ' +
++  'tests/qualification/robustness-requirements.txt installed (see tests/qualification/robustness-README.md).');
++
++test('stage 1: print certificates in Chromium and rasterize the master pages', async ({ page, browser }) => {
++  test.setTimeout(300_000);
++  const errors = await watchViolations(page);
++  // The cover prints the device clock. A fixed clock keeps the master pages identical between runs of one build.
++  await page.clock.setFixedTime(new Date('2026-11-11T00:00:00Z'));
++  const documents = [];
++  let build = 'unknown';
++  for (const doc of DOCUMENTS) {
++    const directory = resolve(work, 'base', doc.id);
++    rmSync(directory, { recursive: true, force: true }); mkdirSync(directory, { recursive: true });
++    const original = Buffer.from(archivalReceiptFixture(doc.payloadBytes));
++    writeFileSync(resolve(directory, 'original.ots'), original);
++    await page.goto('/Unaltered/#verify');
++    build = (await page.locator('#build-hash').textContent())?.trim() ?? 'unknown';
++    await page.getByLabel('Choose a .ots receipt for a QR certificate').setInputFiles({ name: `${doc.id}.ots`, mimeType: 'application/octet-stream', buffer: original });
++    await page.locator('.archival-import summary').click();
++    await expect(page.locator('.archival-import input[value="auto"]')).toBeChecked();
++    await page.locator(`.archival-import input[value="${doc.paper}"]`).check();
++    await page.getByRole('button', { name: 'Preview QR certificate', exact: true }).click();
++    await expect(page.locator('.archival-preview')).toBeVisible();
++    const labels = await page.locator('.unaltered-archival-symbol p:first-of-type').allTextContents();
++    expect(labels).toHaveLength(doc.symbols);
++    for (const text of labels) expect(text).toContain(`V${doc.version}; ${doc.version * 4 + 17} × ${doc.version * 4 + 17} modules; ECC ${doc.level};`);
++    const pages = await page.locator('.archival-page').count();
++    expect(pages).toBe(doc.symbolPages + 1);
++    const pdf = resolve(directory, 'certificate.pdf');
++    await page.pdf({ path: pdf, preferCSSPageSize: true, printBackground: true, displayHeaderFooter: false });
++    expect(Number(/^Pages:\s+(\d+)/m.exec(execFileSync('pdfinfo', [pdf], { encoding: 'utf8' }))?.[1])).toBe(pages);
++    // Symbol pages only: the last page is the recovery appendix and carries no QR data.
++    execFileSync('pdftoppm', ['-r', String(MASTER_DPI), '-gray', '-f', '1', '-l', String(doc.symbolPages), pdf, resolve(directory, 'raster')]);
++    const rasters = readdirSync(directory).filter(name => /^raster-\d+\.pgm$/.test(name)).sort();
++    expect(rasters).toHaveLength(doc.symbolPages);
++    rasters.forEach((name, index) => renameSync(resolve(directory, name), resolve(directory, `page-${index + 1}.pgm`)));
++    documents.push({ id: doc.id, paper: doc.paper, correction: 'auto', version: doc.version, level: doc.level, symbols: doc.symbols,
++      receiptBytes: original.length, receiptSha256: sha256(original), receipt: `${doc.id}/original.ots`,
++      pages: rasters.map((_, index) => `${doc.id}/page-${index + 1}.pgm`) });
++    await page.getByRole('button', { name: 'Close certificate preview' }).click();
++  }
++  const poppler = spawnSync('pdftoppm', ['-v'], { encoding: 'utf8' });
++  writeFileSync(resolve(work, 'base/base.json'), JSON.stringify({ masterDpi: MASTER_DPI, build, documents,
++    tools: { chromium: browser.version(), pdftoppm: /version (\S+)/.exec(`${poppler.stderr}${poppler.stdout}`)?.[1] ?? 'unknown' } }, null, 2) + '\n');
++  expect(await cspViolations(page)).toEqual([]);
++  expect(errors.list).toEqual([]);
++});
++
++test('stage 2: one seed generates the same corpus bytes twice', () => {
++  test.setTimeout(3_600_000);
++  for (const out of ['corpus', 'corpus-repeat']) {
++    rmSync(resolve(work, out), { recursive: true, force: true });
++    run(['generate', '--base', resolve(work, 'base'), '--out', resolve(work, out), '--seed', seed]);
++  }
++  const first = readFileSync(resolve(work, 'corpus/manifest.json'));
++  expect(sha256(readFileSync(resolve(work, 'corpus-repeat/manifest.json')))).toBe(sha256(first));
++  // The manifest lists the SHA-256 of every image; confirm that it describes the files that are on disk.
++  run(['check', '--corpus', resolve(work, 'corpus')]);
++  run(['check', '--corpus', resolve(work, 'corpus-repeat')]);
++  rmSync(resolve(work, 'corpus-repeat'), { recursive: true, force: true });
++  writeFileSync(resolve(work, 'determinism.json'), JSON.stringify({ generations: 2, identical: true, manifestSha256: sha256(first) }) + '\n');
++  expect(new Set(manifest().variants.map(variant => variant.class))).toEqual(new Set(CLASSES));
++});
++
++test('stage 3: third-party decoder on every variant', () => {
++  test.setTimeout(3_600_000);
++  run(['decode', '--base', resolve(work, 'base'), '--corpus', resolve(work, 'corpus'), '--out', resolve(work, 'third-party.json')]);
++  const results = JSON.parse(readFileSync(resolve(work, 'third-party.json'), 'utf8')) as { variants: { outcome: string }[] };
++  expect(results.variants).toHaveLength(manifest().variants.length);
++  // A receipt that passes both checksums but differs from the original would be a security finding.
++  expect(results.variants.filter(variant => variant.outcome === 'wrong')).toEqual([]);
++});
++
++type ScanLog = { __scan: [string, number][] };
++
++/** Opens the recovery panel offline and records every change of its status line with a page timestamp. */
++async function openRecovery(page: Page): Promise<string> {
++  await page.context().setOffline(false);
++  await page.goto('/Unaltered/#verify');
++  const build = (await page.locator('#build-hash').textContent())?.trim() ?? 'unknown';
++  await page.evaluate(() => {
++    const status = document.querySelector('.archival-recovery [role=status]')!;
++    (window as unknown as ScanLog).__scan = [];
++    new MutationObserver(() => { (window as unknown as ScanLog).__scan.push([status.textContent ?? '', performance.now()]); })
++      .observe(status, { childList: true, characterData: true, subtree: true });
++  });
++  await page.context().setOffline(true);
++  return build;
++}
++
++/** One variant through the recovery panel, exactly as a user would: choose the images, press the button, download. */
++async function recoverInApp(page: Page, files: string[], original: Buffer): Promise<Omit<Measured, 'id'> & { stuck: boolean }> {
++  await page.evaluate(() => { (window as unknown as ScanLog).__scan = []; });
++  const started = Date.now();
++  await page.getByLabel('Choose QR images or binary frame files').setInputFiles(files);
++  await page.getByRole('button', { name: 'Recover receipt from QR images' }).click();
++  const state = await page.waitForFunction(() => {
++    const root = document.querySelector('.archival-recovery');
++    if (root?.querySelector('a[download]')) return 'link';
++    return root?.querySelector('[role=status]')?.textContent?.startsWith('Recovery failed.') ? 'failed' : false;
++  }, null, { timeout: files.length * (IMAGE_DEADLINE_MS + 5_000) + 10_000, polling: 100 }).then(handle => handle.jsonValue(), () => 'stuck');
++  const ms = Date.now() - started;
++  const log = await page.evaluate(() => (window as unknown as ScanLog).__scan);
++  const scans = log.filter(([text]) => text.startsWith('Scanning input '));
++  const end = log.at(-1)?.[1] ?? 0;
++  const imageMs = scans.map(([, at], index) => Math.round((scans[index + 1]?.[1] ?? end) - at));
++  if (state === 'link') {
++    const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('link', { name: 'Download recovered .ots receipt' }).click()]);
++    const recovered = readFileSync((await download.path())!);
++    return { outcome: recovered.equals(original) ? 'recovered' : 'wrong', ms, imageMs, stuck: false };
++  }
++  // The app reports a terminated scan like any other unreadable image; only the time tells them apart.
++  const deadline = state === 'stuck' || imageMs.some(time => time >= IMAGE_DEADLINE_MS - 500);
++  return { outcome: deadline ? 'timeout' : 'rejected', ms, imageMs, stuck: state === 'stuck' };
++}
++
++for (const doc of DOCUMENTS) for (const group of CLASSES) {
++  test(`stage 4: in-app recovery of ${doc.id}/${group}`, async ({ page }) => {
++    const variants = manifest().variants.filter(variant => variant.document === doc.id && variant.class === group);
++    expect(variants.length).toBeGreaterThan(0);
++    test.setTimeout(60_000 + variants.reduce((sum, variant) => sum + variant.files.length * (IMAGE_DEADLINE_MS + 10_000), 0));
++    const errors = await watchViolations(page);
++    const original = readFileSync(resolve(work, 'base', doc.id, 'original.ots'));
++    const build = await openRecovery(page);
++    const measured: Measured[] = [];
++    for (const variant of variants) {
++      const { stuck, ...result } = await recoverInApp(page, variant.files.map(file => resolve(work, 'corpus', file.path)), original);
++      measured.push({ id: variant.id, ...result });
++      if (stuck) await openRecovery(page);
++    }
++    const directory = resolve(work, 'in-app', label); mkdirSync(directory, { recursive: true });
++    writeFileSync(resolve(directory, `${doc.id}-${group}.json`), JSON.stringify({ label, build, document: doc.id, class: group, variants: measured }, null, 1) + '\n');
++    console.log(`${doc.id}/${group}: ${measured.filter(item => item.outcome === 'recovered').length}/${measured.length} recovered in-app (${label}, build ${build})`);
++    // A download that differs from the original receipt would be a security finding, never a robustness number.
++    expect(measured.filter(item => item.outcome === 'wrong')).toEqual([]);
++    expect(await cspViolations(page)).toEqual([]);
++    expect(errors.list).toEqual([]);
++  });
++}
++
++test('stage 5: results summary', () => {
++  const out = resolve(work, 'qr-robustness.json');
++  const args = ['report', '--corpus', resolve(work, 'corpus'), '--third-party', resolve(work, 'third-party.json'),
++    '--in-app', resolve(work, 'in-app'), '--out', out];
++  if (existsSync(resolve(work, 'determinism.json'))) args.push('--determinism', resolve(work, 'determinism.json'));
++  console.log(run(args));
++  const summary = JSON.parse(readFileSync(out, 'utf8')) as
++    { totals: { tried: number; thirdParty: { wrong: number }; inApp: Record<string, { tried: number; wrong: number }> } };
++  expect(summary.totals.tried).toBe(manifest().variants.length);
++  expect(summary.totals.thirdParty.wrong).toBe(0);
++  expect(Object.keys(summary.totals.inApp).length).toBeGreaterThan(0);
++  for (const result of Object.values(summary.totals.inApp)) expect(result.wrong).toBe(0);
++});

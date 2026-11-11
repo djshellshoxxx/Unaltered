@@ -1,0 +1,2111 @@
+diff --git a/tests/archival/independent-vectors-v1.json b/tests/archival/independent-vectors-v1.json
+new file mode 100644
+index 0000000..91f0a5a
+--- /dev/null
++++ b/tests/archival/independent-vectors-v1.json
+@@ -0,0 +1,767 @@
++{
++  "schema": "unaltered-ots-qr-independent-vectors/1",
++  "protocol": "UNALTERED-OTS-QR/1",
++  "specification": "docs/ARCHIVAL_QR_PROTOCOL.md",
++  "builder": "tests/archival/independent_frames.py",
++  "about": [
++    "Golden vectors built by a Python program written from the specification text only.",
++    "receipt.hex is the receipt itself; receipt.stream names a deterministic byte stream: block(k) = SHA-256(ASCII('UNALTERED-OTS-QR/1 independent vector ' + label) || uint32be(k)); bytes = block(0) || block(1) || ... truncated to the stated length.",
++    "slices is a list of [repeat, size] runs: the payload sizes of the frames in index order.",
++    "framesSha256 is the SHA-256 of all frames concatenated in index order. Sets of at most 2048 bytes also list every frame as hex; larger sets list the first and the last 80-byte header.",
++    "valid: a decoder must recover exactly the receipt, in any frame order and with identical duplicates present.",
++    "invalid: a decoder must not produce a receipt. Each set breaks the one quoted rule and is otherwise consistent.",
++    "unspecified: the specification text does not determine one outcome. A decoder may reject the input or recover one of the receipts listed under acceptable (for an entry given as receipt and slices: that receipt), and must never produce other bytes."
++  ],
++  "valid": [
++    {
++      "name": "smallest-receipt-single-frame",
++      "covers": "one frame; original length 1, frame count 1, frame index 0 and payload length 1: every lower bound the table names",
++      "receipt": {
++        "hex": "00"
++      },
++      "receiptLength": 1,
++      "receiptSha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
++      "proofId": "6f2cbd7e88aa442eef1c08eb8f19037a",
++      "slices": [
++        [
++          1,
++          1
++        ]
++      ],
++      "frameCount": 1,
++      "framesBytes": 81,
++      "framesSha256": "8d6925d233fb50121121a86ebf8ae54678b2b7ff7487198cf5fc976eb2ded749",
++      "frames": [
++        "554f545351523031010000006f2cbd7e88aa442eef1c08eb8f19037a000000000000000100000001000000016e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d0000000100"
++      ]
++    },
++    {
++      "name": "two-frames-two-bytes",
++      "covers": "the smallest set with more than one frame: two bytes in two one-byte frames",
++      "receipt": {
++        "hex": "0001"
++      },
++      "receiptLength": 2,
++      "receiptSha256": "b413f47d13ee2fe6c845b2ee141af81de858df4ec549a58b7970bb96645bc8d2",
++      "proofId": "7d35e15ed75a6a97494245d9cda9fce8",
++      "slices": [
++        [
++          2,
++          1
++        ]
++      ],
++      "frameCount": 2,
++      "framesBytes": 162,
++      "framesSha256": "15c23ae02478279e46dd0b768b59640e3e678792c5a0b9ac357763d7ca807bab",
++      "frames": [
++        "554f545351523031010000007d35e15ed75a6a97494245d9cda9fce800000000000000020000000200000002b413f47d13ee2fe6c845b2ee141af81de858df4ec549a58b7970bb96645bc8d20000000100",
++        "554f545351523031010000007d35e15ed75a6a97494245d9cda9fce800000001000000020000000200000002b413f47d13ee2fe6c845b2ee141af81de858df4ec549a58b7970bb96645bc8d20000000101"
++      ]
++    },
++    {
++      "name": "ots-shaped-single-frame",
++      "covers": "one frame carrying a small synthetic receipt with the shape of a detached .ots file",
++      "receipt": {
++        "hex": "004f70656e54696d657374616d7073000050726f6f6600bf89e2e884e892940108e05047bdcb16a87e77a0e8ee8de1701aae144db6c0743fb317b7ed42313ac6730083dfe30d2ef90c8e191868747470733a2f2f63616c656e6461722e6578616d706c65"
++      },
++      "receiptLength": 100,
++      "receiptSha256": "180356799644248502cb2081c8e2bae296109e52012d71a84b11eedb9a11f6d7",
++      "proofId": "09a64c4dca0e65e3889716527e099585",
++      "slices": [
++        [
++          1,
++          100
++        ]
++      ],
++      "frameCount": 1,
++      "framesBytes": 180,
++      "framesSha256": "20c46ce8873aeb8513f6cc500b632277bcc9de66cca842dbb9a255f492e48777",
++      "frames": [
++        "554f5453515230310100000009a64c4dca0e65e3889716527e09958500000000000000010000006400000064180356799644248502cb2081c8e2bae296109e52012d71a84b11eedb9a11f6d700000064004f70656e54696d657374616d7073000050726f6f6600bf89e2e884e892940108e05047bdcb16a87e77a0e8ee8de1701aae144db6c0743fb317b7ed42313ac6730083dfe30d2ef90c8e191868747470733a2f2f63616c656e6461722e6578616d706c65"
++      ]
++    },
++    {
++      "name": "ots-shaped-three-frames",
++      "covers": "many frames; the same receipt in three frames, the last one shorter",
++      "receipt": {
++        "hex": "004f70656e54696d657374616d7073000050726f6f6600bf89e2e884e892940108e05047bdcb16a87e77a0e8ee8de1701aae144db6c0743fb317b7ed42313ac6730083dfe30d2ef90c8e191868747470733a2f2f63616c656e6461722e6578616d706c65"
++      },
++      "receiptLength": 100,
++      "receiptSha256": "180356799644248502cb2081c8e2bae296109e52012d71a84b11eedb9a11f6d7",
++      "proofId": "09a64c4dca0e65e3889716527e099585",
++      "slices": [
++        [
++          2,
++          40
++        ],
++        [
++          1,
++          20
++        ]
++      ],
++      "frameCount": 3,
++      "framesBytes": 340,
++      "framesSha256": "12d3fc0bd5b6910e6dcba781c0cb8fb00eecab6fc07b7391ae34b5a9b37785ee",
++      "frames": [
++        "554f5453515230310100000009a64c4dca0e65e3889716527e09958500000000000000030000006400000064180356799644248502cb2081c8e2bae296109e52012d71a84b11eedb9a11f6d700000028004f70656e54696d657374616d7073000050726f6f6600bf89e2e884e892940108e05047bdcb16a8",
++        "554f5453515230310100000009a64c4dca0e65e3889716527e09958500000001000000030000006400000064180356799644248502cb2081c8e2bae296109e52012d71a84b11eedb9a11f6d7000000287e77a0e8ee8de1701aae144db6c0743fb317b7ed42313ac6730083dfe30d2ef90c8e191868747470",
++        "554f5453515230310100000009a64c4dca0e65e3889716527e09958500000002000000030000006400000064180356799644248502cb2081c8e2bae296109e52012d71a84b11eedb9a11f6d700000014733a2f2f63616c656e6461722e6578616d706c65"
++      ]
++    },
++    {
++      "name": "three-equal-frames",
++      "covers": "many frames; the length is a multiple of the slice size, so no frame is shorter",
++      "receipt": {
++        "stream": "three-equal-frames",
++        "length": 300
++      },
++      "receiptLength": 300,
++      "receiptSha256": "3447285b0589ccea77dc380ff66d64e92ba5a05a4ce21b34ee2b99ba9769acbb",
++      "proofId": "f9c8ddfc0e358ef81084cf3095af8478",
++      "slices": [
++        [
++          3,
++          100
++        ]
++      ],
++      "frameCount": 3,
++      "framesBytes": 540,
++      "framesSha256": "8d51aa067ade72354979891c2f5f8dd1b6515061cda6dc004989ad8fd083f7fa",
++      "frames": [
++        "554f54535152303101000000f9c8ddfc0e358ef81084cf3095af847800000000000000030000012c0000012c3447285b0589ccea77dc380ff66d64e92ba5a05a4ce21b34ee2b99ba9769acbb00000064528d94bb10293bc1c51b53993ef02ba90a65d0b6f4f0f0e6026cdf887477abfcdc0fa96bb12e2a97f607ed73697183617009e6d43333a9f3ec9adea5d9399f972cd2e826ba1d72d5c8cd021ca7e72f9ac158ff10576c869ff99aa4505843d863d5a9b051",
++        "554f54535152303101000000f9c8ddfc0e358ef81084cf3095af847800000001000000030000012c0000012c3447285b0589ccea77dc380ff66d64e92ba5a05a4ce21b34ee2b99ba9769acbb000000641bdcc82f544cc9c27d2fbb3919d3be5c5526ac91212ff7c3ae61b95899254903cf60ded553c9df4f4961e67db4cd6f60e03373c27c317c438a23c42aab98b02baefe953b6fd153a0cf310c7ee55b7e91d31b68455997439666a97c3190690e7c6200a572",
++        "554f54535152303101000000f9c8ddfc0e358ef81084cf3095af847800000002000000030000012c0000012c3447285b0589ccea77dc380ff66d64e92ba5a05a4ce21b34ee2b99ba9769acbb000000643767d8eaf0fc6b08c476b9c6934a7641f000b02c75bcee3bd9ab982ff1c4ab3500f99682d88639ca5ff4a93b0fee12fa2ec897e2c8ad26585a8dab2d8700e2b79177596336024d68aa70cc3650f9f147664380fae5a0f34e92f9ea499eb1cf9a3f525942"
++      ]
++    },
++    {
++      "name": "last-frame-shorter",
++      "covers": "many frames; last frame shorter",
++      "receipt": {
++        "stream": "last-frame-shorter",
++        "length": 250
++      },
++      "receiptLength": 250,
++      "receiptSha256": "b377dd6b9b604267698f0fb941da82c2557452bc268ef0275cd2dd087300c7b0",
++      "proofId": "047bd3a1f87d28ce3d64ef01aa743844",
++      "slices": [
++        [
++          2,
++          100
++        ],
++        [
++          1,
++          50
++        ]
++      ],
++      "frameCount": 3,
++      "framesBytes": 490,
++      "framesSha256": "ac786efda33824604e0ddbdde870f3ceff4d918bfae7dee0c5ffb964ec2b49e9",
++      "frames": [
++        "554f54535152303101000000047bd3a1f87d28ce3d64ef01aa7438440000000000000003000000fa000000fab377dd6b9b604267698f0fb941da82c2557452bc268ef0275cd2dd087300c7b000000064f31bf905d972c12ee2601ef2a33f531eef9eecd5af78c6f6c6efc01932abaa7ac2582cd626dab26b11427ff8d6ddbed3d3df1835a8f73188360cb30bcf21ab0da80bd15db5bb6cceb023b0abbc9042bf510cfd3f7c735da3a17d3860674bd17bed0d0030",
++        "554f54535152303101000000047bd3a1f87d28ce3d64ef01aa7438440000000100000003000000fa000000fab377dd6b9b604267698f0fb941da82c2557452bc268ef0275cd2dd087300c7b0000000641b872cf1a09fa153a6b5a0567f9583deb7188749e03c11533c3f6c68a8daa2922708316582adf8687f9f488c981cf2bab184367e366789e2b4638c686c864c21f8fbee7cfdf56c2902c242fb3870d0b70b983ec390c0b5c9f259f1a10df07ee53f9b7284",
++        "554f54535152303101000000047bd3a1f87d28ce3d64ef01aa7438440000000200000003000000fa000000fab377dd6b9b604267698f0fb941da82c2557452bc268ef0275cd2dd087300c7b00000003283b6d81281a6f940bab549ceeb22c1b4a0a98e2c35982424d794cdaad772bcf0b4f7b21f9e791cf97502bda10384c9990d26"
++      ]
++    },
++    {
++      "name": "last-frame-one-byte",
++      "covers": "many frames; the last frame carries a single byte (payload length lower bound)",
++      "receipt": {
++        "stream": "last-frame-one-byte",
++        "length": 201
++      },
++      "receiptLength": 201,
++      "receiptSha256": "4221822a0adc4d609aae1b8130c986649ccf9625cdc968281b7be7c11d832951",
++      "proofId": "8b35825a8ae82ba3dc64d53ae84234f9",
++      "slices": [
++        [
++          2,
++          100
++        ],
++        [
++          1,
++          1
++        ]
++      ],
++      "frameCount": 3,
++      "framesBytes": 441,
++      "framesSha256": "8f47d2bdebe42bb56e40d60ec1128e36829d3f73e0e282993b38667bdf104c06",
++      "frames": [
++        "554f545351523031010000008b35825a8ae82ba3dc64d53ae84234f90000000000000003000000c9000000c94221822a0adc4d609aae1b8130c986649ccf9625cdc968281b7be7c11d832951000000641f799072528312f01ad9eab4e2e0dc96f7e3d1621e93f0fee0b7841b9095d49354129ba8cef3582d081fc9cecad2aea31f31bbcd20847622a383c421ba78bac84064f94a7aed9fed6b0a7bee4e041a19dfd130fc84cef6c7d45f4725bf61cb67c6284bea",
++        "554f545351523031010000008b35825a8ae82ba3dc64d53ae84234f90000000100000003000000c9000000c94221822a0adc4d609aae1b8130c986649ccf9625cdc968281b7be7c11d832951000000643c7049e8b0ff69740298d8e48b8f7377622642bcc713bc38b0ea580dc310f0809f3758654bd340e09e3627c5baa0094c1b234dd644c52fbe9dee5347a86833d87ce04efdc0012c23cba3303e0fc380d6837b104092170825b3ec2fca12fb773f191e0b42",
++        "554f545351523031010000008b35825a8ae82ba3dc64d53ae84234f90000000200000003000000c9000000c94221822a0adc4d609aae1b8130c986649ccf9625cdc968281b7be7c11d8329510000000185"
++      ]
++    },
++    {
++      "name": "uneven-partition",
++      "covers": "slices of unequal sizes in no particular pattern. The specification requires only nonempty, ordered, contiguous slices, so a decoder must accept this set even if no encoder of this project produces it",
++      "receipt": {
++        "stream": "uneven-partition",
++        "length": 205
++      },
++      "receiptLength": 205,
++      "receiptSha256": "489ffd1e4e866c26453f7553198e1cff74ab7cbb0f52fb5357b4c9418dc91374",
++      "proofId": "30bd0ac576693aa58b9d0aa359c3c76a",
++      "slices": [
++        [
++          1,
++          1
++        ],
++        [
++          1,
++          7
++        ],
++        [
++          1,
++          64
++        ],
++        [
++          1,
++          3
++        ],
++        [
++          1,
++          130
++        ]
++      ],
++      "frameCount": 5,
++      "framesBytes": 605,
++      "framesSha256": "bdccffee52107532ddebea018b5b5e442c7d8259be7c11d884e8401bcdb06f76",
++      "frames": [
++        "554f5453515230310100000030bd0ac576693aa58b9d0aa359c3c76a0000000000000005000000cd000000cd489ffd1e4e866c26453f7553198e1cff74ab7cbb0f52fb5357b4c9418dc91374000000019c",
++        "554f5453515230310100000030bd0ac576693aa58b9d0aa359c3c76a0000000100000005000000cd000000cd489ffd1e4e866c26453f7553198e1cff74ab7cbb0f52fb5357b4c9418dc913740000000741c1cd22e00c96",
++        "554f5453515230310100000030bd0ac576693aa58b9d0aa359c3c76a0000000200000005000000cd000000cd489ffd1e4e866c26453f7553198e1cff74ab7cbb0f52fb5357b4c9418dc9137400000040b766312bc079b9f056d50902d898cc9906f23c1ead9b7badca97f428f1a958f0cec6109879c6bdc88a0a673200abf24266ffbbbd77dd726fe5d3f7caa56c8288",
++        "554f5453515230310100000030bd0ac576693aa58b9d0aa359c3c76a0000000300000005000000cd000000cd489ffd1e4e866c26453f7553198e1cff74ab7cbb0f52fb5357b4c9418dc9137400000003a50496",
++        "554f5453515230310100000030bd0ac576693aa58b9d0aa359c3c76a0000000400000005000000cd000000cd489ffd1e4e866c26453f7553198e1cff74ab7cbb0f52fb5357b4c9418dc913740000008243c9d1e79e59e5a1a155be9ccf3c0bd5b8d1eb68e9334575b6637e58ca23b800df2c7547f46d2aed8ff793b4fa6a4f659140c53f2962dca446cb70e7f94edab3e8cb0f88fc90cf2c6a90939bd309d899bcdb6d3a6088fcbc1beeb22ba79724f7f16c9eefa17d5ddd21a97fa25ee887638c4ebafc3c8f0cb73303000f6c502a530686"
++      ]
++    },
++    {
++      "name": "largest-qr-symbol-frames",
++      "covers": "frames of exactly 2953 bytes, the most one ISO/IEC 18004 byte-mode symbol holds (version 40, level L), followed by a shorter last frame",
++      "receipt": {
++        "stream": "largest-qr-symbol-frames",
++        "length": 5846
++      },
++      "receiptLength": 5846,
++      "receiptSha256": "49b80e6172355cb29b261a3f9fbdf4271d971ab1f244be07951733a54c47f14b",
++      "proofId": "7238eb3508e60a5433acea225ca6d25e",
++      "slices": [
++        [
++          2,
++          2873
++        ],
++        [
++          1,
++          100
++        ]
++      ],
++      "frameCount": 3,
++      "framesBytes": 6086,
++      "framesSha256": "5ac9dc0e2fd31b8c4344229b2d58f43144d0602930a03fbc1c1a8686ee289955",
++      "firstHeader": "554f545351523031010000007238eb3508e60a5433acea225ca6d25e0000000000000003000016d6000016d649b80e6172355cb29b261a3f9fbdf4271d971ab1f244be07951733a54c47f14b00000b39",
++      "lastHeader": "554f545351523031010000007238eb3508e60a5433acea225ca6d25e0000000200000003000016d6000016d649b80e6172355cb29b261a3f9fbdf4271d971ab1f244be07951733a54c47f14b00000064"
++    },
++    {
++      "name": "large-receipt-64-frames",
++      "covers": "a large receipt: 64,000 bytes in 64 frames of 1011 payload bytes, last frame shorter",
++      "receipt": {
++        "stream": "large-receipt-64-frames",
++        "length": 64000
++      },
++      "receiptLength": 64000,
++      "receiptSha256": "88fa58259ed8969fbc2bf1b5708e963fc51e7d5cc741b3103d572e9014730e1d",
++      "proofId": "d11f493a0a9ea3811fdcc1a861806785",
++      "slices": [
++        [
++          63,
++          1011
++        ],
++        [
++          1,
++          307
++        ]
++      ],
++      "frameCount": 64,
++      "framesBytes": 69120,
++      "framesSha256": "ed6d8dbd032c51efd34036544db20fee2659284e2688bb6494fa30fa626394c5",
++      "firstHeader": "554f54535152303101000000d11f493a0a9ea3811fdcc1a86180678500000000000000400000fa000000fa0088fa58259ed8969fbc2bf1b5708e963fc51e7d5cc741b3103d572e9014730e1d000003f3",
++      "lastHeader": "554f54535152303101000000d11f493a0a9ea3811fdcc1a8618067850000003f000000400000fa000000fa0088fa58259ed8969fbc2bf1b5708e963fc51e7d5cc741b3103d572e9014730e1d00000133"
++    },
++    {
++      "name": "frame-count-4096",
++      "covers": "frame count upper bound 4096 and frame index upper bound 4095, each frame carrying one byte",
++      "receipt": {
++        "stream": "frame-count-4096",
++        "length": 4096
++      },
++      "receiptLength": 4096,
++      "receiptSha256": "ac0156a467894a8e8663174e2c7e768b6bea35c36ef4da7d9b6d4cef99566b18",
++      "proofId": "abfc7965a08a4e8d212d8d6c2c230dd3",
++      "slices": [
++        [
++          4096,
++          1
++        ]
++      ],
++      "frameCount": 4096,
++      "framesBytes": 331776,
++      "framesSha256": "1b50465b363240837334fe0be20b82ea185ffb54b52336c4045aed8002cd6443",
++      "firstHeader": "554f54535152303101000000abfc7965a08a4e8d212d8d6c2c230dd300000000000010000000100000001000ac0156a467894a8e8663174e2c7e768b6bea35c36ef4da7d9b6d4cef99566b1800000001",
++      "lastHeader": "554f54535152303101000000abfc7965a08a4e8d212d8d6c2c230dd300000fff000010000000100000001000ac0156a467894a8e8663174e2c7e768b6bea35c36ef4da7d9b6d4cef99566b1800000001"
++    },
++    {
++      "name": "largest-receipt-in-qr-symbols",
++      "covers": "11,767,808 bytes in 4096 frames of 2953 bytes each: the largest receipt that 4096 frames can carry when no frame is longer than one QR byte-mode symbol holds. Added after the comparison with the implementations, which enforce that frame size",
++      "receipt": {
++        "stream": "largest-receipt-in-qr-symbols",
++        "length": 11767808
++      },
++      "receiptLength": 11767808,
++      "receiptSha256": "b263a5475442e8fcd3469eee1d7ce0d840207abf4815e102ef1128525cb47481",
++      "proofId": "f3c28b736da79daaab7a3d28e16b83ac",
++      "slices": [
++        [
++          4096,
++          2873
++        ]
++      ],
++      "frameCount": 4096,
++      "framesBytes": 12095488,
++      "framesSha256": "c0d7a3f279e7280ad751385ba96e4970d4bd93f7eabf84d82bdcdb529ad5aad5",
++      "firstHeader": "554f54535152303101000000f3c28b736da79daaab7a3d28e16b83ac000000000000100000b3900000b39000b263a5475442e8fcd3469eee1d7ce0d840207abf4815e102ef1128525cb4748100000b39",
++      "lastHeader": "554f54535152303101000000f3c28b736da79daaab7a3d28e16b83ac00000fff0000100000b3900000b39000b263a5475442e8fcd3469eee1d7ce0d840207abf4815e102ef1128525cb4748100000b39"
++    }
++  ],
++  "invalid": [
++    {
++      "name": "magic-wrong",
++      "rule": "magic: ASCII `UOTSQR01`",
++      "change": "every frame starts with ASCII UOTSQR00",
++      "frames": [
++        "554f5453515230300100000004084395e396f38da6a3eece508d9ad400000000000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230300100000004084395e396f38da6a3eece508d9ad400000001000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e7000000100fa02df2d003526068a957d9c813b03a",
++        "554f5453515230300100000004084395e396f38da6a3eece508d9ad400000002000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000008ce2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "version-0",
++      "rule": "version: exactly 1",
++      "change": "version byte 0 in every frame",
++      "frames": [
++        "554f5453515230310000000004084395e396f38da6a3eece508d9ad400000000000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230310000000004084395e396f38da6a3eece508d9ad400000001000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e7000000100fa02df2d003526068a957d9c813b03a",
++        "554f5453515230310000000004084395e396f38da6a3eece508d9ad400000002000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000008ce2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "version-2",
++      "rule": "version: exactly 1",
++      "change": "version byte 2 in every frame",
++      "frames": [
++        "554f5453515230310200000004084395e396f38da6a3eece508d9ad400000000000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230310200000004084395e396f38da6a3eece508d9ad400000001000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e7000000100fa02df2d003526068a957d9c813b03a",
++        "554f5453515230310200000004084395e396f38da6a3eece508d9ad400000002000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000008ce2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "flags-1",
++      "rule": "flags: exactly 0 in v1",
++      "change": "flags byte 0x01 in every frame",
++      "frames": [
++        "554f5453515230310101000004084395e396f38da6a3eece508d9ad400000000000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230310101000004084395e396f38da6a3eece508d9ad400000001000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e7000000100fa02df2d003526068a957d9c813b03a",
++        "554f5453515230310101000004084395e396f38da6a3eece508d9ad400000002000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000008ce2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "flags-128",
++      "rule": "flags: exactly 0 in v1",
++      "change": "flags byte 0x80 in every frame",
++      "frames": [
++        "554f5453515230310180000004084395e396f38da6a3eece508d9ad400000000000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230310180000004084395e396f38da6a3eece508d9ad400000001000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e7000000100fa02df2d003526068a957d9c813b03a",
++        "554f5453515230310180000004084395e396f38da6a3eece508d9ad400000002000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000008ce2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "compression-1",
++      "rule": "compression: 0 = none; future values rejected",
++      "change": "compression byte 1 in every frame",
++      "frames": [
++        "554f5453515230310100010004084395e396f38da6a3eece508d9ad400000000000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230310100010004084395e396f38da6a3eece508d9ad400000001000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e7000000100fa02df2d003526068a957d9c813b03a",
++        "554f5453515230310100010004084395e396f38da6a3eece508d9ad400000002000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000008ce2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "reserved-1",
++      "rule": "reserved: 0",
++      "change": "reserved byte 1 in every frame",
++      "frames": [
++        "554f5453515230310100000104084395e396f38da6a3eece508d9ad400000000000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230310100000104084395e396f38da6a3eece508d9ad400000001000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e7000000100fa02df2d003526068a957d9c813b03a",
++        "554f5453515230310100000104084395e396f38da6a3eece508d9ad400000002000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000008ce2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "proof-id-without-domain-separation",
++      "rule": "proof ID: first 16 bytes of SHA-256(UTF-8 `UNALTERED-OTS-QR/1` + NUL + original receipt bytes)",
++      "change": "proof ID is the first 16 bytes of the plain SHA-256 of the receipt in every frame",
++      "frames": [
++        "554f54535152303101000000b8d9ef6c3209ba9d1d5325b73bb8070600000000000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f54535152303101000000b8d9ef6c3209ba9d1d5325b73bb8070600000001000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e7000000100fa02df2d003526068a957d9c813b03a",
++        "554f54535152303101000000b8d9ef6c3209ba9d1d5325b73bb8070600000002000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000008ce2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "proof-id-without-nul",
++      "rule": "proof ID: first 16 bytes of SHA-256(UTF-8 `UNALTERED-OTS-QR/1` + NUL + original receipt bytes)",
++      "change": "proof ID is computed without the NUL separator in every frame",
++      "frames": [
++        "554f5453515230310100000044363999d7548bc7a09213b33331f27000000000000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230310100000044363999d7548bc7a09213b33331f27000000001000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e7000000100fa02df2d003526068a957d9c813b03a",
++        "554f5453515230310100000044363999d7548bc7a09213b33331f27000000002000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000008ce2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "proof-id-last-bit",
++      "rule": "Recompute the domain-separated proof ID and compare its first 16 bytes.",
++      "change": "the last bit of the 16-byte proof ID is flipped in every frame",
++      "frames": [
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad500000000000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad500000001000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e7000000100fa02df2d003526068a957d9c813b03a",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad500000002000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000008ce2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "frame-index-one-based",
++      "rule": "frame index: zero-based, less than total",
++      "change": "the three frames carry indices 1, 2, 3, so one index equals the frame count",
++      "frames": [
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000001000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000002000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e7000000100fa02df2d003526068a957d9c813b03a",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000003000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000008ce2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "frame-count-0",
++      "rule": "frame count: 1-4096",
++      "change": "a single frame that carries the whole receipt states frame count 0",
++      "frames": [
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000000000000000000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000028bb4deca4968cc9951aaeb568898b6ebe0fa02df2d003526068a957d9c813b03ace2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "original-length-0",
++      "rule": "original byte length: 1-16,777,216",
++      "change": "a consistent single frame for an empty receipt: lengths 0, hashes of the empty string, no payload",
++      "frames": [
++        "554f545351523031010000003c036478b7a0964bb3db53f22ce43de400000000000000010000000000000000e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b85500000000"
++      ]
++    },
++    {
++      "name": "encoded-length-plus-1",
++      "rule": "encoded byte length: equal to original length in v1",
++      "change": "encoded byte length is original length + 1 in every frame",
++      "frames": [
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000000000000030000002800000029b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000001000000030000002800000029b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e7000000100fa02df2d003526068a957d9c813b03a",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000002000000030000002800000029b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000008ce2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "encoded-length-0",
++      "rule": "encoded byte length: equal to original length in v1",
++      "change": "encoded byte length is 0 in every frame",
++      "frames": [
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000000000000030000002800000000b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000001000000030000002800000000b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e7000000100fa02df2d003526068a957d9c813b03a",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000002000000030000002800000000b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000008ce2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "receipt-sha256-last-bit",
++      "rule": "Concatenate payloads; verify byte length and SHA-256 against the full 32-byte digest in the header.",
++      "change": "the last bit of the 32-byte receipt SHA-256 is flipped in every frame",
++      "frames": [
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000000000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e600000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000001000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e6000000100fa02df2d003526068a957d9c813b03a",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000002000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e600000008ce2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "payload-length-field-too-large",
++      "rule": "payload byte length: equals actual trailing byte count",
++      "change": "the last frame states payload length 9 and carries 8 bytes",
++      "frames": [
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000000000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000001000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e7000000100fa02df2d003526068a957d9c813b03a",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000002000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000009ce2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "payload-trailing-byte",
++      "rule": "payload byte length: equals actual trailing byte count",
++      "change": "the last frame states payload length 8 and is followed by one more byte (0x00)",
++      "frames": [
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000000000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000001000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e7000000100fa02df2d003526068a957d9c813b03a",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000002000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000008ce2b5319e41eee6200"
++      ]
++    },
++    {
++      "name": "payload-empty-last-frame",
++      "rule": "frames must partition the original bytes into nonempty, ordered, contiguous slices",
++      "change": "two frames: the first carries all 40 bytes, the second is consistent but carries no payload",
++      "frames": [
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000000000000020000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000028bb4deca4968cc9951aaeb568898b6ebe0fa02df2d003526068a957d9c813b03ace2b5319e41eee62",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000001000000020000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000000"
++      ]
++    },
++    {
++      "name": "payload-empty-first-frame",
++      "rule": "frames must partition the original bytes into nonempty, ordered, contiguous slices",
++      "change": "two frames: the first is consistent but carries no payload, the second carries all 40 bytes",
++      "frames": [
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000000000000020000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000000",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000001000000020000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000028bb4deca4968cc9951aaeb568898b6ebe0fa02df2d003526068a957d9c813b03ace2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "header-truncated",
++      "rule": "Binary frame (80-byte fixed header)",
++      "change": "a single frame cut to its first 79 bytes",
++      "frames": [
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000000000000010000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e7000000"
++      ]
++    },
++    {
++      "name": "frame-missing",
++      "rule": "Order frames by zero-based index; reject missing or conflicting frames.",
++      "change": "the frame with index 1 is absent",
++      "frames": [
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000000000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000002000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000008ce2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "frame-missing-last",
++      "rule": "Order frames by zero-based index; reject missing or conflicting frames.",
++      "change": "the frame with the highest index is absent",
++      "frames": [
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000000000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000001000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e7000000100fa02df2d003526068a957d9c813b03a"
++      ]
++    },
++    {
++      "name": "duplicate-conflicting",
++      "rule": "Reassembly sorts by index, rejects missing indices and conflicting duplicates",
++      "change": "two frames carry index 1 with identical headers and different payload bytes",
++      "frames": [
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000000000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000001000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e7000000100fa02df2d003526068a957d9c813b03a",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000001000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010870d14ec1eaeffbcd112ec43274e8fe6",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000002000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000008ce2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "slices-out-of-order",
++      "rule": "frames must partition the original bytes into nonempty, ordered, contiguous slices",
++      "change": "the payloads of the frames with index 0 and 1 are exchanged",
++      "frames": [
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000000000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e7000000100fa02df2d003526068a957d9c813b03a",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000001000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000002000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000008ce2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "metadata-conflict-frame-count",
++      "rule": "Every frame in a set repeats identical metadata other than index and payload length.",
++      "change": "index 0 states frame count 3 and index 1 states frame count 2; the two payloads alone are the complete receipt",
++      "frames": [
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000000000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000001000000020000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e7000000180fa02df2d003526068a957d9c813b03ace2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "metadata-conflict-original-length",
++      "rule": "Every frame in a set repeats identical metadata other than index and payload length.",
++      "change": "the frame with index 0 states original and encoded byte length 41, the others 40",
++      "frames": [
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000000000000030000002900000029b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000001000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e7000000100fa02df2d003526068a957d9c813b03a",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000002000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000008ce2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "metadata-conflict-receipt-sha256",
++      "rule": "Every frame in a set repeats identical metadata other than index and payload length.",
++      "change": "the frame with index 0 carries a different receipt SHA-256 than the others",
++      "frames": [
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000000000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e600000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000001000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e7000000100fa02df2d003526068a957d9c813b03a",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000002000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000008ce2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "original-length-not-payload-total",
++      "rule": "Concatenate payloads; verify byte length and SHA-256 against the full 32-byte digest in the header.",
++      "change": "every frame states original and encoded byte length 40, the payloads total 39 bytes, and the proof ID and receipt SHA-256 are those of the 39 bytes",
++      "frames": [
++        "554f5453515230310100000006bce7aeabb8b0895d1c1c0726bcdc9700000000000000030000002800000028b2c0bd195d04aa903a822ce8836ced81d0cc50aea66cf20c9b6a148a81bb03ab00000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f5453515230310100000006bce7aeabb8b0895d1c1c0726bcdc9700000001000000030000002800000028b2c0bd195d04aa903a822ce8836ced81d0cc50aea66cf20c9b6a148a81bb03ab000000100fa02df2d003526068a957d9c813b03a",
++        "554f5453515230310100000006bce7aeabb8b0895d1c1c0726bcdc9700000002000000030000002800000028b2c0bd195d04aa903a822ce8836ced81d0cc50aea66cf20c9b6a148a81bb03ab00000007ce2b5319e41eee"
++      ]
++    },
++    {
++      "name": "mixed-incomplete-receipts",
++      "rule": "Parse the header above; group by the 16-byte proof ID and confirm repeated metadata matches.",
++      "change": "index 0 and 2 come from one receipt and index 1 from another receipt of the same length",
++      "frames": [
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000000000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000010bb4deca4968cc9951aaeb568898b6ebe",
++        "554f54535152303101000000d82654401ce778bdfcbe11175ab4a3c5000000010000000300000028000000288dd344ee68f1973a045a69f46a1781c5963921e292d74ecfb07f2325656feaef00000010645a60d64968f7ee3d58a799b8c831ad",
++        "554f5453515230310100000004084395e396f38da6a3eece508d9ad400000002000000030000002800000028b8d9ef6c3209ba9d1d5325b73bb807064fb41610563be4b16df2fd669a3281e700000008ce2b5319e41eee62"
++      ]
++    },
++    {
++      "name": "frame-count-4097",
++      "rule": "frame count: 1-4096",
++      "change": "a consistent set of 4097 one-byte frames for a 4097-byte receipt",
++      "receipt": {
++        "stream": "frame-count-4097",
++        "length": 4097
++      },
++      "receiptLength": 4097,
++      "receiptSha256": "470656843d88be53650066cdb4695a4963ca8f8ff57a2cb34ac5a4e0f42e960d",
++      "proofId": "b838fed637ab1078143fdef8759bf8bd",
++      "slices": [
++        [
++          4097,
++          1
++        ]
++      ],
++      "frameCount": 4097,
++      "framesBytes": 331857,
++      "framesSha256": "6f0c93ee4d14ed87eed863fef40edbc6cae0be8315ff24f548ece6836ec9f29b",
++      "firstHeader": "554f54535152303101000000b838fed637ab1078143fdef8759bf8bd00000000000010010000100100001001470656843d88be53650066cdb4695a4963ca8f8ff57a2cb34ac5a4e0f42e960d00000001",
++      "lastHeader": "554f54535152303101000000b838fed637ab1078143fdef8759bf8bd00001000000010010000100100001001470656843d88be53650066cdb4695a4963ca8f8ff57a2cb34ac5a4e0f42e960d00000001"
++    },
++    {
++      "name": "original-length-16777217",
++      "rule": "original byte length: 1-16,777,216",
++      "change": "a consistent set of 4096 frames for a 16,777,217-byte receipt",
++      "receipt": {
++        "stream": "original-length-16777217",
++        "length": 16777217
++      },
++      "receiptLength": 16777217,
++      "receiptSha256": "372df044692e02152c89c90ca0a7d048cf33c8a8b6d776d2cfc0d5cda5cc37ff",
++      "proofId": "798cfeb51a69b16b120d3e0dfd8f2942",
++      "slices": [
++        [
++          4095,
++          4096
++        ],
++        [
++          1,
++          4097
++        ]
++      ],
++      "frameCount": 4096,
++      "framesBytes": 17104897,
++      "framesSha256": "efdf5e9e49a75595d48b04afcc6b551385d53c7589dc1f050cd96f0e3bfa9b29",
++      "firstHeader": "554f54535152303101000000798cfeb51a69b16b120d3e0dfd8f294200000000000010000100000101000001372df044692e02152c89c90ca0a7d048cf33c8a8b6d776d2cfc0d5cda5cc37ff00001000",
++      "lastHeader": "554f54535152303101000000798cfeb51a69b16b120d3e0dfd8f294200000fff000010000100000101000001372df044692e02152c89c90ca0a7d048cf33c8a8b6d776d2cfc0d5cda5cc37ff00001001"
++    }
++  ],
++  "unspecified": [
++    {
++      "name": "frame-2954-bytes",
++      "question": "The frame table states no frame size limit and the resource bounds name only the 16 MiB receipt and the 4096-frame limits (\"These are application limits, not QR-standard limits\"). The text also says that frames travel in ISO/IEC 18004 Model 2 byte-mode symbols, which hold at most 2953 bytes. This set satisfies every rule of the frame table and contains a frame longer than 2953 bytes. The first frame is 2954 bytes long, one byte more than a symbol holds.",
++      "receipt": {
++        "stream": "frame-2954-bytes",
++        "length": 2875
++      },
++      "receiptLength": 2875,
++      "receiptSha256": "21e902513038021b50628764e8c8bd79a0369e23af52f1351a2d9725222b4749",
++      "proofId": "caf44fe749a091126b48ab0d76ba1540",
++      "slices": [
++        [
++          1,
++          2874
++        ],
++        [
++          1,
++          1
++        ]
++      ],
++      "frameCount": 2,
++      "framesBytes": 3035,
++      "framesSha256": "285d24db8ab6c046cc7861c80e786d8ed14b9186359cfb4f21c96d609145c6cb",
++      "firstHeader": "554f54535152303101000000caf44fe749a091126b48ab0d76ba1540000000000000000200000b3b00000b3b21e902513038021b50628764e8c8bd79a0369e23af52f1351a2d9725222b474900000b3a",
++      "lastHeader": "554f54535152303101000000caf44fe749a091126b48ab0d76ba1540000000010000000200000b3b00000b3b21e902513038021b50628764e8c8bd79a0369e23af52f1351a2d9725222b474900000001"
++    },
++    {
++      "name": "original-length-16777216",
++      "question": "The frame table states no frame size limit and the resource bounds name only the 16 MiB receipt and the 4096-frame limits (\"These are application limits, not QR-standard limits\"). The text also says that frames travel in ISO/IEC 18004 Model 2 byte-mode symbols, which hold at most 2953 bytes. This set satisfies every rule of the frame table and contains a frame longer than 2953 bytes. The table gives 16,777,216 as the upper bound of the original byte length; at most 4096 frames of at most 2953 bytes carry 4096 * 2873 = 11,767,808 bytes, so the stated bound can only be reached with frames of at least 4176 bytes, as here (4096 frames with 4096 payload bytes each).",
++      "receipt": {
++        "stream": "original-length-16777216",
++        "length": 16777216
++      },
++      "receiptLength": 16777216,
++      "receiptSha256": "cba0803b66a0b457b6e60e6d5c67d80ac979e2d4f6fcab7ca1266e7db72a3cd9",
++      "proofId": "7b2af522eb6ff6fc3214a0f5dd848374",
++      "slices": [
++        [
++          4096,
++          4096
++        ]
++      ],
++      "frameCount": 4096,
++      "framesBytes": 17104896,
++      "framesSha256": "9b71a9da0ffb08a6dc3dbe990294fe4a3e41ba9d4474e96d96ed1754ee0315f4",
++      "firstHeader": "554f545351523031010000007b2af522eb6ff6fc3214a0f5dd84837400000000000010000100000001000000cba0803b66a0b457b6e60e6d5c67d80ac979e2d4f6fcab7ca1266e7db72a3cd900001000",
++      "lastHeader": "554f545351523031010000007b2af522eb6ff6fc3214a0f5dd84837400000fff000010000100000001000000cba0803b66a0b457b6e60e6d5c67d80ac979e2d4f6fcab7ca1266e7db72a3cd900001000"
++    },
++    {
++      "name": "two-complete-receipts",
++      "question": "Two complete sets with different proof IDs are presented together. Recovery step 2 says \"group by the 16-byte proof ID\", which suggests each group is handled on its own; the integration section says \"mixed receipts are rejected\".",
++      "frames": [
++        "554f545351523031010000004bc457458235a7ffacce7840086a2e3d00000000000000030000002800000028426326315948cc68130bc15cf33c6a13d02c6ee587580943765dd38ea1e4ad1900000010e24621e19cadb5aedfe1954c1e1607e9",
++        "554f545351523031010000006744f9ef2fc11a3381c4194a3be1d12300000000000000020000001800000018cff1bdf555863072a25dd23594d11d3939cb912a624899884cfeb39f4fb3882a0000000c37775239c7de301e95688b51",
++        "554f545351523031010000004bc457458235a7ffacce7840086a2e3d00000001000000030000002800000028426326315948cc68130bc15cf33c6a13d02c6ee587580943765dd38ea1e4ad19000000103a976bb29cec73fcdcac7f5bcc52bd20",
++        "554f545351523031010000006744f9ef2fc11a3381c4194a3be1d12300000001000000020000001800000018cff1bdf555863072a25dd23594d11d3939cb912a624899884cfeb39f4fb3882a0000000c0419c27bcdb3923ca3cdce5a",
++        "554f545351523031010000004bc457458235a7ffacce7840086a2e3d00000002000000030000002800000028426326315948cc68130bc15cf33c6a13d02c6ee587580943765dd38ea1e4ad1900000008b0ea79b45968c6c0"
++      ],
++      "acceptable": [
++        "e24621e19cadb5aedfe1954c1e1607e93a976bb29cec73fcdcac7f5bcc52bd20b0ea79b45968c6c0",
++        "37775239c7de301e95688b510419c27bcdb3923ca3cdce5a"
++      ]
++    },
++    {
++      "name": "complete-set-and-foreign-payload",
++      "question": "A complete set is presented together with a payload that is not a frame. The integration section says \"Unknown QR payloads are ignored\" for scans; the framing rules do not say whether a recovery tool given payload files ignores or rejects it.",
++      "frames": [
++        "554f545351523031010000004bc457458235a7ffacce7840086a2e3d00000000000000030000002800000028426326315948cc68130bc15cf33c6a13d02c6ee587580943765dd38ea1e4ad1900000010e24621e19cadb5aedfe1954c1e1607e9",
++        "554f545351523031010000004bc457458235a7ffacce7840086a2e3d00000001000000030000002800000028426326315948cc68130bc15cf33c6a13d02c6ee587580943765dd38ea1e4ad19000000103a976bb29cec73fcdcac7f5bcc52bd20",
++        "554f545351523031010000004bc457458235a7ffacce7840086a2e3d00000002000000030000002800000028426326315948cc68130bc15cf33c6a13d02c6ee587580943765dd38ea1e4ad1900000008b0ea79b45968c6c0",
++        "68747470733a2f2f6578616d706c652e6f72672f6e6f742d612d6672616d65"
++      ],
++      "acceptable": [
++        "e24621e19cadb5aedfe1954c1e1607e93a976bb29cec73fcdcac7f5bcc52bd20b0ea79b45968c6c0"
++      ]
++    },
++    {
++      "name": "complete-set-and-out-of-range-index",
++      "question": "A complete set is presented together with one more frame of the same receipt whose index equals the frame count. The table says the index is \"less than total\"; the text does not say whether one malformed frame invalidates an otherwise complete set.",
++      "frames": [
++        "554f545351523031010000004bc457458235a7ffacce7840086a2e3d00000000000000030000002800000028426326315948cc68130bc15cf33c6a13d02c6ee587580943765dd38ea1e4ad1900000010e24621e19cadb5aedfe1954c1e1607e9",
++        "554f545351523031010000004bc457458235a7ffacce7840086a2e3d00000001000000030000002800000028426326315948cc68130bc15cf33c6a13d02c6ee587580943765dd38ea1e4ad19000000103a976bb29cec73fcdcac7f5bcc52bd20",
++        "554f545351523031010000004bc457458235a7ffacce7840086a2e3d00000002000000030000002800000028426326315948cc68130bc15cf33c6a13d02c6ee587580943765dd38ea1e4ad1900000008b0ea79b45968c6c0",
++        "554f545351523031010000004bc457458235a7ffacce7840086a2e3d00000003000000030000002800000028426326315948cc68130bc15cf33c6a13d02c6ee587580943765dd38ea1e4ad1900000008b0ea79b45968c6c0"
++      ],
++      "acceptable": [
++        "e24621e19cadb5aedfe1954c1e1607e93a976bb29cec73fcdcac7f5bcc52bd20b0ea79b45968c6c0"
++      ]
++    }
++  ]
++}
+diff --git a/tests/archival/independent_frames.py b/tests/archival/independent_frames.py
+new file mode 100644
+index 0000000..2b8f55f
+--- /dev/null
++++ b/tests/archival/independent_frames.py
+@@ -0,0 +1,780 @@
++#!/usr/bin/env python3
++"""Independent UNALTERED-OTS-QR/1 frame builder and golden-vector generator.
++
++Written from the text of docs/ARCHIVAL_QR_PROTOCOL.md only. It shares no code with
++src/core/archive/frames.ts, scripts/recover-archival-qr.py or the frame helper in
++test_recover_reference.py, and its author had read none of them when this file and
++independent-vectors-v1.json were first committed. Agreement between this builder and those
++implementations is therefore evidence about the specification, not about a shared mistake.
++
++Standard library only.
++
++    python3 tests/archival/independent_frames.py            # print a summary of the vector set
++    python3 tests/archival/independent_frames.py --check    # compare with the committed vectors
++    python3 tests/archival/independent_frames.py --write    # regenerate the committed vectors
++
++Where the specification leaves a choice open, this file takes no choice silently: the choice is
++an explicit input (for example the partition of the receipt into slices) and is recorded in the
++vector file. Entries added or reclassified after the comparison with the implementations are
++listed in README.md; no frame byte of an earlier entry was changed.
++"""
++
++from __future__ import annotations
++
++import argparse
++import hashlib
++import json
++import sys
++from pathlib import Path
++from typing import Iterable, Iterator, Sequence
++
++# --- The specification, section "Binary frame (80-byte fixed header)" -------------------------
++#
++# "All integers are unsigned, big-endian. All offsets below are zero-based byte offsets."
++#
++#   offset size field                 rule
++#        0    8 magic                 ASCII `UOTSQR01`
++#        8    1 version               exactly 1
++#        9    1 flags                 exactly 0 in v1
++#       10    1 compression           0 = none; future values rejected
++#       11    1 reserved              0
++#       12   16 proof ID              first 16 bytes of SHA-256(UTF-8 `UNALTERED-OTS-QR/1` + NUL +
++#                                     original receipt bytes)
++#       28    4 frame index           zero-based, less than total
++#       32    4 frame count           1-4096
++#       36    4 original byte length  1-16,777,216
++#       40    4 encoded byte length   equal to original length in v1
++#       44   32 receipt SHA-256       hash of complete original receipt bytes
++#       76    4 payload byte length   equals actual trailing byte count
++#       80    - payload               contiguous slice of original receipt
++
++MAGIC = b"UOTSQR01"
++VERSION = 1
++PROOF_ID_LABEL = "UNALTERED-OTS-QR/1"
++PROOF_ID_BYTES = 16
++HEADER_BYTES = 80
++MIN_FRAME_COUNT = 1
++MAX_FRAME_COUNT = 4096
++MIN_ORIGINAL_BYTES = 1
++MAX_ORIGINAL_BYTES = 16_777_216
++
++# Not part of the transport: ISO/IEC 18004 Model 2 byte mode holds at most 2953 bytes in one symbol
++# (version 40, level L), so no frame printed as one QR symbol can be longer than that.
++QR_BYTE_MODE_MAX_BYTES = 2953
++
++VECTOR_FILE = Path(__file__).resolve().parent / "independent-vectors-v1.json"
++SCHEMA = "unaltered-ots-qr-independent-vectors/1"
++# Frame sets up to this many bytes are stored as hex. Larger sets are stored as a recipe (receipt
++# stream, slices) with the SHA-256 of all frames concatenated in index order.
++INLINE_SET_BYTES = 2048
++
++
++def receipt_sha256(receipt: bytes) -> bytes:
++    """Offset 44: "hash of complete original receipt bytes"."""
++    return hashlib.sha256(receipt).digest()
++
++
++def proof_id(receipt: bytes) -> bytes:
++    """Offset 12: first 16 bytes of SHA-256(UTF-8 label + NUL + original receipt bytes)."""
++    preimage = PROOF_ID_LABEL.encode("utf-8") + b"\x00" + receipt
++    return hashlib.sha256(preimage).digest()[:PROOF_ID_BYTES]
++
++
++def u32(value: int) -> bytes:
++    """An unsigned, big-endian 32-bit integer."""
++    if not 0 <= value <= 0xFFFFFFFF:
++        raise ValueError(f"{value} does not fit an unsigned 32-bit field")
++    return value.to_bytes(4, "big")
++
++
++def u8(value: int) -> bytes:
++    if not 0 <= value <= 0xFF:
++        raise ValueError(f"{value} does not fit an unsigned 8-bit field")
++    return bytes([value])
++
++
++def raw_frame(
++    *,
++    proof: bytes,
++    index: int,
++    count: int,
++    original_length: int,
++    encoded_length: int,
++    digest: bytes,
++    payload_length: int,
++    trailing: bytes,
++    magic: bytes = MAGIC,
++    version: int = VERSION,
++    flags: int = 0,
++    compression: int = 0,
++    reserved: int = 0,
++) -> bytes:
++    """Lay out one frame exactly as the table says. Checks field widths only, never a rule.
++
++    Invalid vectors are built with this function, so it must not refuse rule violations.
++    """
++    if len(magic) != 8 or len(proof) != PROOF_ID_BYTES or len(digest) != 32:
++        raise ValueError("magic, proof ID and receipt SHA-256 have fixed widths of 8, 16 and 32 bytes")
++    header = b"".join(
++        (
++            magic,  # offset 0, 8 bytes
++            u8(version),  # offset 8
++            u8(flags),  # offset 9
++            u8(compression),  # offset 10
++            u8(reserved),  # offset 11
++            proof,  # offset 12, 16 bytes
++            u32(index),  # offset 28
++            u32(count),  # offset 32
++            u32(original_length),  # offset 36
++            u32(encoded_length),  # offset 40
++            digest,  # offset 44, 32 bytes
++            u32(payload_length),  # offset 76
++        )
++    )
++    if len(header) != HEADER_BYTES:
++        raise AssertionError("the fixed header is 80 bytes")
++    return header + trailing
++
++
++def expand_slices(runs: Sequence[Sequence[int]]) -> list[int]:
++    """[[repeat, size], ...] -> one size per frame, in frame order."""
++    sizes: list[int] = []
++    for repeat, size in runs:
++        sizes.extend([size] * repeat)
++    return sizes
++
++
++def assemble(receipt: bytes, sizes: Sequence[int]) -> list[bytes]:
++    """Frames for `receipt` cut into consecutive slices of the given sizes.
++
++    Every header field is derived from the receipt as the table says. No rule is checked, so the
++    same function builds sets that are well formed except for one named limit.
++    """
++    proof = proof_id(receipt)
++    digest = receipt_sha256(receipt)
++    frames: list[bytes] = []
++    offset = 0
++    for index, size in enumerate(sizes):
++        payload = receipt[offset : offset + size]
++        if len(payload) != size:
++            raise ValueError("the slices are longer than the receipt")
++        frames.append(
++            raw_frame(
++                proof=proof,
++                index=index,
++                count=len(sizes),
++                original_length=len(receipt),
++                encoded_length=len(receipt),
++                digest=digest,
++                payload_length=size,
++                trailing=payload,
++            )
++        )
++        offset += size
++    if offset != len(receipt):
++        raise ValueError("the slices do not cover the receipt")
++    return frames
++
++
++def build_frames(receipt: bytes, sizes: Sequence[int]) -> list[bytes]:
++    """A valid v1 frame set, or ValueError when the request breaks a rule of the specification.
++
++    The specification does not say how an encoder chooses slice sizes ("frames must partition the
++    original bytes into nonempty, ordered, contiguous slices"), so the caller states the partition.
++    """
++    if not MIN_ORIGINAL_BYTES <= len(receipt) <= MAX_ORIGINAL_BYTES:
++        raise ValueError("original byte length must be 1-16,777,216")
++    if not MIN_FRAME_COUNT <= len(sizes) <= MAX_FRAME_COUNT:
++        raise ValueError("frame count must be 1-4096")
++    if any(size < 1 for size in sizes):
++        raise ValueError("every slice must be nonempty")
++    if sum(sizes) != len(receipt):
++        raise ValueError("the slices must partition the receipt")
++    return assemble(receipt, sizes)
++
++
++def uniform_sizes(length: int, slice_bytes: int) -> list[int]:
++    """Equal slices with a shorter last slice when the length is not a multiple.
++
++    One possible partition, not one the specification requires.
++    """
++    full, rest = divmod(length, slice_bytes)
++    return [slice_bytes] * full + ([rest] if rest else [])
++
++
++def patch(frame: bytes, offset: int, replacement: bytes) -> bytes:
++    """A copy of `frame` with `replacement` written at `offset`."""
++    if offset + len(replacement) > len(frame):
++        raise ValueError("the replacement does not fit the frame")
++    return frame[:offset] + replacement + frame[offset + len(replacement) :]
++
++
++# --- Deterministic synthetic receipts ----------------------------------------------------------
++
++STREAM_PREFIX = "UNALTERED-OTS-QR/1 independent vector "
++STREAM_RULE = (
++    "block(k) = SHA-256(ASCII('" + STREAM_PREFIX + "' + label) || uint32be(k)); "
++    "bytes = block(0) || block(1) || ... truncated to the stated length"
++)
++
++
++def stream_blocks(label: str) -> Iterator[bytes]:
++    prefix = (STREAM_PREFIX + label).encode("ascii")
++    counter = 0
++    while True:
++        yield hashlib.sha256(prefix + u32(counter)).digest()
++        counter += 1
++
++
++def stream(label: str, length: int) -> bytes:
++    """Deterministic bytes that do not repeat, so swapped or shifted slices change the digest."""
++    blocks = stream_blocks(label)
++    parts: list[bytes] = []
++    for _ in range((length + 31) // 32):
++        parts.append(next(blocks))
++    return b"".join(parts)[:length]
++
++
++def ots_shaped_receipt() -> bytes:
++    """A small synthetic receipt with the shape of a detached OpenTimestamps file.
++
++    Header magic, major version 1, SHA-256 file-hash operation, a 32-byte digest and a single
++    pending attestation that names a reserved example host. The transport treats receipts as
++    opaque bytes; this one only makes the vectors look like the data the transport carries.
++    """
++    magic = b"\x00OpenTimestamps\x00\x00Proof\x00\xbf\x89\xe2\xe8\x84\xe8\x92\x94"
++    file_digest = hashlib.sha256(b"UNALTERED-OTS-QR/1 independent vector: synthetic file").digest()
++    uri = b"https://calendar.example"
++    attestation_payload = u8(len(uri)) + uri
++    pending = b"\x00" + bytes.fromhex("83dfe30d2ef90c8e") + u8(len(attestation_payload)) + attestation_payload
++    return magic + b"\x01" + b"\x08" + file_digest + pending
++
++
++# --- Vector definitions ------------------------------------------------------------------------
++
++
++def receipt_from(spec: dict) -> bytes:
++    """The receipt bytes a vector entry describes."""
++    if "hex" in spec:
++        return bytes.fromhex(spec["hex"])
++    return stream(spec["stream"], spec["length"])
++
++
++def frames_digest(frames: Iterable[bytes]) -> tuple[str, int]:
++    """SHA-256 of all frames concatenated in the given order, and the total byte count."""
++    state = hashlib.sha256()
++    total = 0
++    for frame in frames:
++        state.update(frame)
++        total += len(frame)
++    return state.hexdigest(), total
++
++
++def recipe_entry(name: str, text: dict, receipt_spec: dict, runs: Sequence[Sequence[int]], *, valid: bool) -> dict:
++    """A vector described by receipt and slices. Small sets also carry every frame as hex."""
++    receipt = receipt_from(receipt_spec)
++    sizes = expand_slices(runs)
++    frames = build_frames(receipt, sizes) if valid else assemble(receipt, sizes)
++    digest, total = frames_digest(frames)
++    entry: dict = {"name": name}
++    entry.update(text)
++    entry.update(
++        {
++            "receipt": receipt_spec,
++            "receiptLength": len(receipt),
++            "receiptSha256": receipt_sha256(receipt).hex(),
++            "proofId": proof_id(receipt).hex(),
++            "slices": [list(run) for run in runs],
++            "frameCount": len(frames),
++            "framesBytes": total,
++            "framesSha256": digest,
++        }
++    )
++    if total <= INLINE_SET_BYTES:
++        entry["frames"] = [frame.hex() for frame in frames]
++    else:
++        entry["firstHeader"] = frames[0][:HEADER_BYTES].hex()
++        entry["lastHeader"] = frames[-1][:HEADER_BYTES].hex()
++    return entry
++
++
++def valid_vectors() -> list[dict]:
++    ots = {"hex": ots_shaped_receipt().hex()}
++    largest_symbol_payload = QR_BYTE_MODE_MAX_BYTES - HEADER_BYTES
++    return [
++        recipe_entry(
++            "smallest-receipt-single-frame",
++            {
++                "covers": "one frame; original length 1, frame count 1, frame index 0 and payload length 1: "
++                "every lower bound the table names",
++            },
++            {"hex": "00"},
++            [[1, 1]],
++            valid=True,
++        ),
++        recipe_entry(
++            "two-frames-two-bytes",
++            {"covers": "the smallest set with more than one frame: two bytes in two one-byte frames"},
++            {"hex": "0001"},
++            [[2, 1]],
++            valid=True,
++        ),
++        recipe_entry(
++            "ots-shaped-single-frame",
++            {"covers": "one frame carrying a small synthetic receipt with the shape of a detached .ots file"},
++            ots,
++            [[1, len(ots_shaped_receipt())]],
++            valid=True,
++        ),
++        recipe_entry(
++            "ots-shaped-three-frames",
++            {"covers": "many frames; the same receipt in three frames, the last one shorter"},
++            ots,
++            [[2, 40], [1, len(ots_shaped_receipt()) - 80]],
++            valid=True,
++        ),
++        recipe_entry(
++            "three-equal-frames",
++            {"covers": "many frames; the length is a multiple of the slice size, so no frame is shorter"},
++            {"stream": "three-equal-frames", "length": 300},
++            [[3, 100]],
++            valid=True,
++        ),
++        recipe_entry(
++            "last-frame-shorter",
++            {"covers": "many frames; last frame shorter"},
++            {"stream": "last-frame-shorter", "length": 250},
++            [[2, 100], [1, 50]],
++            valid=True,
++        ),
++        recipe_entry(
++            "last-frame-one-byte",
++            {"covers": "many frames; the last frame carries a single byte (payload length lower bound)"},
++            {"stream": "last-frame-one-byte", "length": 201},
++            [[2, 100], [1, 1]],
++            valid=True,
++        ),
++        recipe_entry(
++            "uneven-partition",
++            {
++                "covers": "slices of unequal sizes in no particular pattern. The specification requires only "
++                "nonempty, ordered, contiguous slices, so a decoder must accept this set even if no encoder "
++                "of this project produces it",
++            },
++            {"stream": "uneven-partition", "length": 205},
++            [[1, 1], [1, 7], [1, 64], [1, 3], [1, 130]],
++            valid=True,
++        ),
++        recipe_entry(
++            "largest-qr-symbol-frames",
++            {
++                "covers": "frames of exactly 2953 bytes, the most one ISO/IEC 18004 byte-mode symbol holds "
++                "(version 40, level L), followed by a shorter last frame",
++            },
++            {"stream": "largest-qr-symbol-frames", "length": 2 * largest_symbol_payload + 100},
++            [[2, largest_symbol_payload], [1, 100]],
++            valid=True,
++        ),
++        recipe_entry(
++            "large-receipt-64-frames",
++            {"covers": "a large receipt: 64,000 bytes in 64 frames of 1011 payload bytes, last frame shorter"},
++            {"stream": "large-receipt-64-frames", "length": 64_000},
++            [[63, 1011], [1, 64_000 - 63 * 1011]],
++            valid=True,
++        ),
++        recipe_entry(
++            "frame-count-4096",
++            {
++                "covers": "frame count upper bound 4096 and frame index upper bound 4095, each frame carrying "
++                "one byte",
++            },
++            {"stream": "frame-count-4096", "length": 4096},
++            [[4096, 1]],
++            valid=True,
++        ),
++        recipe_entry(
++            "largest-receipt-in-qr-symbols",
++            {
++                "covers": "11,767,808 bytes in 4096 frames of 2953 bytes each: the largest receipt that 4096 "
++                "frames can carry when no frame is longer than one QR byte-mode symbol holds. Added after the "
++                "comparison with the implementations, which enforce that frame size",
++            },
++            {"stream": "largest-receipt-in-qr-symbols", "length": MAX_FRAME_COUNT * largest_symbol_payload},
++            [[MAX_FRAME_COUNT, largest_symbol_payload]],
++            valid=True,
++        ),
++    ]
++
++
++def invalid_vectors() -> list[dict]:
++    """Sets that the specification says a decoder must not turn into a receipt.
++
++    Each set breaks one rule and is otherwise consistent, so a decoder that accepts it is missing
++    that rule (wherever in its pipeline the rule is checked).
++    """
++    base = stream("invalid-base", 40)
++    sizes = [16, 16, 8]
++    good = assemble(base, sizes)
++    proof = proof_id(base)
++    digest = receipt_sha256(base)
++    other = stream("invalid-other", 40)
++    other_frames = assemble(other, sizes)
++
++    def every(offset: int, replacement: bytes) -> list[bytes]:
++        return [patch(frame, offset, replacement) for frame in good]
++
++    def flip_last_bit(value: bytes) -> bytes:
++        return value[:-1] + bytes([value[-1] ^ 0x01])
++
++    entries: list[dict] = []
++
++    def add(name: str, rule: str, change: str, frames: Sequence[bytes]) -> None:
++        entries.append({"name": name, "rule": rule, "change": change, "frames": [frame.hex() for frame in frames]})
++
++    add("magic-wrong", "magic: ASCII `UOTSQR01`", "every frame starts with ASCII UOTSQR00", every(0, b"UOTSQR00"))
++    add("version-0", "version: exactly 1", "version byte 0 in every frame", every(8, b"\x00"))
++    add("version-2", "version: exactly 1", "version byte 2 in every frame", every(8, b"\x02"))
++    add("flags-1", "flags: exactly 0 in v1", "flags byte 0x01 in every frame", every(9, b"\x01"))
++    add("flags-128", "flags: exactly 0 in v1", "flags byte 0x80 in every frame", every(9, b"\x80"))
++    add(
++        "compression-1",
++        "compression: 0 = none; future values rejected",
++        "compression byte 1 in every frame",
++        every(10, b"\x01"),
++    )
++    add("reserved-1", "reserved: 0", "reserved byte 1 in every frame", every(11, b"\x01"))
++    add(
++        "proof-id-without-domain-separation",
++        "proof ID: first 16 bytes of SHA-256(UTF-8 `UNALTERED-OTS-QR/1` + NUL + original receipt bytes)",
++        "proof ID is the first 16 bytes of the plain SHA-256 of the receipt in every frame",
++        every(12, digest[:PROOF_ID_BYTES]),
++    )
++    add(
++        "proof-id-without-nul",
++        "proof ID: first 16 bytes of SHA-256(UTF-8 `UNALTERED-OTS-QR/1` + NUL + original receipt bytes)",
++        "proof ID is computed without the NUL separator in every frame",
++        every(12, hashlib.sha256(PROOF_ID_LABEL.encode("utf-8") + base).digest()[:PROOF_ID_BYTES]),
++    )
++    add(
++        "proof-id-last-bit",
++        "Recompute the domain-separated proof ID and compare its first 16 bytes.",
++        "the last bit of the 16-byte proof ID is flipped in every frame",
++        every(12, flip_last_bit(proof)),
++    )
++    add(
++        "frame-index-one-based",
++        "frame index: zero-based, less than total",
++        "the three frames carry indices 1, 2, 3, so one index equals the frame count",
++        [patch(frame, 28, u32(index + 1)) for index, frame in enumerate(good)],
++    )
++    single = assemble(base, [40])
++    add(
++        "frame-count-0",
++        "frame count: 1-4096",
++        "a single frame that carries the whole receipt states frame count 0",
++        [patch(single[0], 32, u32(0))],
++    )
++    empty = b""
++    add(
++        "original-length-0",
++        "original byte length: 1-16,777,216",
++        "a consistent single frame for an empty receipt: lengths 0, hashes of the empty string, no payload",
++        [
++            raw_frame(
++                proof=proof_id(empty),
++                index=0,
++                count=1,
++                original_length=0,
++                encoded_length=0,
++                digest=receipt_sha256(empty),
++                payload_length=0,
++                trailing=b"",
++            )
++        ],
++    )
++    add(
++        "encoded-length-plus-1",
++        "encoded byte length: equal to original length in v1",
++        "encoded byte length is original length + 1 in every frame",
++        every(40, u32(len(base) + 1)),
++    )
++    add(
++        "encoded-length-0",
++        "encoded byte length: equal to original length in v1",
++        "encoded byte length is 0 in every frame",
++        every(40, u32(0)),
++    )
++    add(
++        "receipt-sha256-last-bit",
++        "Concatenate payloads; verify byte length and SHA-256 against the full 32-byte digest in the header.",
++        "the last bit of the 32-byte receipt SHA-256 is flipped in every frame",
++        every(44, flip_last_bit(digest)),
++    )
++    add(
++        "payload-length-field-too-large",
++        "payload byte length: equals actual trailing byte count",
++        "the last frame states payload length 9 and carries 8 bytes",
++        good[:2] + [patch(good[2], 76, u32(9))],
++    )
++    add(
++        "payload-trailing-byte",
++        "payload byte length: equals actual trailing byte count",
++        "the last frame states payload length 8 and is followed by one more byte (0x00)",
++        good[:2] + [good[2] + b"\x00"],
++    )
++    add(
++        "payload-empty-last-frame",
++        "frames must partition the original bytes into nonempty, ordered, contiguous slices",
++        "two frames: the first carries all 40 bytes, the second is consistent but carries no payload",
++        assemble(base, [40, 0]),
++    )
++    add(
++        "payload-empty-first-frame",
++        "frames must partition the original bytes into nonempty, ordered, contiguous slices",
++        "two frames: the first is consistent but carries no payload, the second carries all 40 bytes",
++        assemble(base, [0, 40]),
++    )
++    add(
++        "header-truncated",
++        "Binary frame (80-byte fixed header)",
++        "a single frame cut to its first 79 bytes",
++        [single[0][:79]],
++    )
++    add(
++        "frame-missing",
++        "Order frames by zero-based index; reject missing or conflicting frames.",
++        "the frame with index 1 is absent",
++        [good[0], good[2]],
++    )
++    add(
++        "frame-missing-last",
++        "Order frames by zero-based index; reject missing or conflicting frames.",
++        "the frame with the highest index is absent",
++        good[:2],
++    )
++    conflicting = patch(good[1], HEADER_BYTES, stream("invalid-conflict", 16))
++    add(
++        "duplicate-conflicting",
++        "Reassembly sorts by index, rejects missing indices and conflicting duplicates",
++        "two frames carry index 1 with identical headers and different payload bytes",
++        [good[0], good[1], conflicting, good[2]],
++    )
++    add(
++        "slices-out-of-order",
++        "frames must partition the original bytes into nonempty, ordered, contiguous slices",
++        "the payloads of the frames with index 0 and 1 are exchanged",
++        [
++            patch(good[0], HEADER_BYTES, good[1][HEADER_BYTES:]),
++            patch(good[1], HEADER_BYTES, good[0][HEADER_BYTES:]),
++            good[2],
++        ],
++    )
++    two = assemble(base, [16, 24])
++    add(
++        "metadata-conflict-frame-count",
++        "Every frame in a set repeats identical metadata other than index and payload length.",
++        "index 0 states frame count 3 and index 1 states frame count 2; the two payloads alone are the "
++        "complete receipt",
++        [good[0], two[1]],
++    )
++    add(
++        "metadata-conflict-original-length",
++        "Every frame in a set repeats identical metadata other than index and payload length.",
++        "the frame with index 0 states original and encoded byte length 41, the others 40",
++        [patch(patch(good[0], 36, u32(41)), 40, u32(41)), good[1], good[2]],
++    )
++    add(
++        "metadata-conflict-receipt-sha256",
++        "Every frame in a set repeats identical metadata other than index and payload length.",
++        "the frame with index 0 carries a different receipt SHA-256 than the others",
++        [patch(good[0], 44, flip_last_bit(digest)), good[1], good[2]],
++    )
++    short = base[:39]
++    short_frames = assemble(short, [16, 16, 7])
++    add(
++        "original-length-not-payload-total",
++        "Concatenate payloads; verify byte length and SHA-256 against the full 32-byte digest in the header.",
++        "every frame states original and encoded byte length 40, the payloads total 39 bytes, and the "
++        "proof ID and receipt SHA-256 are those of the 39 bytes",
++        [patch(patch(frame, 36, u32(40)), 40, u32(40)) for frame in short_frames],
++    )
++    add(
++        "mixed-incomplete-receipts",
++        "Parse the header above; group by the 16-byte proof ID and confirm repeated metadata matches.",
++        "index 0 and 2 come from one receipt and index 1 from another receipt of the same length",
++        [good[0], other_frames[1], good[2]],
++    )
++
++    entries.append(
++        recipe_entry(
++            "frame-count-4097",
++            {
++                "rule": "frame count: 1-4096",
++                "change": "a consistent set of 4097 one-byte frames for a 4097-byte receipt",
++            },
++            {"stream": "frame-count-4097", "length": 4097},
++            [[4097, 1]],
++            valid=False,
++        )
++    )
++    entries.append(
++        recipe_entry(
++            "original-length-16777217",
++            {
++                "rule": "original byte length: 1-16,777,216",
++                "change": "a consistent set of 4096 frames for a 16,777,217-byte receipt",
++            },
++            {"stream": "original-length-16777217", "length": MAX_ORIGINAL_BYTES + 1},
++            [[4095, 4096], [1, 4097]],
++            valid=False,
++        )
++    )
++    return entries
++
++
++def unspecified_inputs() -> list[dict]:
++    """Inputs for which the specification text does not determine one outcome.
++
++    They carry no expected result. A decoder may reject them or recover one of the complete
++    receipts they contain; it must never produce any other bytes. Entries given as a recipe
++    (receipt and slices) contain exactly one receipt, which is the only acceptable result.
++    """
++    first = stream("unspecified-first", 40)
++    second = stream("unspecified-second", 24)
++    first_frames = assemble(first, [16, 16, 8])
++    second_frames = assemble(second, [12, 12])
++
++    def entry(name: str, question: str, frames: Sequence[bytes], acceptable: Sequence[bytes]) -> dict:
++        return {
++            "name": name,
++            "question": question,
++            "frames": [frame.hex() for frame in frames],
++            "acceptable": [receipt.hex() for receipt in acceptable],
++        }
++
++    beyond_symbol = (
++        "The frame table states no frame size limit and the resource bounds name only the 16 MiB receipt and "
++        "the 4096-frame limits (\"These are application limits, not QR-standard limits\"). The text also says "
++        "that frames travel in ISO/IEC 18004 Model 2 byte-mode symbols, which hold at most 2953 bytes. This set "
++        "satisfies every rule of the frame table and contains a frame longer than 2953 bytes."
++    )
++    over = QR_BYTE_MODE_MAX_BYTES - HEADER_BYTES + 1
++    return [
++        recipe_entry(
++            "frame-2954-bytes",
++            {"question": beyond_symbol + " The first frame is 2954 bytes long, one byte more than a symbol holds."},
++            {"stream": "frame-2954-bytes", "length": over + 1},
++            [[1, over], [1, 1]],
++            valid=True,
++        ),
++        recipe_entry(
++            "original-length-16777216",
++            {
++                "question": beyond_symbol + " The table gives 16,777,216 as the upper bound of the original byte "
++                "length; at most 4096 frames of at most 2953 bytes carry 4096 * 2873 = 11,767,808 bytes, so the "
++                "stated bound can only be reached with frames of at least 4176 bytes, as here (4096 frames with "
++                "4096 payload bytes each).",
++            },
++            {"stream": "original-length-16777216", "length": MAX_ORIGINAL_BYTES},
++            [[MAX_FRAME_COUNT, 4096]],
++            valid=True,
++        ),
++        entry(
++            "two-complete-receipts",
++            "Two complete sets with different proof IDs are presented together. Recovery step 2 says "
++            "\"group by the 16-byte proof ID\", which suggests each group is handled on its own; the "
++            "integration section says \"mixed receipts are rejected\".",
++            [first_frames[0], second_frames[0], first_frames[1], second_frames[1], first_frames[2]],
++            [first, second],
++        ),
++        entry(
++            "complete-set-and-foreign-payload",
++            "A complete set is presented together with a payload that is not a frame. The integration "
++            "section says \"Unknown QR payloads are ignored\" for scans; the framing rules do not say whether "
++            "a recovery tool given payload files ignores or rejects it.",
++            list(first_frames) + [b"https://example.org/not-a-frame"],
++            [first],
++        ),
++        entry(
++            "complete-set-and-out-of-range-index",
++            "A complete set is presented together with one more frame of the same receipt whose index equals "
++            "the frame count. The table says the index is \"less than total\"; the text does not say whether "
++            "one malformed frame invalidates an otherwise complete set.",
++            list(first_frames) + [patch(first_frames[2], 28, u32(3))],
++            [first],
++        ),
++    ]
++
++
++def build_document() -> dict:
++    return {
++        "schema": SCHEMA,
++        "protocol": PROOF_ID_LABEL,
++        "specification": "docs/ARCHIVAL_QR_PROTOCOL.md",
++        "builder": "tests/archival/independent_frames.py",
++        "about": [
++            "Golden vectors built by a Python program written from the specification text only.",
++            "receipt.hex is the receipt itself; receipt.stream names a deterministic byte stream: " + STREAM_RULE + ".",
++            "slices is a list of [repeat, size] runs: the payload sizes of the frames in index order.",
++            "framesSha256 is the SHA-256 of all frames concatenated in index order. Sets of at most "
++            + str(INLINE_SET_BYTES)
++            + " bytes also list every frame as hex; larger sets list the first and the last 80-byte header.",
++            "valid: a decoder must recover exactly the receipt, in any frame order and with identical "
++            "duplicates present.",
++            "invalid: a decoder must not produce a receipt. Each set breaks the one quoted rule and is "
++            "otherwise consistent.",
++            "unspecified: the specification text does not determine one outcome. A decoder may reject the "
++            "input or recover one of the receipts listed under acceptable (for an entry given as receipt and "
++            "slices: that receipt), and must never produce other bytes.",
++        ],
++        "valid": valid_vectors(),
++        "invalid": invalid_vectors(),
++        "unspecified": unspecified_inputs(),
++    }
++
++
++def render(document: dict) -> str:
++    return json.dumps(document, indent=2, ensure_ascii=True) + "\n"
++
++
++def frames_of(entry: dict) -> list[bytes]:
++    """The frames of a vector entry in index order: inline hex, or rebuilt from its recipe."""
++    if "frames" in entry:
++        return [bytes.fromhex(frame) for frame in entry["frames"]]
++    return assemble(receipt_from(entry["receipt"]), expand_slices(entry["slices"]))
++
++
++def acceptable_receipts(entry: dict) -> list[bytes]:
++    """The receipts a decoder may recover from an entry of the unspecified section."""
++    if "acceptable" in entry:
++        return [bytes.fromhex(receipt) for receipt in entry["acceptable"]]
++    return [receipt_from(entry["receipt"])]
++
++
++def main(argv: Sequence[str] | None = None) -> int:
++    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
++    mode = parser.add_mutually_exclusive_group()
++    mode.add_argument("--write", action="store_true", help="regenerate " + VECTOR_FILE.name)
++    mode.add_argument("--check", action="store_true", help="fail if " + VECTOR_FILE.name + " differs from the builder")
++    arguments = parser.parse_args(argv)
++    text = render(build_document())
++    if arguments.write:
++        VECTOR_FILE.write_bytes(text.encode("ascii"))
++        print(f"wrote {VECTOR_FILE.name}: {len(text)} bytes")
++        return 0
++    if arguments.check:
++        if not VECTOR_FILE.is_file() or VECTOR_FILE.read_bytes().replace(b"\r\n", b"\n") != text.encode("ascii"):
++            print(f"{VECTOR_FILE.name} differs from the builder output", file=sys.stderr)
++            return 1
++        print(f"{VECTOR_FILE.name} matches the builder output")
++        return 0
++    document = json.loads(text)
++    for kind in ("valid", "invalid", "unspecified"):
++        for entry in document[kind]:
++            count = entry.get("frameCount", len(entry.get("frames", [])))
++            print(f"{kind:11} {entry['name']}: {count} frame(s)")
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/tests/archival/test_independent_vectors.py b/tests/archival/test_independent_vectors.py
+new file mode 100644
+index 0000000..c2433c3
+--- /dev/null
++++ b/tests/archival/test_independent_vectors.py
+@@ -0,0 +1,302 @@
++"""Independent golden vectors for UNALTERED-OTS-QR/1 (standard library only, always on).
++
++The vectors come from independent_frames.py, a builder written from the specification text
++only. This module checks
++
++1. the builder and the committed vector file against the specification's header table, with a
++   third, deliberately naive reading of the bytes (fixed offsets, no shared helpers) and one
++   frame assembled by hand;
++2. the Python reference recovery (scripts/recover-archival-qr.py) against every vector.
++
++tests/unit/archival-qr-independent-vectors.test.ts runs the same file through the TypeScript
++implementation. Differences between the specification text and the implementations are listed
++in README.md next to this file.
++"""
++
++from __future__ import annotations
++
++import hashlib
++import importlib.util
++import json
++import os
++import subprocess
++import sys
++import tempfile
++import unittest
++from pathlib import Path
++
++sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
++
++import independent_frames as builder  # noqa: E402  (path set up above)
++
++ROOT = Path(__file__).resolve().parents[2]
++REFERENCE_SCRIPT = ROOT / "scripts" / "recover-archival-qr.py"
++
++
++def load_reference():
++    """The reference recovery module, loaded from its script path (it is not a package)."""
++    spec = importlib.util.spec_from_file_location("archival_recovery_reference", REFERENCE_SCRIPT)
++    assert spec and spec.loader
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    return module
++
++# One frame assembled by hand from the header table for the one-byte receipt 0x00. The two digests
++# were computed with coreutils, not with the builder:
++#   printf '\0' | sha256sum                          -> receipt SHA-256
++#   printf 'UNALTERED-OTS-QR/1\0\0' | sha256sum      -> proof ID preimage (label, NUL, receipt)
++HAND_ASSEMBLED_SMALLEST_FRAME = (
++    "554f545351523031"  # magic: ASCII UOTSQR01
++    "01"  # version
++    "00"  # flags
++    "00"  # compression
++    "00"  # reserved
++    "6f2cbd7e88aa442eef1c08eb8f19037a"  # proof ID: first 16 bytes of 6f2cbd7e...c337e2d1
++    "00000000"  # frame index
++    "00000001"  # frame count
++    "00000001"  # original byte length
++    "00000001"  # encoded byte length
++    "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"  # receipt SHA-256
++    "00000001"  # payload byte length
++    "00"  # payload
++)
++
++
++def committed_document() -> dict:
++    with open(builder.VECTOR_FILE, "rb") as handle:
++        return json.loads(handle.read().decode("ascii"))
++
++
++class IndependentVectorFile(unittest.TestCase):
++    """The committed file is exactly what the independent builder produces."""
++
++    @classmethod
++    def setUpClass(cls) -> None:
++        cls.built = builder.build_document()
++        cls.committed = committed_document()
++
++    def test_committed_vectors_equal_the_builder_output(self) -> None:
++        with open(builder.VECTOR_FILE, "rb") as handle:
++            committed_text = handle.read().replace(b"\r\n", b"\n").decode("ascii")
++        self.assertEqual(self.committed, json.loads(builder.render(self.built)))
++        self.assertEqual(committed_text, builder.render(self.built))
++
++    def test_smallest_vector_is_the_hand_assembled_frame(self) -> None:
++        smallest = self.committed["valid"][0]
++        self.assertEqual(smallest["name"], "smallest-receipt-single-frame")
++        self.assertEqual(smallest["receipt"], {"hex": "00"})
++        self.assertEqual(smallest["frames"], [HAND_ASSEMBLED_SMALLEST_FRAME])
++        self.assertEqual(len(bytes.fromhex(HAND_ASSEMBLED_SMALLEST_FRAME)), 81)
++
++    def test_stream_receipts_follow_the_documented_rule(self) -> None:
++        # Both blocks were computed with coreutils:
++        #   printf 'UNALTERED-OTS-QR/1 independent vector last-frame-shorter\0\0\0\0' | sha256sum
++        #   printf 'UNALTERED-OTS-QR/1 independent vector last-frame-shorter\0\0\0\1' | sha256sum
++        expected = (
++            "f31bf905d972c12ee2601ef2a33f531eef9eecd5af78c6f6c6efc01932abaa7a"
++            "c2582cd626dab26b11427ff8d6ddbed3d3df1835a8f73188360cb30bcf21ab0d"
++        )
++        self.assertEqual(builder.stream("last-frame-shorter", 64).hex(), expected)
++        self.assertEqual(builder.stream("last-frame-shorter", 33).hex(), expected[:66])
++        self.assertEqual(builder.stream("last-frame-shorter", 0), b"")
++
++    def test_vector_names_are_unique(self) -> None:
++        kinds = ("valid", "invalid", "unspecified")
++        names = [entry["name"] for kind in kinds for entry in self.committed[kind]]
++        self.assertEqual(len(names), len(set(names)))
++
++
++class ValidVectorsFollowTheHeaderTable(unittest.TestCase):
++    """Read every valid frame at the table's fixed offsets and check each rule of the table."""
++
++    @classmethod
++    def setUpClass(cls) -> None:
++        cls.committed = committed_document()
++
++    def check_set(self, entry: dict) -> None:
++        receipt = builder.receipt_from(entry["receipt"])
++        frames = builder.frames_of(entry)
++        label = "UNALTERED-OTS-QR/1".encode("utf-8")
++        expected_proof = hashlib.sha256(label + b"\x00" + receipt).digest()[:16]
++        expected_digest = hashlib.sha256(receipt).digest()
++        self.assertEqual(entry["receiptLength"], len(receipt))
++        self.assertEqual(entry["receiptSha256"], expected_digest.hex())
++        self.assertEqual(entry["proofId"], expected_proof.hex())
++        self.assertEqual(entry["frameCount"], len(frames))
++        self.assertTrue(1 <= len(frames) <= 4096)
++        self.assertTrue(1 <= len(receipt) <= 16_777_216)
++
++        running = hashlib.sha256()
++        carried = bytearray()
++        for position, frame in enumerate(frames):
++            running.update(frame)
++            self.assertGreater(len(frame), 80)
++            self.assertEqual(frame[0:8], b"UOTSQR01")
++            self.assertEqual(frame[8], 1)
++            self.assertEqual(frame[9], 0)
++            self.assertEqual(frame[10], 0)
++            self.assertEqual(frame[11], 0)
++            self.assertEqual(frame[12:28], expected_proof)
++            self.assertEqual(int.from_bytes(frame[28:32], "big"), position)
++            self.assertEqual(int.from_bytes(frame[32:36], "big"), len(frames))
++            self.assertEqual(int.from_bytes(frame[36:40], "big"), len(receipt))
++            self.assertEqual(int.from_bytes(frame[40:44], "big"), len(receipt))
++            self.assertEqual(frame[44:76], expected_digest)
++            self.assertEqual(int.from_bytes(frame[76:80], "big"), len(frame) - 80)
++            carried += frame[80:]
++        self.assertEqual(bytes(carried), receipt)
++        self.assertEqual(entry["framesSha256"], running.hexdigest())
++        self.assertEqual(entry["framesBytes"], sum(len(frame) for frame in frames))
++        self.assertEqual([len(frame) - 80 for frame in frames], builder.expand_slices(entry["slices"]))
++        if "frames" not in entry:
++            self.assertEqual(entry["firstHeader"], frames[0][:80].hex())
++            self.assertEqual(entry["lastHeader"], frames[-1][:80].hex())
++
++    def test_every_valid_set(self) -> None:
++        self.assertGreaterEqual(len(self.committed["valid"]), 10)
++        for entry in self.committed["valid"]:
++            with self.subTest(vector=entry["name"]):
++                self.check_set(entry)
++
++    def test_sets_with_frames_beyond_one_qr_symbol_follow_the_table_too(self) -> None:
++        # These two are listed as unspecified only because a frame is longer than one QR symbol holds.
++        recipes = [entry for entry in self.committed["unspecified"] if "slices" in entry]
++        self.assertEqual([entry["name"] for entry in recipes], ["frame-2954-bytes", "original-length-16777216"])
++        for entry in recipes:
++            with self.subTest(vector=entry["name"]):
++                self.check_set(entry)
++                self.assertGreater(max(builder.expand_slices(entry["slices"])) + 80, 2953)
++
++    def test_named_boundaries_are_present(self) -> None:
++        by_name = {entry["name"]: entry for entry in self.committed["valid"]}
++        self.assertEqual(by_name["smallest-receipt-single-frame"]["receiptLength"], 1)
++        self.assertEqual(by_name["smallest-receipt-single-frame"]["frameCount"], 1)
++        self.assertEqual(by_name["frame-count-4096"]["frameCount"], 4096)
++        # Last header of the 4096-frame set: index 4095 (0x00000fff) of 4096 (0x00001000).
++        self.assertEqual(by_name["frame-count-4096"]["lastHeader"][56:72], "00000fff00001000")
++        self.assertEqual(by_name["largest-qr-symbol-frames"]["slices"][0], [2, 2953 - 80])
++        self.assertEqual(by_name["largest-receipt-in-qr-symbols"]["receiptLength"], 4096 * (2953 - 80))
++        self.assertEqual(by_name["largest-receipt-in-qr-symbols"]["slices"], [[4096, 2953 - 80]])
++        # The upper bound the table names for the original byte length needs frames of 4176 bytes.
++        unspecified = {entry["name"]: entry for entry in self.committed["unspecified"]}
++        largest = unspecified["original-length-16777216"]
++        self.assertEqual(largest["receiptLength"], 16_777_216)
++        self.assertEqual(largest["frameCount"], 4096)
++        # Original and encoded byte length 16,777,216 = 0x01000000.
++        self.assertEqual(largest["firstHeader"][72:88], "0100000001000000")
++
++
++class BuilderRefusesRuleViolations(unittest.TestCase):
++    """build_frames produces valid sets only; assemble and raw_frame build the invalid ones."""
++
++    def test_limits(self) -> None:
++        for receipt, sizes in (
++            (b"", []),
++            (b"", [0]),
++            (b"ab", [2, 0]),
++            (b"ab", [1]),
++            (b"ab", [1, 2]),
++            (b"a" * 4097, [1] * 4097),
++            (bytes(16_777_217), [16_777_217]),
++        ):
++            with self.subTest(length=len(receipt), frames=len(sizes)):
++                with self.assertRaises(ValueError):
++                    builder.build_frames(receipt, sizes)
++
++    def test_uniform_sizes(self) -> None:
++        self.assertEqual(builder.uniform_sizes(250, 100), [100, 100, 50])
++        self.assertEqual(builder.uniform_sizes(300, 100), [100, 100, 100])
++        self.assertEqual(builder.uniform_sizes(1, 100), [1])
++
++
++def arrangements(frames: list) -> dict:
++    """The same set in index order, reversed, and with odd indices first."""
++    return {"index order": frames, "reversed": frames[::-1], "odd indices first": frames[1::2] + frames[0::2]}
++
++
++class ReferenceRecoveryAgainstIndependentVectors(unittest.TestCase):
++    """scripts/recover-archival-qr.py must treat the independently built frames as the text says."""
++
++    @classmethod
++    def setUpClass(cls) -> None:
++        cls.reference = load_reference()
++        cls.committed = committed_document()
++
++    def test_the_two_vector_sets_agree(self) -> None:
++        # golden-v1.hex is the first, shared vector. The independent builder produces the same frame.
++        lines = (ROOT / "tests" / "archival" / "golden-v1.hex").read_text(encoding="ascii").splitlines()
++        first_vector = bytes.fromhex("".join(line for line in lines if not line.startswith("#")))
++        receipt = bytes([0x00, 0xFF, 0x01, 0x80, 0x2A, 0x0A])
++        self.assertEqual(builder.build_frames(receipt, [len(receipt)]), [first_vector])
++
++    def test_valid_sets_recover_the_exact_receipt(self) -> None:
++        for entry in self.committed["valid"]:
++            receipt = builder.receipt_from(entry["receipt"])
++            frames = builder.frames_of(entry)
++            for label, arrangement in arrangements(frames).items():
++                with self.subTest(vector=entry["name"], order=label):
++                    self.assertEqual(self.reference.recover(arrangement), receipt)
++
++    def test_identical_duplicates_are_ignored(self) -> None:
++        # "Identical duplicate frames may be ignored." Sets of 4096 frames are left out here: one more
++        # input exceeds the number of payloads both implementations accept (see the next test).
++        for entry in self.committed["valid"]:
++            frames = builder.frames_of(entry)
++            if len(frames) >= 4096:
++                continue
++            with self.subTest(vector=entry["name"]):
++                receipt = builder.receipt_from(entry["receipt"])
++                self.assertEqual(self.reference.recover(frames + frames[:1]), receipt)
++                self.assertEqual(self.reference.recover(frames[-1:] + frames + frames), receipt)
++
++    def test_a_duplicate_next_to_4096_frames_never_yields_other_bytes(self) -> None:
++        # The text bounds the frame count field, not the number of scanned payloads. Whether 4097 inputs
++        # (a complete 4096-frame set and one identical duplicate) are accepted is not specified.
++        entry = next(entry for entry in self.committed["valid"] if entry["name"] == "frame-count-4096")
++        frames = builder.frames_of(entry)
++        try:
++            recovered = self.reference.recover(frames + frames[:1])
++        except ValueError:
++            return
++        self.assertEqual(recovered, builder.receipt_from(entry["receipt"]))
++
++    def test_invalid_sets_are_rejected(self) -> None:
++        self.assertGreaterEqual(len(self.committed["invalid"]), 30)
++        for entry in self.committed["invalid"]:
++            frames = builder.frames_of(entry)
++            for label, arrangement in arrangements(frames).items():
++                with self.subTest(vector=entry["name"], order=label, rule=entry["rule"]):
++                    with self.assertRaises(ValueError):
++                        self.reference.recover(arrangement)
++
++    def test_unspecified_inputs_never_yield_other_bytes(self) -> None:
++        for entry in self.committed["unspecified"]:
++            frames = builder.frames_of(entry)
++            acceptable = builder.acceptable_receipts(entry)
++            for label, arrangement in arrangements(frames).items():
++                with self.subTest(vector=entry["name"], order=label):
++                    try:
++                        recovered = self.reference.recover(arrangement)
++                    except ValueError:
++                        continue
++                    self.assertIn(recovered, acceptable)
++
++    def test_documented_command_line_recovers_a_multi_frame_vector(self) -> None:
++        entry = next(entry for entry in self.committed["valid"] if entry["name"] == "ots-shaped-three-frames")
++        frames = builder.frames_of(entry)
++        with tempfile.TemporaryDirectory() as directory:
++            paths = []
++            for index, frame in enumerate(frames):
++                path = Path(directory) / f"frame-{index:03}.bin"
++                path.write_bytes(frame)
++                paths.append(str(path))
++            output = Path(directory) / "recovered.ots"
++            command = [sys.executable, str(REFERENCE_SCRIPT), *reversed(paths), "-o", str(output)]
++            completed = subprocess.run(command, capture_output=True, text=True, timeout=120, check=False)
++            self.assertEqual(completed.returncode, 0, completed.stderr)
++            self.assertEqual(output.read_bytes(), builder.receipt_from(entry["receipt"]))
++            self.assertIn(entry["receiptSha256"], completed.stdout)
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/tests/unit/archival-qr-independent-vectors.test.ts b/tests/unit/archival-qr-independent-vectors.test.ts
+new file mode 100644
+index 0000000..e6cd831
+--- /dev/null
++++ b/tests/unit/archival-qr-independent-vectors.test.ts
+@@ -0,0 +1,238 @@
++import { createHash } from 'node:crypto';
++import { readFileSync } from 'node:fs';
++import { describe, expect, it } from 'vitest';
++import { encodeReceiptFrames, recoverReceiptFrames } from '../../src/core/archive/frames';
++
++// Second, independently constructed vector set for UNALTERED-OTS-QR/1.
++// tests/archival/independent_frames.py built every frame from the text of docs/ARCHIVAL_QR_PROTOCOL.md; its author
++// had not read this implementation when the vectors were first committed. tests/archival/test_independent_vectors.py
++// checks the same file against the Python reference recovery. tests/archival/README.md lists the differences found
++// between the specification text and the implementations.
++
++type Runs = readonly (readonly [number, number])[];
++type ReceiptSource = { hex: string } | { stream: string; length: number };
++interface Recipe {
++  name: string;
++  receipt: ReceiptSource;
++  receiptLength: number;
++  receiptSha256: string;
++  proofId: string;
++  slices: Runs;
++  frameCount: number;
++  framesBytes: number;
++  framesSha256: string;
++  frames?: string[];
++  firstHeader?: string;
++  lastHeader?: string;
++}
++interface FrameList { name: string; frames: string[] }
++type InvalidVector = (Recipe | FrameList) & { rule: string; change: string };
++type UnspecifiedInput = (Recipe | (FrameList & { acceptable: string[] })) & { question: string };
++interface VectorFile { schema: string; protocol: string; valid: Recipe[]; invalid: InvalidVector[]; unspecified: UnspecifiedInput[] }
++
++const HEADER = 80;
++/** The most one ISO/IEC 18004 Model 2 byte-mode symbol holds (version 40, level L). */
++const QR_SYMBOL_BYTES = 2953;
++const vectors = JSON.parse(readFileSync('tests/archival/independent-vectors-v1.json', 'utf8')) as VectorFile;
++
++const unhex = (text: string): Uint8Array => Uint8Array.from(Buffer.from(text, 'hex'));
++const hex = (bytes: Uint8Array): string => Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength).toString('hex');
++const same = (a: Uint8Array, b: Uint8Array): boolean =>
++  Buffer.from(a.buffer, a.byteOffset, a.byteLength).equals(Buffer.from(b.buffer, b.byteOffset, b.byteLength));
++function sha256Hex(parts: Iterable<Uint8Array>): string {
++  const state = createHash('sha256');
++  for (const part of parts) state.update(part);
++  return state.digest('hex');
++}
++
++/** The deterministic receipt stream of the vector file: block(k) = SHA-256(ASCII prefix + label || uint32be(k)). */
++function stream(label: string, length: number): Uint8Array {
++  const prefix = Buffer.from('UNALTERED-OTS-QR/1 independent vector ' + label, 'ascii');
++  const counter = Buffer.alloc(4);
++  const out = new Uint8Array(Math.ceil(length / 32) * 32);
++  for (let block = 0; block * 32 < length; block++) {
++    counter.writeUInt32BE(block);
++    out.set(createHash('sha256').update(prefix).update(counter).digest(), block * 32);
++  }
++  return out.slice(0, length);
++}
++const receiptOf = (source: ReceiptSource): Uint8Array => 'hex' in source ? unhex(source.hex) : stream(source.stream, source.length);
++const sizesOf = (slices: Runs): number[] => slices.flatMap(([repeat, size]) => Array.from({ length: repeat }, () => size));
++const isRecipe = (entry: Recipe | FrameList): entry is Recipe => 'slices' in entry;
++
++/** Frames of an entry in index order: the listed hex, or the first header with index and payload length rewritten
++ * around consecutive slices of the receipt. The result must hash to the entry's framesSha256, so this helper cannot
++ * drift from the Python builder unnoticed. */
++function framesOf(entry: Recipe | FrameList): Uint8Array[] {
++  if (entry.frames) return entry.frames.map(unhex);
++  if (!isRecipe(entry) || !entry.firstHeader) throw new Error(`${entry.name}: neither frames nor a recipe`);
++  const receipt = receiptOf(entry.receipt);
++  const template = unhex(entry.firstHeader);
++  const frames: Uint8Array[] = [];
++  let offset = 0;
++  for (const [index, size] of sizesOf(entry.slices).entries()) {
++    const frame = new Uint8Array(HEADER + size);
++    frame.set(template);
++    const view = new DataView(frame.buffer);
++    view.setUint32(28, index);
++    view.setUint32(76, size);
++    frame.set(receipt.subarray(offset, offset + size), HEADER);
++    frames.push(frame);
++    offset += size;
++  }
++  if (offset !== receipt.length || sha256Hex(frames) !== entry.framesSha256) throw new Error(`${entry.name}: recipe does not reproduce the vector`);
++  return frames;
++}
++
++/** The same set in index order, reversed, and with odd indices first. */
++function arrangements(frames: readonly Uint8Array[]): [string, Uint8Array[]][] {
++  return [
++    ['index order', [...frames]],
++    ['reversed', [...frames].reverse()],
++    ['odd indices first', [...frames.filter((_, i) => i % 2 === 1), ...frames.filter((_, i) => i % 2 === 0)]],
++  ];
++}
++/** `first` bytes per frame, then a shorter or equal last frame: the only partition encodeReceiptFrames produces. */
++function greedyCapacity(sizes: readonly number[]): number | null {
++  const first = sizes[0]!;
++  const last = sizes[sizes.length - 1]!;
++  return sizes.slice(0, -1).every(size => size === first) && last <= first ? first : null;
++}
++async function outcome(frames: readonly Uint8Array[]): Promise<Uint8Array | null> {
++  try { return await recoverReceiptFrames(frames); } catch { return null; }
++}
++
++describe('independent golden vectors: the vector file as read here', () => {
++  it('names the protocol and holds all three kinds of entries', () => {
++    expect(vectors.schema).toBe('unaltered-ots-qr-independent-vectors/1');
++    expect(vectors.protocol).toBe('UNALTERED-OTS-QR/1');
++    expect(vectors.valid.length).toBeGreaterThanOrEqual(10);
++    expect(vectors.invalid.length).toBeGreaterThanOrEqual(30);
++    expect(vectors.unspecified.length).toBeGreaterThanOrEqual(3);
++  });
++  it('reproduces every recorded digest of receipts and frame sets', () => {
++    const recipes = [...vectors.valid, ...vectors.invalid.filter(isRecipe), ...vectors.unspecified.filter(isRecipe)];
++    for (const entry of recipes) {
++      const receipt = receiptOf(entry.receipt);
++      const frames = framesOf(entry);
++      expect(receipt.length, entry.name).toBe(entry.receiptLength);
++      expect(sha256Hex([receipt]), entry.name).toBe(entry.receiptSha256);
++      expect(frames.length, entry.name).toBe(entry.frameCount);
++      expect(sha256Hex(frames), entry.name).toBe(entry.framesSha256);
++      expect(frames.reduce((total, frame) => total + frame.length, 0), entry.name).toBe(entry.framesBytes);
++    }
++  }, 120_000);
++});
++
++describe('independent golden vectors: valid sets', () => {
++  for (const entry of vectors.valid) {
++    it(`recovers the exact receipt from ${entry.name} in any order`, async () => {
++      const receipt = receiptOf(entry.receipt);
++      const frames = framesOf(entry);
++      for (const [order, arrangement] of arrangements(frames)) {
++        expect(same(await recoverReceiptFrames(arrangement), receipt), order).toBe(true);
++      }
++      // "Identical duplicate frames may be ignored." A 4096-frame set is left out: one more input exceeds the
++      // number of payloads the implementation accepts, which the text does not specify (see the last block).
++      if (frames.length < 4096) {
++        expect(same(await recoverReceiptFrames([...frames, frames[0]!]), receipt), 'duplicate').toBe(true);
++        expect(same(await recoverReceiptFrames([frames[frames.length - 1]!, ...frames, ...frames]), receipt), 'duplicates').toBe(true);
++      }
++    }, 120_000);
++
++    const capacity = greedyCapacity(sizesOf(entry.slices));
++    if (capacity === null) {
++      it(`cannot encode the partition of ${entry.name}, which only a decoder has to accept`, () => {
++        expect(entry.name).toBe('uneven-partition');
++      });
++      continue;
++    }
++    it(`encodes ${entry.name} to the same bytes as the independent builder`, async () => {
++      const receipt = receiptOf(entry.receipt);
++      const produced = await encodeReceiptFrames(receipt, capacity + HEADER);
++      expect(produced.length).toBe(entry.frameCount);
++      expect(sha256Hex(produced)).toBe(entry.framesSha256);
++      if (entry.frames) expect(produced.map(hex)).toEqual(entry.frames);
++      else {
++        expect(hex(produced[0]!.subarray(0, HEADER))).toBe(entry.firstHeader);
++        expect(hex(produced[produced.length - 1]!.subarray(0, HEADER))).toBe(entry.lastHeader);
++      }
++    }, 120_000);
++  }
++});
++
++describe('independent golden vectors: invalid sets', () => {
++  for (const entry of vectors.invalid) {
++    it(`rejects ${entry.name} (${entry.rule})`, async () => {
++      const frames = framesOf(entry);
++      expect(frames.length).toBeGreaterThan(0);
++      for (const [order, arrangement] of arrangements(frames)) {
++        await expect(recoverReceiptFrames(arrangement), order).rejects.toBeInstanceOf(Error);
++      }
++    }, 120_000);
++  }
++  it('refuses to encode a receipt that needs more than 4096 frames or is longer than 16,777,216 bytes', async () => {
++    const tooManyFrames = vectors.invalid.filter(isRecipe).find(entry => entry.name === 'frame-count-4097')!;
++    await expect(encodeReceiptFrames(receiptOf(tooManyFrames.receipt), HEADER + 1)).rejects.toBeInstanceOf(Error);
++    const tooLong = vectors.invalid.filter(isRecipe).find(entry => entry.name === 'original-length-16777217')!;
++    expect(tooLong.receiptLength).toBe(16_777_217);
++    await expect(encodeReceiptFrames(receiptOf(tooLong.receipt), QR_SYMBOL_BYTES)).rejects.toBeInstanceOf(Error);
++  }, 120_000);
++});
++
++describe('independent golden vectors: inputs the specification text leaves open', () => {
++  // Rejecting is always acceptable. Recovering is acceptable only if the result is one of the complete receipts
++  // in the input. No expectation is pinned beyond that: the text does not determine these outcomes.
++  for (const entry of vectors.unspecified) {
++    it(`never produces other bytes from ${entry.name}`, async () => {
++      const frames = framesOf(entry);
++      const acceptable = isRecipe(entry) ? [receiptOf(entry.receipt)] : entry.acceptable.map(unhex);
++      for (const [order, arrangement] of arrangements(frames)) {
++        const recovered = await outcome(arrangement);
++        if (recovered !== null) expect(acceptable.some(receipt => same(receipt, recovered)), order).toBe(true);
++      }
++    }, 120_000);
++  }
++  it('never produces other bytes from 4096 frames and one identical duplicate', async () => {
++    const entry = vectors.valid.find(candidate => candidate.name === 'frame-count-4096')!;
++    const frames = framesOf(entry);
++    const recovered = await outcome([...frames, frames[0]!]);
++    if (recovered !== null) expect(same(recovered, receiptOf(entry.receipt))).toBe(true);
++  }, 120_000);
++});
++
++describe('independent golden vectors: where this implementation is stricter than the frame table', () => {
++  // Finding, pinned so that a change on either side is noticed. The frame table and the resource bounds of
++  // docs/ARCHIVAL_QR_PROTOCOL.md name no frame size limit, and give 16,777,216 as the upper bound of the original
++  // byte length. This implementation and the Python reference recovery refuse frames longer than 2953 bytes (one
++  // QR byte-mode symbol), so 4096 frames carry at most 4096 * 2873 = 11,767,808 bytes.
++  const largest = vectors.valid.find(entry => entry.name === 'largest-receipt-in-qr-symbols')!;
++  const beyond = vectors.unspecified.filter(isRecipe);
++
++  it('accepts a frame of 2953 bytes and refuses a frame of 2954 bytes', async () => {
++    const atLimit = vectors.valid.find(entry => entry.name === 'largest-qr-symbol-frames')!;
++    expect(Math.max(...sizesOf(atLimit.slices)) + HEADER).toBe(QR_SYMBOL_BYTES);
++    expect(same(await recoverReceiptFrames(framesOf(atLimit)), receiptOf(atLimit.receipt))).toBe(true);
++    const over = beyond.find(entry => entry.name === 'frame-2954-bytes')!;
++    const frames = framesOf(over);
++    expect(frames[0]!.length).toBe(QR_SYMBOL_BYTES + 1);
++    await expect(recoverReceiptFrames(frames)).rejects.toBeInstanceOf(Error);
++    await expect(encodeReceiptFrames(receiptOf(over.receipt), QR_SYMBOL_BYTES + 1)).rejects.toBeInstanceOf(Error);
++  });
++  it('cannot carry the 16,777,216 bytes the table names as the upper bound', async () => {
++    const named = beyond.find(entry => entry.name === 'original-length-16777216')!;
++    expect(named.receiptLength).toBe(16_777_216);
++    const receipt = receiptOf(named.receipt);
++    await expect(recoverReceiptFrames(framesOf(named))).rejects.toBeInstanceOf(Error);
++    // No frame capacity the encoder allows fits 16,777,216 bytes into 4096 frames.
++    await expect(encodeReceiptFrames(receipt, 4096 + HEADER)).rejects.toBeInstanceOf(Error);
++    await expect(encodeReceiptFrames(receipt, QR_SYMBOL_BYTES)).rejects.toBeInstanceOf(Error);
++  }, 120_000);
++  it('carries at most 11,767,808 bytes: one byte more is refused', async () => {
++    expect(largest.receiptLength).toBe(4096 * (QR_SYMBOL_BYTES - HEADER));
++    const oneMore = new Uint8Array(largest.receiptLength + 1);
++    oneMore.set(receiptOf(largest.receipt));
++    await expect(encodeReceiptFrames(oneMore, QR_SYMBOL_BYTES)).rejects.toBeInstanceOf(Error);
++    expect((await encodeReceiptFrames(oneMore.subarray(0, largest.receiptLength), QR_SYMBOL_BYTES)).length).toBe(4096);
++  }, 120_000);
++});

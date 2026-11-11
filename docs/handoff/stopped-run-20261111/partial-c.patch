@@ -1,0 +1,118 @@
+diff --git a/scripts/parser-fuzz.mjs b/scripts/parser-fuzz.mjs
+index 02fa229..a9dd01a 100644
+--- a/scripts/parser-fuzz.mjs
++++ b/scripts/parser-fuzz.mjs
+@@ -3,18 +3,18 @@ import { createHash } from 'node:crypto';
+ import { execFileSync } from 'node:child_process';
+ import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
+ import { tmpdir } from 'node:os';
+-import { basename, dirname, join, resolve } from 'node:path';
++import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+ import { performance } from 'node:perf_hooks';
+ import { pathToFileURL } from 'node:url';
+ import { build } from 'esbuild';
+ import { createExecutor } from './lib/fuzz-executor.mjs';
+ 
+-const usage = 'node scripts/parser-fuzz.mjs [--iterations 100000] [--seconds 300] [--seed 20261028] [--out scratch/fuzz] [--replay finding.json]';
++const usage = 'node scripts/parser-fuzz.mjs [--iterations 100000] [--seconds 300] [--seed 20261028] [--out scratch/fuzz] [--targets name,name] [--replay finding.json]';
+ const options = { iterations: 100000, seconds: 300, seed: 20261028, out: 'scratch/fuzz' };
+ for (let i = 2; i < process.argv.length; i++) {
+   const key = process.argv[i].replace(/^--/, '');
+   if (key === 'help') { process.stdout.write(`${usage}\n`); process.exit(0); }
+-  if (!['iterations', 'seconds', 'seed', 'out', 'replay'].includes(key) || process.argv[i] !== `--${key}` || !process.argv[i + 1]) throw new Error(usage);
++  if (!['iterations', 'seconds', 'seed', 'out', 'replay', 'targets'].includes(key) || process.argv[i] !== `--${key}` || !process.argv[i + 1]) throw new Error(usage);
+   const value = process.argv[++i];
+   options[key] = ['iterations', 'seconds', 'seed'].includes(key) ? Number(value) : value;
+ }
+@@ -24,6 +24,8 @@ for (const [key, max] of [['iterations', 10000000], ['seconds', 86400], ['seed',
+ const MAX_BYTES = 65536;
+ const MAX_CORPUS = 256;
+ const SEED_DIR = 'tests/fixtures/ots';
++// Shared archival frame vector (hex lines, '#' comments): an optional seed for the frame target.
++const VECTOR_FILE = 'tests/archival/golden-v1.hex';
+ const HARNESS = ['parser-fuzz.mjs', 'lib/fuzz-coverage.mjs', 'lib/fuzz-executor.mjs', 'lib/fuzz-worker.mjs'];
+ const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
+ // Git is a development prerequisite, never a shipped dependency. Do not search inherited PATH (which may
+@@ -39,7 +41,7 @@ const random = (n) => {
+   randomState ^= randomState << 13; randomState ^= randomState >>> 17; randomState ^= randomState << 5;
+   return (randomState >>> 0) % n;
+ };
+-function mutate(source, target, crc32) {
++function mutate(source, target, crc32, structure, pick) {
+   let bytes = source.slice();
+   for (let changes = 1 + random(4); changes > 0; changes--) {
+     const at = random(bytes.length + 1);
+@@ -71,6 +73,14 @@ function mutate(source, target, crc32) {
+   if (target === 'wav' && random(2) && bytes.length >= 12) {
+     new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).setUint32(4, bytes.length - 8, true);
+   }
++  // A target may bring its own structure-aware step (repair a checksum, splice records from another retained input).
++  // It runs on half of that target's mutations, draws only from this campaign's generator and cannot lift the input bound.
++  const hook = structure[target];
++  if (hook && random(2)) {
++    bytes = hook(bytes, random, pick());
++    if (!(bytes instanceof Uint8Array)) throw new Error(`Structure step for ${target} did not return bytes`);
++    if (bytes.length > MAX_BYTES) bytes = bytes.slice(0, MAX_BYTES);
++  }
+   return bytes;
+ }
+ 
+@@ -88,7 +98,10 @@ try {
+   const targetFile = join(temp, 'targets.mjs');
+   writeFileSync(targetFile, bundle);
+   const targetUrl = pathToFileURL(targetFile).href;
+-  const { TARGETS, seedCases, crc32 } = await import(targetUrl);
++  const { TARGETS, seedCases, crc32, structure = {} } = await import(targetUrl);
++  // A campaign can be limited to some targets, so that one target gets the whole budget. The default is all of them.
++  const active = options.targets === undefined ? [...TARGETS] : options.targets.split(',');
++  if (new Set(active).size !== active.length || active.some((target) => !TARGETS.includes(target))) throw new Error(`Invalid targets; choose from ${TARGETS.join(',')}`);
+   executor = await createExecutor(targetUrl);
+   const start = performance.now();
+   // Seeds must be committed synthetic fixtures, so a local receipt left in the folder is never fuzzed or copied to a corpus.
+@@ -100,13 +113,29 @@ try {
+     return { name, bytes: new Uint8Array(readFileSync(path)) };
+   });
+   const seedFixtures = { count: seedFiles.length, sha256: sha256(seedFiles.map(({ name, bytes }) => `${sha256(bytes)}  ${name}\n`).join('')) };
+-  const seeds = seedCases(seedFiles.map(({ bytes }) => bytes));
++  // The frame vector follows the same rule: it is a seed only when Git tracks it, and the report names its digest.
++  const seedVectors = {};
++  const archivalFrames = [];
++  if (existsSync(VECTOR_FILE)) {
++    if (!git('ls-files', '-z', '--', VECTOR_FILE).split('\0').includes(VECTOR_FILE)) throw new Error(`Seed ${VECTOR_FILE} is not tracked by Git; refusing to fuzz it`);
++    if (statSync(VECTOR_FILE).size > 4 * MAX_BYTES) throw new Error('Seed exceeds fuzz input bound');
++    const file = readFileSync(VECTOR_FILE);
++    const hex = file.toString('utf8').split(/\r?\n/).filter((line) => !line.startsWith('#')).join('').trim();
++    if (!/^(?:[0-9a-fA-F]{2})+$/.test(hex) || hex.length / 2 > MAX_BYTES) throw new Error(`Seed ${VECTOR_FILE} is not bounded hexadecimal`);
++    archivalFrames.push(Uint8Array.from(Buffer.from(hex, 'hex')));
++    seedVectors[VECTOR_FILE] = sha256(file);
++  }
++  const seeds = seedCases(seedFiles.map(({ bytes }) => bytes), { archivalFrames }).filter((seed) => active.includes(seed.target));
++  for (const target of active) if (!seeds.some((seed) => seed.target === target)) throw new Error(`No seed for target ${target}`);
+   mkdirSync(options.out, { recursive: true });
+   const output = mkdtempSync(join(resolve(options.out), 'campaign-'));
+-  const report = { sourceCommit, sourceDirty, targetSha256: sha256(bundle), harnessSha256, seedFixtures, node: process.version, v8: process.versions.v8,
++  // Reports are kept as evidence, so a campaign directory inside the checkout is named relative to it.
++  const inside = relative(process.cwd(), output);
++  const shownOutput = inside && !inside.startsWith('..') && !isAbsolute(inside) ? inside.split(sep).join('/') : output;
++  const report = { sourceCommit, sourceDirty, targetSha256: sha256(bundle), harnessSha256, seedFixtures, seedVectors, node: process.version, v8: process.versions.v8,
+     options, limits: { maxInputBytes: MAX_BYTES, maxCorpusPerTarget: MAX_CORPUS, caseDeadlineMs: 1000, workerOldHeapMiB: 128 },
+-    status: 'running', executed: 0, mutations: 0, targets: Object.fromEntries(TARGETS.map((t) => [t, { accepted: 0, rejected: 0, coveredOffsets: 0, corpus: 0 }])), output };
+-  const corpus = new Map(TARGETS.map((t) => [t, []]));
++    status: 'running', executed: 0, mutations: 0, targets: Object.fromEntries(active.map((t) => [t, { accepted: 0, rejected: 0, coveredOffsets: 0, corpus: 0 }])), output: shownOutput };
++  const corpus = new Map(active.map((t) => [t, []]));
+   const hashes = new Set();
+   let current;
+   const save = () => { report.elapsedMs = Math.round(performance.now() - start); writeFileSync(join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n'); };
+@@ -146,9 +175,10 @@ try {
+       report.seedExecutions = seeds.length;
+       for (const item of seeds) { retain(item, true); await evaluate(item); }
+       while (report.mutations < options.iterations && performance.now() - start < options.seconds * 1000) {
+-        const target = TARGETS[report.mutations % TARGETS.length];
++        const target = active[report.mutations % active.length];
+         const list = corpus.get(target);
+-        await evaluate({ target, bytes: mutate(list[random(list.length)].bytes, target, crc32) });
++        current = undefined; // A fault while mutating is a harness fault: never save the previous input as its cause.
++        await evaluate({ target, bytes: mutate(list[random(list.length)].bytes, target, crc32, structure, () => list[random(list.length)].bytes) });
+         report.mutations++;
+         if (report.mutations % 1000 === 0) save();
+       }
