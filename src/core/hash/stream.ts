@@ -44,6 +44,19 @@ function abandon(reader: ReadableStreamBYOBReader): Promise<void> {
   return cancelling;
 }
 
+function unreadable(): UnalteredError {
+  return new UnalteredError('INPUT_UNREADABLE', 'The browser stopped delivering the file. Try again, or copy the file to a local disk first.');
+}
+
+/**
+ * A file read that rejects means the file can no longer be read (deleted, modified, permission or device lost).
+ * Engines report this as TypeError (Chromium stream reads) or DOMException (NotFoundError/NotReadableError from
+ * arrayBuffer); the raw message can name the file, so callers only ever see the typed, generic error.
+ */
+function readFailure(error: unknown): UnalteredError {
+  return error instanceof UnalteredError ? error : unreadable();
+}
+
 /** WebCrypto needs one input buffer; fill it with bounded backend reads on every engine. */
 export async function readCrossCheckInput(blob: Blob, signal?: AbortSignal): Promise<ArrayBuffer> {
   if (signal?.aborted) throw new UnalteredError('ABORTED', 'Cancelled.');
@@ -52,7 +65,8 @@ export async function readCrossCheckInput(blob: Blob, signal?: AbortSignal): Pro
   for (let start = 0; start < blob.size; start += CHUNK_SIZE) {
     const end = Math.min(start + CHUNK_SIZE, blob.size);
     // Opaque reads expose no intermediate progress; abort can stop our wait without imposing a chunk-fill deadline.
-    const read = await awaitAbortable(blob.slice(start, end).arrayBuffer(), signal);
+    let read: ArrayBuffer;
+    try { read = await awaitAbortable(blob.slice(start, end).arrayBuffer(), signal); } catch (error) { throw readFailure(error); }
     if (signal?.aborted) throw new UnalteredError('ABORTED', 'Cancelled.');
     const bytes = new Uint8Array(read);
     if (bytes.length !== end - start) throw new UnalteredError('INPUT_INVALID', 'The file ended before its declared size.');
@@ -84,10 +98,6 @@ export interface StreamResult {
   bytes: number;
 }
 
-function unreadable(): UnalteredError {
-  return new UnalteredError('INPUT_UNREADABLE', 'The browser stopped delivering the file. Try again, or copy the file to a local disk first.');
-}
-
 /** Returns null if cancelled. */
 export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Promise<StreamResult | null> {
   const chunk = opts.chunkSize ?? CHUNK_SIZE;
@@ -106,6 +116,8 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
   let abandonedDataReaders = 0;
   let reported = 0;
   let reader: ReadableStreamBYOBReader | null = null;
+  // True only while awaiting a file read, so failures from callbacks or hashing are not relabelled (no per-chunk cost).
+  let reading = false;
   // WebKit may service a whole-Blob stream on the main thread even when requested by a worker.
   // Bound each backend read while retaining BYOB buffer reuse for large-file memory acceptance.
   const blob = typeof Blob !== 'undefined' && src instanceof Blob ? src : null;
@@ -124,9 +136,11 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
       if (reader && buffer) {
         // Blob reads take whatever the backend has ready, so the stall timer measures time without any
         // bytes, not time to fill a whole chunk: a slow device that keeps delivering is never abandoned.
+        reading = true;
         const read = blob
           ? await within(reader.read(new Uint8Array(buffer, 0, end - done)), stallMs, opts.signal)
           : await awaitAbortable(reader.read(new Uint8Array(buffer, 0, end - done), { min: end - done }), opts.signal);
+        reading = false;
         if (isCancelled()) return null;
         if (read === STALLED) {
           // Nothing from this read reached the hash, so reopening [done, streamEnd) neither skips nor repeats bytes
@@ -150,7 +164,9 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
         buf = read.value;
         buffer = read.value.buffer;
       } else {
+        reading = true;
         const read = await awaitAbortable(src.slice(done, end).arrayBuffer(), opts.signal);
+        reading = false;
         if (isCancelled()) return null;
         buf = new Uint8Array(read);
         if (buf.byteLength !== end - done) throw new UnalteredError('INPUT_INVALID', 'The file ended before its declared size.');
@@ -168,7 +184,9 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
       if (blob && reader && done === streamEnd) {
         // Let the file backend finish the slice before reopening it. A separate tiny view
         // observes EOF without transferring/detaching the reusable hashing buffer.
+        reading = true;
         const eof = await within(reader.read(new Uint8Array(1)), stallMs, opts.signal);
+        reading = false;
         if (isCancelled()) return null;
         if (eof === STALLED) {
           // This read owns only the separate one-byte EOF view, not a transferred full hashing buffer.
@@ -189,7 +207,7 @@ export async function hashSource(src: ChunkSource, opts: StreamOptions = {}): Pr
     }
   } catch (error) {
     if (opts.signal?.aborted) return null;
-    throw error;
+    throw reading ? readFailure(error) : error;
   } finally {
     if (reader) {
       const cancelling = reader.cancel().catch(() => {});
