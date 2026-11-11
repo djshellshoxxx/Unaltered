@@ -1,3 +1,8 @@
+# Latest — 2026-11-10 UTC
+
+CLI parity (`inspect`, `verify --json`, `batch`, `evidence`) and a verified-certificate source check:
+[handoff](docs/handoff/CLAUDE-CLI-PARITY-20261110.md), branch `claude/great-darwin-elcc18`. Sections below are history.
+
 # Active autonomous checkpoint — 2026-11-05 UTC
 
 Continue from [the incremental development handoff](docs/handoff/AUTONOMOUS-DEVELOPMENT-LATEST.md)
