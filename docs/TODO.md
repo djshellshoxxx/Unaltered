@@ -22,7 +22,8 @@ Done (each fix has a regression test that failed first):
   read (fixed by 8d3e7cb, locked by f87cfa4; [evidence](evidence/hash-cancel-20261111.md)). Remaining bound: at most
   `CANCEL_SETTLE_MS` (1 s) when a backend's `cancel()` never settles. Native reads are abandoned, not cancelled.
 - [x] **Unreadable file mid-hash** now reports a typed `INPUT_UNREADABLE` error, not a raw `TypeError`/`DOMException`.
-  This also stops the worker path from re-reading the whole file on the main thread (15d154a).
+  A read failure inside the worker still falls back to the main thread, because WebKit's single-file build cannot
+  read the Blob in a worker (15d154a, corrected by 1d5bdde after CI WebKit run 42944774093).
 - [x] **R1 mitigation (ADR-014).** When a pending lookup is unreadable, a per-calendar liveness canary tells "calendar
   reachable, receipt probably still waiting" apart from "calendar unreachable or blocked". It fails closed to
   "unknown". CSP and allowlist are unchanged. The upstream fix is drafted in

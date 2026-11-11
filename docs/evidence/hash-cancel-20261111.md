@@ -117,3 +117,10 @@ UNALTERED_BIG=1 npx vitest run tests/unit/hash.test.ts                      # 76
    mid-read failure was not attempted.
 4. **Engines.** Native results are for Chromium 153 only. Firefox and WebKit may reject with other types. Any untyped
    read rejection maps to `INPUT_UNREADABLE`, but that was not run on those engines here.
+
+## Correction (1d5bdde)
+
+The first version of this fix made a rejected read inside the worker final. CI WebKit (run 42944774093) showed that
+WebKit's offline single-file build cannot read the Blob in its worker, but can on the main thread, so offline hashing
+broke. A rejected worker read now replies `error` and the page falls back. Only a main-thread read failure becomes the
+typed `INPUT_UNREADABLE`. The worker-path expectations above changed accordingly; the main-thread results are unchanged.
