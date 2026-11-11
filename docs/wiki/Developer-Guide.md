@@ -40,6 +40,12 @@ The **merged main source** provides `src/core/reports/batch-pair.ts` for exact `
 
 The reusable source-level interfaces live in `src/core/`. Do not introduce unreviewed network calls, unsafe script execution, or hidden upload endpoints. Respect receipt interoperability, exact digest/receipt binding, and verification levels. API/schema changes need tests and corresponding specification/ADR updates.
 
+## Archival QR print planning and acceptance limits
+
+The experimental QR print route uses `src/core/archive/qr-plan.ts` to choose error correction, symbol count and paper layout; `qr-print.ts` renders a certificate cover, QR frames and a separate **offline recovery appendix**. A valid plan therefore always needs **at least two pages**, even for a one-symbol receipt. The printable workflow caps frames at **64 QR symbols**, which is different from the larger raw archive transport limit. `tests/unit/archival-qr-plan.test.ts` exercises the planner; `tests/unit/archival-qr-frames.test.ts` covers byte-exact recovery; the separate archival QR print/scan CI checks independent raster recovery. A passing software test is not evidence of real-world printer/camera reliability.
+
+**Source-status distinction (November 10, 2026):** `main` currently reports an inaccurate “64-symbol” error for `maxPages: 1`, even for a tiny receipt. [Draft PR #78](https://github.com/djshellshoxxx/Unaltered/pull/78) confirmed this through a failing Linux/Windows/macOS regression on its test-only SHA `b44d05a2e9ac7e1944e40d2c556029b18a6603b8` ([CI](https://github.com/djshellshoxxx/Unaltered/actions/runs/42920840680)). It proposes a minimal **diagnostic-only** fix at `90031b315cd85cfa75d0f85e471f8c1640dff64e`; **corrective exact-head CI is not yet qualified**, and the fix is not merged. QR frames are a representation of the original digital `.ots` receipt, not a standalone Bitcoin-verification result. Preserve the original receipt and source file whenever possible.
+
 ## Contribution, security, debugging
 
 Read [CONTRIBUTING.md](https://github.com/djshellshoxxx/Unaltered/blob/main/CONTRIBUTING.md), [SECURITY.md](https://github.com/djshellshoxxx/Unaltered/blob/main/SECURITY.md), [OPSEC.md](https://github.com/djshellshoxxx/Unaltered/blob/main/docs/OPSEC.md), and [dependency policy](https://github.com/djshellshoxxx/Unaltered/blob/main/docs/DEPENDENCIES.md). Avoid `eval`, `innerHTML`, inline event handlers, telemetry, third-party scripts/CDNs, and new runtime dependencies without an accepted ADR. Use synthetic fixtures rather than actual sensitive evidence.
