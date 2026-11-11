@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { el, setChildren } from '../../src/ui/dom';
+import { el, setChildren, dropZone } from '../../src/ui/dom';
 import { doc, FElement, installFakeDom } from './ui-fake-dom';
 
 let restore: () => void;
@@ -19,6 +19,20 @@ describe('el() sinks', () => {
     const b = el('button', { onclick: () => n++ }) as unknown as FElement;
     b.dispatch('click');
     expect(n).toBe(1);
+  });
+  it('blocks script URLs after browser whitespace normalization and attribute case folding', () => {
+    for (const attr of ['href', 'HREF', 'src', 'SRC', 'action', 'Action', 'formaction', 'formAction']) {
+      for (const value of ['java\nscript:alert(1)', 'java\tscript:alert(1)', '\u0001javascript:alert(1)', 'da\rta:text/html,hi', 'VBScript:msgbox(1)']) {
+        const node = el('a', { [attr]: value }) as unknown as FElement;
+        expect(node.getAttribute(attr), `${attr}: ${JSON.stringify(value)}`).toBeNull();
+      }
+    }
+  });
+  it('keeps ordinary relative, HTTPS, fragment and blob URLs', () => {
+    for (const value of ['./main.js', '/Unaltered/', '#verify', 'https://example.org/', 'blob:https://example.org/id']) {
+      const node = el('a', { href: value }) as unknown as FElement;
+      expect(node.getAttribute('href')).toBe(value);
+    }
   });
 });
 
@@ -126,4 +140,14 @@ describe('focus restoration follows each ancestor at its own position', () => {
     expect(doc.activeElement!.textContent).toBe('Remove b');
     expect(root.all()).toContain(doc.activeElement);
   });
+});
+
+
+it('clears file selection before consumers can throw or replace the input', () => {
+  const root = dropZone({ id: 'repeat', label: 'Choose', hint: '', onFiles: () => { throw new Error('consumer failed'); } }) as unknown as FElement;
+  const input = root.querySelector('input')!;
+  input.value = 'selected-file';
+  input.files = [{ name: 'same.txt' }];
+  expect(() => input.dispatch('change')).toThrow('consumer failed');
+  expect(input.value).toBe('');
 });

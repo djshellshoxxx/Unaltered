@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
 
 ROOT = Path(__file__).resolve().parents[2]
 SEARCH = ROOT / 'skills/paper-search/scripts/search.sh'
@@ -61,7 +62,10 @@ class SearchPagingValidationTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         calls = self.curl_log.read_text().splitlines()
         self.assertEqual(len(calls), 1)
-        self.assertIn('per_page=25&page=3&sort=cited_by_count:desc', calls[0])
+        params = parse_qs(urlsplit(calls[0].removeprefix('-s ')).query)
+        self.assertEqual(params['per_page'], ['25'])
+        self.assertEqual(params['page'], ['3'])
+        self.assertEqual(params['sort'], ['cited_by_count:desc'])
 
 
 if __name__ == '__main__':

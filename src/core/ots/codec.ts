@@ -24,11 +24,25 @@ const malformed = (m: string): never => {
   throw new UnalteredError('PROOF_MALFORMED', m);
 };
 
+// python-opentimestamps v0.5.0, TimeAttestation.MAX_HEIGHT (core/notary.py): unsigned 32-bit height.
+function checkBitcoinHeight(height: number): void {
+  if (!Number.isInteger(height) || height < 0 || height > 0xffff_ffff) {
+    malformed('The receipt contains an invalid Bitcoin block height.');
+  }
+}
+
+function checkPendingUri(uri: string): void {
+  if (typeof uri !== 'string' || uri.length > LIMITS.maxUri || !/^[a-zA-Z0-9.\-_/:]+$/.test(uri)) {
+    malformed('The receipt names an invalid calendar address.');
+  }
+}
+
 function readOp(r: Reader, tag: number): Op {
   if (tag === TAG_SHA256) return { kind: 'sha256' };
   if (tag === 0xf0 || tag === 0xf1) {
     const arg = r.varbytes(LIMITS.maxOpArg, 1);
-    return { kind: tag === 0xf0 ? 'append' : 'prepend', arg: arg.slice() };
+    // Buffer.slice() returns a view; parsed operations must not retain caller-owned receipt bytes.
+    return { kind: tag === 0xf0 ? 'append' : 'prepend', arg: Uint8Array.from(arg) };
   }
   if (TAGS_KNOWN_UNSUPPORTED.has(tag)) {
     throw new UnalteredError('PROOF_UNSUPPORTED', 'This receipt uses an operation this version does not support.');
@@ -41,6 +55,7 @@ function readAttestation(r: Reader): Attestation {
   const payload = new Reader(r.varbytes(LIMITS.maxAttPayload), 'PROOF_MALFORMED');
   if (equalBytes(tag, ATT_BITCOIN)) {
     const height = payload.varuint();
+    checkBitcoinHeight(height);
     if (!payload.eof()) malformed('Trailing data in an attestation.');
     return { kind: 'bitcoin', height };
   }
@@ -54,7 +69,7 @@ function readAttestation(r: Reader): Attestation {
     } catch {
       return malformed('The receipt names an invalid calendar address.');
     }
-    if (!/^[a-zA-Z0-9.\-_/:]+$/.test(uri)) malformed('The receipt names an invalid calendar address.');
+    checkPendingUri(uri);
     return { kind: 'pending', uri };
   }
   for (const k of ATTS_KNOWN_UNSUPPORTED) {
@@ -69,8 +84,10 @@ export function readTimestampTree(r: Reader, rootMsg: Uint8Array): TsNode {
   interface Frame {
     node: TsNode;
     lastItem: boolean;
+    operations: Set<string>;
+    attestations: Set<string>;
   }
-  const stack: Frame[] = [{ node: root, lastItem: false }];
+  const stack: Frame[] = [{ node: root, lastItem: false, operations: new Set(), attestations: new Set() }];
   let nodes = 1;
   let attestations = 0;
   while (stack.length > 0) {
@@ -83,7 +100,12 @@ export function readTimestampTree(r: Reader, rootMsg: Uint8Array): TsNode {
     }
     if (tag === TAG_ATTESTATION) {
       if (++attestations > LIMITS.maxAttestations) throw new UnalteredError('PROOF_TOO_LARGE', 'The receipt contains too many attestations.');
-      frame.node.attestations.push(readAttestation(r));
+      const attestation = readAttestation(r);
+      const key = attKey(attestation);
+      if (!frame.attestations.has(key)) {
+        frame.attestations.add(key);
+        frame.node.attestations.push(attestation);
+      }
       let complete = last;
       while (complete) {
         stack.pop();
@@ -92,6 +114,10 @@ export function readTimestampTree(r: Reader, rootMsg: Uint8Array): TsNode {
       }
     } else {
       const op = readOp(r, tag);
+      // Duplicate edges have differed across reference versions; current reference rejects this ambiguity.
+      const key = opKey(op);
+      if (frame.operations.has(key)) malformed('The receipt repeats an operation at the same timestamp.');
+      frame.operations.add(key);
       let msg: Uint8Array;
       try {
         msg = applyOp(op, frame.node.msg);
@@ -104,7 +130,7 @@ export function readTimestampTree(r: Reader, rootMsg: Uint8Array): TsNode {
       const child: TsNode = { msg, attestations: [], children: [] };
       frame.node.children.push({ op, node: child });
       frame.lastItem = last;
-      stack.push({ node: child, lastItem: false });
+      stack.push({ node: child, lastItem: false, operations: new Set(), attestations: new Set() });
     }
   }
   return root;
@@ -131,13 +157,21 @@ export function parseProof(bytes: Uint8Array): DetachedProof {
     if (TAGS_KNOWN_UNSUPPORTED.has(hashTag)) throw new UnalteredError('PROOF_UNSUPPORTED', 'This receipt uses a fingerprint type other than SHA-256, which is not supported.');
     malformed('The receipt has an unknown fingerprint type.');
   }
-  const digest = r.bytes(32).slice();
+  // Keep digest equality and later asynchronous header verification bound to the same private fingerprint.
+  const digest = Uint8Array.from(r.bytes(32));
   const root = readTimestampTree(r, digest);
   if (!r.eof()) malformed('Unexpected data after the end of the receipt.');
   return { digest, root };
 }
 
+function checkAttestation(a: Attestation): void {
+  if (a?.kind === 'bitcoin') checkBitcoinHeight(a.height);
+  else if (a?.kind === 'pending') checkPendingUri(a.uri);
+  else malformed('The receipt contains an unknown attestation type.');
+}
+
 function attestationBytes(a: Attestation): Uint8Array {
+  checkAttestation(a);
   if (a.kind === 'bitcoin') {
     const p = Uint8Array.from(writeVaruint(a.height));
     return concat(ATT_BITCOIN, Uint8Array.from(writeVaruint(p.length)), p);
@@ -162,11 +196,18 @@ function opBytes(op: Op): Uint8Array {
   return concat(Uint8Array.from([opTag(op)]), Uint8Array.from(writeVaruint(op.arg.length)), op.arg);
 }
 
+function checkOperation(op: Op): void {
+  opTag(op); // Unknown runtime kinds must never be encoded as a supported operation.
+  if (op.kind !== 'sha256' && (!(op.arg instanceof Uint8Array) || op.arg.length < 1 || op.arg.length > LIMITS.maxOpArg)) {
+    malformed('The receipt contains an invalid operation argument.');
+  }
+}
+
 /** Canonical serialisation, matching the reference implementation's ordering. Iterative. */
 export function serializeTree(root: TsNode): Uint8Array {
   const out: Uint8Array[] = [];
-  type Work = { node: TsNode; depth: number } | Uint8Array;
-  const work: Work[] = [{ node: root, depth: 1 }];
+  type Work = { node: TsNode; depth: number; messageLength: number } | Uint8Array;
+  const work: Work[] = [{ node: root, depth: 1, messageLength: root.msg.length }];
   let nodes = 0;
   let attestations = 0;
   let bytes = 0;
@@ -183,8 +224,21 @@ export function serializeTree(root: TsNode): Uint8Array {
     if (item.depth > LIMITS.maxDepth) throw new UnalteredError('PROOF_TOO_LARGE', 'The receipt is nested too deeply.');
     attestations += item.node.attestations.length;
     if (attestations > LIMITS.maxAttestations) throw new UnalteredError('PROOF_TOO_LARGE', 'The receipt contains too many attestations.');
-    const atts = [...item.node.attestations].sort(compareAtt);
-    const kids = [...item.node.children].sort((a, b) => compareOps(a.op, b.op));
+    const uniqueAtts = new Map<string, Attestation>();
+    for (const att of item.node.attestations) {
+      checkAttestation(att); // Validate before deduplication, including unsupported runtime kinds.
+      uniqueAtts.set(attKey(att), att);
+    }
+    const atts = [...uniqueAtts.values()].sort(compareAtt);
+    const kids = [...item.node.children];
+    const operations = new Set<string>();
+    for (const kid of kids) {
+      checkOperation(kid.op);
+      const key = opKey(kid.op);
+      if (operations.has(key)) malformed('The receipt repeats an operation at the same timestamp.');
+      operations.add(key);
+    }
+    kids.sort((a, b) => compareOps(a.op, b.op));
     const total = atts.length + kids.length;
     if (total === 0) throw new UnalteredError('PROOF_MALFORMED', 'Cannot serialise an empty timestamp.');
     const seq: Work[] = [];
@@ -195,9 +249,11 @@ export function serializeTree(root: TsNode): Uint8Array {
       seq.push(Uint8Array.from([TAG_ATTESTATION]), attestationBytes(a));
     }
     for (const k of kids) {
+      const messageLength = k.op.kind === 'sha256' ? 32 : item.messageLength + k.op.arg.length;
+      if (messageLength > LIMITS.maxMsg) malformed('The receipt contains an oversized value.');
       i++;
       if (i < total) seq.push(Uint8Array.from([TAG_MORE]));
-      seq.push(opBytes(k.op), { node: k.node, depth: item.depth + 1 });
+      seq.push(opBytes(k.op), { node: k.node, depth: item.depth + 1, messageLength });
     }
     for (let j = seq.length - 1; j >= 0; j--) work.push(seq[j]!);
   }
@@ -229,8 +285,16 @@ function opKey(op: Op): string {
 
 /** Merge `from` into `into` (same message). Mirrors Timestamp.merge. Iterative; indexed so cost is linear. */
 export function mergeTree(into: TsNode, from: TsNode, validate?: () => void): void {
-  if (!equalBytes(into.msg, from.msg)) throw new UnalteredError('PROOF_MALFORMED', 'Cannot combine receipts for different data.');
-  const work: [TsNode, TsNode][] = [[into, from]];
+  mergeTrees([[into, from]], validate);
+}
+
+/** Merge several matching roots as one transaction, with one aggregate validation and shared rollback. */
+export function mergeTrees(pairs: readonly (readonly [TsNode, TsNode])[], validate?: () => void): void {
+  const work: [TsNode, TsNode][] = [];
+  for (const [into, from] of pairs) {
+    if (!equalBytes(into.msg, from.msg)) throw new UnalteredError('PROOF_MALFORMED', 'Cannot combine receipts for different data.');
+    work.push([into, from]);
+  }
   let steps = 0;
   // Record touched arrays so aggregate rejection cannot poison the previously valid proof.
   const snapshots = new Map<TsNode, { atts: Attestation[]; attLength: number; children: TsNode['children']; childLength: number }>();

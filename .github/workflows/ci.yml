@@ -115,10 +115,20 @@ jobs:
       - run: npm ci --ignore-scripts
       # The browser version is fixed by the pinned @playwright/test version in package-lock.json.
       - run: npx playwright install --with-deps ${{ matrix.browser }}
-      - run: npm run test:e2e
+      # No retries: a passing retry would hide a failed attempt, including the SPEC "never blocked > 50 ms" check.
+      - run: npm run test:e2e -- --retries=0
         env:
           CI: "true"
           UNALTERED_BROWSER: ${{ matrix.browser }}
+      # Candidate PRs can qualify the Pages artifact before the standalone manual workflow reaches main.
+      # Upload only after successful Chromium acceptance; this packages files and grants no deployment permission.
+      - name: Package the verified site for GitHub Pages
+        if: success() && matrix.browser == 'chromium'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          name: github-pages
+          path: dist/web/
+          retention-days: 7
       - name: Live browser CORS diagnostic (informational)
         if: always() && matrix.browser == 'chromium'
         continue-on-error: true
@@ -134,7 +144,8 @@ jobs:
   browser-memory:
     name: Browser 2 GiB memory acceptance (Chromium)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Three attempts may each use the full 600 s test timeout; leave room for install/build as well.
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -165,7 +176,8 @@ jobs:
     name: Browser 2 GiB completion (${{ matrix.browser }})
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # Match Chromium's budget: three 600 s tests plus browser install/build.
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -211,27 +223,43 @@ jobs:
       - run: npm run test
       - run: npm run build
       - run: npx playwright install chromium
-      - run: npx playwright test
+      - run: npx playwright test --retries=0
         env:
           CI: "true"
       - name: Windows checksum list for the cross-platform comparison
         shell: bash
         run: cp dist/SHA256SUMS windows-SHA256SUMS
-      - name: Verify the shipped Verify-Checksums.ps1 logic on the real zip
+      # The Windows package is opened by its exact name: dist/ also holds the macOS zip, which a wildcard lists first.
+      # The check is the Verify-Checksums.ps1 shipped inside it. That script always exits 0 and ends with a Read-Host
+      # prompt, so the prompt is stubbed and its printed verdict is judged: every entry OK, then a changed and a missing
+      # file reported.
+      - name: Verify the Windows zip with the Verify-Checksums.ps1 it ships
         shell: pwsh
         run: |
-          $zip = Get-ChildItem dist/unaltered-*.zip | Select-Object -First 1
-          Expand-Archive -Path $zip.FullName -DestinationPath $env:RUNNER_TEMP/unz
-          $dir = Get-ChildItem $env:RUNNER_TEMP/unz | Select-Object -First 1
-          $bad = 0
-          foreach ($line in Get-Content (Join-Path $dir.FullName 'SHA256SUMS')) {
-            if ($line -match '^([0-9a-f]{64})\s+(.+)$') {
-              $actual = (Get-FileHash -Algorithm SHA256 -Path (Join-Path $dir.FullName $Matches[2])).Hash.ToLower()
-              if ($actual -ne $Matches[1]) { Write-Host "MISMATCH $($Matches[2])"; $bad++ }
-            }
+          $ErrorActionPreference = 'Stop'
+          $version = (Get-Content -Raw package.json | ConvertFrom-Json).version
+          $zip = Get-Item -LiteralPath "dist/unaltered-$version.zip"
+          $unz = Join-Path $env:RUNNER_TEMP 'unz'
+          Expand-Archive -LiteralPath $zip.FullName -DestinationPath $unz
+          $dir = Join-Path $unz "unaltered-$version"
+          $shipped = Join-Path $dir 'Verify-Checksums.ps1'
+          $entries = @(Get-Content -LiteralPath (Join-Path $dir 'SHA256SUMS') | Where-Object { $_ -ne '' })
+          function Read-Host { }
+          function Invoke-Shipped { @(& $shipped 6>&1 | ForEach-Object { "$_" }) }
+          $out = Invoke-Shipped
+          $out | Write-Host
+          $ok = @($out | Where-Object { $_ -like 'OK *' }).Count
+          if ($entries.Count -lt 1 -or $ok -ne $entries.Count -or $out -notcontains "All files match this folder's SHA256SUMS.") {
+            throw "Verify-Checksums.ps1 confirmed $ok of $($entries.Count) files in $($zip.Name)."
           }
-          if ($bad -ne 0) { exit 1 }
-          Write-Host 'All files in the Windows zip match its SHA256SUMS.'
+          Add-Content -LiteralPath (Join-Path $dir 'README.txt') -Value 'changed'
+          Remove-Item -LiteralPath (Join-Path $dir 'LICENSE')
+          $out = Invoke-Shipped
+          $out | Write-Host
+          if ($out -notcontains 'MISMATCH README.txt' -or $out -notcontains 'MISSING  LICENSE' -or $out -contains "All files match this folder's SHA256SUMS.") {
+            throw 'Verify-Checksums.ps1 did not report a changed and a missing file.'
+          }
+          Write-Host "All $($entries.Count) files in $($zip.Name) match its SHA256SUMS, checked by its own Verify-Checksums.ps1."
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: unaltered-windows-build
@@ -324,14 +352,20 @@ jobs:
         with:
           python-version: "3.12"
       - run: npm ci --ignore-scripts
-      # Dev-only (never shipped). Version pinned; hashes of the sdist are reviewed in docs/DEPENDENCIES.md.
       - name: Offline bundled toolkit regressions (no SDK or services)
         run: python -m unittest discover -s tests/toolkit -p 'test_*.py' -v
-      - run: python -m venv /tmp/venv && /tmp/venv/bin/pip install opentimestamps==0.4.5
+      # Dev-only reference client (never shipped). It and its dependencies are pinned by version and wheel SHA-256 in
+      # tests/differential/requirements.txt (review record: docs/DEPENDENCIES.md section 7). Wheels only, so no sdist
+      # build fetches unpinned build dependencies.
+      - name: Install the pinned reference client
+        run: |
+          python -m venv /tmp/venv && /tmp/venv/bin/pip install --require-hashes --only-binary :all: -r tests/differential/requirements.txt
+      # The whole directory, so expected.json (the oracle tests/unit/codec.test.ts trusts) cannot be hand-edited, and
+      # a fixture missing on either side fails too.
       - name: Fixtures regenerate byte-identically from the reference implementation
         run: |
           /tmp/venv/bin/python tests/differential/gen_fixtures.py /tmp/fixtures
-          for f in pending confirmed batch0 batch1 batch2 litecoin; do cmp /tmp/fixtures/$f.ots tests/fixtures/ots/$f.ots; done
+          diff -r /tmp/fixtures tests/fixtures/ots
       - name: Our parser and serializer against the reference
         run: npx vitest run tests/unit/codec.test.ts
         env:

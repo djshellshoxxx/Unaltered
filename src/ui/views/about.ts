@@ -21,6 +21,20 @@ export function localNodeInstructions(): HTMLElement {
   );
 }
 
+/** Reference-client retry guidance; commands are fixed examples, never built from an untrusted receipt filename. */
+export function referenceUpgradeInstructions(): HTMLElement {
+  return el(
+    'details', { class: 'l2 reference-upgrade' },
+    el('summary', {}, t('upgrade.referenceSummary')),
+    el('p', {}, t('upgrade.referenceIntro')),
+    el('p', {}, el('a', { href: 'https://github.com/opentimestamps/opentimestamps-client#installation',
+      rel: 'noreferrer noopener', target: '_blank' }, t('upgrade.referenceInstall'))),
+    el('p', {}, t('upgrade.referenceCopy')),
+    el('pre', { class: 'cmd', tabindex: 0, 'aria-label': t('upgrade.referenceCmdAria') }, 'ots upgrade receipt.ots'),
+    el('p', {}, t('upgrade.referenceVerify')),
+  );
+}
+
 export function mountAbout(root: HTMLElement): void {
   setChildren(
     root,

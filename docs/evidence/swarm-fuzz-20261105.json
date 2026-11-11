@@ -1,0 +1,75 @@
+{
+  "sourceCommit": "5d5959654a23d07dd474c3e266fb1f4b85742e5e",
+  "sourceDirty": false,
+  "targetSha256": "312f0e7dc7d73746828c246530eb5083ae2128440051dc1658d5359aabdf218c",
+  "harnessSha256": {
+    "scripts/parser-fuzz.mjs": "a94c2c94a225bdc96a6633b268ba434213e550fd239f82154a5b6aa1abe20681",
+    "scripts/lib/fuzz-coverage.mjs": "7947ad3a3b4a6cd573ae2f4cf385d0ec5f69a4ff7b99c1052871a16ea59d2618",
+    "scripts/lib/fuzz-executor.mjs": "1995019661c1c3ff4a7f272c1b834fb5181bdb7cf241f6c6e4f537007b529cfb",
+    "scripts/lib/fuzz-worker.mjs": "a8803e73cd112fc5329cc0946296e11110103834cbacb320d8c06572c54f3624"
+  },
+  "seedFixtures": {
+    "count": 6,
+    "sha256": "59073f4f7af7ffaa5469053b58ab0ae147e4c348e34cd1b83483430faf50b91a"
+  },
+  "node": "v22.23.4",
+  "v8": "12.4.254.21-node.57",
+  "options": {
+    "iterations": 1000000,
+    "seconds": 300,
+    "seed": 20261106,
+    "out": "../evidence-continuation-20261105/fuzz-swarm"
+  },
+  "limits": {
+    "maxInputBytes": 65536,
+    "maxCorpusPerTarget": 256,
+    "caseDeadlineMs": 1000,
+    "workerOldHeapMiB": 128
+  },
+  "status": "budget-complete",
+  "executed": 205451,
+  "mutations": 205415,
+  "targets": {
+    "proof": {
+      "accepted": 497,
+      "rejected": 33751,
+      "coveredOffsets": 17210,
+      "corpus": 29
+    },
+    "timestamp": {
+      "accepted": 973,
+      "rejected": 33273,
+      "coveredOffsets": 15989,
+      "corpus": 20
+    },
+    "jpeg": {
+      "accepted": 325,
+      "rejected": 33914,
+      "coveredOffsets": 8832,
+      "corpus": 37
+    },
+    "png": {
+      "accepted": 260,
+      "rejected": 33979,
+      "coveredOffsets": 5566,
+      "corpus": 16
+    },
+    "wav": {
+      "accepted": 259,
+      "rejected": 33981,
+      "coveredOffsets": 5331,
+      "corpus": 22
+    },
+    "mp3": {
+      "accepted": 639,
+      "rejected": 33600,
+      "coveredOffsets": 5911,
+      "corpus": 19
+    }
+  },
+  "output": "/workspaces/Unaltered/.development/evidence-continuation-20261105/fuzz-swarm/campaign-yoEs3c",
+  "seedExecutions": 36,
+  "retainedSeeds": 32,
+  "elapsedMs": 300004,
+  "stopReason": "wall-clock"
+}

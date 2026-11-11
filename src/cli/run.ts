@@ -2,9 +2,10 @@
 // without a browser. Pure of process globals so it can be tested; main.ts wires it to the real process.
 import { constants } from 'node:fs';
 import { open, type FileHandle } from 'node:fs/promises';
-import { groupHex } from '../core/bytes';
+import { fromHex, groupHex } from '../core/bytes';
 import { hashSource, type ChunkSource } from '../core/hash/stream';
 import { defaultVerifyConfig, LIMITS, verify, type VerifyState } from '../core/ots';
+import { checkTrustedHeader, verifyWithTrustedHeader, type TrustedHeaderEvidence, type TrustedHeaderState } from '../core/ots/trusted-header';
 
 export interface CliIO {
   out(text: string): void;
@@ -22,8 +23,17 @@ export const EXIT: Record<VerifyState, number> = {
 const USAGE = `unaltered <command>
   hash <file>                 print the SHA-256 fingerprint
   verify <file> [receipt.ots] verify a receipt (default: <file>.ots)
+  verify-offline <file> <receipt.ots> <height> <block-hash> <header.hex>
+                             compare with explicitly trusted header evidence; no network or chain check
 exit codes for verify: 0 verified, 2 pending, 3 file differs, 4 invalid receipt, 5 sources disagree, 6 unreachable, 1 usage/other
+exit codes for verify-offline: 0 supplied header matched, 2 pending, 3 file differs, 4 invalid receipt,
+  5 header Merkle root differs, 6 supplied height absent, 7 invalid header evidence, 1 usage/other
 `;
+
+const OFFLINE_EXIT: Record<TrustedHeaderState, number> = {
+  MATCHED_TRUSTED_HEADER: 0, PENDING: 2, NO_MATCH_FILE: 3, INVALID_PROOF: 4,
+  NO_MATCH_HEADER: 5, MISSING_HEADER: 6, INVALID_HEADER: 7,
+};
 
 const NOT_REGULAR = 'not a regular file';
 const SIZE_CHANGED = 'the file size changed while reading';
@@ -112,9 +122,14 @@ async function hashFile(path: string): Promise<{ hex: string; digest: Uint8Array
  * an oversized receipt reaches the core with `maxInputBytes + 1` bytes and is rejected there with its usual message.
  */
 export async function readReceipt(path: string): Promise<Uint8Array> {
+  return readBounded(path, LIMITS.maxInputBytes);
+}
+
+/** One extra byte detects oversized regular files without unbounded allocation or waiting on an idle FIFO. */
+async function readBounded(path: string, limit: number): Promise<Uint8Array> {
   const fh = await openRegular(path);
   try {
-    const buf = new Uint8Array(LIMITS.maxInputBytes + 1);
+    const buf = new Uint8Array(limit + 1);
     let got = 0;
     while (got < buf.length) {
       const { bytesRead } = await fh.read(buf, got, buf.length - got, got);
@@ -145,6 +160,28 @@ export async function run(argv: readonly string[], io: CliIO): Promise<number> {
       if (report.bitcoin) io.out(`bitcoin block ${report.bitcoin.height}, ${report.bitcoin.blockTimeUtc} (no later than about this time)\nsources: ${report.bitcoin.sourcesAgreeing.join(', ')}\n`);
       if (report.pendingCalendars?.length) io.out(`pending at: ${report.pendingCalendars.join(', ')}\n`);
       return EXIT[report.state];
+    }
+    if (cmd === 'verify-offline' && file && receipt && argv.length === 6) {
+      const [, , , height, hashHex, headerPath] = argv;
+      if (!height || !/^(?:0|[1-9][0-9]{0,9})$/.test(height) || !hashHex || !headerPath) {
+        io.err(USAGE); return 1;
+      }
+      const bytes = await readBounded(headerPath, 162); // 160 hex characters plus optional CRLF.
+      let evidence: TrustedHeaderEvidence;
+      try {
+        const hex = new TextDecoder('utf-8', { fatal: true }).decode(bytes).trim();
+        if (bytes.length > 162 || !/^[0-9a-fA-F]{160}$/.test(hex)) throw new Error('invalid header text');
+        evidence = { height: Number(height), hashHex, raw: fromHex(hex) };
+        checkTrustedHeader(evidence);
+      } catch {
+        io.err('error: invalid trusted header evidence\n'); return 7;
+      }
+      const ots = await readReceipt(receipt);
+      const { hex, digest } = await hashFile(file);
+      const report = verifyWithTrustedHeader(digest, ots, evidence);
+      io.out(`file sha-256: ${groupHex(hex)}\nresult: ${report.state}\ntrust: ${report.trust}\n${report.detail}\n`);
+      if (report.bitcoin) io.out(`supplied header ${report.bitcoin.height}, ${report.bitcoin.hashHex}, ${report.bitcoin.blockTimeUtc} (miner time)\n`);
+      return OFFLINE_EXIT[report.state];
     }
   } catch (e) {
     // Generic message only (SR-8): never echo paths or stack traces from lower layers.

@@ -1,0 +1,21 @@
+# Reference OpenTimestamps client for the differential CI job and scripts/r1-acceptance.sh. Dev/CI only, never shipped.
+# The complete dependency set, each pinned by version and by the SHA-256 of its wheels as published on PyPI; review
+# record in docs/DEPENDENCIES.md section 7. Install only with all three flags, so nothing unlisted or unhashed runs:
+#   <venv>/bin/pip install --require-hashes --only-binary :all: -r tests/differential/requirements.txt
+opentimestamps==0.4.5 \
+    --hash=sha256:a4912b3bd1b612a3ef5fac925b9137889e6c5cb91cc9e76c8202a2bf8abe26b5
+python-bitcoinlib==0.12.2 \
+    --hash=sha256:2f29a9f475f21c12169b3a6cc8820f34f11362d7ff1200a5703dce3e4e903a44
+# cp37-abi3 wheels for every platform PyPI publishes (Linux glibc/musl, macOS, Windows).
+pycryptodomex==3.23.0 \
+    --hash=sha256:02d87b80778c171445d67e23d1caef279bf4b25c3597050ccd2e13970b57fd51 \
+    --hash=sha256:06698f957fe1ab229a99ba2defeeae1c09af185baa909a31a5d1f9d42b1aaed6 \
+    --hash=sha256:189afbc87f0b9f158386bf051f720e20fa6145975f1e76369303d0f31d1a8d7c \
+    --hash=sha256:43c446e2ba8df8889e0e16f02211c25b4934898384c1ec1ec04d7889c0333587 \
+    --hash=sha256:52e5ca58c3a0b0bd5e100a9fbc8015059b05cffc6c66ce9d98b4b45e023443b9 \
+    --hash=sha256:55ccbe27f049743a4caf4f4221b166560d3438d0b1e5ab929e07ae1702a4d6fd \
+    --hash=sha256:6bbcb1dd0f646484939e142462d9e532482bc74475cecf9c4903d4e1cd21f003 \
+    --hash=sha256:8a4fcd42ccb04c31268d1efeecfccfd1249612b4de6374205376b8f280321744 \
+    --hash=sha256:b2c2537863eccef2d41061e82a881dcabb04944c5c06c5aa7110b577cc487545 \
+    --hash=sha256:bdc69d0d3d989a1029df0eed67cc5e8e5d968f3724f4519bd03e0ec68df7543c \
+    --hash=sha256:f489c4765093fb60e2edafdf223397bc716491b2b69fe74367b70d6999257a5c

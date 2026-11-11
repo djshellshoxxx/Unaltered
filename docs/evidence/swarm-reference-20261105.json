@@ -1,0 +1,135 @@
+{
+  "officialMetadata": "https://pypi.org/pypi/opentimestamps/0.5.0/json",
+  "wheelUrl": "https://files.pythonhosted.org/packages/3e/bd/d85a57fab74dabdeb8bcfaf5de781be1d1410394b58720e3fa3c128c4e70/opentimestamps-0.5.0-py3-none-any.whl",
+  "wheelSha256": "bbe386274469292b54bb1d2e3af29b3e17f30025f12516bfc4aea3474b12e848",
+  "requiresPython": ">=3.11",
+  "licenseExpression": "LGPL-3.0-or-later",
+  "officialWheelFilesComparedToInstalled": 29,
+  "installedFileMismatches": [],
+  "duplicateProofHex": "004f70656e54696d657374616d7073000050726f6f6600bf89e2e884e8929401082323232323232323232323232323232323232323232323232323232323232323ff08000588960d73d71901012a080083dfe30d2ef90c8e2e2d68747470733a2f2f616c6963652e6274632e63616c656e6461722e6f70656e74696d657374616d70732e6f7267",
+  "duplicateProofSha256": "1b4d098a2c2902c20f508ecb3c624e747bddfef69d014b5fb065734e9f2aeb15",
+  "results": {
+    "reference-20261105": {
+      "python": "3.14.2 (main, Oct 28 2026, 19:03:49) [GCC 13.3.0]",
+      "executable": "/workspaces/Unaltered/.development/reference-20261105/bin/python",
+      "distributions": {
+        "python-bitcoinlib": "0.12.2",
+        "opentimestamps": "0.4.5",
+        "pycryptodomex": "3.23.0",
+        "pip": "25.3"
+      },
+      "duplicate": {
+        "accepted": true,
+        "digest": "2323232323232323232323232323232323232323232323232323232323232323",
+        "byteIdentical": false,
+        "bitcoinHeights": [],
+        "pending": [
+          "https://alice.btc.calendar.opentimestamps.org"
+        ]
+      },
+      "fixtures": {
+        "pending.ots": {
+          "digest": "96990e1d64b166f9af8853b816e0e34a7f2b94354125f78599f209a3769c795a",
+          "byteIdentical": true,
+          "bitcoinHeights": [],
+          "pending": [
+            "https://alice.btc.calendar.opentimestamps.org"
+          ]
+        },
+        "confirmed.ots": {
+          "digest": "96990e1d64b166f9af8853b816e0e34a7f2b94354125f78599f209a3769c795a",
+          "byteIdentical": true,
+          "bitcoinHeights": [
+            358391
+          ],
+          "pending": [
+            "https://bob.btc.calendar.opentimestamps.org"
+          ]
+        },
+        "batch0.ots": {
+          "digest": "15c27816b41541594fbf35e58a55903a5aa8c567269a4411514fd380f06770b5",
+          "byteIdentical": true,
+          "bitcoinHeights": [],
+          "pending": [
+            "https://finney.calendar.eternitywall.com"
+          ]
+        },
+        "batch1.ots": {
+          "digest": "c2bb3ccfff6a5dec63bfc98b37438bd1cbf44fb16376761c797302e8392207aa",
+          "byteIdentical": true,
+          "bitcoinHeights": [],
+          "pending": [
+            "https://finney.calendar.eternitywall.com"
+          ]
+        },
+        "batch2.ots": {
+          "digest": "69453e62c1eea568938af2cf8c1dca9285036a30ec84c6620f747540eedc30c1",
+          "byteIdentical": true,
+          "bitcoinHeights": [],
+          "pending": [
+            "https://finney.calendar.eternitywall.com"
+          ]
+        }
+      }
+    },
+    "reference-current-20261105": {
+      "python": "3.14.2 (main, Oct 28 2026, 19:03:49) [GCC 13.3.0]",
+      "executable": "/workspaces/Unaltered/.development/reference-current-20261105/bin/python",
+      "distributions": {
+        "python-bitcoinlib": "0.12.2",
+        "pycryptodomex": "3.23.0",
+        "opentimestamps": "0.5.0",
+        "pip": "25.3"
+      },
+      "duplicate": {
+        "accepted": false,
+        "errorType": "DeserializationError",
+        "error": "Invalid timestamp; op OpSHA256() repeated"
+      },
+      "fixtures": {
+        "pending.ots": {
+          "digest": "96990e1d64b166f9af8853b816e0e34a7f2b94354125f78599f209a3769c795a",
+          "byteIdentical": true,
+          "bitcoinHeights": [],
+          "pending": [
+            "https://alice.btc.calendar.opentimestamps.org"
+          ]
+        },
+        "confirmed.ots": {
+          "digest": "96990e1d64b166f9af8853b816e0e34a7f2b94354125f78599f209a3769c795a",
+          "byteIdentical": true,
+          "bitcoinHeights": [
+            358391
+          ],
+          "pending": [
+            "https://bob.btc.calendar.opentimestamps.org"
+          ]
+        },
+        "batch0.ots": {
+          "digest": "15c27816b41541594fbf35e58a55903a5aa8c567269a4411514fd380f06770b5",
+          "byteIdentical": true,
+          "bitcoinHeights": [],
+          "pending": [
+            "https://finney.calendar.eternitywall.com"
+          ]
+        },
+        "batch1.ots": {
+          "digest": "c2bb3ccfff6a5dec63bfc98b37438bd1cbf44fb16376761c797302e8392207aa",
+          "byteIdentical": true,
+          "bitcoinHeights": [],
+          "pending": [
+            "https://finney.calendar.eternitywall.com"
+          ]
+        },
+        "batch2.ots": {
+          "digest": "69453e62c1eea568938af2cf8c1dca9285036a30ec84c6620f747540eedc30c1",
+          "byteIdentical": true,
+          "bitcoinHeights": [],
+          "pending": [
+            "https://finney.calendar.eternitywall.com"
+          ]
+        }
+      }
+    }
+  }
+}

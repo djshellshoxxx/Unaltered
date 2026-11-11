@@ -28,6 +28,36 @@ const typeName = (b: Uint8Array, o: number): string => String.fromCharCode(b[o]!
 const KEEP = new Set(['IHDR', 'PLTE', 'tRNS', 'IDAT', 'IEND', 'sRGB']);
 const MAX_REMOVAL_SUMMARY_LABELS = 64;
 const REMOVAL_SUMMARY_OVERFLOW = 'Additional metadata chunks';
+const DEPTHS: Readonly<Record<number, readonly number[]>> = { 0: [1, 2, 4, 8, 16], 2: [8, 16], 3: [1, 2, 4, 8], 4: [8, 16], 6: [8, 16] };
+
+// IHDR constraints from PNG 11.2.2. Checking the container never decompresses IDAT or allocates by image dimensions.
+function validHeader(input: Uint8Array, dv: DataView, data: number): boolean {
+  const width = dv.getUint32(data);
+  const height = dv.getUint32(data + 4);
+  return width > 0 && width <= 0x7fffffff && height > 0 && height <= 0x7fffffff
+    && (DEPTHS[input[data + 9]!] ?? []).includes(input[data + 8]!)
+    && input[data + 10] === 0 && input[data + 11] === 0 && input[data + 12]! <= 1;
+}
+
+/** PNG3 11.3.1.1: decoders mask sample bits above the IHDR depth, so those ignored bits must not survive cleaning. */
+function normalizeTransparency(chunk: Uint8Array, bitDepth: number): Uint8Array | null {
+  if (bitDepth === 16) return null;
+  const normalized = Uint8Array.from(chunk); // Buffer.slice aliases its input; always own a zero-offset copy.
+  const fields = new DataView(normalized.buffer);
+  const mask = 2 ** bitDepth - 1;
+  let changed = false;
+  for (let offset = 8; offset < normalized.length - 4; offset += 2) {
+    const value = fields.getUint16(offset);
+    const sample = value & mask;
+    if (value !== sample) {
+      fields.setUint16(offset, sample);
+      changed = true;
+    }
+  }
+  if (!changed) return null;
+  fields.setUint32(normalized.length - 4, crc32(normalized.subarray(4, normalized.length - 4)));
+  return normalized;
+}
 
 export function cleanPng(input: Uint8Array): PngResult {
   const n = input.length;
@@ -68,22 +98,22 @@ export function cleanPng(input: Uint8Array): PngResult {
     if (crc32(input.subarray(pos + 4, pos + 8 + len)) !== crcStored) return rej('A PNG chunk failed its integrity check.');
     if (first && type !== 'IHDR') return rej('The PNG does not start with a header chunk.');
     if (type === 'acTL' || type === 'fcTL' || type === 'fdAT') return { kind: 'unsupported', reason: 'Animated PNG files cannot be cleaned safely.' };
-    const chunk = input.subarray(pos, pos + 12 + len);
+    let chunk = input.subarray(pos, pos + 12 + len);
     if (KEEP.has(type)) {
       if (type === 'IHDR') {
-        if (!first || len !== 13) return rej('Invalid PNG header chunk.');
+        if (!first || len !== 13 || !validHeader(input, dv, pos + 8)) return rej('Invalid PNG header chunk.');
         bitDepth = input[pos + 8 + 8]!;
         colorType = input[pos + 8 + 9]!;
       } else if (first) {
         return rej('Invalid PNG chunk order.');
       }
       if (type === 'sRGB') {
-        if (len !== 1 || sawSrgb) return rej('Invalid sRGB chunk.');
+        if (len !== 1 || sawSrgb || input[pos + 8]! > 3) return rej('Invalid sRGB chunk.');
         sawSrgb = true;
       }
       // Kept bytes a decoder ignores would survive cleaning unseen, so PLTE/tRNS must fit the IHDR colour type exactly.
       if (type === 'PLTE') {
-        if (sawIdat || sawPlte || len % 3 !== 0 || len === 0 || len > 768) return rej('Invalid PNG palette.');
+        if (sawIdat || sawPlte || sawTrns || len % 3 !== 0 || len === 0 || len > 768) return rej('Invalid PNG palette.');
         if (colorType === 0 || colorType === 4 || (colorType === 3 && len / 3 > 2 ** bitDepth)) return rej('Invalid PNG palette.');
         sawPlte = true;
         paletteEntries = len / 3;
@@ -92,10 +122,20 @@ export function cleanPng(input: Uint8Array): PngResult {
         // Greyscale/truecolour tRNS has one fixed size; indexed tRNS follows PLTE and covers no more entries than it.
         const ok = colorType === 3 ? len > 0 && len <= paletteEntries : len === (colorType === 0 ? 2 : colorType === 2 ? 6 : -1);
         if (sawIdat || sawTrns || !ok) return rej('Invalid PNG transparency chunk.');
+        if (colorType !== 3) {
+          const normalized = normalizeTransparency(chunk, bitDepth);
+          if (normalized) {
+            // Supported engines disagree about masking sub-8-bit greyscale transparency. Refuse to silently change it.
+            if (bitDepth < 8) return { kind: 'unsupported', reason: 'This PNG uses transparency data that browsers interpret differently, so it cannot be cleaned safely.' };
+            chunk = normalized;
+            note('Unused transparency sample bits (tRNS)');
+          }
+        }
         sawTrns = true;
       }
       if (type === 'sRGB' && (sawIdat || sawPlte)) return rej('Invalid PNG chunk order.');
       if (type === 'IDAT') {
+        if (colorType === 3 && !sawPlte) return rej('Indexed PNG image data requires a palette.');
         if (idatEnded) return rej('PNG image data is not contiguous.');
         sawIdat = true;
       } else if (sawIdat) {
@@ -137,6 +177,7 @@ export function selfCheckPng(b: Uint8Array): string | null {
   while (pos < b.length) {
     if (pos + 12 > b.length) return 'truncated';
     const len = dv.getUint32(pos);
+    if (len > 0x7fffffff || len > b.length - pos - 12) return 'invalid chunk length';
     const type = typeName(b, pos + 4);
     if (!KEEP.has(type)) return `forbidden chunk ${type}`;
     if (crc32(b.subarray(pos + 4, pos + 8 + len)) !== dv.getUint32(pos + 8 + len)) return 'bad crc';

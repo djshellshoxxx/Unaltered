@@ -1,0 +1,659 @@
+{
+  "recordedAt": "2026-11-05T23:44:26.990030+00:00",
+  "sourceCheckpoint": "6da4011818ebe421320aba8e0d81709f20f62f25",
+  "status": "READY_FOR_REVIEW_WITH_EXTERNAL_GATES",
+  "recovery": {
+    "main": "1b6dd91",
+    "pr51Previous": "c02dd52",
+    "pr52": "295877e",
+    "newerPRs": false,
+    "originalDirtyCheckout": "preserved"
+  },
+  "workers": {
+    "security": {
+      "start": "src/core/strip/png.ts",
+      "branch": "codex/security-sweep-20261105",
+      "status": "PNG ignored-transparency-bit regression/fix in progress"
+    },
+    "bugs": {
+      "start": "src/ui/views/stamp.ts",
+      "branch": "codex/bugs-sweep-20261105",
+      "status": "receipt-label retention regression/fix in progress"
+    },
+    "audit": {
+      "start": "src/core/ots/types.ts",
+      "branch": "codex/audit-sweep-20261105",
+      "commit": "7600d46124f0cf771439b549b3c614cd2c896859",
+      "integration": "7ec46d4"
+    }
+  },
+  "completed": {
+    "networkLimits": {
+      "commit": "63fef7b",
+      "newCases": 16,
+      "failingBefore": 12,
+      "relatedPassed": 79,
+      "typecheck": "PASSED",
+      "lint": "PASSED",
+      "opsec": "PASSED",
+      "limit": "invalid programmatic overrides; no demonstrated browser-input exploit"
+    },
+    "serialization": {
+      "integration": "7ec46d4",
+      "newCases": 17,
+      "failingBefore": 14,
+      "referenceRelatedPassed": 108,
+      "leadRelatedPassed": 76,
+      "typecheck": "PASSED",
+      "lint": "PASSED",
+      "limit": "unknown runtime operation could become prepend and produce VERIFIED in exported in-memory API; wire parser already rejected unknown tags"
+    },
+    "ui": {
+      "labelRetention": "64f5757",
+      "referenceFallback": "4113c49",
+      "viewAnnouncements": "c415f40",
+      "unsupportedCleaningWarning": "0e04089"
+    },
+    "proofBoundaries": {
+      "duplicateOperations": "16aed97",
+      "headerSnapshots": "047956f",
+      "receiptSnapshots": "5d59596"
+    },
+    "png": {
+      "commits": [
+        "38e38f7",
+        "052d31d"
+      ],
+      "newCases": 14,
+      "relatedCases": 105,
+      "pixelObservations": 15,
+      "safeUnsupportedObservations": 9,
+      "evidence": "swarm-png-20261105.json",
+      "history": "swarm-png-20261105-history.json",
+      "failedNormalization": "swarm-png-20261105-failed-normalization.json"
+    }
+  },
+  "livePendingProbe": {
+    "testedArtifact": "b63394d9086f7bd9 (prior qualified build; emitted CSP unchanged)",
+    "result": {
+      "checkedAt": "2026-11-05T22:36:43.601Z",
+      "browser": "156.0.8078.4",
+      "calendars": [
+        {
+          "host": "alice.btc.calendar.opentimestamps.org",
+          "post": {
+            "status": 200,
+            "length": 172,
+            "error": null
+          },
+          "pendingLookups": [
+            {
+              "host": "alice.btc.calendar.opentimestamps.org",
+              "status": null,
+              "length": null,
+              "error": "TypeError",
+              "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+            }
+          ],
+          "pending": {
+            "host": "alice.btc.calendar.opentimestamps.org",
+            "status": null,
+            "length": null,
+            "error": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+          }
+        },
+        {
+          "host": "bob.btc.calendar.opentimestamps.org",
+          "post": {
+            "status": 200,
+            "length": 170,
+            "error": null
+          },
+          "pendingLookups": [
+            {
+              "host": "bob.btc.calendar.opentimestamps.org",
+              "status": null,
+              "length": null,
+              "error": "TypeError",
+              "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+            }
+          ],
+          "pending": {
+            "host": "bob.btc.calendar.opentimestamps.org",
+            "status": null,
+            "length": null,
+            "error": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+          }
+        },
+        {
+          "host": "finney.calendar.eternitywall.com",
+          "post": {
+            "status": 200,
+            "length": 191,
+            "error": null
+          },
+          "pendingLookups": [
+            {
+              "host": "finney.calendar.eternitywall.com",
+              "status": null,
+              "length": null,
+              "error": "TypeError",
+              "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+            }
+          ],
+          "pending": {
+            "host": "finney.calendar.eternitywall.com",
+            "status": null,
+            "length": null,
+            "error": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+          }
+        }
+      ],
+      "sources": [
+        {
+          "host": "mempool.space",
+          "height": {
+            "status": 200,
+            "length": 64,
+            "error": null
+          },
+          "header": {
+            "status": 200,
+            "length": 160,
+            "error": null
+          },
+          "hashMatches": true,
+          "headerMatches": true
+        },
+        {
+          "host": "blockstream.info",
+          "height": {
+            "status": 200,
+            "length": 64,
+            "error": null
+          },
+          "header": {
+            "status": 200,
+            "length": 160,
+            "error": null
+          },
+          "hashMatches": true,
+          "headerMatches": true
+        }
+      ],
+      "csp": [],
+      "requestFailures": [
+        {
+          "host": "bob.btc.calendar.opentimestamps.org",
+          "error": "net::ERR_FAILED"
+        },
+        {
+          "host": "alice.btc.calendar.opentimestamps.org",
+          "error": "net::ERR_FAILED"
+        },
+        {
+          "host": "finney.calendar.eternitywall.com",
+          "error": "net::ERR_FAILED"
+        }
+      ],
+      "pendingLookupIdentity": "Validated POST proof; looked up each pending attestation node commitment.",
+      "confirmedUpgrade": "NOT TESTED: a known anchored receipt and independent reference verification remain separate requirements.",
+      "ok": false
+    }
+  },
+  "hosted": {
+    "checkedAt": "2026-11-05T23:44:26.990030+00:00",
+    "run": 42130213579,
+    "head": "6da4011",
+    "status": "queued",
+    "Sonar": "SUCCESS at6da4011",
+    "Snyk": "SUCCESS at6da4011",
+    "automationSonar": "SUCCESS at2691189",
+    "limits": "No hosted/native/Pages upload pass; manualdispatch403 and owner Actions-write boundary unchanged"
+  },
+  "dependencies": {
+    "fullAuditModerateDevOnly": 10,
+    "runtimeAudit": 0,
+    "change": "none; latest lint parents still declare minimatch10; no incompatible override"
+  },
+  "next": "Inspect required hosted CI on current published head when runners execute; owner resolves Actions-write dispatch/runner access; operator pending CORS; native/human/audit/signing/production authorization gates. No active workers or background continuation assumed.",
+  "apiUsage": "not exposed; no cache-hit/cost/hard-budget claim",
+  "rawLogs": {
+    "net-policy-before.log": "6891c66d093e26c05dfcae52ecc9998b9a8894c4fc4bb8dca413e6db8fdae13a",
+    "net-policy-after.log": "aaf8cf597046f31f0d20593b9c27d22c3effd550fa0d4121897c5f3da71f6908",
+    "swarm-serializer-before.log": "2b4f60d311d7422a1c09421271d957bb655607fe977f64d6f8d6c0d1d9a6cd82",
+    "swarm-unknown-op-before.log": "70e0bce4edb3d040a7bdf6da3d814379f1728ec8a79afc24bfb0acc226da18df",
+    "swarm-serializer-reference.log": "ea887dcdb26d83466a57176712ae57de50fe658315648f76ddda86564dc74b25",
+    "serialization-integrated.log": "8c3f70d53a978628c9ac839d58ca2aa9f593270a291fb6e2f68aa78a7e784868",
+    "check-swarm-final.log": "dc212074c06f3cd51898f68cda6b4b72870f09af4c3383a9df0b97c0cd73d4a3",
+    "check-swarm-final-fixed.log": "8b306895f64af4d69296cce57c408f12c07a884d5cdecbb5fa86f8ccca7d5455",
+    "browser-swarm-chromium.log": "5f6ff59d59e557f5c2c26bc76f575d752be5fd78709c60050eed293d7c835210",
+    "browser-swarm-chromium-fixed.log": "70ca5642d0e52d5a1e57f26ca08e9708d724f291b31fa40274dbbeb857290b2a",
+    "browser-swarm-firefox.log": "ef337b1b63daa560dea6edeffb359a8e64090411ddccada59783939bb8bb0513",
+    "browser-swarm-webkit.log": "4541f14a068c8b3687d0d07ab3867aa36cd0a0726ebde1b0e3948e6e0cb0bf01",
+    "browser-swarm-regression-chromium.log": "5db4393a95c55719ca50180656ebd6267d4470904f19a17951e940a56609fc15",
+    "browser-fallback-contract-fixed.log": "7d99fa2c3c98c92c7ef110aa2cdc6c97105744e9249128c4af8b7efcdf2aebef",
+    "browser-swarm-full-chromium.log": "b158d834e6615f31b0399905e440097e9121de65b59b71e895d095af8c3be22a",
+    "browser-swarm-full-firefox.log": "94d22985fd3b92169bc0cf0801869e1af498f462ae1ffecb143e0460111ff88b",
+    "browser-swarm-full-webkit.log": "d0f80beeb76f243ced8de7f6f228abc1aacfcb0d706266416d2cb55145b560a4",
+    "reference-045-after.log": "2d236f3d374fbd588457f0a7fc6b10363cfa3c8cb39f9271ecfa94da2cda06b5",
+    "reference-050-after.log": "dfea1256a07c129dfc99ef1511c8afaf70f51a0ee81c175ccbfa44de2b01ab8c",
+    "automation-bootstrap-before.log": "2c7dcd67d687e75586248c3c7bc2820c9417d154f48bbc6236044f310c041afd",
+    "automation-bootstrap-after.log": "0c5a586703f2554309d015ebe4c682ea82d607492da81b41f8a1be23b74dd72b",
+    "automation-python-before.log": "73d97116546e02fdc3da301502e5ca68cf1e8eda98760c4582c860551add9da7",
+    "automation-python-after.log": "cd82a15e1237fcda449cb811f3db9bdd9dffe0a84f7a78c3bc80dda155e14528",
+    "build-swarm1.sums": "514c3a2499a338f8cfbbcd30f5e4fa7ff320acbc021602c2d83fd338b8fc5cdb",
+    "build-swarm2.sums": "514c3a2499a338f8cfbbcd30f5e4fa7ff320acbc021602c2d83fd338b8fc5cdb"
+  },
+  "publishedApplication": "6da4011818ebe421320aba8e0d81709f20f62f25",
+  "publishedAutomation": "269118949894b137b6a8ad855780da296955e7de",
+  "tests": {
+    "project": {
+      "status": "PASSED at210e3df runtime",
+      "unitPassed": 506,
+      "unitSkipped": 2,
+      "nodePassed": 127,
+      "nodeSkipped": 3,
+      "typecheck": "PASSED",
+      "lint": "PASSED",
+      "opsec": "PASSED"
+    },
+    "fullBrowser2969": {
+      "chromium": {
+        "passed": 98,
+        "skipped": 1
+      },
+      "firefox": {
+        "passed": 98,
+        "skipped": 1
+      },
+      "webkit": {
+        "passed": 97,
+        "skipped": 2
+      },
+      "retries": 0,
+      "versions": {
+        "chromium": "156.0.8078.4",
+        "firefox": "157.0",
+        "webkit": "27.2"
+      },
+      "skips": "opt-in2GiB each; WebKit Worker.evaluate unsupported probe",
+      "scope": "complete regular suite against emitted2969 build, before later upgrade fan-out change"
+    },
+    "focusedEmitted": {
+      "perEngine": 14,
+      "engines": 3,
+      "retries": 0
+    },
+    "referenceComparison": {
+      "pinned045": 33,
+      "current050": 33,
+      "wheelSha256": "bbe386274469292b54bb1d2e3af29b3e17f30025f12516bfc4aea3474b12e848",
+      "runtimeDependencyChange": false
+    },
+    "fuzz": {
+      "status": "budget-complete/no finding",
+      "sourceCommit": "5d5959654a23d07dd474c3e266fb1f4b85742e5e",
+      "mutations": 205415,
+      "executed": 205451,
+      "elapsedMs": 300004,
+      "stopReason": "wall-clock",
+      "details": "swarm-fuzz-20261105.json"
+    },
+    "automation": {
+      "source": "2691189",
+      "passed": 22,
+      "independentReview": "22/22, no bounded blocker; not human audit",
+      "exactHeadSonar": "SUCCESS"
+    },
+    "currentProject": {
+      "status": "PASSED",
+      "sourceRuntime": "54ff6e5 (same runtime tree as6da4011)",
+      "unitPassed": 520,
+      "unitSkipped": 2,
+      "nodePassed": 127,
+      "nodeSkipped": 3,
+      "typecheck": "PASSED",
+      "lint": "PASSED",
+      "opsec": "PASSED",
+      "reference": "pinned Python0.4.5"
+    },
+    "currentAffectedBrowser": {
+      "build": "d582df5797284236",
+      "perEngine": 4,
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "passed": 12,
+      "retries": 0,
+      "coverage": [
+        "complete stamp/upgrade/verify trust flow",
+        "converging branches: one request, two Bitcoin attestations, no stale pending, actual download",
+        "cancellation/late reply handling",
+        "unreadable pending reference-client fallback"
+      ]
+    },
+    "restrictedFirefox": {
+      "build": "d582df5797284236",
+      "browser": "157.0",
+      "passed": 32,
+      "failed": 0,
+      "skipped": 0,
+      "profiles": "JS Ion and Baseline JIT disabled; fingerprinting resistance off/on",
+      "evidence": "restricted-browser-20261105.json",
+      "limits": "no actual Tor/Edge/nativeSafari, large-file or performance claim; preliminary about:config harness timeout retained"
+    },
+    "parserTargetEquivalence": {
+      "checkedAt": "2026-11-05T23:33:13.128Z",
+      "previousSource": "5d5959654a23d07dd474c3e266fb1f4b85742e5e",
+      "previousTarget": "312f0e7dc7d73746828c246530eb5083ae2128440051dc1658d5359aabdf218c",
+      "currentTarget": "312f0e7dc7d73746828c246530eb5083ae2128440051dc1658d5359aabdf218c",
+      "identical": true,
+      "scope": "Exact compiled parser fuzz target; new upgrade merge transaction is covered separately by deterministic and browser tests."
+    }
+  },
+  "artifactQualification": {
+    "build": "2969d158f4936bfd",
+    "source": "210e3df",
+    "twoBuildsIdenticalFiles": 10,
+    "publishedChecksumsPassed": 5,
+    "independentCheckoutNodeVersions": [
+      "22.23.4",
+      "24.22.2"
+    ],
+    "independentCheckoutMatchesAll10": true,
+    "limit": "one Linux environment/shared existing dependencies; not independent human/native OS acceptance",
+    "preservedAt": ".development/qualified-build-2969d158f4936bfd",
+    "manifest": [
+      "6a3a66e6e473852a84dc6499080accdb3039100467d910b2002ac0713b245409  dist/RELEASE-NOTES.md",
+      "651f38a9c826527a44595e6f6fb6a4f505c766c5cab18b01c1c14753217b0b9e  dist/SHA256SUMS",
+      "680b530420a9abf32b04d1d9d31cd9cfbdd89a06debf99d72e6c7ad0fb527fa3  dist/unaltered-0.3.1-linux.tar.gz",
+      "65fc5922cad4fd077b5dabea99c03a002b97f8d61c0a880dd17525a670f7e259  dist/unaltered-0.3.1-macos.zip",
+      "86a35c926509baf489278933bbd7d2fa91a9800b38b435e2b11c533660738e5e  dist/unaltered-0.3.1.html",
+      "4d48d029933161ed611b55d929b1d46531eb8f85d5ad8241db51fc7c1052afb9  dist/unaltered-0.3.1.zip",
+      "ca74be05617b86b3e7a9145a9206281a345800cb210d6f96c0dbf830d47e8ef0  dist/unaltered-cli-0.3.1.mjs",
+      "4f2cc36eccf9845f1c31ab35e2ab8a5ac94c67d3d1a2a62ccfe7ecc7fff4c14e  dist/web/index.html",
+      "39b1a18e3d2bfd56619381cdc777f51d47061534aff45384b40cc46f76d48ca2  dist/web/main.js",
+      "a6615aedfd8aa0549a9d01c462ddefc2548d3908b9c306e8b0e232cad756d161  dist/web/styles.css"
+    ],
+    "offlineRealReceipts": {
+      "checkedAt": "2026-11-05T23:10:29.036957+00:00",
+      "buildCode": "2969d158f4936bfd",
+      "cliSha256": "ca74be05617b86b3e7a9145a9206281a345800cb210d6f96c0dbf830d47e8ef0",
+      "scope": "Actual bundled Node22CLI with fetch forbidden, genuine cached Bob/Finney receipts and cached independently fetched headers; user-supplied trust, no node/consensus claim",
+      "results": [
+        {
+          "calendar": "bob",
+          "height": 429355,
+          "blockHash": "000000000000000001a2d3983295ee55464c32cf0ce0b3fb8239e5bd0293ed9e",
+          "exit": 0,
+          "stdout": "file sha-256: efaa174f 68e59705 757460f4 f7d204bd 2b535cfd 194d9d94 54187321 29404ddb\nresult: MATCHED_TRUSTED_HEADER\ntrust: USER_SUPPLIED_HEADER\nThe file and receipt match the supplied header. Chain membership and height remain trusted inputs; Bitcoin consensus is not checked.\nsupplied header 429355, 000000000000000001a2d3983295ee55464c32cf0ce0b3fb8239e5bd0293ed9e, 2016-09-11T22:12:07Z (miner time)\n",
+          "receiptSha256": "a2b0bc80fe19e49062a8ddae936d469946660338b2e4121cde59e5ac55a71218",
+          "headerTextSha256": "cf73ad2777a9ddaa4da620a38da5b7b1e6469b129f6470bd4821a19b23696488"
+        },
+        {
+          "calendar": "finney",
+          "height": 523367,
+          "blockHash": "00000000000000000016051dc6f002cf4b205ccf278096ff5fd99dc9f4362c31",
+          "exit": 0,
+          "stdout": "file sha-256: 397a0083 69798373 19bdd350 aa93bcc2 798e94e0 8ab00f32 f355e5eb e7837c2b\nresult: MATCHED_TRUSTED_HEADER\ntrust: USER_SUPPLIED_HEADER\nThe file and receipt match the supplied header. Chain membership and height remain trusted inputs; Bitcoin consensus is not checked.\nsupplied header 523367, 00000000000000000016051dc6f002cf4b205ccf278096ff5fd99dc9f4362c31, 2018-05-19T09:22:13Z (miner time)\n",
+          "receiptSha256": "8131fdf1d375c27362d1a727ba8481e935edd8e3b761f5c7eab0c1b90fa0a84e",
+          "headerTextSha256": "2f211f42f4d574a689a9fdadf3be77251bae094442cf9ffc1328dd9b050e7528"
+        }
+      ]
+    }
+  },
+  "followupIndependentWorkstreams": {
+    "release": {
+      "source": "c21b4fa",
+      "integration": "0e3d397",
+      "status": "published in54ff6e5",
+      "result": "same ten files across separate paths and Node22/24; explicit GPG signature filename; no signature created",
+      "latestQualification": "Current d582 all10files independently match across checkout paths/Node22+24;5outer/27inner sums; report published"
+    },
+    "pages": {
+      "sources": [
+        "684d355",
+        "5d587bc"
+      ],
+      "integrations": [
+        "39e0347",
+        "8de04f2"
+      ],
+      "status": "published inactive template; tests pass; no workflow installed/activated",
+      "result": "inactive docs template only; no deployment enabled; case-sensitive shell gate plus native guards;10 related cases"
+    },
+    "protocol": {
+      "source": "1c3b7af",
+      "integration": "54ff6e5",
+      "status": "published;520/127 project and12 affected browser cases passed",
+      "tests": "114/114 current reference,7/7 pinned; independent read-only review repeats these and rollback assertions",
+      "result": "known FR6 residual; one fetch updates all matching nodes atomically; not a new vulnerability"
+    }
+  },
+  "initialFailuresRetained": [
+    "Initial project check505pass/1fail: malformed URI test incorrectly used newly strict serializer; independently assembled wire input preserves rejection assertion; final506pass.",
+    "Initial new PNG UI checks11pass/3selector failures: hidden Settings warning also matched; scope corrected to filecard,14pass per engine.",
+    "Initial browser regression30pass/1fail: old test forbade all links; new fallback allows exactly one approved documentation URL while downloads still forbidden. Full regular matrix passes.",
+    "Current Python0.5 initial32pass/1fail: test assumed old0.4.5 last-wins behavior; now explicitly asserts both qualified version outcomes,33pass each.",
+    "Initial PNG24/24 equivalence claim invalidated by Buffer copy bug; corrected normalization exposed3 Chromium mismatches; conservative policy now15equal+9safe unsupported.",
+    "Prepublication OPSEC found a machine home path in restricted Firefox metadata; replaced with documented <HOME> placeholder before publication, preserving metrics/preferences/binary hashes. Original worker source remains local; no shared published history rewritten."
+  ],
+  "publication": {
+    "initialWorkerErrors": "new worker branches rejected with fatal error in commit_refs_rules; local commits preserved; no bypass",
+    "recovery": "pages follow-up pushed successfully; reviewed release/Pages/protocol slices pushed through existingPR51 at54ff6e5",
+    "releaseOrDeployment": false
+  },
+  "applicationSourceTree": "a0cc1c55b3b06a5d1779ef33c206a5c62b2624d4",
+  "currentArtifactQualification": {
+    "build": "d582df5797284236",
+    "source": "6da4011",
+    "twoNode22BuildsIdenticalFiles": 10,
+    "separateCheckoutNode22And24MatchesAll10": true,
+    "outerChecksumsPassed": 5,
+    "innerArchiveChecksumsPassed": 27,
+    "archiveIntegrity": "ZIP CRCs/unique safe sorted paths/fixed metadata and tar regular-file/owner/time passed",
+    "report": "latest-build-independent-20261105.json",
+    "manifest": [
+      "000fb261e4ce62e6915cca97dc449134bc9139cbd5b89b9499feddaa1367c6ca  dist/RELEASE-NOTES.md",
+      "5864bc9f869c9ed43ea0661104fd4ac9e96edffe8df8ecd727173dc34ab78a60  dist/SHA256SUMS",
+      "a22d934427d720acd8e38b6934aece839bdc2f28f8af2b7df087f3f238cf8c9d  dist/unaltered-0.3.1-linux.tar.gz",
+      "e67119be28236f090c5a466b062a306ecdbddead8d016eb60130dab4ee43791a  dist/unaltered-0.3.1-macos.zip",
+      "849f29a3018655a46bf5b81220c70620fe615b896173221cbc74d466d415b975  dist/unaltered-0.3.1.html",
+      "2853c36cb7f4197cf64a92eaf15f80dcd64732b3140a0fe4beab103cf1def69f  dist/unaltered-0.3.1.zip",
+      "ca74be05617b86b3e7a9145a9206281a345800cb210d6f96c0dbf830d47e8ef0  dist/unaltered-cli-0.3.1.mjs",
+      "3da6bcbf9bcd2ff9afb78f58367ed714feefab6416d8bae6ceeec03ecbec1541  dist/web/index.html",
+      "ce2047190a1bbd246d8b66e0a65a9df4d256fd2783073251f464a6f88dd1b6ec  dist/web/main.js",
+      "a6615aedfd8aa0549a9d01c462ddefc2548d3908b9c306e8b0e232cad756d161  dist/web/styles.css"
+    ],
+    "cliIdenticalToActualOfflineAcceptance": true,
+    "cliSha256": "ca74be05617b86b3e7a9145a9206281a345800cb210d6f96c0dbf830d47e8ef0",
+    "limit": "one Linux environment/shared existing dependencies; no independent human/native OS or signature claim"
+  },
+  "latestLiveProbe": {
+    "status": "FAILED pending-readability release qualification",
+    "build": "d582df5797284236",
+    "result": {
+      "checkedAt": "2026-11-05T23:33:16.107Z",
+      "browser": "156.0.8078.4",
+      "calendars": [
+        {
+          "host": "alice.btc.calendar.opentimestamps.org",
+          "post": {
+            "status": 200,
+            "length": 207,
+            "error": null
+          },
+          "pendingLookups": [
+            {
+              "host": "alice.btc.calendar.opentimestamps.org",
+              "status": null,
+              "length": null,
+              "error": "TypeError",
+              "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+            }
+          ],
+          "pending": {
+            "host": "alice.btc.calendar.opentimestamps.org",
+            "status": null,
+            "length": null,
+            "error": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+          }
+        },
+        {
+          "host": "bob.btc.calendar.opentimestamps.org",
+          "post": {
+            "status": 200,
+            "length": 205,
+            "error": null
+          },
+          "pendingLookups": [
+            {
+              "host": "bob.btc.calendar.opentimestamps.org",
+              "status": null,
+              "length": null,
+              "error": "TypeError",
+              "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+            }
+          ],
+          "pending": {
+            "host": "bob.btc.calendar.opentimestamps.org",
+            "status": null,
+            "length": null,
+            "error": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+          }
+        },
+        {
+          "host": "finney.calendar.eternitywall.com",
+          "post": {
+            "status": 200,
+            "length": 226,
+            "error": null
+          },
+          "pendingLookups": [
+            {
+              "host": "finney.calendar.eternitywall.com",
+              "status": null,
+              "length": null,
+              "error": "TypeError",
+              "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+            }
+          ],
+          "pending": {
+            "host": "finney.calendar.eternitywall.com",
+            "status": null,
+            "length": null,
+            "error": "TypeError",
+            "classification": "UNREADABLE_CORS_OR_TRANSPORT"
+          }
+        }
+      ],
+      "sources": [
+        {
+          "host": "mempool.space",
+          "height": {
+            "status": 200,
+            "length": 64,
+            "error": null
+          },
+          "header": {
+            "status": 200,
+            "length": 160,
+            "error": null
+          },
+          "hashMatches": true,
+          "headerMatches": true
+        },
+        {
+          "host": "blockstream.info",
+          "height": {
+            "status": 200,
+            "length": 64,
+            "error": null
+          },
+          "header": {
+            "status": 200,
+            "length": 160,
+            "error": null
+          },
+          "hashMatches": true,
+          "headerMatches": true
+        }
+      ],
+      "csp": [],
+      "requestFailures": [
+        {
+          "host": "finney.calendar.eternitywall.com",
+          "error": "net::ERR_FAILED"
+        },
+        {
+          "host": "alice.btc.calendar.opentimestamps.org",
+          "error": "net::ERR_FAILED"
+        },
+        {
+          "host": "bob.btc.calendar.opentimestamps.org",
+          "error": "net::ERR_FAILED"
+        }
+      ],
+      "pendingLookupIdentity": "Validated POST proof; looked up each pending attestation node commitment.",
+      "confirmedUpgrade": "NOT TESTED: a known anchored receipt and independent reference verification remain separate requirements.",
+      "ok": false
+    }
+  },
+  "evidenceArchive": {
+    "file": "verification-swarm-20261105.zip",
+    "sha256": "9ef5684147b07c2376a0bb60f55f7dd96c069a682b6bbb6aceea125b9cf7be41",
+    "files": {
+      "automation-bootstrap-after.log": "0c5a586703f2554309d015ebe4c682ea82d607492da81b41f8a1be23b74dd72b",
+      "automation-bootstrap-before.log": "2c7dcd67d687e75586248c3c7bc2820c9417d154f48bbc6236044f310c041afd",
+      "automation-python-after.log": "cd82a15e1237fcda449cb811f3db9bdd9dffe0a84f7a78c3bc80dda155e14528",
+      "automation-python-before.log": "73d97116546e02fdc3da301502e5ca68cf1e8eda98760c4582c860551add9da7",
+      "browser-fallback-contract-fixed.log": "7d99fa2c3c98c92c7ef110aa2cdc6c97105744e9249128c4af8b7efcdf2aebef",
+      "browser-independent-chromium.log": "85be1d1898554523e021b4df2ed4e1361901de955d5530a9de7386242910344f",
+      "browser-independent-firefox.log": "8295c61d1aea498ca0bd8f041b3ba448525e7f18c4597127971043c7fcf5cc90",
+      "browser-independent-webkit.log": "f4ae8289e24a000e38b92b5a2e9c6dcb98ae60f27bba805cce45ec5ccf4f527d",
+      "browser-swarm-chromium-fixed.log": "70ca5642d0e52d5a1e57f26ca08e9708d724f291b31fa40274dbbeb857290b2a",
+      "browser-swarm-chromium.log": "5f6ff59d59e557f5c2c26bc76f575d752be5fd78709c60050eed293d7c835210",
+      "browser-swarm-firefox.log": "ef337b1b63daa560dea6edeffb359a8e64090411ddccada59783939bb8bb0513",
+      "browser-swarm-full-chromium.log": "b158d834e6615f31b0399905e440097e9121de65b59b71e895d095af8c3be22a",
+      "browser-swarm-full-firefox.log": "94d22985fd3b92169bc0cf0801869e1af498f462ae1ffecb143e0460111ff88b",
+      "browser-swarm-full-webkit.log": "d0f80beeb76f243ced8de7f6f228abc1aacfcb0d706266416d2cb55145b560a4",
+      "browser-swarm-regression-chromium.log": "5db4393a95c55719ca50180656ebd6267d4470904f19a17951e940a56609fc15",
+      "browser-swarm-webkit.log": "4541f14a068c8b3687d0d07ab3867aa36cd0a0726ebde1b0e3948e6e0cb0bf01",
+      "build-independent1.sums": "49fde647ebf552fd81bdfaa923bbdff130c5bde984c4975dd966112b5ff04e78",
+      "build-independent2.sums": "49fde647ebf552fd81bdfaa923bbdff130c5bde984c4975dd966112b5ff04e78",
+      "build-swarm1.sums": "514c3a2499a338f8cfbbcd30f5e4fa7ff320acbc021602c2d83fd338b8fc5cdb",
+      "build-swarm2.sums": "514c3a2499a338f8cfbbcd30f5e4fa7ff320acbc021602c2d83fd338b8fc5cdb",
+      "check-independent-final.log": "38773d3e6bb38c173f5963ce8dc657bfa5a0470026bd58a248bef1794b7ea5ef",
+      "check-swarm-final-fixed.log": "8b306895f64af4d69296cce57c408f12c07a884d5cdecbb5fa86f8ccca7d5455",
+      "check-swarm-final.log": "dc212074c06f3cd51898f68cda6b4b72870f09af4c3383a9df0b97c0cd73d4a3",
+      "cors-final-live.json": "bc21c8aabeb38ab557acd54d7598a9b1dc6ec16786bde2df99a01461846ebe10",
+      "fuzz-report.json": "299feb7d61df9dd27742696fd1d8759e318e7c9b9b4c3cc4c4127908aff31545",
+      "fuzz-target-equivalence.json": "5b0246a603b346617c0eed3262f4a0e5d2ca304a64841be18c8dbaf986123088",
+      "hostile-uri-fixture-fixed.log": "f4ccdbdbea91a52aca7d565c21bb292d4a2cfc1c554e0971dbc924c5cb178674",
+      "independent-workstreams-integrated.log": "ac44539f1d10e35d8e4377bbb9b0e1fef0de46f577cf7c5a3e60ec915c546539",
+      "latest-build-independent-20261105.json": "ae0904cfbe4b4c7ecbad2ab227001e68c62949ebc3f7695514bc0148f05e80bd",
+      "net-policy-after.log": "aaf8cf597046f31f0d20593b9c27d22c3effd550fa0d4121897c5f3da71f6908",
+      "net-policy-before.log": "6891c66d093e26c05dfcae52ecc9998b9a8894c4fc4bb8dca413e6db8fdae13a",
+      "offline-swarm-real-receipts.json": "16745bb618a2e4f039d072ad8e7bfdfc9aef579ad96a3bce429b628c37a48f0f",
+      "png-integrated.log": "154198b6a7ac82ca39de77bfa0c46618e4ec3465e49eca2d0072139833751e45",
+      "protocol-integrated-final.log": "f968ead511fb1e8ea948877c4a6f568b44b69607df0228ed328e2eddc384bbe0",
+      "receipt-snapshots-integrated.log": "b5dcfd263722ebe5c7a713f010845a93b746598a830b20b7eb95ae8e5898b43e",
+      "reference-045-after.log": "2d236f3d374fbd588457f0a7fc6b10363cfa3c8cb39f9271ecfa94da2cda06b5",
+      "reference-050-after.log": "dfea1256a07c129dfc99ef1511c8afaf70f51a0ee81c175ccbfa44de2b01ab8c",
+      "restricted-browser-20261105.json": "5a22057a8e2a768b40b76b879d01fe167d44ae8dd785a4d7caf60d6d3befca0b",
+      "swarm-serializer-before.log": "2b4f60d311d7422a1c09421271d957bb655607fe977f64d6f8d6c0d1d9a6cd82",
+      "swarm-serializer-reference.log": "ea887dcdb26d83466a57176712ae57de50fe658315648f76ddda86564dc74b25",
+      "swarm-unknown-op-before.log": "70e0bce4edb3d040a7bdf6da3d814379f1728ec8a79afc24bfb0acc226da18df",
+      "ui-swarm-integrated.log": "7a3d9bebeaafe2ce51726f4fb9430be400fc6262191d62ae7535cc62cacde829"
+    },
+    "scope": "Selected completed verification logs and synthetic/public-reference reports; machine home paths redacted in restricted-profile metadata; no credentials or original user files."
+  }
+}

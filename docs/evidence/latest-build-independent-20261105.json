@@ -1,0 +1,87 @@
+{
+  "checked_at_utc": "2026-11-05T23:35:45.261281+00:00",
+  "source_commit": "6da4011818ebe421320aba8e0d81709f20f62f25",
+  "source_tree": "ba228006e16a07030a382fb00da8551b75302f1d",
+  "source_clean": true,
+  "platform": "Linux",
+  "checkout": "/workspaces/Unaltered/.development/verify-latest-build-20261105",
+  "baseline_dist": "/workspaces/Unaltered/.development/consolidation-20261104/dist",
+  "baseline_manifest": "/workspaces/Unaltered/.development/evidence-continuation-20261105/build-independent2.sums",
+  "baseline_manifest_sha256": "49fde647ebf552fd81bdfaa923bbdff130c5bde984c4975dd966112b5ff04e78",
+  "build_code": "d582df5797284236",
+  "node22": {
+    "binary": "/usr/local/share/nvm/versions/node/v22.23.4/bin/node",
+    "version": "v22.23.4",
+    "build_exit_code": 0,
+    "files_matching_expected_and_baseline": 10,
+    "published_checksums_passed": 5
+  },
+  "manifest": {
+    "RELEASE-NOTES.md": "000fb261e4ce62e6915cca97dc449134bc9139cbd5b89b9499feddaa1367c6ca",
+    "SHA256SUMS": "5864bc9f869c9ed43ea0661104fd4ac9e96edffe8df8ecd727173dc34ab78a60",
+    "unaltered-0.3.1-linux.tar.gz": "a22d934427d720acd8e38b6934aece839bdc2f28f8af2b7df087f3f238cf8c9d",
+    "unaltered-0.3.1-macos.zip": "e67119be28236f090c5a466b062a306ecdbddead8d016eb60130dab4ee43791a",
+    "unaltered-0.3.1.html": "849f29a3018655a46bf5b81220c70620fe615b896173221cbc74d466d415b975",
+    "unaltered-0.3.1.zip": "2853c36cb7f4197cf64a92eaf15f80dcd64732b3140a0fe4beab103cf1def69f",
+    "unaltered-cli-0.3.1.mjs": "ca74be05617b86b3e7a9145a9206281a345800cb210d6f96c0dbf830d47e8ef0",
+    "web/index.html": "3da6bcbf9bcd2ff9afb78f58367ed714feefab6416d8bae6ceeec03ecbec1541",
+    "web/main.js": "ce2047190a1bbd246d8b66e0a65a9df4d256fd2783073251f464a6f88dd1b6ec",
+    "web/styles.css": "a6615aedfd8aa0549a9d01c462ddefc2548d3908b9c306e8b0e232cad756d161"
+  },
+  "published_checksums": {
+    "passed": 5,
+    "exit_code": 0,
+    "output": [
+      "unaltered-0.3.1.zip: OK",
+      "unaltered-0.3.1.html: OK",
+      "unaltered-0.3.1-linux.tar.gz: OK",
+      "unaltered-cli-0.3.1.mjs: OK",
+      "unaltered-0.3.1-macos.zip: OK"
+    ]
+  },
+  "archive_checks": [
+    {
+      "name": "unaltered-0.3.1-macos.zip",
+      "entries": 10,
+      "inner_checksums_passed": 9,
+      "unique_safe_sorted_paths": true,
+      "fixed_timestamps": true,
+      "stored_zip_crcs_valid": true
+    },
+    {
+      "name": "unaltered-0.3.1.zip",
+      "entries": 10,
+      "inner_checksums_passed": 9,
+      "unique_safe_sorted_paths": true,
+      "fixed_timestamps": true,
+      "stored_zip_crcs_valid": true
+    },
+    {
+      "name": "unaltered-0.3.1-linux.tar.gz",
+      "entries": 10,
+      "inner_checksums_passed": 9,
+      "unique_safe_sorted_paths": true,
+      "regular_files_only": true,
+      "fixed_timestamp_owner_metadata": true
+    }
+  ],
+  "limits": [
+    "Both builds use one Linux environment and existing shared dependencies; no fresh dependency installation.",
+    "Establishes checkout-path and Node-version artifact equivalence, not independent human or native Windows/macOS approval.",
+    "No browser, server, main checkout source/dist, shared dependency, signing/key, workflow-dispatch, deployment or release changes."
+  ],
+  "node24": {
+    "binary": "/usr/local/share/nvm/versions/node/v24.22.2/bin/node",
+    "version": "v24.22.2",
+    "build_exit_code": 0,
+    "files_matching_expected_and_baseline": 10,
+    "published_checksums_passed": 5
+  },
+  "completed_at_utc": "2026-11-05T23:35:54.623983+00:00",
+  "architecture": "x86_64",
+  "shared_dependencies": "/workspaces/Unaltered/.development/dependencies-20261105/node_modules",
+  "all_10_outputs_identical_across_node_versions_and_checkout_paths": true,
+  "baseline_unchanged": true,
+  "archive_check_scope": "Archive checks performed on Node 22 output; byte-identical Node 24 output has the same checksums and archive bytes.",
+  "result": "PASS"
+}

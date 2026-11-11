@@ -133,3 +133,52 @@ Pin exact versions at M0-1 via `npm install --save-exact --save-dev <pkg>`; revi
 | 2026-10-24 | Current direct dependencies and lockfile | exact versions in current snapshot above | internal resume review | local manifest/lockfile agreement; no diff from resume baseline | REL-1 record refresh only. No dependencies changed; current CI signature/provenance results recorded above. No new upstream audit/advisory research or independently audited-version diff claimed |
 | 2026-11-04 | minimatch (transitive, dev-only via eslint/typescript-eslint) | 10.2.6 | integration session | npm registry metadata of eslint 10.14.0, @eslint/config-array 0.23.5, typescript-estree 8.72.1, minimatch 11.0.4 | GHSA-g3hv-75wg-m249 accepted as dev-only risk (repository-controlled patterns); no override, lockfile unchanged. See 2026-11-04 snapshot |
 | 2026-11-04 | minimatch re-verification (worker-deps, no change) | 10.2.6 (locked); latest 10.x 10.2.6; 11.0.4 latest 11.x | deps worker | `npm view` of eslint 10.14.0 (`minimatch ^10.2.6`), @eslint/config-array 0.23.5 (`^10.2.4`), @typescript-eslint/typescript-estree 8.72.1 (`^10.2.2`), typescript-eslint 8.72.1 (latest); `npm audit --json` before: 11 moderate, 0 high/critical, all dev-only (GHSA-g3hv-75wg-m249, `minimatch <11.0.1`); `npm audit --omit=dev`: 0 | Still open. No exact-pin upgrade of a devDependency resolves the entries: every latest lint-chain release keeps `^10.x` ranges. Lockfile SHA-256 unchanged (`836f4e61…262df`). No override, no new dependency. `npm run check` passed (opsec, typecheck, lint, 288 passed / 2 skipped vitest) |
+| 2026-11-04 | opentimestamps, python-bitcoinlib, pycryptodomex (PyPI, python) | 0.4.5, 0.12.2, 3.23.0: version and wheel SHA-256 pins in `tests/differential/requirements.txt` | integration session | PyPI JSON metadata: declared dependencies, upload dates, published SHA-256 of each listed wheel. `pip --require-hashes` re-hashed the Linux x86_64 wheels on install (Python 3.12 and 3.13); the other platforms' hashes are as PyPI publishes them | Dev/CI only: differential job and `scripts/r1-acceptance.sh`, installed with `--require-hashes --only-binary :all:`. Before this, `pip install opentimestamps==0.4.5` resolved the newest pycryptodomex (`>=3.3.1`) and python-bitcoinlib (`>=0.9.0,<0.13.0`) on every run, with no hash. The 2026-10-14 row records no hash. python-bitcoinlib 0.12.2 is the newest version the range allows. pycryptodomex 3.23.0 (2025-05-17) was chosen over 3.24.x (October 2026) as the longest-aged release. No code review of the wheels is claimed. Pip is not covered by Dependabot, so a bump is a manual edit plus a new row here |
+
+## Fuzz-runner Git prerequisite — 2026-11-05
+
+The development fuzz runner invokes Git by an absolute system path: `/usr/bin/git` or
+`/bin/git` on Linux/macOS; `C:/Program Files/Git/cmd/git.exe` or the corresponding
+`Program Files (x86)` location on Windows. These administrator-managed locations must
+contain the trusted Git installation. A nonstandard installation fails with an explicit
+prerequisite error; the runner never falls back to inherited `PATH` or the current
+working directory. This changes development tooling only; no Git binary is bundled.
+
+The exact PR47 Sonar finding was retrieved from the public issues API: `javascript:S4036`,
+`scripts/parser-fuzz.mjs:29`, unsafe executable search. Before the fix, executed regression
+tests demonstrated that a writable directory at the front of `PATH` could supply a fake
+Git binary, and an empty `PATH` stopped source-evidence collection. Both cases and the
+four existing campaign tests pass after the fix. This closes the reproduced behavior;
+a passing new Sonar analysis is a separate external gate.
+
+Sources: [Node child-process command lookup](https://nodejs.org/api/child_process.html),
+[Sonar's S4036 introduction](https://community.sonarsource.com/t/many-improvements-for-js-ts-css-and-two-new-rules-for-security-and-tests/64617).
+No third-party source code was copied and no dependency changed.
+
+## Distributed license notices — 2026-11-05
+
+The build now places the complete first-party `LICENSE` and the installed `@noble/hashes`
+MIT notice in explicit comments in every page, worker and CLI bundle. The source package's
+comments had previously been removed by bundling without retaining its full notice in
+the distributed assets. Loose JavaScript, standalone HTML, the embedded worker, the CLI,
+all portable archives and the Pages site now carry both notices without a sidecar file.
+The CLI shebang stays first. CSP, SRI, build codes and artifact checksums cover the added
+notice bytes; line endings use the same deterministic normalization as other build inputs.
+
+The installed `@noble/hashes@2.4.0` license matches the
+[official upstream license](https://github.com/paulmillr/noble-hashes/blob/663c2aeeffc308ac0cded59bd32f7c212adacfc2/LICENSE):
+SHA-256 `4f221aee6e072336700c408c68ab3b96a3fc09f6aebe6f48f1bd99e5ef13faec`.
+The `2.4.0` annotated tag resolves to commit `663c2aeeffc308ac0cded59bd32f7c212adacfc2`.
+No dependency or lockfile changed, and building requires no network request. Artifact
+tests compare complete notice text, decode the actual embedded worker source and check
+the generated integrity values. This packaging correction is not a new cryptographic
+audit or an audited-version comparison.
+
+## Archival QR completion — 2026-11-08
+
+- Decision record: [ADR-013](DECISIONS.md#adr-013-local-binary-qr-transport-for-standard-receipts) records the encoder/decoder choice, maintenance and audit limits, and the versioned transport. The integration review establishes no independent security audit of either QR library; pinning and round-trip tests are qualification evidence, not an audit claim.
+- Runtime QR decoder: `jsqr` **1.4.0**, Apache-2.0, exact version and npm SHA-512 integrity pinned in `package-lock.json`. Official source: https://github.com/cozmo/jsQR . The downloaded package's integrity was checked against npm's version-specific `dist.integrity` before local testing. It has no runtime package dependencies. The application uses `binaryData`, not its Unicode `data` string, and runs image decoding in a locally bundled, cancellable worker; no CDN fetch occurs.
+- QR encoder: Project Nayuki's MIT TypeScript implementation carried from the reviewed archival branch at Unaltered commit `cb703a4703dc49ec20c65f19f90bbcc6e68b27cf`, `src/vendor/qrcodegen.ts`. Original source: https://github.com/nayuki/QR-Code-generator . The inherited adaptation exports the namespace and isolates legacy vendor typing/linting. The integration does not rewrite QR error correction or placement.
+- Complete decoder, encoder and existing hash-library license notices are embedded in the distributed browser/worker/offline/CLI copies by `scripts/build.mjs`; regression tests check the emitted bytes. The notice text is not stripped from distribution by minification.
+- Favicon: the owner's existing monochrome Unaltered U/checkmark artwork, converted to a metadata-free 64×64 PNG on the CDL dark background. A base64 source asset allows deterministic binary emission without adding a remote origin. No font files are embedded or redistributed.
+- Qualification-only external tool: Poppler's `pdfinfo`/`pdftoppm` from the Ubuntu runner package repository rasterize browser PDFs for tests. Poppler is not shipped to users or used by the application. Physical printing and camera capture require separate hardware testing; simulated scans do not establish universal scan reliability.

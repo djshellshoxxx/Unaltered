@@ -23,13 +23,15 @@ export interface HeaderSource {
 }
 
 export function parseHeader(raw: Uint8Array): BlockHeader {
-  if (raw.length !== 80) throw new UnalteredError('SOURCE_INVALID', 'A block header had the wrong size.');
-  const dv = new DataView(raw.buffer, raw.byteOffset, raw.byteLength);
-  const hash = sha256(sha256(raw));
+  if (!(raw instanceof Uint8Array) || raw.length !== 80) throw new UnalteredError('SOURCE_INVALID', 'A block header had the wrong size.');
+  // Buffer.slice() aliases its input; copy to a plain Uint8Array before deriving identity or retaining any fields.
+  const snapshot = Uint8Array.from(raw);
+  const dv = new DataView(snapshot.buffer, snapshot.byteOffset, snapshot.byteLength);
+  const hash = sha256(sha256(snapshot));
   return {
-    raw: raw.slice(),
+    raw: snapshot,
     hashHex: toHex(reversed(hash)),
-    merkleRoot: raw.slice(36, 68),
+    merkleRoot: snapshot.slice(36, 68),
     time: dv.getUint32(68, true),
   };
 }

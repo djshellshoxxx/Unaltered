@@ -1,0 +1,2224 @@
+{
+  "generated_utc": "2026-11-04T22:54:10.688584+00:00",
+  "remote_refresh": "FAILED: github.com DNS/API unavailable; all refs cached, not claimed latest",
+  "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+  "main_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+  "method": "for-each-ref, merge-base, log --no-merges candidate..branch, git cherry candidate branch, blob identity comparisons; cached ledger consulted for content/historical intent",
+  "summary": {
+    "integrated": 34,
+    "intentionally excluded": 2,
+    "repair-needed": 2,
+    "superseded": 7
+  },
+  "branches": [
+    {
+      "branch": "origin/automation/api-funded-unaltered-cloud-20261103",
+      "head_sha": "e5c9b231565f4e15258b9cb8d4309a3ef0b2503a",
+      "head_subject": "Use existing Unaltered Actions secret A for API-funded Codex",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "e550b5ac83c3dee5af33701ce599f6bb2ffb09bb",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "e550b5ac83c3dee5af33701ce599f6bb2ffb09bb",
+      "exact_ancestor": false,
+      "unique_nonmerge_count": 2,
+      "unique_nonmerge_commits": [
+        {
+          "sha": "e5c9b231565f4e15258b9cb8d4309a3ef0b2503a",
+          "subject": "Use existing Unaltered Actions secret A for API-funded Codex"
+        },
+        {
+          "sha": "854e7c4d33a4c4f15e9dcfe6fe407af1a52adabb",
+          "subject": "Add API-funded cloud coding and PR publication workflow for Unaltered"
+        }
+      ],
+      "patch_unique_count": 2,
+      "patch_unique_shas": [
+        "854e7c4d33a4c4f15e9dcfe6fe407af1a52adabb",
+        "e5c9b231565f4e15258b9cb8d4309a3ef0b2503a"
+      ],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [
+        ".github/workflows/unaltered-codex-cloud.yml"
+      ],
+      "identical_candidate_blob_paths": [
+        ".github/workflows/unaltered-codex-cloud.yml"
+      ],
+      "functional_summary": "Workflow content is identical to cached main (#40) despite differing ancestry.",
+      "historical_disposition": "no-op (identical to main)",
+      "security_implications": [
+        "Workflow permissions, code execution, action pins and review controls"
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Its workflow file is byte-identical to `main` (merged by #40); the three-dot diff only reflects an older merge base."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/automation/unaltered-cloud-autointegrate-20261103",
+      "head_sha": "d35291677bf41355160b61ae9aa9b18eff782aa3",
+      "head_subject": "ci: continue Unaltered API-funded development and integrate validated cloud PRs",
+      "associated_pr": 41,
+      "pr_association_basis": "cached project handoff/ledger",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "exact_ancestor": false,
+      "unique_nonmerge_count": 1,
+      "unique_nonmerge_commits": [
+        {
+          "sha": "d35291677bf41355160b61ae9aa9b18eff782aa3",
+          "subject": "ci: continue Unaltered API-funded development and integrate validated cloud PRs"
+        }
+      ],
+      "patch_unique_count": 1,
+      "patch_unique_shas": [
+        "d35291677bf41355160b61ae9aa9b18eff782aa3"
+      ],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [
+        ".github/workflows/unaltered-codex-cloud.yml"
+      ],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Paid scheduled automation/automerge has unresolved governance, scope, spending and failure-backoff defects; do not integrate or enable.",
+      "historical_disposition": "**not integrated: owner decision**",
+      "security_implications": [
+        "Workflow permissions, code execution, action pins and review controls"
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Adds an integrate job that squash-merges AI-generated PRs into `main` after named checks pass, with no human review (finding F1). See the automation review below."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": false,
+      "disposition": "repair-needed"
+    },
+    {
+      "branch": "origin/automation/unaltered-four-parallel-agents-20261103",
+      "head_sha": "db519a9e2c279b4f6ba58e3a4d6339723a372bd0",
+      "head_subject": "fix(ci): require publisher-side lane scope checks and dispatch exact-branch CI",
+      "associated_pr": 42,
+      "pr_association_basis": "cached project handoff/ledger",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "exact_ancestor": false,
+      "unique_nonmerge_count": 3,
+      "unique_nonmerge_commits": [
+        {
+          "sha": "db519a9e2c279b4f6ba58e3a4d6339723a372bd0",
+          "subject": "fix(ci): require publisher-side lane scope checks and dispatch exact-branch CI"
+        },
+        {
+          "sha": "1c030f5f4e53e19f0f42b0d8c917eeb66c58afa7",
+          "subject": "ci: parallelize Unaltered Codex across four isolated validated workstreams"
+        },
+        {
+          "sha": "d35291677bf41355160b61ae9aa9b18eff782aa3",
+          "subject": "ci: continue Unaltered API-funded development and integrate validated cloud PRs"
+        }
+      ],
+      "patch_unique_count": 3,
+      "patch_unique_shas": [
+        "d35291677bf41355160b61ae9aa9b18eff782aa3",
+        "1c030f5f4e53e19f0f42b0d8c917eeb66c58afa7",
+        "db519a9e2c279b4f6ba58e3a4d6339723a372bd0"
+      ],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [
+        ".github/workflows/unaltered-codex-cloud.yml"
+      ],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Paid scheduled automation/automerge has unresolved governance, scope, spending and failure-backoff defects; do not integrate or enable.",
+      "historical_disposition": "**not integrated**",
+      "security_implications": [
+        "Workflow permissions, code execution, action pins and review controls"
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Inherits F1. Its path allowlist misses newly added files (F2), and it fans out four paid runs twice a day with no spend cap or failure backoff (F3)."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": false,
+      "disposition": "repair-needed"
+    },
+    {
+      "branch": "origin/chatgpt/acceptance-cancellation-20261102",
+      "head_sha": "03f3ac80cfe6f3014162967b5e05bff95ec350b6",
+      "head_subject": "Assert exact calendar failure attribution in browser controls",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "7a040323f415d0f4c1c48b84e97739451669b00f",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "7a040323f415d0f4c1c48b84e97739451669b00f",
+      "exact_ancestor": false,
+      "unique_nonmerge_count": 3,
+      "unique_nonmerge_commits": [
+        {
+          "sha": "03f3ac80cfe6f3014162967b5e05bff95ec350b6",
+          "subject": "Assert exact calendar failure attribution in browser controls"
+        },
+        {
+          "sha": "928cf8b4d97ade63d20479da03d57a7713dc8910",
+          "subject": "Simplify test worker transfer forwarding"
+        },
+        {
+          "sha": "8d3e7cbb95daf629ab8b63482acd49a131facaf4",
+          "subject": "Fix abortable hash waits and prove worker acceptance results"
+        }
+      ],
+      "patch_unique_count": 3,
+      "patch_unique_shas": [
+        "8d3e7cbb95daf629ab8b63482acd49a131facaf4",
+        "928cf8b4d97ade63d20479da03d57a7713dc8910",
+        "03f3ac80cfe6f3014162967b5e05bff95ec350b6"
+      ],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [
+        "docs/gates/SCREEN_READER_SCRIPT.md",
+        "src/core/hash/hasher.ts",
+        "src/core/hash/hasher.worker.ts",
+        "src/core/hash/stream.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/e2e/hash-worker-evidence.spec.ts",
+        "tests/e2e/hash-worker-evidence.ts",
+        "tests/e2e/memory.spec.ts",
+        "tests/unit/hash.test.ts"
+      ],
+      "identical_candidate_blob_paths": [
+        "docs/gates/SCREEN_READER_SCRIPT.md",
+        "src/core/hash/hasher.worker.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/e2e/hash-worker-evidence.ts",
+        "tests/e2e/memory.spec.ts"
+      ],
+      "functional_summary": "Historical content reconciliation plus current blob comparisons; source patch identity alone is not authoritative. `awaitAbortable` and the settled guard (from #38) are present; the single normalized `postMessage` in `tests/e2e/hash-worker-evidence.ts` and the exact host/error `expect.poll` assertion in `tests/e2e/app.spec.ts` are present.",
+      "historical_disposition": "already integrated (content)",
+      "security_implications": [
+        "SHA-256, streaming/cancellation and worker lifecycle"
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "`awaitAbortable` and the settled guard (from #38) are present; the single normalized `postMessage` in `tests/e2e/hash-worker-evidence.ts` and the exact host/error `expect.poll` assertion in `tests/e2e/app.spec.ts` are present."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/chatgpt/calendar-evidence-20261102",
+      "head_sha": "76caf3e84c940ca902540686d4c891e820862fbb",
+      "head_subject": "Use private capture directories and verify the real reference path",
+      "associated_pr": 39,
+      "pr_association_basis": "cached project handoff/ledger",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "e550b5ac83c3dee5af33701ce599f6bb2ffb09bb",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "76caf3e84c940ca902540686d4c891e820862fbb",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "contained in integration",
+      "security_implications": [
+        "Workflow permissions, code execution, action pins and review controls",
+        "Dependency exact pins/integrity; preserve unrelated local lockfile edits"
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Ancestor via PR47."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/chatgpt/paper-search-sort-parameter-20261104",
+      "head_sha": "dde46eab7d1dfdaace9579cee004053c82568412",
+      "head_subject": "fix(toolkit): percent-encode custom OpenAlex sort before URL construction",
+      "associated_pr": 49,
+      "pr_association_basis": "cached project handoff/ledger",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "d9b4fdc379b4e8d834c05ea6c7328806dc3c2fac",
+      "exact_ancestor": false,
+      "unique_nonmerge_count": 12,
+      "unique_nonmerge_commits": [
+        {
+          "sha": "dde46eab7d1dfdaace9579cee004053c82568412",
+          "subject": "fix(toolkit): percent-encode custom OpenAlex sort before URL construction"
+        },
+        {
+          "sha": "c4afe4a95be80ea2b51b34c9c132b8a14159cb74",
+          "subject": "test(toolkit): reproduce OpenAlex sort parameter injection"
+        },
+        {
+          "sha": "9abae9dee38fb910116dd673cc5bcbcf6de3bac3",
+          "subject": "docs(handoff): add the 2026-11-04 second-pass consolidation section"
+        },
+        {
+          "sha": "275b38be4301ffe48a39401082250009368d1553",
+          "subject": "docs(evidence): record a seeded 1.5M-mutation parser fuzz campaign on the PR48 sources"
+        },
+        {
+          "sha": "80b2a2f62890ee6c4c8d0c7896829c162eca3325",
+          "subject": "docs(todo): name PR48 as the candidate and record the re-verified cancellation and minimatch items"
+        },
+        {
+          "sha": "05c9038362e63a88e6486dbbea33d865910348ce",
+          "subject": "docs: summarize the A/B diagnostic records instead of copying them; correct three ledger statements"
+        },
+        {
+          "sha": "e9cfe76c857d2e5a2db254c3bc78aaca53ec5f4a",
+          "subject": "docs: add the 2026-11-04 branch ledger with a disposition for every remote branch"
+        },
+        {
+          "sha": "e27329cd4f9d52df5967f7e7ed8d430c0fa5e9bb",
+          "subject": "docs(diagnostics): keep the native stall A/B design record next to its results"
+        },
+        {
+          "sha": "1f44905fd5036ff0ee38b21c658430418b3943d5",
+          "subject": "ci: scope cancellation to push and PR events, add job timeouts"
+        },
+        {
+          "sha": "f587b2d7bfaca45e78763df762ea213c5c006b56",
+          "subject": "docs: re-verify minimatch dev-only advisories on 2026-11-04"
+        },
+        {
+          "sha": "3c63dda9fbf5cf1c4fbca6480bf0c850cca475dc",
+          "subject": "Add abort regression tests for non-Blob BYOB read and chunk yield"
+        },
+        {
+          "sha": "8319087f7b00aa0e19d154497a620bdb3cd5899d",
+          "subject": "docs: add parallel consolidation prompt for 2026-11-04"
+        }
+      ],
+      "patch_unique_count": 8,
+      "patch_unique_shas": [
+        "8319087f7b00aa0e19d154497a620bdb3cd5899d",
+        "f587b2d7bfaca45e78763df762ea213c5c006b56",
+        "e27329cd4f9d52df5967f7e7ed8d430c0fa5e9bb",
+        "e9cfe76c857d2e5a2db254c3bc78aaca53ec5f4a",
+        "05c9038362e63a88e6486dbbea33d865910348ce",
+        "80b2a2f62890ee6c4c8d0c7896829c162eca3325",
+        "275b38be4301ffe48a39401082250009368d1553",
+        "9abae9dee38fb910116dd673cc5bcbcf6de3bac3"
+      ],
+      "patch_duplicate_count": 4,
+      "patch_duplicate_shas": [
+        "3c63dda9fbf5cf1c4fbca6480bf0c850cca475dc",
+        "1f44905fd5036ff0ee38b21c658430418b3943d5",
+        "c4afe4a95be80ea2b51b34c9c132b8a14159cb74",
+        "dde46eab7d1dfdaace9579cee004053c82568412"
+      ],
+      "changed_paths_since_merge_base": [
+        ".github/workflows/ci.yml",
+        "HANDOFF.md",
+        "docs/BRANCH_LEDGER_20261104.md",
+        "docs/DEPENDENCIES.md",
+        "docs/FUZZING.md",
+        "docs/TODO.md",
+        "docs/diagnostics/read-stall-ab-20261102.md",
+        "docs/evidence/fuzz-20261104-ext-20261105.json",
+        "docs/prompts/CONSOLIDATE_PARALLEL_20261104.md",
+        "skills/paper-search/scripts/search.sh",
+        "tests/toolkit/test_search_sort_20261104.py",
+        "tests/unit/hash-cancel-residual.test.ts"
+      ],
+      "identical_candidate_blob_paths": [
+        "skills/paper-search/scripts/search.sh",
+        "tests/toolkit/test_search_sort_20261104.py",
+        "tests/unit/hash-cancel-residual.test.ts"
+      ],
+      "functional_summary": "Selected unique cancellation/CI/OpenAlex changes already cherry-picked; candidate retains newer #47 source/test hardening. Historical docs/evidence remain at source.",
+      "historical_disposition": null,
+      "security_implications": [
+        "Workflow permissions, code execution, action pins and review controls",
+        "Toolkit-only; exclude from application runtime and release bundles"
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": null,
+        "historical_claim": null
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": false,
+      "disposition": "superseded"
+    },
+    {
+      "branch": "origin/claude/cool-einstein-ekcvh3",
+      "head_sha": "733079e3af5fe8f92bdc5cb077da78f2579aed84",
+      "head_subject": "Record D10, add the one-run Bob/Finney R1 check, and prepare human-gate material",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "66f67dc33fc2f4671502e60004e80b19449592cf",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "66f67dc33fc2f4671502e60004e80b19449592cf",
+      "exact_ancestor": false,
+      "unique_nonmerge_count": 2,
+      "unique_nonmerge_commits": [
+        {
+          "sha": "733079e3af5fe8f92bdc5cb077da78f2579aed84",
+          "subject": "Record D10, add the one-run Bob/Finney R1 check, and prepare human-gate material"
+        },
+        {
+          "sha": "f7bbf0b16f3d7f39270d1a0a589c9899c24432a9",
+          "subject": "Carry the Claude takeover prompt and its handoff section onto the dev stack"
+        }
+      ],
+      "patch_unique_count": 2,
+      "patch_unique_shas": [
+        "f7bbf0b16f3d7f39270d1a0a589c9899c24432a9",
+        "733079e3af5fe8f92bdc5cb077da78f2579aed84"
+      ],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [
+        "HANDOFF.md",
+        "docs/CLAUDE_TAKEOVER.md",
+        "docs/NETWORK.md",
+        "docs/R1_BOB_FINNEY_TEMPLATE.md",
+        "docs/gates/SCREEN_READER_SCRIPT.md",
+        "docs/gates/SPANISH_STRINGS_20261030.md",
+        "package.json",
+        "scripts/lib/r1-calendars.mjs",
+        "scripts/r1-bob-finney.mjs",
+        "tests/r1/r1-calendars.test.mjs"
+      ],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "The R1 classifier is superseded by `scripts/r1-bob-finney.mjs` and `scripts/lib/r1-calendars.mjs` with target attribution (the earlier false-PASS findings). Gate documents have newer versions. `docs/CLAUDE_TAKEOVER.md` (f7bbf0b) is a stale prompt: not imported. The D10 `NETWORK.md` hunk records an owner decision that is not evidenced: not imported.",
+      "historical_disposition": "superseded; takeover prompt kept as history only",
+      "security_implications": [
+        "Dependency exact pins/integrity; preserve unrelated local lockfile edits"
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "The R1 classifier is superseded by `scripts/r1-bob-finney.mjs` and `scripts/lib/r1-calendars.mjs` with target attribution (the earlier false-PASS findings). Gate documents have newer versions. `docs/CLAUDE_TAKEOVER.md` (f7bbf0b) is a stale prompt: not imported. The D10 `NETWORK.md` hunk records an owner decision that is not evidenced: not imported."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": false,
+      "disposition": "superseded"
+    },
+    {
+      "branch": "origin/claude/friendly-faraday-papf5c",
+      "head_sha": "c4723d4974fd03c2adbe3f0a99b4bfe30b865a49",
+      "head_subject": "Merge main into claude/friendly-faraday-papf5c (PR25), keeping both handoffs",
+      "associated_pr": 25,
+      "pr_association_basis": "cached project handoff/ledger",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "da9b0a3626e702381f2ad1d1b1d4cd3128fde2dd",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "da9b0a3626e702381f2ad1d1b1d4cd3128fde2dd",
+      "exact_ancestor": false,
+      "unique_nonmerge_count": 2,
+      "unique_nonmerge_commits": [
+        {
+          "sha": "92e2420da02b2ba11d0161f72f7bb9ff338170b4",
+          "subject": "Handoff: record #25 timeout policy and cross-browser gate evidence"
+        },
+        {
+          "sha": "73fc82e57e35c970c7f5101265c78c67426cca53",
+          "subject": "Hashing: stall timer measures silence, not time to fill a chunk; 2 GiB completion check for Firefox/WebKit"
+        }
+      ],
+      "patch_unique_count": 2,
+      "patch_unique_shas": [
+        "73fc82e57e35c970c7f5101265c78c67426cca53",
+        "92e2420da02b2ba11d0161f72f7bb9ff338170b4"
+      ],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [
+        ".github/workflows/ci.yml",
+        "HANDOFF.md",
+        "src/core/hash/stream.ts",
+        "tests/e2e/memory.spec.ts",
+        "tests/unit/hash.test.ts"
+      ],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Historical content reconciliation plus current blob comparisons; source patch identity alone is not authoritative. PR25 silence-based stall policy (D6) and its tests are present in a newer form in `src/core/hash/stream.ts` and `tests/unit/hash.test.ts`; the Firefox/WebKit 2 GiB job is in `ci.yml`. Handoff text is already in `HANDOFF.md`.",
+      "historical_disposition": "already integrated (content)",
+      "security_implications": [
+        "Workflow permissions, code execution, action pins and review controls",
+        "SHA-256, streaming/cancellation and worker lifecycle"
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "PR25 silence-based stall policy (D6) and its tests are present in a newer form in `src/core/hash/stream.ts` and `tests/unit/hash.test.ts`; the Firefox/WebKit 2 GiB job is in `ci.yml`. Handoff text is already in `HANDOFF.md`."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/claude/funny-lamport-2jfc0e",
+      "head_sha": "2592675cb55b58f079a3059907eba1187d7e8865",
+      "head_subject": "docs: record the green full-matrix dispatch run, post-validation fixes and the open SonarCloud gate",
+      "associated_pr": 47,
+      "pr_association_basis": "cached project handoff/ledger",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "2592675cb55b58f079a3059907eba1187d7e8865",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "contained in integration",
+      "security_implications": [
+        "Workflow permissions, code execution, action pins and review controls",
+        "SHA-256, streaming/cancellation and worker lifecycle",
+        "Proof budget/replay and independent Bitcoin evidence; fail closed",
+        "Hostile parser bounds, metadata correctness and resource limits",
+        "DOM/URL sinks, stale state, focus and accessibility",
+        "Toolkit-only; exclude from application runtime and release bundles",
+        "Dependency exact pins/integrity; preserve unrelated local lockfile edits"
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Merged with `--no-ff` (two merges: `04a9c1f`, then `d9b4fdc`). PR47 stays open; PR48 supersedes it in its description only."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/claude/hash-stall-progress",
+      "head_sha": "0d4f465652d86bdfd41ee73447b4ce93e3be818f",
+      "head_subject": "Hash: progress-based stall timeout for Blob slice reads",
+      "associated_pr": 31,
+      "pr_association_basis": "cached project handoff/ledger",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "9f06c46d061f8a0f67d8684b6c9c6cbbd163242d",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "9f06c46d061f8a0f67d8684b6c9c6cbbd163242d",
+      "exact_ancestor": false,
+      "unique_nonmerge_count": 1,
+      "unique_nonmerge_commits": [
+        {
+          "sha": "0d4f465652d86bdfd41ee73447b4ce93e3be818f",
+          "subject": "Hash: progress-based stall timeout for Blob slice reads"
+        }
+      ],
+      "patch_unique_count": 1,
+      "patch_unique_shas": [
+        "0d4f465652d86bdfd41ee73447b4ce93e3be818f"
+      ],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [
+        "src/core/hash/stream.ts",
+        "tests/unit/hash.test.ts"
+      ],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "The progress-based test name and the `[3, 6, 7]` progress assertion exist in `tests/unit/hash.test.ts`.",
+      "historical_disposition": "superseded; leftover test already present",
+      "security_implications": [
+        "SHA-256, streaming/cancellation and worker lifecycle"
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "The progress-based test name and the `[3, 6, 7]` progress assertion exist in `tests/unit/hash.test.ts`."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": false,
+      "disposition": "superseded"
+    },
+    {
+      "branch": "origin/claude/language-switch-tests",
+      "head_sha": "4968f4026512b8fe8db0787b3c8bfcb8aebd590a",
+      "head_subject": "e2e: read the upgraded-receipt notice from the string table",
+      "associated_pr": 33,
+      "pr_association_basis": "cached project handoff/ledger",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "595fd06891346d88d9339cf7448569b023c59b68",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "595fd06891346d88d9339cf7448569b023c59b68",
+      "exact_ancestor": false,
+      "unique_nonmerge_count": 2,
+      "unique_nonmerge_commits": [
+        {
+          "sha": "4968f4026512b8fe8db0787b3c8bfcb8aebd590a",
+          "subject": "e2e: read the upgraded-receipt notice from the string table"
+        },
+        {
+          "sha": "e399a25265a881c08304327d42555458dd2ac376",
+          "subject": "e2e: cover receipts and upgrades across a language switch"
+        }
+      ],
+      "patch_unique_count": 2,
+      "patch_unique_shas": [
+        "e399a25265a881c08304327d42555458dd2ac376",
+        "4968f4026512b8fe8db0787b3c8bfcb8aebd590a"
+      ],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [
+        "docs/proposals/LANGUAGE_SWITCH.md",
+        "tests/e2e/language-switch.spec.ts"
+      ],
+      "identical_candidate_blob_paths": [
+        "docs/proposals/LANGUAGE_SWITCH.md",
+        "tests/e2e/language-switch.spec.ts"
+      ],
+      "functional_summary": "Historical content reconciliation plus current blob comparisons; source patch identity alone is not authoritative. `tests/e2e/language-switch.spec.ts` and `docs/proposals/LANGUAGE_SWITCH.md` are byte-identical to the integration tree; the seven U-N1 cases and the string-table notice are present.",
+      "historical_disposition": "already integrated (content)",
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "`tests/e2e/language-switch.spec.ts` and `docs/proposals/LANGUAGE_SWITCH.md` are byte-identical to the integration tree; the seven U-N1 cases and the string-table notice are present."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/claude/peaceful-curie-u239yn",
+      "head_sha": "4c5dcc44ac0d306276c2e2af9505f02ecc4e6e8f",
+      "head_subject": "Add WAV/MP3 metadata stripping (ADR-012), bump to 0.3.0",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "4c5dcc44ac0d306276c2e2af9505f02ecc4e6e8f",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "4c5dcc44ac0d306276c2e2af9505f02ecc4e6e8f",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "already integrated (ancestry)",
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Tip is an ancestor of the integration head."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/claude/pending-receipt-cors",
+      "head_sha": "0151ca54868df1f95eb145f741e6b50383844065",
+      "head_subject": "e2e: accept WebKit's page errors for the deliberately CORS-blocked lookups",
+      "associated_pr": 30,
+      "pr_association_basis": "cached project handoff/ledger",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "595fd06891346d88d9339cf7448569b023c59b68",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "595fd06891346d88d9339cf7448569b023c59b68",
+      "exact_ancestor": false,
+      "unique_nonmerge_count": 2,
+      "unique_nonmerge_commits": [
+        {
+          "sha": "0151ca54868df1f95eb145f741e6b50383844065",
+          "subject": "e2e: accept WebKit's page errors for the deliberately CORS-blocked lookups"
+        },
+        {
+          "sha": "c98f1213f2e36b1fa20204c69d130972e55a7854",
+          "subject": "Upgrade: report unreadable pending calendar replies as pending, check later"
+        }
+      ],
+      "patch_unique_count": 2,
+      "patch_unique_shas": [
+        "c98f1213f2e36b1fa20204c69d130972e55a7854",
+        "0151ca54868df1f95eb145f741e6b50383844065"
+      ],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [
+        "docs/NETWORK.md",
+        "src/core/ots/calendar.ts",
+        "src/ui/strings.ts",
+        "src/ui/views/verify.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/e2e/helpers.ts",
+        "tests/unit/ots-flow.test.ts"
+      ],
+      "identical_candidate_blob_paths": [
+        "tests/e2e/helpers.ts"
+      ],
+      "functional_summary": "Historical content reconciliation plus current blob comparisons; source patch identity alone is not authoritative. Unreadable-pending handling (`src/core/ots/calendar.ts`), verify notice, unit tests in `tests/unit/ots-flow.test.ts`, `pendingCors` E2E helper and the WebKit `corsBlockedLookup` filter in `tests/e2e/app.spec.ts` are all present. Copy wording was later consolidated.",
+      "historical_disposition": "already integrated (content)",
+      "security_implications": [
+        "Proof budget/replay and independent Bitcoin evidence; fail closed",
+        "DOM/URL sinks, stale state, focus and accessibility"
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Unreadable-pending handling (`src/core/ots/calendar.ts`), verify notice, unit tests in `tests/unit/ots-flow.test.ts`, `pendingCors` E2E helper and the WebKit `corsBlockedLookup` filter in `tests/e2e/app.spec.ts` are all present. Copy wording was later consolidated."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/claude/project-completion-builds-vhvag8",
+      "head_sha": "e740d90d9a71cd0754079d129b5b18b5b45da5f9",
+      "head_subject": "release: publish numbered pre-release on branch push when no tag exists",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "e740d90d9a71cd0754079d129b5b18b5b45da5f9",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "e740d90d9a71cd0754079d129b5b18b5b45da5f9",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "already integrated (ancestry)",
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Tip is an ancestor of the integration head."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/claude/quirky-meitner-0jr3pz",
+      "head_sha": "9abae9dee38fb910116dd673cc5bcbcf6de3bac3",
+      "head_subject": "docs(handoff): add the 2026-11-04 second-pass consolidation section",
+      "associated_pr": 48,
+      "pr_association_basis": "cached project handoff/ledger",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "d9b4fdc379b4e8d834c05ea6c7328806dc3c2fac",
+      "exact_ancestor": false,
+      "unique_nonmerge_count": 10,
+      "unique_nonmerge_commits": [
+        {
+          "sha": "9abae9dee38fb910116dd673cc5bcbcf6de3bac3",
+          "subject": "docs(handoff): add the 2026-11-04 second-pass consolidation section"
+        },
+        {
+          "sha": "275b38be4301ffe48a39401082250009368d1553",
+          "subject": "docs(evidence): record a seeded 1.5M-mutation parser fuzz campaign on the PR48 sources"
+        },
+        {
+          "sha": "80b2a2f62890ee6c4c8d0c7896829c162eca3325",
+          "subject": "docs(todo): name PR48 as the candidate and record the re-verified cancellation and minimatch items"
+        },
+        {
+          "sha": "05c9038362e63a88e6486dbbea33d865910348ce",
+          "subject": "docs: summarize the A/B diagnostic records instead of copying them; correct three ledger statements"
+        },
+        {
+          "sha": "e9cfe76c857d2e5a2db254c3bc78aaca53ec5f4a",
+          "subject": "docs: add the 2026-11-04 branch ledger with a disposition for every remote branch"
+        },
+        {
+          "sha": "e27329cd4f9d52df5967f7e7ed8d430c0fa5e9bb",
+          "subject": "docs(diagnostics): keep the native stall A/B design record next to its results"
+        },
+        {
+          "sha": "1f44905fd5036ff0ee38b21c658430418b3943d5",
+          "subject": "ci: scope cancellation to push and PR events, add job timeouts"
+        },
+        {
+          "sha": "f587b2d7bfaca45e78763df762ea213c5c006b56",
+          "subject": "docs: re-verify minimatch dev-only advisories on 2026-11-04"
+        },
+        {
+          "sha": "3c63dda9fbf5cf1c4fbca6480bf0c850cca475dc",
+          "subject": "Add abort regression tests for non-Blob BYOB read and chunk yield"
+        },
+        {
+          "sha": "8319087f7b00aa0e19d154497a620bdb3cd5899d",
+          "subject": "docs: add parallel consolidation prompt for 2026-11-04"
+        }
+      ],
+      "patch_unique_count": 8,
+      "patch_unique_shas": [
+        "8319087f7b00aa0e19d154497a620bdb3cd5899d",
+        "f587b2d7bfaca45e78763df762ea213c5c006b56",
+        "e27329cd4f9d52df5967f7e7ed8d430c0fa5e9bb",
+        "e9cfe76c857d2e5a2db254c3bc78aaca53ec5f4a",
+        "05c9038362e63a88e6486dbbea33d865910348ce",
+        "80b2a2f62890ee6c4c8d0c7896829c162eca3325",
+        "275b38be4301ffe48a39401082250009368d1553",
+        "9abae9dee38fb910116dd673cc5bcbcf6de3bac3"
+      ],
+      "patch_duplicate_count": 2,
+      "patch_duplicate_shas": [
+        "3c63dda9fbf5cf1c4fbca6480bf0c850cca475dc",
+        "1f44905fd5036ff0ee38b21c658430418b3943d5"
+      ],
+      "changed_paths_since_merge_base": [
+        ".github/workflows/ci.yml",
+        "HANDOFF.md",
+        "docs/BRANCH_LEDGER_20261104.md",
+        "docs/DEPENDENCIES.md",
+        "docs/FUZZING.md",
+        "docs/TODO.md",
+        "docs/diagnostics/read-stall-ab-20261102.md",
+        "docs/evidence/fuzz-20261104-ext-20261105.json",
+        "docs/prompts/CONSOLIDATE_PARALLEL_20261104.md",
+        "tests/unit/hash-cancel-residual.test.ts"
+      ],
+      "identical_candidate_blob_paths": [
+        "tests/unit/hash-cancel-residual.test.ts"
+      ],
+      "functional_summary": "Selected unique cancellation/CI/OpenAlex changes already cherry-picked; candidate retains newer #47 source/test hardening. Historical docs/evidence remain at source.",
+      "historical_disposition": "integration branch",
+      "security_implications": [
+        "Workflow permissions, code execution, action pins and review controls"
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "This branch."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": false,
+      "disposition": "superseded"
+    },
+    {
+      "branch": "origin/claude/responsiveness-flake",
+      "head_sha": "6a9fdcef3c2a4d34fc9b808ef4ba49afe1579ed3",
+      "head_subject": "Merge branch 'main' into claude/responsiveness-flake",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "6a9fdcef3c2a4d34fc9b808ef4ba49afe1579ed3",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "6a9fdcef3c2a4d34fc9b808ef4ba49afe1579ed3",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "already integrated (ancestry)",
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Tip is an ancestor of the integration head."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/claude/specs-and-plan",
+      "head_sha": "9db67d694005aec772072d7c5c223d601381ceae",
+      "head_subject": "ci: fix invalid workflow (hashFiles not allowed in job-level if)",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "9db67d694005aec772072d7c5c223d601381ceae",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "9db67d694005aec772072d7c5c223d601381ceae",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "already integrated (ancestry)",
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Tip is an ancestor of the integration head."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/claude/stoic-mccarthy-m7xpb8",
+      "head_sha": "21bf07bf99dad4a7aee3cd47aac13e2031f40160",
+      "head_subject": "CI: update GitHub Actions pins on every use; skip TypeScript majors in Dependabot",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "21bf07bf99dad4a7aee3cd47aac13e2031f40160",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "21bf07bf99dad4a7aee3cd47aac13e2031f40160",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "already integrated (ancestry)",
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Tip is an ancestor of the integration head."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/claude/sweet-hypatia-vp4syp",
+      "head_sha": "78c1b0cef81c67b8979a7732ee0d71c54241dc76",
+      "head_subject": "Desktop shell and Windows standalone packaging (ADR-008)",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "9db67d694005aec772072d7c5c223d601381ceae",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "9db67d694005aec772072d7c5c223d601381ceae",
+      "exact_ancestor": false,
+      "unique_nonmerge_count": 2,
+      "unique_nonmerge_commits": [
+        {
+          "sha": "78c1b0cef81c67b8979a7732ee0d71c54241dc76",
+          "subject": "Desktop shell and Windows standalone packaging (ADR-008)"
+        },
+        {
+          "sha": "118be50ab33673711e1a3fd6b65ede9f22ab7b3a",
+          "subject": "Toolchain, shared core foundation, and reference OTS corpus (M0-4, M0-5)"
+        }
+      ],
+      "patch_unique_count": 2,
+      "patch_unique_shas": [
+        "118be50ab33673711e1a3fd6b65ede9f22ab7b3a",
+        "78c1b0cef81c67b8979a7732ee0d71c54241dc76"
+      ],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [
+        ".gitignore",
+        ".npmrc",
+        "desktop/main.cjs",
+        "desktop/policy.cjs",
+        "eslint.config.js",
+        "package-lock.json",
+        "package.json",
+        "playwright.desktop.config.ts",
+        "scripts/build-windows.mjs",
+        "src/core/bytes.ts",
+        "src/core/config.ts",
+        "src/core/errors.ts",
+        "src/core/hash/hasher.ts",
+        "src/core/net/allowlist.ts",
+        "src/core/ots/index.ts",
+        "src/core/strip/index.ts",
+        "tests/desktop/shell.spec.ts",
+        "tests/fixtures/ots/README.md",
+        "tests/fixtures/ots/bad-stamp.txt",
+        "tests/fixtures/ots/bad-stamp.txt.ots",
+        "tests/fixtures/ots/different-blockchains.txt",
+        "tests/fixtures/ots/different-blockchains.txt.ots",
+        "tests/fixtures/ots/empty",
+        "tests/fixtures/ots/empty.ots",
+        "tests/fixtures/ots/hello-world.txt",
+        "tests/fixtures/ots/hello-world.txt.ots",
+        "tests/fixtures/ots/incomplete.txt",
+        "tests/fixtures/ots/incomplete.txt.ots",
+        "tests/fixtures/ots/invalid/bad-major-version.ots",
+        "tests/fixtures/ots/invalid/exceeds-max-msg-length.ots",
+        "tests/fixtures/ots/invalid/invalid-file-digest-type.ots",
+        "tests/fixtures/ots/known-and-unknown-notary.txt",
+        "tests/fixtures/ots/known-and-unknown-notary.txt.ots",
+        "tests/fixtures/ots/merkle1.txt",
+        "tests/fixtures/ots/merkle1.txt.ots",
+        "tests/fixtures/ots/merkle2.txt",
+        "tests/fixtures/ots/merkle2.txt.ots",
+        "tests/fixtures/ots/two-calendars.txt",
+        "tests/fixtures/ots/two-calendars.txt.ots",
+        "tests/fixtures/ots/unknown-notary.txt",
+        "tests/fixtures/ots/unknown-notary.txt.ots",
+        "tests/unit/bytes.test.ts",
+        "tests/unit/desktop/policy.test.ts",
+        "tsconfig.json",
+        "tsconfig.test.json",
+        "vitest.config.ts"
+      ],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Old foundation is superseded by the current core. The Electron shell and standalone packaging (ADR-008) are rejected by ADR-009 and ADR-011 in `docs/DECISIONS.md`.",
+      "historical_disposition": "superseded / rejected by ADR",
+      "security_implications": [
+        "SHA-256, streaming/cancellation and worker lifecycle",
+        "Proof budget/replay and independent Bitcoin evidence; fail closed",
+        "Hostile parser bounds, metadata correctness and resource limits",
+        "Dependency exact pins/integrity; preserve unrelated local lockfile edits"
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Old foundation is superseded by the current core. The Electron shell and standalone packaging (ADR-008) are rejected by ADR-009 and ADR-011 in `docs/DECISIONS.md`."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": false,
+      "disposition": "superseded"
+    },
+    {
+      "branch": "origin/claude/unaltered-continuation-20261029",
+      "head_sha": "a602126c92acbc2f052c15b7992eb3c593309007",
+      "head_subject": "Merge branch 'main' into claude/unaltered-continuation-20261029",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "a602126c92acbc2f052c15b7992eb3c593309007",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "a602126c92acbc2f052c15b7992eb3c593309007",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "already integrated (ancestry)",
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Tip is an ancestor of the integration head."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/claude/zealous-wozniak-ey71lr",
+      "head_sha": "00e390db8faa71a22aac03eb97575dbfad43fe8e",
+      "head_subject": "Harden parsers and fan-out after independent review; fix Windows path test",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "00e390db8faa71a22aac03eb97575dbfad43fe8e",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "00e390db8faa71a22aac03eb97575dbfad43fe8e",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "already integrated (ancestry)",
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Tip is an ancestor of the integration head."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/codex/accepted-gates-20261028",
+      "head_sha": "d124dd47971fdff1ef600e27e918d7421f1cbec3",
+      "head_subject": "Record continuation (f) review, fuzz evidence, PR25 reconciliation and handoff",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "d124dd47971fdff1ef600e27e918d7421f1cbec3",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "d124dd47971fdff1ef600e27e918d7421f1cbec3",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "already integrated (ancestry)",
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Tip is an ancestor of the integration head."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/codex/audit-preparation-20261030",
+      "head_sha": "926e75b41eea8735fe1fe09263f9035e7b5c5c25",
+      "head_subject": "docs: retain raw validation evidence and publication handoff",
+      "associated_pr": 34,
+      "pr_association_basis": "cached project handoff/ledger",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "da9b0a3626e702381f2ad1d1b1d4cd3128fde2dd",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "da9b0a3626e702381f2ad1d1b1d4cd3128fde2dd",
+      "exact_ancestor": false,
+      "unique_nonmerge_count": 4,
+      "unique_nonmerge_commits": [
+        {
+          "sha": "926e75b41eea8735fe1fe09263f9035e7b5c5c25",
+          "subject": "docs: retain raw validation evidence and publication handoff"
+        },
+        {
+          "sha": "1e036ca5c958ca96ce6c3e6f63809dcf6ec9b2ac",
+          "subject": "docs: reconcile audit preparation acceptance and complete handoff"
+        },
+        {
+          "sha": "f2e7d24017171475be23f9e069a91ae195fea2c3",
+          "subject": "ci: invoke locked Playwright CLI without implicit downloads"
+        },
+        {
+          "sha": "d09c2401839ea5a06fd794c9666d439b17e500e4",
+          "subject": "fix: consolidate silence-based hashing and pending receipt regressions"
+        }
+      ],
+      "patch_unique_count": 4,
+      "patch_unique_shas": [
+        "d09c2401839ea5a06fd794c9666d439b17e500e4",
+        "f2e7d24017171475be23f9e069a91ae195fea2c3",
+        "1e036ca5c958ca96ce6c3e6f63809dcf6ec9b2ac",
+        "926e75b41eea8735fe1fe09263f9035e7b5c5c25"
+      ],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [
+        ".github/workflows/ci.yml",
+        "HANDOFF.md",
+        "docs/BRANCH_LEDGER_20261030.md",
+        "docs/COMPLETION_STATUS.md",
+        "docs/CONSOLIDATION_20261030.md",
+        "docs/DEPENDENCIES.md",
+        "docs/FINAL_HANDOFF_20261030.md",
+        "docs/NETWORK.md",
+        "docs/R1_ACCEPTANCE.md",
+        "docs/REVIEW_CONSOLIDATION_20261030.md",
+        "docs/TODO.md",
+        "docs/evidence/consolidation-20261030-logs.zip",
+        "docs/evidence/consolidation-20261030.json",
+        "docs/gates/SCREEN_READER_SCRIPT.md",
+        "docs/gates/SPANISH_STRINGS_20261030.md",
+        "docs/proposals/LANGUAGE_SWITCH.md",
+        "src/core/hash/hasher.ts",
+        "src/core/hash/stream.ts",
+        "src/core/ots/calendar.ts",
+        "src/ui/strings.ts",
+        "src/ui/views/verify.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/e2e/helpers.ts",
+        "tests/e2e/language-switch.spec.ts",
+        "tests/e2e/memory.spec.ts",
+        "tests/unit/hash.test.ts",
+        "tests/unit/ots-flow.test.ts"
+      ],
+      "identical_candidate_blob_paths": [
+        "docs/BRANCH_LEDGER_20261030.md",
+        "docs/COMPLETION_STATUS.md",
+        "docs/CONSOLIDATION_20261030.md",
+        "docs/FINAL_HANDOFF_20261030.md",
+        "docs/NETWORK.md",
+        "docs/REVIEW_CONSOLIDATION_20261030.md",
+        "docs/evidence/consolidation-20261030-logs.zip",
+        "docs/evidence/consolidation-20261030.json",
+        "docs/gates/SPANISH_STRINGS_20261030.md",
+        "docs/proposals/LANGUAGE_SWITCH.md",
+        "tests/e2e/helpers.ts",
+        "tests/e2e/language-switch.spec.ts",
+        "tests/unit/ots-flow.test.ts"
+      ],
+      "functional_summary": "Historical content reconciliation plus current blob comparisons; source patch identity alone is not authoritative. Raw evidence (`docs/evidence/consolidation-20261030*.{json,zip}`, `docs/FINAL_HANDOFF_20261030.md`) is byte-identical in the tree. The Playwright CLI change is present in `ci.yml`. The hashing commit d09c240 predates #38 and conflicts with the newer stream. Status prose is superseded, and its `SCREEN_READER_SCRIPT.md` would weaken the C.4 \"Blocked\" rule: not taken.",
+      "historical_disposition": "already integrated / stale status dropped",
+      "security_implications": [
+        "Workflow permissions, code execution, action pins and review controls",
+        "SHA-256, streaming/cancellation and worker lifecycle",
+        "Proof budget/replay and independent Bitcoin evidence; fail closed",
+        "DOM/URL sinks, stale state, focus and accessibility"
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Raw evidence (`docs/evidence/consolidation-20261030*.{json,zip}`, `docs/FINAL_HANDOFF_20261030.md`) is byte-identical in the tree. The Playwright CLI change is present in `ci.yml`. The hashing commit d09c240 predates #38 and conflicts with the newer stream. Status prose is superseded, and its `SCREEN_READER_SCRIPT.md` would weaken the C.4 \"Blocked\" rule: not taken."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/codex/claude-handoff-20261028",
+      "head_sha": "d358f6c0d746193d62f92d5239b346517f728ce1",
+      "head_subject": "Preserve verified restart state and autonomous Claude takeover prompt",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "9e16d5bafddd207d7fa14621fe01a6d692885213",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "9e16d5bafddd207d7fa14621fe01a6d692885213",
+      "exact_ancestor": false,
+      "unique_nonmerge_count": 1,
+      "unique_nonmerge_commits": [
+        {
+          "sha": "d358f6c0d746193d62f92d5239b346517f728ce1",
+          "subject": "Preserve verified restart state and autonomous Claude takeover prompt"
+        }
+      ],
+      "patch_unique_count": 1,
+      "patch_unique_shas": [
+        "d358f6c0d746193d62f92d5239b346517f728ce1"
+      ],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [
+        "HANDOFF.md",
+        "docs/CLAUDE_TAKEOVER.md"
+      ],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Stale takeover prompt; its handoff section is already in `HANDOFF.md`.",
+      "historical_disposition": "superseded; history only",
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Stale takeover prompt; its handoff section is already in `HANDOFF.md`."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": false,
+      "disposition": "superseded"
+    },
+    {
+      "branch": "origin/codex/ordinary-fixes-20261027",
+      "head_sha": "6d600249241dc40e252ef22d053b3cb7feb1868c",
+      "head_subject": "Handoff: native memory-gate record (3 pass / 3 fail on unchanged hash source), R1 job status",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "6d600249241dc40e252ef22d053b3cb7feb1868c",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "6d600249241dc40e252ef22d053b3cb7feb1868c",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "already integrated (ancestry)",
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Tip is an ancestor of the integration head."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/codex/proposal-language-presentation-20261027",
+      "head_sha": "bea5aae656cb9965563889c887c2168b5fc3b656",
+      "head_subject": "Merge branch 'codex/ordinary-fixes-20261027' into codex/proposal-language-presentation-20261027",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "bea5aae656cb9965563889c887c2168b5fc3b656",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "bea5aae656cb9965563889c887c2168b5fc3b656",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "already integrated (ancestry)",
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Tip is an ancestor of the integration head."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/codex/read-stall-watchdog-20261027",
+      "head_sha": "0fa99d70df341c285fafe6b1dd1213593d897097",
+      "head_subject": "Hashing: recover from a Blob slice read that stops delivering, instead of hanging",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "0fa99d70df341c285fafe6b1dd1213593d897097",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "0fa99d70df341c285fafe6b1dd1213593d897097",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "already integrated (ancestry)",
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Tip is an ancestor of the integration head."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/codex/resume-acceptance-20261024",
+      "head_sha": "0b448d887df89fab22f701810197e51285590e2b",
+      "head_subject": "Complete each bounded Blob stream through EOF before reopening the backend",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "0b448d887df89fab22f701810197e51285590e2b",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "0b448d887df89fab22f701810197e51285590e2b",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "already integrated (ancestry)",
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Tip is an ancestor of the integration head."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/codex/ui-correctness-checkpoint-20261025",
+      "head_sha": "c0ae8e7aac344add7237b426002510386fc6a433",
+      "head_subject": "Record exact-head native CI result for PR #7 in handoff",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "c0ae8e7aac344add7237b426002510386fc6a433",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "c0ae8e7aac344add7237b426002510386fc6a433",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "already integrated (ancestry)",
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Tip is an ancestor of the integration head."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/codex/unaltered-consolidation-audit-20261104",
+      "head_sha": "3811638d929629a0e3cbd83a47ff8a763e2dd15b",
+      "head_subject": "docs: audit branch ancestry and consolidation gates",
+      "associated_pr": 50,
+      "pr_association_basis": "owner request",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "exact_ancestor": false,
+      "unique_nonmerge_count": 1,
+      "unique_nonmerge_commits": [
+        {
+          "sha": "3811638d929629a0e3cbd83a47ff8a763e2dd15b",
+          "subject": "docs: audit branch ancestry and consolidation gates"
+        }
+      ],
+      "patch_unique_count": 1,
+      "patch_unique_shas": [
+        "3811638d929629a0e3cbd83a47ff8a763e2dd15b"
+      ],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [
+        "docs/UNALTERED_CONSOLIDATION_AUDIT_20261104.md"
+      ],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Read-only audit advice has been executed selectively; retain source history and this refreshed ledger. PR50 association supplied by current owner, not live GitHub query.",
+      "historical_disposition": null,
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": null,
+        "historical_claim": null
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": false,
+      "disposition": "superseded"
+    },
+    {
+      "branch": "origin/codex/unaltered-delivery-20261030",
+      "head_sha": "f9703929426602e6cf5e7bef16088afb327b1833",
+      "head_subject": "test: cover idle FIFO hash and receipt inputs with bounded subprocesses",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "da9b0a3626e702381f2ad1d1b1d4cd3128fde2dd",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "da9b0a3626e702381f2ad1d1b1d4cd3128fde2dd",
+      "exact_ancestor": false,
+      "unique_nonmerge_count": 2,
+      "unique_nonmerge_commits": [
+        {
+          "sha": "f9703929426602e6cf5e7bef16088afb327b1833",
+          "subject": "test: cover idle FIFO hash and receipt inputs with bounded subprocesses"
+        },
+        {
+          "sha": "99c50b8456277214f7b9a8e4abf1b48c48456164",
+          "subject": "fix: reject idle pipes before CLI file reads can block"
+        }
+      ],
+      "patch_unique_count": 2,
+      "patch_unique_shas": [
+        "99c50b8456277214f7b9a8e4abf1b48c48456164",
+        "f9703929426602e6cf5e7bef16088afb327b1833"
+      ],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [
+        "src/cli/run.ts",
+        "tests/unit/cli.test.ts"
+      ],
+      "identical_candidate_blob_paths": [
+        "tests/unit/cli.test.ts"
+      ],
+      "functional_summary": "Historical content reconciliation plus current blob comparisons; source patch identity alone is not authoritative. The idle-FIFO tests exist (`tests/unit/cli.test.ts`, \"rejects an idle FIFO promptly\", and the named-pipe case). The `src/cli/run.ts` hunk would revert the later checksum-line escaping and control-name refusal.",
+      "historical_disposition": "already integrated (content)",
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "The idle-FIFO tests exist (`tests/unit/cli.test.ts`, \"rejects an idle FIFO promptly\", and the named-pipe case). The `src/cli/run.ts` hunk would revert the later checksum-line escaping and control-name refusal."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/codex/unaltered-signed-candidate-20261030",
+      "head_sha": "71d40bb116de574e400425249595ea9f1c1d03c8",
+      "head_subject": "fix: reject idle FIFO inputs before CLI file reads block",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "71d40bb116de574e400425249595ea9f1c1d03c8",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "71d40bb116de574e400425249595ea9f1c1d03c8",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "already integrated (ancestry)",
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Tip is an ancestor of the integration head."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/codex/validated-completion",
+      "head_sha": "e4d80b67d145e940b0458bad93cc069412b39306",
+      "head_subject": "Fix browser memory bounds and strict-CSP language controls for 0.3.1",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "e4d80b67d145e940b0458bad93cc069412b39306",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "e4d80b67d145e940b0458bad93cc069412b39306",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "already integrated (ancestry)",
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Tip is an ancestor of the integration head."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/dependabot/github_actions/actions/checkout-7.0.1",
+      "head_sha": "8061e011f6e9d0c330a108994f786c18785fe927",
+      "head_subject": "Bump actions/checkout from 4.4.0 to 7.0.1",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "0f6e85a61a055004fc588a9f57a09d8549efaec3",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "0f6e85a61a055004fc588a9f57a09d8549efaec3",
+      "exact_ancestor": false,
+      "unique_nonmerge_count": 1,
+      "unique_nonmerge_commits": [
+        {
+          "sha": "8061e011f6e9d0c330a108994f786c18785fe927",
+          "subject": "Bump actions/checkout from 4.4.0 to 7.0.1"
+        }
+      ],
+      "patch_unique_count": 1,
+      "patch_unique_shas": [
+        "8061e011f6e9d0c330a108994f786c18785fe927"
+      ],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/release.yml"
+      ],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Historical content reconciliation plus current blob comparisons; source patch identity alone is not authoritative. Every workflow already pins `actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1`, the same SHA as the bump.",
+      "historical_disposition": "already integrated (content)",
+      "security_implications": [
+        "Workflow permissions, code execution, action pins and review controls"
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Every workflow already pins `actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1`, the same SHA as the bump."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/dependabot/github_actions/actions/download-artifact-8.0.2",
+      "head_sha": "4151bf9e6b3e5f4f647d254a0ef3270b31dd60cc",
+      "head_subject": "Bump actions/download-artifact from 4.3.0 to 8.0.2",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "0f6e85a61a055004fc588a9f57a09d8549efaec3",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "0f6e85a61a055004fc588a9f57a09d8549efaec3",
+      "exact_ancestor": false,
+      "unique_nonmerge_count": 1,
+      "unique_nonmerge_commits": [
+        {
+          "sha": "4151bf9e6b3e5f4f647d254a0ef3270b31dd60cc",
+          "subject": "Bump actions/download-artifact from 4.3.0 to 8.0.2"
+        }
+      ],
+      "patch_unique_count": 1,
+      "patch_unique_shas": [
+        "4151bf9e6b3e5f4f647d254a0ef3270b31dd60cc"
+      ],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/release.yml"
+      ],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Historical content reconciliation plus current blob comparisons; source patch identity alone is not authoritative. `ci.yml` and `release.yml` already pin `actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2`.",
+      "historical_disposition": "already integrated (content)",
+      "security_implications": [
+        "Workflow permissions, code execution, action pins and review controls"
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "`ci.yml` and `release.yml` already pin `actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2`."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/dependabot/npm_and_yarn/eslint-10.13.0",
+      "head_sha": "74bb024165c34ea01393e091f59bc2280a092a09",
+      "head_subject": "Bump eslint from 10.12.0 to 10.13.0",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "74bb024165c34ea01393e091f59bc2280a092a09",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "74bb024165c34ea01393e091f59bc2280a092a09",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "already integrated (ancestry)",
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Tip is an ancestor of the integration head."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/dependabot/npm_and_yarn/vitest-5.0.5",
+      "head_sha": "ae1bf4177b71bb1ae80ad7332f14de952264f2f5",
+      "head_subject": "Bump vitest from 5.0.4 to 5.0.5",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "ae1bf4177b71bb1ae80ad7332f14de952264f2f5",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "ae1bf4177b71bb1ae80ad7332f14de952264f2f5",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "already integrated (ancestry)",
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Tip is an ancestor of the integration head."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/diag/read-stall-ab-20261027",
+      "head_sha": "6f5b6c9ece959e454dd3341f7c0f8012c4431259",
+      "head_subject": "DIAGNOSTIC (do not merge): native A/B of the 2 GiB read stall, baseline vs watchdog, 8 shards each",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "0fa99d70df341c285fafe6b1dd1213593d897097",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "0fa99d70df341c285fafe6b1dd1213593d897097",
+      "exact_ancestor": false,
+      "unique_nonmerge_count": 1,
+      "unique_nonmerge_commits": [
+        {
+          "sha": "6f5b6c9ece959e454dd3341f7c0f8012c4431259",
+          "subject": "DIAGNOSTIC (do not merge): native A/B of the 2 GiB read stall, baseline vs watchdog, 8 shards each"
+        }
+      ],
+      "patch_unique_count": 1,
+      "patch_unique_shas": [
+        "6f5b6c9ece959e454dd3341f7c0f8012c4431259"
+      ],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [
+        ".github/workflows/diag-read-stall.yml"
+      ],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Diagnostic workflows/experiments remain on their source branches; evidence is historical only.",
+      "historical_disposition": "diagnostic; code never integrated",
+      "security_implications": [
+        "Workflow permissions, code execution, action pins and review controls"
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Adds only a do-not-merge diagnostic workflow and holds no evidence files."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": false,
+      "disposition": "intentionally excluded"
+    },
+    {
+      "branch": "origin/diag/read-stall-ab-20261102",
+      "head_sha": "d77763e8ba9a52f20b22752de273aeb5058f0f4b",
+      "head_subject": "Fix diagnostic runner environment initialization",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "7a040323f415d0f4c1c48b84e97739451669b00f",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "7a040323f415d0f4c1c48b84e97739451669b00f",
+      "exact_ancestor": false,
+      "unique_nonmerge_count": 5,
+      "unique_nonmerge_commits": [
+        {
+          "sha": "d77763e8ba9a52f20b22752de273aeb5058f0f4b",
+          "subject": "Fix diagnostic runner environment initialization"
+        },
+        {
+          "sha": "98ad3d50c01dcf6388f8bf310b840e4c39962bf3",
+          "subject": "Prepare bounded native hashing comparison (diagnostic only)"
+        },
+        {
+          "sha": "03f3ac80cfe6f3014162967b5e05bff95ec350b6",
+          "subject": "Assert exact calendar failure attribution in browser controls"
+        },
+        {
+          "sha": "928cf8b4d97ade63d20479da03d57a7713dc8910",
+          "subject": "Simplify test worker transfer forwarding"
+        },
+        {
+          "sha": "8d3e7cbb95daf629ab8b63482acd49a131facaf4",
+          "subject": "Fix abortable hash waits and prove worker acceptance results"
+        }
+      ],
+      "patch_unique_count": 5,
+      "patch_unique_shas": [
+        "8d3e7cbb95daf629ab8b63482acd49a131facaf4",
+        "928cf8b4d97ade63d20479da03d57a7713dc8910",
+        "03f3ac80cfe6f3014162967b5e05bff95ec350b6",
+        "98ad3d50c01dcf6388f8bf310b840e4c39962bf3",
+        "d77763e8ba9a52f20b22752de273aeb5058f0f4b"
+      ],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [
+        ".github/workflows/diag-read-stall-ab-20261102.yml",
+        "docs/diagnostics/read-stall-ab-20261102/README.md",
+        "docs/diagnostics/read-stall-ab-20261102/manifest.json",
+        "docs/gates/SCREEN_READER_SCRIPT.md",
+        "src/core/hash/hasher.ts",
+        "src/core/hash/hasher.worker.ts",
+        "src/core/hash/stream.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/e2e/hash-worker-evidence.spec.ts",
+        "tests/e2e/hash-worker-evidence.ts",
+        "tests/e2e/memory.spec.ts",
+        "tests/unit/hash.test.ts"
+      ],
+      "identical_candidate_blob_paths": [
+        "docs/gates/SCREEN_READER_SCRIPT.md",
+        "src/core/hash/hasher.worker.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/e2e/hash-worker-evidence.ts",
+        "tests/e2e/memory.spec.ts"
+      ],
+      "functional_summary": "Diagnostic workflows/experiments remain on their source branches; evidence is historical only.",
+      "historical_disposition": "diagnostic; evidence summarized, not copied",
+      "security_implications": [
+        "Workflow permissions, code execution, action pins and review controls",
+        "SHA-256, streaming/cancellation and worker lifecycle"
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Its README requires the workflow and its records to stay on the diagnostic branch, so they are not copied. `docs/diagnostics/read-stall-ab-20261102.md` summarizes the frozen design and records the location, Git blob and SHA-256 of the README and manifest at 98ad3d5 (unchanged at the tip). The source/test commits (a net no-op against the tree) are not taken. Results: run 41561857747."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": false,
+      "disposition": "intentionally excluded"
+    },
+    {
+      "branch": "origin/docs/readme-and-wiki",
+      "head_sha": "55ca0501821fe280b0a3888c812b82bb66bca3fa",
+      "head_subject": "docs: add README and wiki for the Unaltered toolkit",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "55ca0501821fe280b0a3888c812b82bb66bca3fa",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "55ca0501821fe280b0a3888c812b82bb66bca3fa",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "already integrated (ancestry)",
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Tip is an ancestor of the integration head."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/fix/accessibility-announcement-race-20261103",
+      "head_sha": "edbdbda9f9dc51fc2556223ef832aa8cdba0dade",
+      "head_subject": "fix: accessibility-announcement-race-20261103",
+      "associated_pr": 46,
+      "pr_association_basis": "cached project handoff/ledger",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "edbdbda9f9dc51fc2556223ef832aa8cdba0dade",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "contained in integration",
+      "security_implications": [
+        "DOM/URL sinks, stale state, focus and accessibility"
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Ancestor via PR47."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/fix/hash-stall-timeout-validation-20261103",
+      "head_sha": "c795702b010e4aec3ff0d29a48dc6c313d69a0ec",
+      "head_subject": "fix(hash): validate positive integer stall timeout before stream access",
+      "associated_pr": 43,
+      "pr_association_basis": "cached project handoff/ledger",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "c795702b010e4aec3ff0d29a48dc6c313d69a0ec",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "contained in integration",
+      "security_implications": [
+        "SHA-256, streaming/cancellation and worker lifecycle"
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Ancestor via PR47."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/fix/metadata-truncated-ftyp-20261103",
+      "head_sha": "e8fd5cb9d78dfda80c8933d81ca9d859ff8d33fe",
+      "head_subject": "fix: metadata-truncated-ftyp-20261103",
+      "associated_pr": 45,
+      "pr_association_basis": "cached project handoff/ledger",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "e8fd5cb9d78dfda80c8933d81ca9d859ff8d33fe",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "contained in integration",
+      "security_implications": [
+        "Hostile parser bounds, metadata correctness and resource limits"
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Ancestor via PR47."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/fix/proof-serialization-guard-20261103",
+      "head_sha": "7c2f958a32b55b5ea77f53995c024512c1bf40fc",
+      "head_subject": "fix: proof-serialization-guard-20261103",
+      "associated_pr": 44,
+      "pr_association_basis": "cached project handoff/ledger",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "7c2f958a32b55b5ea77f53995c024512c1bf40fc",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "contained in integration",
+      "security_implications": [
+        "Proof budget/replay and independent Bitcoin evidence; fail closed"
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Ancestor via PR47."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    },
+    {
+      "branch": "origin/main",
+      "head_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "head_subject": "Introduce API-funded autonomous Unaltered cloud development (#40)",
+      "associated_pr": null,
+      "pr_association_basis": "not established; live GitHub unavailable",
+      "main_base_sha": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "merge_base_main": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "candidate_sha": "7e8f4377fe8e40045bd0b67983a4635e0868939b",
+      "merge_base_candidate": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "exact_ancestor": true,
+      "unique_nonmerge_count": 0,
+      "unique_nonmerge_commits": [],
+      "patch_unique_count": 0,
+      "patch_unique_shas": [],
+      "patch_duplicate_count": 0,
+      "patch_duplicate_shas": [],
+      "changed_paths_since_merge_base": [],
+      "identical_candidate_blob_paths": [],
+      "functional_summary": "Exact head is an ancestor of recovered candidate.",
+      "historical_disposition": "base",
+      "security_implications": [
+        "No new security-sensitive content established beyond inherited tree; source history retained."
+      ],
+      "test_evidence": {
+        "current_tests": "No branch-specific tests executed by this read-only reconciliation worker. Recovered candidate prior handoff reports 313 passing selected unit tests; parent is rerunning baseline.",
+        "historical_source": "9abae9d:docs/BRANCH_LEDGER_20261104.md",
+        "historical_claim": "Ancestor of the integration head."
+      },
+      "dependencies": [
+        "Working GitHub connectivity to confirm current head/base/reviews and required checks.",
+        "Exact-head qualification and contributor coordination before any publication/merge."
+      ],
+      "integration_eligibility": "already represented; no merge needed",
+      "disposition": "integrated"
+    }
+  ],
+  "range_diff_47_48_vs_recovery": [
+    " 1:  8319087 <  -:  ------- docs: add parallel consolidation prompt for 2026-11-04",
+    " -:  ------- >  1:  d386f5b test(toolkit): reproduce OpenAlex sort parameter injection",
+    " -:  ------- >  2:  0c98674 fix(toolkit): percent-encode custom OpenAlex sort before URL construction",
+    " 2:  3c63dda =  3:  9cbc925 Add abort regression tests for non-Blob BYOB read and chunk yield",
+    " 3:  f587b2d <  -:  ------- docs: re-verify minimatch dev-only advisories on 2026-11-04",
+    " 4:  1f44905 =  4:  0716e69 ci: scope cancellation to push and PR events, add job timeouts",
+    " 5:  e27329c <  -:  ------- docs(diagnostics): keep the native stall A/B design record next to its results",
+    " 6:  e9cfe76 <  -:  ------- docs: add the 2026-11-04 branch ledger with a disposition for every remote branch",
+    " 7:  05c9038 <  -:  ------- docs: summarize the A/B diagnostic records instead of copying them; correct three ledger statements",
+    " 8:  80b2a2f <  -:  ------- docs(todo): name PR48 as the candidate and record the re-verified cancellation and minimatch items",
+    " 9:  275b38b <  -:  ------- docs(evidence): record a seeded 1.5M-mutation parser fuzz campaign on the PR48 sources",
+    "10:  9abae9d <  -:  ------- docs(handoff): add the 2026-11-04 second-pass consolidation section",
+    " -:  ------- >  5:  f5a10a5 fix(ui): normalize URL schemes before rejecting script attributes",
+    " -:  ------- >  6:  925ad52 fix(hash): validate worker completion and release failed script URLs",
+    " -:  ------- >  7:  f7fd8f1 fix(ui): scan leading URL controls without a control regex",
+    " -:  ------- >  8:  007d13c fix(hash): fall back on malformed worker protocol messages",
+    " -:  ------- >  9:  35a7ea5 fix(ui): clear stale fingerprints on invalid share-link navigation",
+    " -:  ------- > 10:  2d4134a Prepare static Pages artifacts and test project-path offline hashing",
+    " -:  ------- > 11:  424fd8e fix(ci): allow the full three-attempt large-file acceptance budget",
+    " -:  ------- > 12:  0f811a2 test(toolkit): compare decoded OpenAlex paging parameters after sort encoding",
+    " -:  ------- > 13:  7e8f437 docs: record consolidation evidence, release backlog and publication recovery"
+  ],
+  "range_diff_conclusion": "The two functional unique #48 commits are patch-identical to recovered cherry-picks (3c63dda=9cbc925 and 1f44905=0716e69). Remaining #48-only nonmerge commits are docs/evidence/status, not new application fixes; #47 post-divergence improvements remain retained."
+}

@@ -1,0 +1,627 @@
+{
+  "recordedAt": "2026-11-05T23:40:08.441Z",
+  "scope": "Supplemental restricted Firefox compatibility QA; 16 unchanged existing cases per profile. This does not replace a full browser matrix.",
+  "sourceCheckpoint": "6da4011818ebe421320aba8e0d81709f20f62f25",
+  "buildCode": "d582df5797284236",
+  "qualifiedBuild": "The existing qualified dist was copied into this isolated worktree; it was not rebuilt.",
+  "artifacts": {
+    "sha256Sums": "5864bc9f869c9ed43ea0661104fd4ac9e96edffe8df8ecd727173dc34ab78a60",
+    "webMain": "ce2047190a1bbd246d8b66e0a65a9df4d256fd2783073251f464a6f88dd1b6ec",
+    "webIndex": "3da6bcbf9bcd2ff9afb78f58367ed714feefab6416d8bae6ceeec03ecbec1541",
+    "singleFile": "849f29a3018655a46bf5b81220c70620fe615b896173221cbc74d466d415b975"
+  },
+  "environment": {
+    "os": "linux",
+    "node": "22.23.4",
+    "playwright": "1.64.1",
+    "firefoxExecutable": "<HOME>/.cache/ms-playwright/firefox-1555/firefox/firefox",
+    "firefoxVersion": "157.0",
+    "headed": false,
+    "workers": 1,
+    "retries": 0
+  },
+  "profiles": [
+    {
+      "version": "157.0",
+      "prefs": {
+        "javascript.options.ion": false,
+        "javascript.options.baselinejit": false,
+        "privacy.resistFingerprinting": false
+      },
+      "preferenceLines": [
+        "user_pref(\"javascript.options.baselinejit\", false);",
+        "user_pref(\"javascript.options.ion\", false);"
+      ],
+      "observed": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:157.0) Gecko/20100101 Firefox/157.0",
+        "hardwareConcurrency": 2,
+        "timezone": "UTC"
+      },
+      "profileDirectory": "/tmp/unaltered-restricted-settings-HSWpaH",
+      "verification": "Fresh Firefox launch with launch-time prefs; persisted prefs.js values checked after clean shutdown. False default RFP may be omitted from prefs.js."
+    },
+    {
+      "version": "157.0",
+      "prefs": {
+        "javascript.options.ion": false,
+        "javascript.options.baselinejit": false,
+        "privacy.resistFingerprinting": true
+      },
+      "preferenceLines": [
+        "user_pref(\"javascript.options.baselinejit\", false);",
+        "user_pref(\"javascript.options.ion\", false);",
+        "user_pref(\"privacy.resistFingerprinting\", true);"
+      ],
+      "observed": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:157.0) Gecko/20100101 Firefox/157.0",
+        "hardwareConcurrency": 4,
+        "timezone": "Atlantic/Reykjavik"
+      },
+      "profileDirectory": "/tmp/unaltered-restricted-settings-xR6Ges",
+      "verification": "Fresh Firefox launch with launch-time prefs; persisted prefs.js values checked after clean shutdown. False default RFP may be omitted from prefs.js."
+    }
+  ],
+  "method": {
+    "testsUnchanged": true,
+    "applicationUnchanged": true,
+    "launch": "Each test project launches a fresh Firefox process with its prefs supplied through firefoxUserPrefs before browser startup.",
+    "preferenceVerification": "Separate fresh persistent-profile probes with the identical launch prefs, followed by clean shutdown and prefs.js inspection. This checks preference values, not generated machine code.",
+    "jits": "Ion and Baseline JIT explicitly disabled. Baseline interpreter, regexp and WebAssembly settings were left at Playwright/browser defaults; this is not a claim that every runtime code-generation path was disabled.",
+    "network": "Calendar/explorer traffic in receipt tests is fulfilled with synthetic responses by existing installNetwork fixture; no live confirmation or Bitcoin mining proof is implied.",
+    "offline": "Existing single-file test uses a file: URL and offline browser context, verifies the known hello e2e SHA-256 digest and zero HTTP(S) requests.",
+    "worker": "Existing worker-evidence tests require one real Worker start and completion with matching input size, byte count, SHA-256 digest, no Worker failures and cross-check status ok/skipped. Negative controls reject evidence for forced fallback and a forged wrong byte count.",
+    "fixture": {
+      "content": "Unaltered synthetic worker acceptance fixture.",
+      "bytes": 46,
+      "sha256": "2e3208fa63bec520cfca955f26b143fcfc962071c7307ab597b854ef4899655c",
+      "oracle": "Node crypto SHA-256 independent of app hashing"
+    }
+  },
+  "command": "/usr/local/share/nvm/versions/node/v22.23.4/bin/node node_modules/playwright/cli.js test --config /tmp/unaltered-restricted.config.mjs",
+  "temporaryConfig": "import { defineConfig } from '/workspaces/Unaltered/.development/restricted-compatibility-20261105/node_modules/@playwright/test/index.mjs';\nconst root='/workspaces/Unaltered/.development/restricted-compatibility-20261105';\nconst prefs={'javascript.options.ion':false,'javascript.options.baselinejit':false};\nexport default defineConfig({\n testDir:root+'/tests/e2e', timeout:60000,fullyParallel:false,workers:1,retries:0,\n outputDir:'/tmp/unaltered-restricted-output', reporter:[['list'],['json',{outputFile:'/tmp/unaltered-restricted-results.json'}]],\n testMatch:['app.spec.ts','hash-worker-evidence.spec.ts','upgrade-lifecycle.spec.ts','focus-restore.spec.ts','bugs-sweep-upgrade-fallback.spec.ts'],\n grep:/full flow with the four mandatory|works offline from a local file|multi-file build loads|keyboard: skip link|accepts a real hash worker|rejects worker creation followed|rejects a worker completion with|keyboard cancellation restores|verify: choosing|stamp: Remove keeps|settings: Space|settings: a calendar checkbox|settings: the minimum|settings: removing a stored|unreadable pending upgrade offers/,\n use:{browserName:'firefox',baseURL:'http://127.0.0.1:4173'},\n projects:[{name:'firefox157-jit-disabled',use:{launchOptions:{firefoxUserPrefs:{...prefs,'privacy.resistFingerprinting':false}}}},{name:'firefox157-jit-disabled-rfp',use:{launchOptions:{firefoxUserPrefs:{...prefs,'privacy.resistFingerprinting':true}}}}],\n webServer:{command:'/usr/local/share/nvm/versions/node/v22.23.4/bin/node '+root+'/tests/e2e/serve.mjs',cwd:root,url:'http://127.0.0.1:4173/index.html',reuseExistingServer:false,timeout:20000}\n});\n",
+  "results": {
+    "status": "PASSED",
+    "passed": 32,
+    "failed": 0,
+    "skipped": 0,
+    "stats": {
+      "startTime": "2026-11-05T23:38:53.702Z",
+      "duration": 34780.412000000004,
+      "expected": 32,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "byProject": [
+      {
+        "project": "firefox157-jit-disabled",
+        "passed": 16
+      },
+      {
+        "project": "firefox157-jit-disabled-rfp",
+        "passed": 16
+      }
+    ],
+    "cases": [
+      {
+        "project": "firefox157-jit-disabled",
+        "file": "app.spec.ts",
+        "line": 35,
+        "title": "app.spec.ts > full flow with the four mandatory trust behaviours",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 3989,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled-rfp",
+        "file": "app.spec.ts",
+        "line": 35,
+        "title": "app.spec.ts > full flow with the four mandatory trust behaviours",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 3919,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled",
+        "file": "app.spec.ts",
+        "line": 308,
+        "title": "app.spec.ts > works offline from a local file (single-file build) and without any network request",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 642,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled",
+        "file": "app.spec.ts",
+        "line": 324,
+        "title": "app.spec.ts > multi-file build loads under SRI and strict CSP with no violations",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 574,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled-rfp",
+        "file": "app.spec.ts",
+        "line": 308,
+        "title": "app.spec.ts > works offline from a local file (single-file build) and without any network request",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 608,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled-rfp",
+        "file": "app.spec.ts",
+        "line": 324,
+        "title": "app.spec.ts > multi-file build loads under SRI and strict CSP with no violations",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 632,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled",
+        "file": "app.spec.ts",
+        "line": 463,
+        "title": "app.spec.ts > keyboard: skip link first, nav reachable, file inputs focusable and labelled",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 697,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled-rfp",
+        "file": "app.spec.ts",
+        "line": 463,
+        "title": "app.spec.ts > keyboard: skip link first, nav reachable, file inputs focusable and labelled",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 732,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled",
+        "file": "bugs-sweep-upgrade-fallback.spec.ts",
+        "line": 5,
+        "title": "unreadable pending upgrade offers keyboard-accessible reference guidance without claiming verification",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1011,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled-rfp",
+        "file": "bugs-sweep-upgrade-fallback.spec.ts",
+        "line": 5,
+        "title": "unreadable pending upgrade offers keyboard-accessible reference guidance without claiming verification",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1077,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled",
+        "file": "focus-restore.spec.ts",
+        "line": 21,
+        "title": "verify: choosing a file keeps focus on the file input",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 773,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled",
+        "file": "focus-restore.spec.ts",
+        "line": 30,
+        "title": "verify: choosing a receipt keeps focus on the receipt input",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 470,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled",
+        "file": "focus-restore.spec.ts",
+        "line": 38,
+        "title": "stamp: Remove keeps focus when hashing finishes, and Enter removes the file rather than copying",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 692,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled",
+        "file": "focus-restore.spec.ts",
+        "line": 53,
+        "title": "settings: Space on the receipt-list toggle keeps focus on it",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 553,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled",
+        "file": "focus-restore.spec.ts",
+        "line": 65,
+        "title": "settings: a calendar checkbox keeps focus when it is toggled",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1683,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled",
+        "file": "focus-restore.spec.ts",
+        "line": 77,
+        "title": "settings: the minimum-calendars field keeps focus when stepped with the keyboard",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 630,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled",
+        "file": "focus-restore.spec.ts",
+        "line": 87,
+        "title": "settings: removing a stored receipt never moves focus onto the next receipt",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 517,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled-rfp",
+        "file": "focus-restore.spec.ts",
+        "line": 21,
+        "title": "verify: choosing a file keeps focus on the file input",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 568,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled-rfp",
+        "file": "focus-restore.spec.ts",
+        "line": 30,
+        "title": "verify: choosing a receipt keeps focus on the receipt input",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 509,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled-rfp",
+        "file": "focus-restore.spec.ts",
+        "line": 38,
+        "title": "stamp: Remove keeps focus when hashing finishes, and Enter removes the file rather than copying",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 647,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled-rfp",
+        "file": "focus-restore.spec.ts",
+        "line": 53,
+        "title": "settings: Space on the receipt-list toggle keeps focus on it",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 602,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled-rfp",
+        "file": "focus-restore.spec.ts",
+        "line": 65,
+        "title": "settings: a calendar checkbox keeps focus when it is toggled",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1641,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled-rfp",
+        "file": "focus-restore.spec.ts",
+        "line": 77,
+        "title": "settings: the minimum-calendars field keeps focus when stepped with the keyboard",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 818,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled-rfp",
+        "file": "focus-restore.spec.ts",
+        "line": 87,
+        "title": "settings: removing a stored receipt never moves focus onto the next receipt",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 548,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled",
+        "file": "hash-worker-evidence.spec.ts",
+        "line": 32,
+        "title": "accepts a real hash worker completion with matching input, byte count and digest",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 576,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled",
+        "file": "hash-worker-evidence.spec.ts",
+        "line": 37,
+        "title": "rejects worker creation followed by fallback even when the UI digest is correct",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 537,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled",
+        "file": "hash-worker-evidence.spec.ts",
+        "line": 43,
+        "title": "rejects a worker completion with the correct digest but a wrong byte count",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 517,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled-rfp",
+        "file": "hash-worker-evidence.spec.ts",
+        "line": 32,
+        "title": "accepts a real hash worker completion with matching input, byte count and digest",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 541,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled-rfp",
+        "file": "hash-worker-evidence.spec.ts",
+        "line": 37,
+        "title": "rejects worker creation followed by fallback even when the UI digest is correct",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 561,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled-rfp",
+        "file": "hash-worker-evidence.spec.ts",
+        "line": 43,
+        "title": "rejects a worker completion with the correct digest but a wrong byte count",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 591,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled",
+        "file": "upgrade-lifecycle.spec.ts",
+        "line": 4,
+        "title": "keyboard cancellation restores upgrade action focus and discards a late calendar reply",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 619,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "project": "firefox157-jit-disabled-rfp",
+        "file": "upgrade-lifecycle.spec.ts",
+        "line": 4,
+        "title": "keyboard cancellation restores upgrade action focus and discards a late calendar reply",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 654,
+            "retry": 0,
+            "errors": []
+          }
+        ]
+      }
+    ]
+  },
+  "edge": {
+    "status": "NOT RUN",
+    "reason": "No existing Edge executable found; no browser installed.",
+    "search": "command -v microsoft-edge || command -v microsoft-edge-stable || command -v msedge; find /opt /usr/bin /usr/local/bin <HOME>/.cache/ms-playwright -maxdepth 5 -type f (names msedge,microsoft-edge,microsoft-edge-stable)"
+  },
+  "limits": [
+    "No Tor Browser engine/profile was run; no Tor compatibility or approval claim.",
+    "No native Safari or Edge executable was run.",
+    "Synthetic network flows do not establish live calendar/explorer availability.",
+    "No 2 GiB file, performance benchmark or memory ceiling was tested in these restricted profiles.",
+    "Selected existing tests only; image cleaning/canvas under Resist Fingerprinting was not covered.",
+    "A preliminary attempt to navigate automated Firefox to about:config timed out; preference evidence instead uses launch-time options and persisted prefs.js. This was a harness-only probe, not an application test failure."
+  ],
+  "isolation": {
+    "worktree": "/workspaces/Unaltered/.development/restricted-compatibility-20261105",
+    "rootSourceEdits": false,
+    "dependencyChanges": false,
+    "systemChanges": false,
+    "browserDownloads": false,
+    "sharedBrowserCacheChanges": false,
+    "server": "Existing tests/e2e/serve.mjs bound port 4173 for this run and was stopped by Playwright.",
+    "rawReport": "/tmp/unaltered-restricted-results.json"
+  },
+  "officialSources": [
+    {
+      "url": "https://searchfox.org/firefox-release/source/modules/libpref/init/StaticPrefList.yaml",
+      "supports": "Mozilla source names Baseline and Ion JIT preferences and states JIT compiler prefs are read once at startup; set before fresh launch."
+    },
+    {
+      "url": "https://support.mozilla.org/en-US/kb/resist-fingerprinting",
+      "supports": "Mozilla documents privacy.resistFingerprinting and potential compatibility effects, including clocks, graphics and reported environment."
+    }
+  ],
+  "apiCacheAndCost": "Not exposed in this environment.",
+  "pathRedaction": {
+    "placeholder": "<HOME>",
+    "reason": "Machine-local home-directory path omitted; test results, preferences, versions and binary hashes unchanged.",
+    "unredactedLocalEvidenceSha256": "49eca265b6de0871ef0b5767a88c356a085f7e06878ffff46cbca6071d651229"
+  }
+}

@@ -1,5 +1,8 @@
+import { mountArchiveTools, type ArchiveToolsView } from './ui/archive-tools';
 // Wires the UI to core. No business logic here (SPEC 5.1).
 import { clear, el, setLiveRegion } from './ui/dom';
+import { installOfflineFavicon } from './ui/favicon';
+import { networkCapabilityText } from './core/net/capability';
 import { VIEWS, parseHash } from './ui/router';
 import { detectLang, setLang, t } from './ui/strings';
 import { mountAbout } from './ui/views/about';
@@ -22,7 +25,15 @@ function frameBust(): boolean {
 
 function start(): void {
   if (frameBust()) return;
+  installOfflineFavicon();
   setLang(detectLang(navigator.languages ?? [navigator.language]));
+  const indicator = document.getElementById('network-capability');
+  const refreshNetwork = (): void => {
+    if (indicator) indicator.textContent = networkCapabilityText(navigator.onLine);
+  };
+  refreshNetwork();
+  window.addEventListener('online', refreshNetwork);
+  window.addEventListener('offline', refreshNetwork);
   const live = document.getElementById('live');
   if (live) setLiveRegion(live);
 
@@ -38,6 +49,7 @@ function start(): void {
   });
   let stampView: StampView | null = null;
   let verifyView: VerifyView | null = null;
+  let archiveTools: ArchiveToolsView | null = null;
   let pendingPrefill: string | null = null;
 
   function renderChrome(): void {
@@ -51,6 +63,7 @@ function start(): void {
     set('nav-about', 'nav.about');
     set('nav-settings', 'nav.settings');
     set('skip', 'nav.skip');
+    set('footer-cdl', 'footer.cdl');
     set('footer-version-label', 'footer.version');
     set('footer-build-label', 'footer.build');
     set('footer-note', 'footer.note');
@@ -61,6 +74,8 @@ function start(): void {
     renderChrome();
     stampView = mountStamp(sections.stamp);
     verifyView = mountVerify(sections.verify);
+    archiveTools?.dispose();
+    archiveTools = mountArchiveTools(sections.verify);
     if (pendingPrefill) verifyView.setPrefill(pendingPrefill);
     mountAbout(sections.about);
     mountSettings(sections.settings, onLang);
@@ -72,6 +87,7 @@ function start(): void {
     renderChrome();
     stampView?.relabel();
     verifyView?.relabel();
+    archiveTools?.relabel();
     mountAbout(sections.about);
     mountSettings(sections.settings, onLang);
     route(false);
@@ -85,6 +101,11 @@ function start(): void {
     if (h && h !== pendingPrefill) {
       pendingPrefill = h;
       verifyView?.setPrefill(h);
+    } else if (!h && pendingPrefill !== null && /(?:^#?|[&?])h=/.test(location.hash)) {
+      // An invalid or conflicting share link must not leave a previous link's fingerprint available for Check.
+      // Ordinary tab navigation has no h= parameter and keeps the user's current verification state.
+      pendingPrefill = null;
+      verifyView?.setPrefill(null);
     }
     for (const v of VIEWS) {
       sections[v].hidden = v !== view;

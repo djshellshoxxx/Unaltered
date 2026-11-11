@@ -31,6 +31,88 @@ async function stampNote(page: Page, name = 'note.txt', content: Buffer = NOTE):
   return readFileSync((await dl.path())!);
 }
 
+test.describe('essential landing-page guidance', () => {
+  test('shows three expandable guides without changing stamping behaviour', async ({ page }) => {
+    await page.goto('/index.html#stamp');
+    const guides = page.locator('.essential-guides details');
+    await expect(guides).toHaveCount(3);
+    await page.getByText('Start here: three steps').click();
+    await expect(guides.nth(0)).toContainText('Create and download the .ots receipt');
+    await page.getByText('Understand your verification result').click();
+    await expect(guides.nth(1)).toContainText('Pending:');
+    await page.getByText('Evidence backup checklist').click();
+    await expect(guides.nth(2)).toContainText('two independent locations');
+    await expect(page.locator('#stamp-file')).toHaveCount(1);
+  });
+});
+
+test.describe('browser connectivity notice', () => {
+  test('distinguishes browser offline from server availability', async ({ page, context }) => {
+    await page.goto('/index.html#stamp');
+    await expect(page.locator('#network-capability')).toContainText('not a server health check');
+    await context.setOffline(true);
+    await expect(page.locator('#network-capability')).toContainText('Browser reports offline');
+    await expect(page.locator('#network-capability')).toContainText('Hashing');
+    await context.setOffline(false);
+  });
+});
+
+test.describe('batch verification', () => {
+  test('renders individual results with status and guidance', async ({ page }) => {
+    await page.goto('/index.html#verify');
+    await page.locator('#batch-files').setInputFiles({ name: 'evidence.txt', mimeType: 'text/plain', buffer: Buffer.from('evidence') });
+    await page.locator('#batch-receipts').setInputFiles({ name: 'evidence.txt.ots', mimeType: 'application/octet-stream', buffer: Buffer.from([0, 1, 2]) });
+    await page.getByRole('button', { name: 'Verify batch' }).click();
+    await expect(page.locator('.batch-results')).toContainText('evidence.txt');
+    await expect(page.locator('.batch-results')).toContainText('INVALID_PROOF');
+  });
+  test('rejects missing matching receipts before verification', async ({ page }) => {
+    await page.goto('/index.html#verify');
+    await page.locator('#batch-files').setInputFiles({ name: 'a.txt', mimeType: 'text/plain', buffer: Buffer.from('a') });
+    await page.locator('#batch-receipts').setInputFiles({ name: 'other.txt.ots', mimeType: 'application/octet-stream', buffer: Buffer.from([1, 2, 3]) });
+    await page.getByRole('button', { name: 'Verify batch' }).click();
+    await expect(page.locator('.batch-results')).toContainText('Files and receipts do not match');
+  });
+});
+
+test.describe('local evidence bundle', () => {
+  test('exports a ZIP with original bytes, receipt and manifest', async ({ page }) => {
+    await page.goto('/index.html#verify');
+    await page.locator('#verify-file').setInputFiles({
+      name: 'evidence.txt', mimeType: 'text/plain', buffer: Buffer.from('evidence'),
+    });
+    await page.locator('#verify-receipt').setInputFiles({
+      name: 'evidence.ots', mimeType: 'application/octet-stream', buffer: Buffer.from([0, 1, 2]),
+    });
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'Download evidence ZIP (16 MiB max)' }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe('unaltered-evidence.zip');
+    const bytes = readFileSync((await download.path())!);
+    expect(bytes.subarray(0, 4).toString('hex')).toBe('504b0304');
+    expect(bytes.includes(Buffer.from('manifest.json'))).toBe(true);
+    expect(bytes.includes(Buffer.from('receipt.ots'))).toBe(true);
+  });
+});
+
+test.describe('receipt overview', () => {
+  test('does not mislabel saved fingerprints as verified receipts', async ({ page }) => {
+    await page.goto('/index.html#settings');
+    await page.evaluate(() => {
+      localStorage.setItem('unaltered.receipts.enabled', '1');
+      localStorage.setItem('unaltered.receipts.v1', JSON.stringify([
+        { digestHex: 'a'.repeat(64), createdAtUtc: '2026-11-01T00:00:00Z', label: 'example' },
+      ]));
+    });
+    await page.reload();
+    const overview = page.locator('.receipt-health-summary');
+    await expect(overview).toContainText('Saved fingerprints: 1');
+    await expect(overview).toContainText('Verification status: unknown');
+    await expect(overview.getByRole('link', { name: 'Open Verify' })).toHaveAttribute('href', '#verify');
+  });
+});
+
 test.describe('stamp, upgrade, verify (network mocked)', () => {
   test('full flow with the four mandatory trust behaviours', async ({ page, context }) => {
     const chain = await installNetwork(context);
@@ -50,6 +132,13 @@ test.describe('stamp, upgrade, verify (network mocked)', () => {
     await page.setInputFiles('#verify-receipt', { name: 'note.txt.ots', mimeType: 'application/octet-stream', buffer: pending });
     await page.getByRole('button', { name: 'Check', exact: true }).click();
     await expect(page.locator('.result-PENDING')).toContainText('Not yet confirmed');
+    const reportLink = page.getByRole('link', { name: 'Download verification report (JSON)' });
+    await expect(reportLink).toBeVisible();
+    const [reportDownload] = await Promise.all([page.waitForEvent('download'), reportLink.click()]);
+    const exportedReport = JSON.parse(readFileSync((await reportDownload.path())!, 'utf8'));
+    expect(exportedReport.status).toBe('PENDING');
+    expect(exportedReport.bitcoin).toBeNull();
+
     await expect(page.locator('.result-VERIFIED')).toHaveCount(0);
 
     // upgrade while calendars still answer 404
@@ -77,6 +166,15 @@ test.describe('stamp, upgrade, verify (network mocked)', () => {
     await expect(page.locator('.result-VERIFIED')).toContainText('Trust level L1');
     await expect(page.locator('.result-VERIFIED')).toContainText('no later than about');
     await expect(page.locator('.result-VERIFIED')).toContainText('mempool.space');
+    // A verified certificate is tied to the uploaded original and the exact upgraded receipt.
+    await expect(page.locator('.result-VERIFIED .archival-controls')).toBeVisible();
+    await page.locator('.result-VERIFIED .archival-controls').getByRole('button', { name: 'Preview QR certificate' }).click();
+    const certificate = page.locator('.unaltered-archival-sheet');
+    await expect(certificate).toContainText('Verified against matching original file');
+    await expect(certificate).toContainText('Bitcoin block hash:');
+    await expect(certificate).toContainText('Independent header sources agreeing:');
+    await page.getByRole('button', { name: 'Close certificate preview' }).click();
+
 
     // mutated file -> NO_MATCH
     await page.setInputFiles('#verify-file', { name: 'note.txt', mimeType: 'text/plain', buffer: bytesOf('hello e2f') });
@@ -136,7 +234,12 @@ test.describe('stamp, upgrade, verify (network mocked)', () => {
       const hosts = ['alice.btc.calendar.opentimestamps.org', 'bob.btc.calendar.opentimestamps.org', 'finney.calendar.eternitywall.com'];
       await expect.poll(async () => (await failures.allTextContents()).sort())
         .toEqual(hosts.map((host) => `✖ ${host} – ${scenario.error}`).sort());
-      await expect(page.locator('.upgrade-result a')).toHaveCount(0);
+      await expect(page.locator('.upgrade-result a[download]')).toHaveCount(0);
+      const links = page.locator('.upgrade-result a');
+      await expect(links).toHaveCount(scenario.transport ? 1 : 0);
+      if (scenario.transport) {
+        await expect(links).toHaveAttribute('href', 'https://github.com/opentimestamps/opentimestamps-client#installation');
+      }
       await expect(page.locator('.result-VERIFIED')).toHaveCount(0);
     });
   }

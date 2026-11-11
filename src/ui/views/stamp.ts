@@ -1,4 +1,5 @@
 // Stamp view (FR-1..FR-5, FR-10, FR-11, FR-12): pick file(s), optionally clean, fingerprint, create receipt.
+import { archivalCertificateControls, type ArchivalCertificateView } from '../archival-certificate';
 import { groupHex } from '../../core/bytes';
 import { isAbort, safeMessage, UnalteredError } from '../../core/errors';
 import { hashBlob, type HashResult } from '../../core/hash/hasher';
@@ -24,6 +25,9 @@ interface Item {
   ackHidden: boolean;
   ackOrientation: boolean;
   proof: Uint8Array | null;
+  certificate: { receipt: Uint8Array; view: ArchivalCertificateView } | null;
+  label: string;
+  savedToList: boolean | null;
   abort: AbortController;
   card: HTMLElement;
 }
@@ -79,6 +83,7 @@ export function mountStamp(root: HTMLElement): StampView {
     it.outcome = null;
     // A receipt belongs to the previous byte target; changing cleaning requires a new stamp.
     it.proof = null;
+    it.savedToList = null;
     lastCalendars = null;
     stampError = null;
     it.progress = 0;
@@ -131,6 +136,7 @@ export function mountStamp(root: HTMLElement): StampView {
   }
 
   function refreshItem(it: Item): void {
+    const hadFocus = it.card.contains(document.activeElement);
     const c = cleanedOf(it);
     const kids: (Node | string | false | null)[] = [];
     kids.push(
@@ -190,7 +196,7 @@ export function mountStamp(root: HTMLElement): StampView {
         el(
           'div',
           { class: 'notice warn' },
-          el('p', {}, pdf ? t('stamp.pdfWarn') : isImage(it.kind) ? t('stamp.stripOffWarn') : t('stamp.unsupportedWarn')),
+          el('p', {}, pdf ? t('stamp.pdfWarn') : isImage(it.kind) ? t(it.strip ? 'stamp.stripUnsupportedWarn' : 'stamp.stripOffWarn') : t('stamp.unsupportedWarn')),
           el(
             'label',
             { class: 'check' },
@@ -215,6 +221,12 @@ export function mountStamp(root: HTMLElement): StampView {
     }
 
     if (it.proof) {
+      if (it.certificate?.receipt !== it.proof) {
+        it.certificate?.view.dispose();
+        const receipt = it.proof;
+        it.certificate = { receipt, view: archivalCertificateControls(async () => receipt) };
+      }
+      it.certificate.view.relabel();
       const name = receiptName(c ? cleanedName(it.file.name, c.format) : it.file.name);
       kids.push(
         el(
@@ -222,12 +234,19 @@ export function mountStamp(root: HTMLElement): StampView {
           { class: 'notice ok' },
           downloadLink(t('stamp.downloadReceipt', { name }), name, it.proof, 'application/octet-stream', undefined, { owner: it, key: 'receipt' }),
           el('p', { class: 'muted' }, t('stamp.receiptName')),
+          it.certificate.view.root,
           shareRow(it),
           labelRow(it),
         ),
       );
+    } else {
+      it.certificate?.view.dispose();
+      it.certificate = null;
     }
     setChildren(it.card, ...kids);
+    // Cancel/cleaning controls may disappear during a transition. Never leave focus on a detached control or move it
+    // to an unrelated row action that happens to occupy the same position.
+    if (hadFocus && !it.card.contains(document.activeElement)) root.querySelector<HTMLElement>('#stamp-file')?.focus();
   }
 
   function shareRow(it: Item): Node | null {
@@ -246,8 +265,15 @@ export function mountStamp(root: HTMLElement): StampView {
   function labelRow(it: Item): Node | null {
     if (!isEnabled() || !it.hash) return null;
     const hex = it.hash.hex;
-    const input = el('input', { type: 'text', id: `label-${it.id}`, maxlength: 100, autocomplete: 'off' });
-    const saved = el('span', { class: 'muted', role: 'status' });
+    const saved = el('span', { class: 'muted', role: 'status' }, it.savedToList === null ? '' : t(it.savedToList ? 'stamp.savedToList' : 'stamp.saveFailed'));
+    const input = el('input', {
+      type: 'text', id: `label-${it.id}`, maxlength: 100, autocomplete: 'off', value: it.label,
+      oninput: (event: Event) => {
+        it.label = (event.target as HTMLInputElement).value;
+        it.savedToList = null;
+        saved.textContent = '';
+      },
+    });
     return el(
       'div',
       { class: 'label-row' },
@@ -260,6 +286,7 @@ export function mountStamp(root: HTMLElement): StampView {
           class: 'button small',
           onclick: () => {
             const ok = addReceipt({ digestHex: hex, createdAtUtc: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), label: input.value });
+            it.savedToList = ok;
             saved.textContent = ok ? t('stamp.savedToList') : t('stamp.saveFailed');
           },
         },
@@ -270,15 +297,17 @@ export function mountStamp(root: HTMLElement): StampView {
   }
 
   function flash(target: HTMLElement, msg: string): void {
-    announce(msg);
+    announce(msg, root);
     const old = target.textContent;
     target.textContent = msg;
     setTimeout(() => (target.textContent = old), 1500);
   }
 
   function remove(it: Item): void {
+    const hadFocus = it.card.contains(document.activeElement);
     it.abort.abort();
     revokeOwner(it);
+    it.certificate?.view.dispose();
     items.splice(items.indexOf(it), 1);
     it.card.remove();
     if (items.length === 0) {
@@ -286,6 +315,8 @@ export function mountStamp(root: HTMLElement): StampView {
       stampError = null;
     }
     refreshActions();
+    // The removed control cannot keep keyboard focus. Use a stable picker rather than another row's Remove.
+    if (hadFocus) root.querySelector<HTMLElement>('#stamp-file')?.focus();
   }
 
   function add(files: File[]): void {
@@ -304,6 +335,9 @@ export function mountStamp(root: HTMLElement): StampView {
         ackHidden: false,
         ackOrientation: false,
         proof: null,
+        certificate: null,
+        label: '',
+        savedToList: null,
         abort: new AbortController(),
         card: el('div', { class: 'card item', role: 'listitem' }),
       };
@@ -327,7 +361,7 @@ export function mountStamp(root: HTMLElement): StampView {
       const r = await stampBatch(digests, cfg);
       lastCalendars = r.calendars;
       items.forEach((it, i) => (it.proof = r.proofs[i]!));
-      announce(t('stamp.done'));
+      announce(t('stamp.done'), root);
     } catch (e) {
       if (!isAbort(e)) {
         stampError = safeMessage(e);
@@ -382,12 +416,34 @@ export function mountStamp(root: HTMLElement): StampView {
     setChildren(result, ...res);
   }
 
+  function essentialGuides(): HTMLElement {
+    const guides = el('aside', { class: 'essential-guides', 'aria-label': t('guide.start.title') });
+    const entries: readonly [string, string, string, string][] = [
+      ['guide.start.title', 'guide.start.one', 'guide.start.two', 'guide.start.three'],
+      ['guide.status.title', 'guide.status.pending', 'guide.status.verified', 'guide.status.other'],
+      ['guide.backup.title', 'guide.backup.file', 'guide.backup.receipt', 'guide.backup.copies'],
+    ];
+    for (const [heading, first, second, third] of entries) {
+      const details = el('details', { class: 'essential-guide' },
+        el('summary', {}, t(heading as Parameters<typeof t>[0])),
+        el('ol', {},
+          el('li', {}, t(first as Parameters<typeof t>[0])),
+          el('li', {}, t(second as Parameters<typeof t>[0])),
+          el('li', {}, t(third as Parameters<typeof t>[0])),
+        ),
+      );
+      guides.appendChild(details);
+    }
+    return guides;
+  }
+
   function renderFrame(): void {
     setChildren(
       root,
       el('h2', { id: 'stamp-h', tabindex: -1 }, t('stamp.title')),
       el('p', { class: 'lead' }, t('copy.stays')),
       el('p', {}, t('copy.notTrue')),
+      essentialGuides(),
       dropZone({ id: 'stamp-file', label: t('stamp.drop'), hint: t('stamp.dropHint'), multiple: true, onFiles: add }),
       list,
       actions,

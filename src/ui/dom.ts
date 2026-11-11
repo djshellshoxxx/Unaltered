@@ -3,6 +3,16 @@ export type Child = Node | string | null | undefined | false;
 export type AttrValue = string | number | boolean | undefined | null | ((ev: Event) => void);
 
 const PROPS = new Set(['checked', 'disabled', 'hidden', 'value', 'indeterminate']);
+const URL_ATTRS = new Set(['href', 'src', 'action', 'formaction']);
+
+function isScriptUrl(value: string): boolean {
+  // Match browser URL preprocessing: remove TAB/LF/CR anywhere, then trim leading C0 controls and spaces.
+  // Other embedded controls are not removed by the URL parser and must not be treated as scheme characters.
+  const normalized = value.replace(/[\t\n\r]/g, '');
+  let start = 0;
+  while (start < normalized.length && normalized.charCodeAt(start) <= 0x20) start++;
+  return /^(javascript|data|vbscript):/i.test(normalized.slice(start));
+}
 
 export function el<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<string, AttrValue> = {}, ...kids: Child[]): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
@@ -14,7 +24,7 @@ export function el<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<
       if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v as EventListener);
       continue;
     }
-    if (typeof v === 'string' && /^\s*(javascript|data|vbscript):/i.test(v) && (k === 'href' || k === 'src' || k === 'action' || k === 'formaction')) continue;
+    if (typeof v === 'string' && URL_ATTRS.has(k.toLowerCase()) && isScriptUrl(v)) continue;
     if (k === 'class') node.className = String(v);
     else if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v as EventListener);
     else if (PROPS.has(k)) (node as unknown as Record<string, unknown>)[k] = v === true ? true : v;
@@ -90,14 +100,15 @@ export function setLiveRegion(node: HTMLElement): void {
   liveRegion = node;
   announcementGeneration++;
 }
-/** Polite screen-reader announcement. Only the newest queued status may be spoken. */
-export function announce(message: string): void {
-  if (!liveRegion) return;
+/** Polite status: only the newest message from a still-visible owning view may be spoken. */
+export function announce(message: string, owner?: HTMLElement): void {
+  const active = (): boolean => !owner || (owner.isConnected && !owner.hidden);
+  if (!liveRegion || !active()) return;
   const target = liveRegion;
   const generation = ++announcementGeneration;
   target.textContent = '';
   setTimeout(() => {
-    if (generation === announcementGeneration && liveRegion === target) target.textContent = message;
+    if (generation === announcementGeneration && liveRegion === target && active()) target.textContent = message;
   }, 30);
 }
 
@@ -117,8 +128,9 @@ export function dropZone(o: DropZoneOptions): HTMLElement {
   const wrap = el('div', { class: 'drop-wrap' }, input, zone);
   input.addEventListener('change', () => {
     const files = input.files ? Array.from(input.files) : [];
-    if (files.length > 0) o.onFiles(files);
+    // Reset before consumers can replace the input or throw, so the same file can be chosen again.
     input.value = '';
+    if (files.length > 0) o.onFiles(o.multiple ? files : files.slice(0, 1));
   });
   wrap.addEventListener('dragover', (e) => {
     e.preventDefault();

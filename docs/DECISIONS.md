@@ -119,7 +119,9 @@ Format: Context → Decision → Consequences. Status: Proposed / Accepted / Sup
 
 **Context.** FR-1 requires the main thread never block more than 50 ms and `require-trusted-types-for 'script'` (SR-1) makes `new Worker(url)` a policy-checked sink. Chrome blocks module scripts and Workers from `file://`.
 
-**Decision.** One lazily created Trusted Types policy (`unaltered-worker`, allowed in the CSP via `trusted-types unaltered-worker`) approves exactly the one URL the app is about to use. Multi-file: `./hasher.worker.js` (`worker-src 'self'`). Single-file: a `blob:` URL of the inlined worker source (`worker-src blob:`). If a Worker cannot start (e.g. multi-file over `file://` in Chrome) the identical chunked code runs on the main thread, yielding between 4 MiB chunks. The WebCrypto cross-check runs inside the worker so the main thread never copies the file.
+**Decision.** One lazily created Trusted Types policy (`unaltered-worker`, allowed in the CSP via `trusted-types unaltered-worker`) approves exactly the one URL the app is about to use. Both builds start the worker from a `blob:` URL of the worker source inlined in the page script (`worker-src blob:`), so the worker inherits the page's CSP and Trusted Types, and its code is pinned by the SRI hash of `main.js` (multi-file) or the CSP hash of the inline script (single-file). If a Worker cannot start the identical chunked code runs on the main thread, yielding between 4 MiB chunks. The WebCrypto cross-check runs inside the worker so the main thread never copies the file.
+
+*Amended 2026-11-04:* the multi-file build used to load `./hasher.worker.js` under `worker-src 'self'`. A worker loaded from its own URL takes its CSP only from that response's HTTP headers, never from the page's `<meta>` CSP, and static hosts send none; `new Worker(url)` also has no integrity check. That worker, which reads every file, therefore ran without `connect-src`, `script-src` or Trusted Types and could be changed without any SRI error. It is no longer shipped as a separate file.
 
 **Consequences.** (+) Measured max main-thread gap about 12 ms while hashing 48 MiB in Chromium; no CSP violations. (-) Q7 is only answered for Chromium. Firefox and Tor Browser are untested; both fall back safely (no `trustedTypes` means the policy step is skipped, and a failed Worker falls back to the main thread).
 
@@ -146,3 +148,18 @@ Format: Context → Decision → Consequences. Status: Proposed / Accepted / Sup
 **Decision.** Add allowlist rewriters for WAV and MP3 in `core/strip/audio.ts` (SPEC 8.2a), reusing the existing cleaned-copy-required flow. Loop/cue chunks (`smpl`, `inst`, `cue `) are kept because they are musical content, not identity. No new dependency.
 
 **Consequences.** (+) Same security properties as image stripping, tiny code. (-) FLAC/AAC/OGG/AIFF remain unsupported and are warned about, not cleaned.
+
+---
+
+## ADR-013: Local binary QR transport for standard receipts
+**Status:** Accepted; records the QR integration merged in #67 and its follow-up review on 2026-11-09.
+
+**Context.** The owner requested a printable PDF certificate carrying a recoverable `.ots` receipt. QR encoding and pixel decoding require symbol placement, error correction, image location and sampling. Implementing these correctly in under 200 lines is not a reasonable alternative. The original digital receipt must remain usable by independent OpenTimestamps clients.
+
+**Decision.** Reuse [Project Nayuki's QR encoder](https://github.com/nayuki/QR-Code-generator), vendored with its MIT notice, and [cozmo/jsQR](https://github.com/cozmo/jsQR) **1.4.0**, pinned with package integrity and its Apache-2.0 notice. The upstream projects maintain their respective libraries; Unaltered owns the local integration, bounds and update qualification. No independent security audit of either library is established by this review. The provenance and distribution notices are recorded in [DEPENDENCIES.md](DEPENDENCIES.md#archival-qr-completion--2026-11-08).
+
+Encode the original receipt bytes in the versioned `UNALTERED-OTS-QR/1` framing documented in [ARCHIVAL_QR_PROTOCOL.md](ARCHIVAL_QR_PROTOCOL.md). Preserve binary payloads without text conversion. Reassembly requires a complete consistent frame set, receipt checksum and domain-separated identifier, followed by the existing `.ots` parser. This is an experimental transport for an unchanged standard receipt, not a new timestamp authority or OpenTimestamps standard.
+
+Bundle both libraries locally. Decode images in a cancellable worker with byte, pixel, frame and time limits. Keep the existing CSP, network allowlist and no-CDN behavior. Use the browser's Print / Save as PDF function. Prefer saving the digital `.ots` receipt; QR images and paper certificates are supplementary backups, and verification also requires the original document.
+
+**Consequences.** Independent encoding/decoding, shared Python golden vectors, generated parser properties, and A4/Letter PDF raster tests qualify the implemented path. These checks do not establish physical printer/camera reliability or Bitcoin confirmation. New library versions or framing changes require renewed review and qualification; unsupported compression/version flags fail closed. Practical print limits leave oversized receipts available digitally without truncation.

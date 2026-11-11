@@ -8,7 +8,7 @@ Mark rules **[MUST]**, **[SHOULD]**.
 Decide now whether maintainers are pseudonymous. If yes, decide **before the first commit**; history, forks, caches, and web archives cannot be fully scrubbed later.
 
 1. **[MUST]** Use a dedicated git identity for this repo only (`git config user.name/email` locally, never `--global`), preferably the GitHub `noreply` address.
-2. **[MUST]** Run `scripts/opsec-check.sh` before every push (also run in CI). It flags personal emails, home-directory paths, and image metadata in tracked files.
+2. **[MUST]** Run `scripts/opsec-check.sh` before every push (also run in CI). It flags personal emails, home-directory paths, and image metadata in tracked files (committed, staged and working-tree content) and in commit and tag identities and messages. Exit 2 means git could not be read: nothing was verified. Media checks need `exiftool`; without it every tracked image, document, audio or video file is a finding.
 3. **[SHOULD]** Make commit timestamps non-revealing: commit in UTC (`TZ=UTC`) and avoid patterns that reveal working hours.
 4. **[MUST]** Keep personal names out of `package.json` (`author`), `LICENSE` (we use "The Unaltered contributors"), docs, test fixtures, and commit messages.
 5. **[MUST]** Strip metadata from every image, PDF, and document fixture before committing; use synthetic fixtures only.
