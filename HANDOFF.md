@@ -1,3 +1,12 @@
+# Hard-problems run — 2026-11-11 UTC
+
+Prompt: [docs/handoff/HARD-PROBLEMS-20261111.md](docs/handoff/HARD-PROBLEMS-20261111.md). Draft
+[PR79](https://github.com/djshellshoxxx/Unaltered/pull/79), branch `claude/hopeful-franklin-r1ey6w`. Results and open
+items are in the 2026-11-11 section of [docs/TODO.md](docs/TODO.md). PR backlog:
+[docs/handoff/PR_BACKLOG_20261111.md](docs/handoff/PR_BACKLOG_20261111.md). Nothing was merged to main, released or
+signed. Calendars and explorers were unreachable from this container, so the liveness canary is qualified with mocks
+and recorded evidence only.
+
 # Active autonomous checkpoint — 2026-11-05 UTC
 
 Continue from [the incremental development handoff](docs/handoff/AUTONOMOUS-DEVELOPMENT-LATEST.md)

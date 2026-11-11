@@ -106,4 +106,5 @@ No input was found that makes `verify()` return `VERIFIED` wrongly (digest equal
 | 7 | Header quorum has no proof-of-work check | **Accepted, documented.** A target check would not add security: a forger can cheaply mine a header at the minimum difficulty. Trust rests on the explorer quorum (L1) or the user's own node (L2) |
 | 8 | `varuint` could return an unsafe integer | **Fixed.** Rejected as malformed |
 | - | `verifyProof` accepted a null digest | **Fixed.** Parameter is now required |
-| - | Unconfirmed: raw `DOMException` if a file becomes unreadable mid-hash; ~80 MB worst-case memory from 20k nodes of 4 KiB messages | Open, low. The UI shows a generic message for any non-typed error |
+| - | Raw `TypeError`/`DOMException` if a file becomes unreadable mid-hash (generic UI text; the worker path re-read the file on the main thread) | **Fixed 2026-11-11** (15d154a): reported as typed `INPUT_UNREADABLE` |
+| - | Unconfirmed: ~80 MB worst-case memory from 20k nodes of 4 KiB messages | Open, low |

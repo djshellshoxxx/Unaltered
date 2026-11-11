@@ -10,6 +10,47 @@ Current publication addendum: [final handoff and raw evidence](FINAL_HANDOFF_202
 Legend: `[ ]` open, `[x]` done. IDs map to milestones in `BUILD_PLAN.md` and requirements in `SPEC.md`.
 Do tasks in order within a milestone unless marked parallel.
 
+## Hard-problems run — 2026-11-11
+
+Prompt and ownership: [HARD-PROBLEMS-20261111.md](handoff/HARD-PROBLEMS-20261111.md). Draft
+[PR79](https://github.com/djshellshoxxx/Unaltered/pull/79), branch `claude/hopeful-franklin-r1ey6w`. This section supersedes
+older dated sections where they disagree. Nothing is released, signed or merged to main by this run.
+
+Done (each fix has a regression test that failed first):
+
+- [x] **Fallback cancellation residual.** Abort no longer waits for the 30 s stall watchdog or for a pending cross-check
+  read (fixed by 8d3e7cb, locked by f87cfa4; [evidence](evidence/hash-cancel-20261111.md)). Remaining bound: at most
+  `CANCEL_SETTLE_MS` (1 s) when a backend's `cancel()` never settles. Native reads are abandoned, not cancelled.
+- [x] **Unreadable file mid-hash** now reports a typed `INPUT_UNREADABLE` error, not a raw `TypeError`/`DOMException`.
+  This also stops the worker path from re-reading the whole file on the main thread (15d154a).
+- [x] **R1 mitigation (ADR-014).** When a pending lookup is unreadable, a per-calendar liveness canary tells "calendar
+  reachable, receipt probably still waiting" apart from "calendar unreachable or blocked". It fails closed to
+  "unknown". CSP and allowlist are unchanged. The upstream fix is drafted in
+  [OTS_SERVER_CORS.md](proposals/OTS_SERVER_CORS.md) and has not been sent.
+- [x] **Fuzzing (REL-2 progress).** New targets with independent oracles: qr-frames, qr-image headers, trusted-header,
+  receipt-store. Four 300 s campaigns, seed 20261111, no product finding
+  ([evidence](evidence/fuzz-20261111.json)). The follow-up review found that a forged frame allocated the declared 16 MiB
+  before rejection; this is fixed (7cc087c).
+- [x] **PR backlog ledger** ([PR_BACKLOG_20261111.md](handoff/PR_BACKLOG_20261111.md)). Integrated #71 (CLI code), #74, #75 and #76,
+  plus the source and test parts of #77 and #78.
+
+Still open:
+
+- [ ] **Owner:** restore OpenAI API quota or billing for the scheduled "Unaltered API-Funded Cloud Development" workflow,
+  or disable its schedule. It fails on `main` with "Quota exceeded"; the cause is not in the code.
+- [ ] **R1 live qualification of the canary.** Run
+  `npm run build && UNALTERED_LIVE_LIVENESS=1 npx playwright test tests/e2e/liveness-live.spec.ts --retries=0` where the
+  calendars are reachable (for example in the network-check CI job; the workflow edit is the owner's).
+  Pending 404 CORS itself remains external.
+- [ ] **Owner:** decide whether to send `docs/proposals/OTS_SERVER_CORS.md` to the opentimestamps-server maintainers or operators.
+- [ ] **Native Spanish review** of the new `upgrade.liveness.*` strings.
+- [ ] **Native evidence** for a never-settling Blob read in Chromium, Firefox and WebKit (only models so far), and the
+  Firefox/WebKit error types for unreadable files.
+- [ ] **QR limits in ARCHIVAL_QR_PROTOCOL.md are inconsistent:** 4096 frames × 2873 payload bytes is about 11.2 MiB,
+  below the stated 16 MiB receipt cap. Reconcile the documented limits.
+- [ ] **Review the rest of the PR backlog:** #77/#78 doc edits, #65, and #71's remaining commits (see the ledger).
+  Another session is integrating #50, #52, #56–#58, #63, #65, #70, #72 and #73.
+
 ## Authoritative integration status — 2026-11-04
 
 - Candidate: draft [PR48](https://github.com/djshellshoxxx/Unaltered/pull/48), branch `claude/quirky-meitner-0jr3pz`.
