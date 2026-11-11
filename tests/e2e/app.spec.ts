@@ -5,6 +5,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { concat, fromHex, groupHex } from '../../src/core/bytes';
 import { serializeTree } from '../../src/core/ots/codec';
+import { LIVENESS_CANARIES } from '../../src/core/ots/liveness';
 import { makeJpeg } from '../helpers/images';
 import { bytesOf, cspViolations, installNetwork, sha256hex, watchViolations } from './helpers';
 
@@ -199,7 +200,9 @@ test.describe('stamp, upgrade, verify (network mocked)', () => {
     expect(await cspViolations(page)).toEqual([]);
     // WebKit reports the deliberately CORS-blocked pending lookups (see installNetwork) as page errors. Only those
     // exact lookups are expected; any other page error still fails.
-    const corsBlockedLookup = /^pageerror: \/(alice\.btc\.calendar\.opentimestamps\.org|bob\.btc\.calendar\.opentimestamps\.org|finney\.calendar\.eternitywall\.com)\/timestamp\/[0-9a-f]{64} due to access control checks\.$/;
+    // The fixed liveness canaries (ADR-014) are CORS-blocked by the same mock and may be reported the same way.
+    const lookup = `([0-9a-f]{64}|${LIVENESS_CANARIES.map((c) => c.commitment).join('|')})`;
+    const corsBlockedLookup = new RegExp(`^pageerror: \\/(alice\\.btc\\.calendar\\.opentimestamps\\.org|bob\\.btc\\.calendar\\.opentimestamps\\.org|finney\\.calendar\\.eternitywall\\.com)\\/timestamp\\/${lookup} due to access control checks\\.$`);
     expect(viol.list.filter((e) => !corsBlockedLookup.test(e))).toEqual([]);
   });
 
@@ -252,7 +255,10 @@ test.describe('stamp, upgrade, verify (network mocked)', () => {
     await page.getByRole('button', { name: 'Check for confirmation' }).click();
     await expect(page.locator('.upgrade-result .notice')).toHaveText([PENDING_UPGRADE_NOTICE, UNREADABLE_UPGRADE_NOTICE]);
     const lookups = chain.timestampGets.length;
-    expect(lookups).toBe(3);
+    // Three receipt-bound pending lookups plus one fixed liveness canary per unreadable calendar (ADR-014).
+    const canaries = new Set(LIVENESS_CANARIES.map((c) => c.commitment));
+    expect(chain.timestampGets.filter((hex) => !canaries.has(hex))).toHaveLength(3);
+    expect(chain.timestampGets.filter((hex) => canaries.has(hex)).sort()).toEqual([...canaries].sort());
 
     await page.setInputFiles('#upgrade-receipt', { name: 'invalid.ots', mimeType: 'application/octet-stream', buffer: bytesOf('invalid') });
     await page.getByRole('button', { name: 'Check for confirmation' }).click();
