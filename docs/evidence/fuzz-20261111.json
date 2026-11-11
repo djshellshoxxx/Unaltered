@@ -1,0 +1,148 @@
+{
+  "workstream": "C: hostile-input parser fuzzing (docs/handoff/HARD-PROBLEMS-20261111.md)",
+  "note": "One 300-second wall-clock campaign per new target, run sequentially with --targets and seed 20261111 on a shared 4-CPU container (four other agents active). Corpora and bytes stay in ignored scratch/fuzz. A bounded clean run is not an exhaustive audit; see docs/FUZZING.md for each oracle and what is not covered.",
+  "sourceCommit": "34dd4fc299a8a340dd0b6c4990929411c135a534",
+  "targetSha256": "8231ec7c9af67fc16dda5ff63f21eddf420debedc443af99744fda82c33f8512",
+  "harnessSha256": {
+    "scripts/parser-fuzz.mjs": "2293aafca73ff04f97bc7e0f95b7f3c2152e5851e406732bf8958516b0be2ab0",
+    "scripts/lib/fuzz-coverage.mjs": "7947ad3a3b4a6cd573ae2f4cf385d0ec5f69a4ff7b99c1052871a16ea59d2618",
+    "scripts/lib/fuzz-executor.mjs": "1995019661c1c3ff4a7f272c1b834fb5181bdb7cf241f6c6e4f537007b529cfb",
+    "scripts/lib/fuzz-worker.mjs": "63d1e22f28393d5f23de7b9a90c8fb4e1a5c9f0f5c59d183cea260724ad83ca1"
+  },
+  "seedFixtures": {
+    "count": 6,
+    "sha256": "59073f4f7af7ffaa5469053b58ab0ae147e4c348e34cd1b83483430faf50b91a"
+  },
+  "node": "v22.23.4",
+  "v8": "12.4.254.21-node.57",
+  "campaigns": [
+    {
+      "sourceDirty": false,
+      "options": {
+        "iterations": 10000000,
+        "seconds": 300,
+        "seed": 20261111,
+        "out": "scratch/fuzz",
+        "targets": "qr-frames"
+      },
+      "limits": {
+        "maxInputBytes": 65536,
+        "maxCorpusPerTarget": 256,
+        "caseDeadlineMs": 1000,
+        "workerOldHeapMiB": 128
+      },
+      "status": "budget-complete",
+      "executed": 97089,
+      "mutations": 97059,
+      "targets": {
+        "qr-frames": {
+          "accepted": 14138,
+          "rejected": 82951,
+          "coveredOffsets": 8142,
+          "corpus": 39
+        }
+      },
+      "output": "scratch/fuzz/(local campaign directory, not committed)",
+      "seedExecutions": 30,
+      "retainedSeeds": 30,
+      "elapsedMs": 300004,
+      "stopReason": "wall-clock"
+    },
+    {
+      "sourceDirty": false,
+      "options": {
+        "iterations": 10000000,
+        "seconds": 300,
+        "seed": 20261111,
+        "out": "scratch/fuzz",
+        "targets": "qr-image"
+      },
+      "limits": {
+        "maxInputBytes": 65536,
+        "maxCorpusPerTarget": 256,
+        "caseDeadlineMs": 1000,
+        "workerOldHeapMiB": 128
+      },
+      "status": "budget-complete",
+      "executed": 233696,
+      "mutations": 233684,
+      "targets": {
+        "qr-image": {
+          "accepted": 11703,
+          "rejected": 221993,
+          "coveredOffsets": 5869,
+          "corpus": 19
+        }
+      },
+      "output": "scratch/fuzz/(local campaign directory, not committed)",
+      "seedExecutions": 12,
+      "retainedSeeds": 12,
+      "elapsedMs": 300001,
+      "stopReason": "wall-clock"
+    },
+    {
+      "sourceDirty": false,
+      "options": {
+        "iterations": 10000000,
+        "seconds": 300,
+        "seed": 20261111,
+        "out": "scratch/fuzz",
+        "targets": "trusted-header"
+      },
+      "limits": {
+        "maxInputBytes": 65536,
+        "maxCorpusPerTarget": 256,
+        "caseDeadlineMs": 1000,
+        "workerOldHeapMiB": 128
+      },
+      "status": "budget-complete",
+      "executed": 201364,
+      "mutations": 201313,
+      "targets": {
+        "trusted-header": {
+          "accepted": 735,
+          "rejected": 200629,
+          "coveredOffsets": 20608,
+          "corpus": 73
+        }
+      },
+      "output": "scratch/fuzz/(local campaign directory, not committed)",
+      "seedExecutions": 51,
+      "retainedSeeds": 51,
+      "elapsedMs": 300000,
+      "stopReason": "wall-clock"
+    },
+    {
+      "sourceDirty": false,
+      "options": {
+        "iterations": 10000000,
+        "seconds": 300,
+        "seed": 20261111,
+        "out": "scratch/fuzz",
+        "targets": "receipt-store"
+      },
+      "limits": {
+        "maxInputBytes": 65536,
+        "maxCorpusPerTarget": 256,
+        "caseDeadlineMs": 1000,
+        "workerOldHeapMiB": 128
+      },
+      "status": "budget-complete",
+      "executed": 176462,
+      "mutations": 176452,
+      "targets": {
+        "receipt-store": {
+          "accepted": 15427,
+          "rejected": 161035,
+          "coveredOffsets": 4404,
+          "corpus": 12
+        }
+      },
+      "output": "scratch/fuzz/(local campaign directory, not committed)",
+      "seedExecutions": 10,
+      "retainedSeeds": 10,
+      "elapsedMs": 300001,
+      "stopReason": "wall-clock"
+    }
+  ]
+}

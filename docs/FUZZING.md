@@ -8,14 +8,22 @@ See the [Node inspector API](https://nodejs.org/api/inspector.html) and [V8 prec
 npm ci --ignore-scripts
 npm test
 npm run fuzz:parsers -- --iterations 250000 --seconds 300 --seed 20261028
+npm run fuzz:parsers -- --iterations 10000000 --seconds 300 --seed 20261111 --targets qr-frames
 ```
 
-The driver bundles six synchronous entrypoints: detached OTS proof, bare calendar timestamp, JPEG, PNG, WAV and MP3 (WAV/MP3
-added 2026-10-28 continuation (f)). Initial cases come only from the repository's synthetic/reference fixtures. Every `.ots`
+The driver bundles `tests/fuzz/campaign-targets.ts`: the six original entrypoints in `tests/fuzz/targets.ts` (detached OTS
+proof, bare calendar timestamp, JPEG, PNG, WAV and MP3; WAV/MP3 added 2026-10-28 continuation (f)) and four hostile-input
+targets in `tests/fuzz/targets-hostile.ts` (added 2026-11-11, see below). `--targets a,b` limits the round-robin to the named
+targets, so one campaign can be spent on a single parser; without it every target runs. The worker awaits each case, so an
+asynchronous entrypoint (archival frame recovery hashes with WebCrypto) is checked to completion and a promise that never
+settles hits the same parent deadline as a synchronous hang. Initial cases come only from the repository's synthetic/reference fixtures. Every `.ots`
 file in `tests/fixtures/ots` must be tracked by Git: an untracked or ignored one stops the run before anything is fuzzed or
 written, so a local receipt left there is never fuzzed or copied into a corpus. Unsupported Litecoin, RF64 WAV and
 free-format MP3 remain negative seeds. Mutations flip/replace/insert/delete/truncate bytes; half of PNG mutations repair
 surviving chunk CRCs and half of WAV mutations restore the RIFF length to reach deeper parser branches.
+Half of `qr-frames` mutations go through the target's `repairCase` hook, which rewrites payload lengths and both checksums
+(and, in one of two modes, renumbers indices and counts) so mutated frame sets reach reassembly instead of stopping at the
+SHA-256 check. The hook runs in the driver, never in the worker, so it adds no coverage of its own.
 An input is retained for further mutation when it runs bundled source offsets that no earlier input for that target ran.
 V8 reports block counts in a minimal form: it leaves out a block that runs as often as its parent and joins neighbours with
 equal counts. So each offset takes the count of the innermost reported range around it. A new branch counts even when it
@@ -27,6 +35,28 @@ digest and attestation-commitment equivalence failures remain findings, even if 
 image/audio output must pass self-check, remain byte-idempotent, never grow and leave the input unchanged; an MP3 result
 that reports no removal must equal its input. This does not establish
 pixel or audio equivalence, browser decoding of every mutation, full sanitization or robustness of third-party decoders.
+
+### Hostile-input targets (2026-11-11)
+
+Each oracle is independent of the code under test where that is possible: Node's own SHA-256 instead of WebCrypto or
+`@noble/hashes`, and a separate reading of the specification instead of the product's control flow. Every implementation is
+injectable, and `tests/fuzz/oracles.test.mjs` (part of `npm test`) feeds each oracle deliberately broken implementations and
+requires it to report them, so a target cannot silently degrade to "did not throw".
+
+| Target | Entry point | Input | Oracle (any violation is a finding) |
+|---|---|---|---|
+| `qr-frames` | `recoverReceiptFrames`, `encodeReceiptFrames` (`src/core/archive/frames.ts`) | A frame-list container: big-endian u16 length + frame bytes, or a repeat record (top bit set) that duplicates the previous frame, so up to 4100 frames fit in 64 KiB | Accept/reject and the recovered bytes equal a reference reassembler written from `ARCHIVAL_QR_PROTOCOL.md` (missing, conflicting, mixed and malformed sets must be rejected); every accepted frame's SHA-256 and proof ID match the result; never accepts more than 4096 frames or 16 MiB; a canonically chunked set re-encodes to exactly its distinct frames and every re-encoding round-trips; rejection is an `Error` whose message starts `Invalid archival QR frame: `; input frames are unchanged |
+| `qr-image` | `qrImageDimensions` (`src/core/archive/qr-image.ts`) | Raw PNG/JPEG bytes | Dimensions equal the PNG IHDR or the first JPEG SOFn header as read by a reference tokenizer (ITU T.81 B.1.1); never above 6000 px per side or 16 Mpx, never below 21 px (checked against both the specification and the exported constants); appending bytes or inserting an APPn segment after SOI leaves the result unchanged; rejection is a plain `Error` with one of the eight documented messages; input unchanged |
+| `trusted-header` | `checkTrustedHeader`, `verifyWithTrustedHeader` (`src/core/ots/trusted-header.ts`) | Mode byte, up to 80 header bytes, `.ots` receipt. Mode bits choose the hash form (exact, upper case, wrong nibble, trailing newline), splice the receipt's Bitcoin commitment into the Merkle root, choose the height (attested, +1, nonce, hostile number), take the file digest from the receipt, pass the header as an offset view, or pass a non-string hash | The header check succeeds exactly when Node's double SHA-256 of 80 bytes matches the supplied hash and the height is a u32, otherwise it throws `UnalteredError` `SOURCE_INVALID`; parsed fields equal the supplied bytes and do not alias them; verification never throws, keeps `USER_SUPPLIED_HEADER` trust, returns the state an independent model gives and, when matched, the right height, hash and time; inputs unchanged |
+| `receipt-store` | `loadReceipts`, `addReceipt`, `removeReceipt` (`src/ui/store.ts`) | UTF-8 text placed in an in-memory `localStorage` under the receipt-list key | Never throws; returns at most 500 plain objects with exactly the keys `digestHex`, `createdAtUtc`, `label` (so a stored `fileName` or any other field is never kept or written back), lowercase 64-hex digests and fields bounded to 40/200 characters, equal to a model of the documented contract; loading does not rewrite storage; after hostile data a new record is stored first without losing, reordering or inventing others, and removing it restores the rest |
+
+Not covered by these targets: native browser image decoding (`createImageBitmap`) and the jsQR pixel decoder
+(`decodeRasterFrames`, which needs a raster and is exercised by the archival scan tests and QR qualification workflow), the
+12 MiB image byte limit (fuzz inputs are at most 64 KiB), 16 MiB receipts (a 64 KiB input cannot carry one; the limit is
+checked by rejection of a larger declared length), real Bitcoin headers or chain membership, and browser `localStorage`
+quotas or exceptions (covered by `tests/unit/ui-store-robust.test.ts`). Seeds are the committed `.ots` fixtures, the
+committed golden frame `tests/archival/golden-v1.hex` and generated synthetic data. Campaign evidence for these targets is in
+`docs/evidence/fuzz-20261111.json`.
 
 Bounds are independent of all product acceptance limits: 64 KiB per fuzz input, 256 retained inputs per target, one input at
 a time, one-second parent deadline per input, 128 MiB worker old-generation heap plus 16 MiB young generation. These heap
