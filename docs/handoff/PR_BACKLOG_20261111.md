@@ -45,8 +45,8 @@ CI: "pass*" means every required check passed and only the informational "Live c
 |----|------|------|-----------|---------------------|-------|----|---------|----------------|
 | #41 | d35291677 | main | 1b6dd91 | 0/1 | clean | not read | workflow `unaltered-codex-cloud.yml` | leave; owner decision about the automation (see below) |
 | #42 | db519a9e2 | #41 branch | 1b6dd91 | 0/1 | clean | not read | same workflow, 4 parallel agents | leave; stacked on #41 |
-| #48 | 9abae9dee | main | 1b6dd91 | 43/30 | CONFLICT | not read | consolidation branch, 96 commits; `main` differs from it in 216 files, mostly because `main` is ahead | superseded in large part by #61-#69; needs owner |
-| #49 | dde46eab7 | #48 branch | 1b6dd91 | 45/29 | CONFLICT | not read | OpenAlex sort parameter fix, stacked on #48 | needs owner; lift the single fix if still wanted |
+| #48 | 9abae9dee | main | 1b6dd91 | 43/30 | CONFLICT | not read | consolidation branch, 96 commits; `main` differs from it in 216 files, mostly because `main` is ahead | **merged** to `main` as 6c02ce7 (docs-only squash, 2026-11-11, at the owner's request in another session) |
+| #49 | dde46eab7 | #48 branch | 1b6dd91 | 45/29 | CONFLICT | not read | OpenAlex sort parameter fix, stacked on #48 | superseded: `main` already has its `search.sh` sort fix and test (left open) |
 | #50 | 3811638d9 | main | 1b6dd91 | 0/1 | clean | not read | audit doc `docs/UNALTERED_CONSOLIDATION_AUDIT_20261104.md` | leave (historic) |
 | #52 | 269118949 | main | 1b6dd91 | 0/4 | clean | not read | `.github/scripts/cloud_scope_guard.py` and test, workflow, `docs/AUTOMATION_SCOPE_20261104.md` | needs owner (touches workflow) |
 | #53 | 092829b8a | `codex/recover-qualify-20261104` | 1b89621 | 0/1 | clean | not read | `pages-readiness.yml` npm cache | needs owner (workflow, stacked base) |
@@ -89,3 +89,7 @@ Cause: the OpenAI API account behind the workflow's key has no remaining quota o
 Smallest owner action: restore billing or quota on the OpenAI account whose key is stored as the repository secret
 used by the workflow, or disable the schedule in the repository's Actions settings until funded. Not done by this
 workstream (no workflow edit, disable or dispatch).
+
+## Update 2026-11-11
+
+Another session is integrating #50, #52 (review only), #56, #57, #58, #63, #65, #70, #72 and #73 on its own draft branch. To avoid overlap, this branch does not take them. This branch carries #71 (code), #74, #75 and #76, plus the source and test parts of #77 and #78.
