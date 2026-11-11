@@ -11,6 +11,65 @@ Branch: `codex/recover-qualify-20261104`. See [continuous progress and publicati
 for current source/remote distinctions, fixes, tests and remaining gates. Preserve earlier bundles and the main
 checkout's lockfile edits. Sections below describe historical integration runs.
 
+# Historical consolidation run — 2026-11-04, second pass (UTC)
+
+> Merged forward on 2026-11-11: main later took this pass's code changes (the CI concurrency/timeout change and
+> `tests/unit/hash-cancel-residual.test.ts`) as identical patches, and raised the 2 GiB job timeouts to 40 minutes.
+> The statements below describe the state on 2026-11-04.
+
+- **Candidate:** draft [PR48](https://github.com/djshellshoxxx/Unaltered/pull/48), branch `claude/quirky-meitner-0jr3pz`.
+  It contains all of draft [PR47](https://github.com/djshellshoxxx/Unaltered/pull/47) (head `d9b4fdc`, merged with
+  `--no-ff`) and supersedes it in its description. PR47 is still open and was not changed.
+- **Base:** main `1b6dd91`. Nothing is merged to main. No release, tag, signing, deployment, secret, setting or paid API
+  call. No branch was deleted, rebased or force-pushed; no PR was closed.
+- **Branch dispositions:** [docs/BRANCH_LEDGER_20261104.md](docs/BRANCH_LEDGER_20261104.md) covers all 43 `origin/*` refs.
+  26 are ancestors of the candidate. The other 17 hold no unique valid work beyond one diagnostic design record, which
+  is summarized in [docs/diagnostics/read-stall-ab-20261102.md](docs/diagnostics/read-stall-ab-20261102.md) and not
+  copied, because its README keeps it on the diagnostic branch.
+- **Automation (PR41, PR42, api-funded branch):** reviewed read-only, not integrated. Two high findings need an owner
+  decision first. F1 is an autonomous squash-merge to main with no human review. F2 is PR42's path allowlist missing new
+  files. There are also medium and low findings on the workflow already on main. See the ledger.
+
+## What this pass did
+
+1. Merged the PR47 head twice: `04a9c1f`, then `d9b4fdc` (a GNU-coreutils gate for a sha256sum interop test).
+2. Ran triage, automation-review and four development lanes in parallel, each in its own worktree:
+   - **Cancellation:** every abortable await in `src/core/hash/` now maps to a test.
+     `tests/unit/hash-cancel-residual.test.ts` covers the two paths that had none. Both tests fail when their guard is
+     removed. No source change was needed.
+   - **Dependencies:** the 11 moderate dev-only minimatch advisories were re-verified. No lint-chain release accepts
+     `minimatch >= 11`. Runtime audit is 0. The lockfile is unchanged.
+   - **CI:** measured first. With free runners a run takes about 3.5 minutes; waiting for runners dominates.
+     - `ci.yml` now cancels superseded runs only for `push` and `pull_request`.
+     - Manual dispatches get their own concurrency group.
+     - Every job has `timeout-minutes`.
+     - No job, step or test was removed.
+   - **Fuzz:** seed 20261105, 1,500,000 mutations, 1638 s, no finding
+     ([report](docs/evidence/fuzz-20261104-ext-20261105.json)). The fuzz worker returned no result, so the coordinator
+     ran it.
+3. An independent final review (3 lenses, each finding checked by 2 skeptics) found no code defects. It confirmed four
+   documentation inaccuracies, all fixed in `05c9038`.
+
+## Verification at the final head
+
+- `npm run check`: opsec PASS, typecheck and lint clean, vitest 29 files, 290 passed and 2 skipped, Node tests 45/45.
+- `npm run test:e2e -- --retries=0` (Chromium, local): 79 passed, 1 skipped.
+- CI on PR48: see the PR. The informational live calendar check is red for a known external reason: the calendars
+  return their pending 404 without CORS headers.
+
+## Incidents
+
+- A triage worker ran `git reset --hard 459cded` in the main checkout by mistake. Its `cd` into a scratch directory had
+  failed. The tree was clean and already pushed, so the coordinator restored the branch with a fast-forward to
+  `origin/claude/quirky-meitner-0jr3pz`. Nothing was lost.
+
+## Still open (owner or human gates)
+
+R1 Bob/Finney residuals; Q7 Trusted Types decision and Tor Browser testing; screen-reader, Spanish-copy and usability
+passes; independent audit and second-person rebuild; signing (REL-5) and OPS-1..6; domain (Q5) and legal review
+(LEGAL-1); decision on PR41/PR42 automation; merge of PR48 to main.
+
+# Current integration run — 2026-11-04 (UTC)
 # Historical integration run — 2026-11-04 (UTC)
 
 - **Candidate:** draft [PR47](https://github.com/djshellshoxxx/Unaltered/pull/47), branch `claude/funny-lamport-2jfc0e`,
