@@ -42,3 +42,10 @@ it('counts the full technical appendix and uses print-safe physical symbol dimen
   expect(plan.moduleSizeMm * (plan.modules + 8)).toBeCloseTo(72);
   expect(plan.version).toBeLessThan(20);
 });
+
+// The print layout always includes a cover page and a separate recovery appendix.
+// A one-page cap is an impossible configuration, not a 64-symbol overflow.
+it('reports the two-page minimum rather than an unrelated symbol-limit error', () => {
+  expect(planArchivalQr(100, { maxPages: 2 }).pages).toBe(2);
+  expect(() => planArchivalQr(100, { maxPages: 1 })).toThrow(/at least two pages/i);
+});
