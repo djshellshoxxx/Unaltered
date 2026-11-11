@@ -64,6 +64,15 @@ test('unexpected parser exceptions remain findings', async () => {
     assert.deepEqual(result.finding, { kind: 'exception', name: 'RangeError', message: 'fixture exception' });
   } finally { await worker.close(); }
 });
+test('asynchronous targets are awaited: their outcome, rejection and hang are all observed', async () => {
+  const worker = await createExecutor(targetUrl, { timeoutMs: 200 });
+  try {
+    assert.equal((await worker.runCase('async-accept', Uint8Array.of(1))).outcome, 'accepted');
+    assert.equal((await worker.runCase('async-accept', Uint8Array.of(0))).outcome, 'rejected');
+    assert.deepEqual((await worker.runCase('async-throw', new Uint8Array())).finding, { kind: 'exception', name: 'TypeError', message: 'fixture async exception' });
+    await assert.rejects(worker.runCase('async-hang', new Uint8Array()), { code: 'FUZZ_TIMEOUT' });
+  } finally { await worker.close(); }
+});
 test('parent deadline terminates a synchronous parser hang', async () => {
   const worker = await createExecutor(targetUrl, { timeoutMs: 50 });
   try {
