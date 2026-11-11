@@ -34,6 +34,13 @@ Done (each fix has a regression test that failed first):
 - [x] **QR image size gate bypass (fixed, 59ad556).** A stuffed `FF 00` at a JPEG marker position let a hidden frame
   header set the decoded size, while the gate read a later small decoy. Chromium decoded a crafted file as 7000x32 against
   the 6000 px side limit. Impact: raster memory from a scan image the user selects. Regression test added.
+- [x] **Archival QR production prerequisites (D).**
+  - Independent golden-v2 vectors (7 accept, 18 reject), built by Python from the spec text. TypeScript and Python agree.
+  - zxing-cpp 3.1.1 recovers 15/15 Chromium-printed PDFs byte-identically.
+  - Distortion corpus (seed 20261111, [evidence](evidence/qr-robustness-20261111.json)): in-app recovery rose from 58/77 to
+    68/77 (auto ECC) and from 16/27 to 20/27 (H), matching zxing. The gain comes from a contrast stretch and bounded ±2°/±4°
+    deskew retries in the scan worker; no previous recovery was lost and no wrong receipt was ever produced.
+  - Docs corrected: the largest printable version is V22, not V23.
 - [x] **PR backlog ledger** ([PR_BACKLOG_20261111.md](handoff/PR_BACKLOG_20261111.md)). Integrated #71 (CLI code), #74, #75 and #76,
   plus the source and test parts of #77 and #78.
 
@@ -46,6 +53,11 @@ Still open:
   calendars are reachable (for example in the network-check CI job; the workflow edit is the owner's).
   Pending 404 CORS itself remains external.
 - [ ] **Owner:** decide whether to send `docs/proposals/OTS_SERVER_CORS.md` to the opentimestamps-server maintainers or operators.
+- [ ] **CI (owner, workflow edit):** install `tests/archival/requirements.txt` (hash-pinned) in `qr-qualification.yml` and
+  set `UNALTERED_QR_PYTHON`, so `qr-independent.spec.ts` runs on every commit. Without the decoder it skips.
+- [ ] **Human QR evidence:** print on at least 2 real printers and recover with at least 2 phone cameras and a flatbed
+  scanner. Also measure scan-worker robustness in Firefox and WebKit.
+- [ ] **Small refactor:** export `symbolCandidates` from `qr-decode.ts` so the worker's near-copy `hasSymbolLikeArea` can go.
 - [ ] **Native Spanish review** of the new `upgrade.liveness.*` strings.
 - [ ] **Canary binding (optional hardening).** The canary is bound to the recorded Bitcoin height only. Binding Bob and
   Finney to their recorded Merkle roots as well would be stricter. A calendar reply does not carry its commitment, so
