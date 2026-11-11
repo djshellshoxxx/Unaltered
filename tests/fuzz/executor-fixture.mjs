@@ -4,6 +4,10 @@ export function runCase(target, bytes) {
   if (target === 'hang') for (;;) { /* Parent must terminate a synchronous infinite loop. */ }
   if (target === 'throw') throw new RangeError('fixture exception');
   if (target === 'exit') process.exit(9);
+  // Asynchronous entry points (archival frame recovery uses WebCrypto) are awaited to completion.
+  if (target === 'async-accept') return Promise.resolve().then(() => (bytes[0] === 1 ? 'accepted' : 'rejected'));
+  if (target === 'async-throw') return Promise.resolve().then(() => { throw new TypeError('fixture async exception'); });
+  if (target === 'async-hang') return new Promise(() => {});
   // V8 leaves out a block that runs exactly as often as its parent and joins equal-count neighbours,
   // so these shapes check that feedback follows executed code rather than reported range shapes.
   if (target === 'branch') { if (bytes[0] === 1) { hits.taken++; } else { hits.other++; } return 'accepted'; }

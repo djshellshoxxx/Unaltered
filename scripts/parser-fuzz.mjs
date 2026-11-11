@@ -9,12 +9,12 @@ import { pathToFileURL } from 'node:url';
 import { build } from 'esbuild';
 import { createExecutor } from './lib/fuzz-executor.mjs';
 
-const usage = 'node scripts/parser-fuzz.mjs [--iterations 100000] [--seconds 300] [--seed 20261028] [--out scratch/fuzz] [--replay finding.json]';
+const usage = 'node scripts/parser-fuzz.mjs [--iterations 100000] [--seconds 300] [--seed 20261028] [--out scratch/fuzz] [--targets a,b] [--replay finding.json]';
 const options = { iterations: 100000, seconds: 300, seed: 20261028, out: 'scratch/fuzz' };
 for (let i = 2; i < process.argv.length; i++) {
   const key = process.argv[i].replace(/^--/, '');
   if (key === 'help') { process.stdout.write(`${usage}\n`); process.exit(0); }
-  if (!['iterations', 'seconds', 'seed', 'out', 'replay'].includes(key) || process.argv[i] !== `--${key}` || !process.argv[i + 1]) throw new Error(usage);
+  if (!['iterations', 'seconds', 'seed', 'out', 'targets', 'replay'].includes(key) || process.argv[i] !== `--${key}` || !process.argv[i + 1]) throw new Error(usage);
   const value = process.argv[++i];
   options[key] = ['iterations', 'seconds', 'seed'].includes(key) ? Number(value) : value;
 }
@@ -39,7 +39,7 @@ const random = (n) => {
   randomState ^= randomState << 13; randomState ^= randomState >>> 17; randomState ^= randomState << 5;
   return (randomState >>> 0) % n;
 };
-function mutate(source, target, crc32) {
+function mutate(source, target, crc32, repair) {
   let bytes = source.slice();
   for (let changes = 1 + random(4); changes > 0; changes--) {
     const at = random(bytes.length + 1);
@@ -67,6 +67,8 @@ function mutate(source, target, crc32) {
       at += 12 + size;
     }
   }
+  // Target-specific repair (archival QR frames: lengths and both checksums) so mutations reach reassembly logic.
+  if (repair) bytes = repair(target, bytes, random);
   // Half the WAV mutations restore the RIFF length so feedback reaches the chunk walk instead of the container check.
   if (target === 'wav' && random(2) && bytes.length >= 12) {
     new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).setUint32(4, bytes.length - 8, true);
@@ -83,12 +85,17 @@ try {
   const sourceCommit = git('rev-parse', 'HEAD').trim();
   const sourceDirty = git('status', '--porcelain', '--untracked-files=normal').length > 0;
   const harnessSha256 = Object.fromEntries(HARNESS.map((path) => [`scripts/${path}`, sha256(readFileSync(new URL(`./${path}`, import.meta.url)))]));
-  const bundled = await build({ entryPoints: ['tests/fuzz/targets.ts'], bundle: true, platform: 'node', format: 'esm', target: 'node22', write: false });
+  const bundled = await build({ entryPoints: ['tests/fuzz/campaign-targets.ts'], bundle: true, platform: 'node', format: 'esm', target: 'node22', write: false,
+    loader: { '.hex': 'text' } });
   const bundle = bundled.outputFiles[0].contents;
   const targetFile = join(temp, 'targets.mjs');
   writeFileSync(targetFile, bundle);
   const targetUrl = pathToFileURL(targetFile).href;
-  const { TARGETS, seedCases, crc32 } = await import(targetUrl);
+  const { TARGETS, seedCases, crc32, repairCase } = await import(targetUrl);
+  // --targets narrows the round-robin, e.g. one 300-second campaign per newly added parser.
+  const selected = options.targets === undefined ? [...TARGETS] : [...new Set(options.targets.split(','))];
+  const unknown = selected.filter((target) => !TARGETS.includes(target));
+  if (!selected.length || unknown.length) throw new Error(`Unknown fuzz target(s): ${unknown.join(', ') || '(none)'}; known: ${TARGETS.join(', ')}`);
   executor = await createExecutor(targetUrl);
   const start = performance.now();
   // Seeds must be committed synthetic fixtures, so a local receipt left in the folder is never fuzzed or copied to a corpus.
@@ -100,20 +107,21 @@ try {
     return { name, bytes: new Uint8Array(readFileSync(path)) };
   });
   const seedFixtures = { count: seedFiles.length, sha256: sha256(seedFiles.map(({ name, bytes }) => `${sha256(bytes)}  ${name}\n`).join('')) };
-  const seeds = seedCases(seedFiles.map(({ bytes }) => bytes));
+  const seeds = (await seedCases(seedFiles.map(({ bytes }) => bytes))).filter((item) => selected.includes(item.target));
   mkdirSync(options.out, { recursive: true });
   const output = mkdtempSync(join(resolve(options.out), 'campaign-'));
   const report = { sourceCommit, sourceDirty, targetSha256: sha256(bundle), harnessSha256, seedFixtures, node: process.version, v8: process.versions.v8,
     options, limits: { maxInputBytes: MAX_BYTES, maxCorpusPerTarget: MAX_CORPUS, caseDeadlineMs: 1000, workerOldHeapMiB: 128 },
-    status: 'running', executed: 0, mutations: 0, targets: Object.fromEntries(TARGETS.map((t) => [t, { accepted: 0, rejected: 0, coveredOffsets: 0, corpus: 0 }])), output };
-  const corpus = new Map(TARGETS.map((t) => [t, []]));
+    status: 'running', executed: 0, mutations: 0, targets: Object.fromEntries(selected.map((t) => [t, { accepted: 0, rejected: 0, coveredOffsets: 0, corpus: 0 }])), output };
+  const corpus = new Map(selected.map((t) => [t, []]));
   const hashes = new Set();
   let current;
   const save = () => { report.elapsedMs = Math.round(performance.now() - start); writeFileSync(join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n'); };
   const retain = (item, initial = false) => {
     const key = `${item.target}-${sha256(item.bytes)}`;
     const list = corpus.get(item.target);
-    if (hashes.has(key) || list.length >= MAX_CORPUS) return;
+    // A replayed target outside --targets is checked but never retained.
+    if (!list || hashes.has(key) || list.length >= MAX_CORPUS) return;
     hashes.add(key); list.push(item);
     writeFileSync(join(output, `${key}.bin`), item.bytes, { flag: 'wx' });
     report.targets[item.target].corpus = list.length;
@@ -125,7 +133,7 @@ try {
     const result = await executor.runCase(item.target, item.bytes);
     report.executed++;
     if (result.finding) throw Object.assign(new Error(result.finding.message), { finding: result.finding });
-    const counts = report.targets[item.target];
+    const counts = report.targets[item.target] ??= { accepted: 0, rejected: 0, coveredOffsets: 0, corpus: 0 };
     counts[result.outcome]++; counts.coveredOffsets = result.coveredOffsets;
     if (result.novel) retain(item);
   };
@@ -146,9 +154,10 @@ try {
       report.seedExecutions = seeds.length;
       for (const item of seeds) { retain(item, true); await evaluate(item); }
       while (report.mutations < options.iterations && performance.now() - start < options.seconds * 1000) {
-        const target = TARGETS[report.mutations % TARGETS.length];
+        const target = selected[report.mutations % selected.length];
         const list = corpus.get(target);
-        await evaluate({ target, bytes: mutate(list[random(list.length)].bytes, target, crc32) });
+        if (!list.length) throw new Error(`No seed for fuzz target ${target}`);
+        await evaluate({ target, bytes: mutate(list[random(list.length)].bytes, target, crc32, repairCase) });
         report.mutations++;
         if (report.mutations % 1000 === 0) save();
       }
