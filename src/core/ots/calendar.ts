@@ -6,6 +6,7 @@ import { UnalteredError, safeMessage } from '../errors';
 import { DEFAULT_CALENDARS, DEFAULT_MIN_CALENDARS } from '../net/allowlist';
 import { netFetch, type NetPolicy } from '../net/fetch';
 import { collectAttestations, mergeTree, mergeTrees, parseProof, parseTimestampBody, serializeProof, type Leaf } from './codec';
+import { probeLiveness, type CalendarLiveness } from './liveness';
 import { applyOp } from './ops';
 import type { DetachedProof, Op, ProofStatus, TsNode } from './types';
 
@@ -18,6 +19,11 @@ export interface StampConfig {
   signal?: AbortSignal | undefined;
   /** Test seam; production uses crypto.getRandomValues. */
   randomBytes?: (n: number) => Uint8Array;
+  /**
+   * Upgrade only (ADR-014): after an unreadable pending lookup on a still-pending receipt, ask that calendar once for
+   * its recorded public canary commitment. Off by default; the browser Verify view turns it on.
+   */
+  liveness?: boolean;
 }
 
 export const defaultStampConfig = (): StampConfig => ({ calendars: DEFAULT_CALENDARS, minAccepted: DEFAULT_MIN_CALENDARS });
@@ -31,6 +37,11 @@ export interface CalendarResult {
    * Access-Control-Allow-Origin, so it is indistinguishable here from an outage. Not a confirmation either way.
    */
   unreadable?: boolean;
+  /**
+   * Upgrade with `liveness` only, set on unreadable results: whether the calendar answered its fixed public canary.
+   * A hint about the calendar, never about this receipt; it changes neither the receipt nor its status.
+   */
+  liveness?: CalendarLiveness;
 }
 
 export interface StampResult {
@@ -219,6 +230,17 @@ export async function upgrade(ots: Uint8Array, cfg: StampConfig): Promise<Upgrad
       }
     }),
   );
+
+  // R1 (ADR-014): only a still-pending receipt needs the reachable-versus-blocked hint. At most one canary per calendar.
+  if (cfg.liveness === true && proofStatus(proof) === 'pending') {
+    const unreadable = [...new Set(calendars.filter((c) => c.unreadable === true).map((c) => c.url))];
+    const found = await Promise.all(unreadable.map(async (url) => [url, await probeLiveness(url, { net: cfg.net, signal: cfg.signal })] as const));
+    const byUrl = new Map(found);
+    for (const c of calendars) {
+      const state = c.unreadable === true ? byUrl.get(c.url) : undefined;
+      if (state) c.liveness = state;
+    }
+  }
 
   // Compare against the canonical re-serialisation of the input so a receipt written by another tool with a different
   // (but equivalent) ordering is not reported as changed.
