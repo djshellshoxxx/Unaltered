@@ -1,5 +1,46 @@
 # Network facts (M0-3)
 
+## Liveness canary for unreadable pending upgrades — 2026-11-11 UTC
+
+[ADR-014](DECISIONS.md#adr-014-calendar-liveness-canary-for-unreadable-pending-upgrades). Pending `404` replies remain
+unreadable in browsers (below). When an upgrade leaves a receipt pending and a calendar's lookup was unreadable, the
+Verify page now asks **that calendar** once for a fixed public commitment whose completed `200` reply carries
+`Access-Control-Allow-Origin: *` in the recorded evidence:
+
+| Calendar | Canary `GET /timestamp/<commitment>` | Recorded block | Evidence of a browser-readable 200 |
+|---|---|---|---|
+| alice.btc.calendar.opentimestamps.org | `57cfa5c46716df9bd9e83595bce439c58108d8fcc1678f30d4c6731c3f1fa6c79ed712c66fb1ac8d4e4eb0e7` | 428648 | [browser-20261105-network.json](evidence/browser-20261105-network.json) `confirmedAliceUpgrade` (Chromium GET 200, ACAO `*`); commitment in [r1-targets](evidence/r1-targets-20261105.json) `initialSameCommitmentProbe` |
+| bob.btc.calendar.opentimestamps.org | `57d4651676e9ac3b3b57c1584828ea5162979c96483a03c87c69a1b8614d1cbaf387e0f5647b90ea1b270a97` | 429355 | [r1-targets](evidence/r1-targets-20261105.json) target `bob` (Node and Chromium GET 200, ACAO `*`) |
+| finney.calendar.eternitywall.com | `5affdc4e9ca8db900367fd8d74967d67d57dbad0f3cdc715d217dfd5d07a4dbb1eacec03384e62331c930912` | 523367 | [r1-targets](evidence/r1-targets-20261105.json) target `finney` (Node and Chromium GET 200, ACAO `*`) |
+
+Each commitment is the pending commitment that calendar itself issued in an upstream example receipt
+(`opentimestamps-client` `incomplete.txt.ots` and `two-calendars.txt.ots`, `javascript-opentimestamps` `osdsp.txt.ots`;
+LGPL-3.0-or-later; only the hex is used). On 2026-11-11 the commitments were re-derived with python-opentimestamps 0.4.5
+from upstream receipts whose SHA-256 matches the recorded `95673f28…`, `1f0fe002…` and `080ccfea…`.
+`tests/unit/ots-upgrade-liveness.test.ts` binds the table to the evidence files.
+
+- **Result per calendar.** *Reachable*: the reply reads, parses with the normal calendar parser and contains a Bitcoin
+  attestation at the recorded height. The page says the receipt is *probably* still waiting for Bitcoin there.
+  *Unreachable or blocked*: the canary could not be read either, or timed out. *Unknown*: anything else, including a
+  malformed or different timestamp; never "pending". The canary never changes the receipt, its status or verification.
+- **Privacy and limits.** A fixed public commitment reveals nothing about the user's file. It goes only to an allowlisted
+  calendar the page has just contacted, through the same `netFetch` policy (HTTPS only, no credentials or referrer,
+  `cache: no-store`, redirects refused, 15 s, 256 KiB). At most one canary per calendar per upgrade attempt, so at most
+  three extra requests; none when the pending reply was readable or the receipt became confirmed. The CSP, allowlist and
+  hosts are unchanged. The fixed canary path does make the request recognisable as this app to the calendar operator.
+- **Qualification.** Mocked Chromium: `tests/e2e/upgrade-liveness.spec.ts` (both UI states, EN/ES). Unit:
+  `tests/unit/ots-upgrade-liveness.test.ts`, `tests/unit/ots-liveness-view.test.ts`. **Live browser qualification is
+  outstanding**: the 2026-11-11 container's proxy refused the calendars (`ERR_TUNNEL_CONNECTION_FAILED`), and the app then
+  correctly showed all three as "unreachable or blocked". On a host that reaches the calendars (CI `network-check`):
+
+  ```sh
+  npm run build && UNALTERED_LIVE_LIVENESS=1 npx playwright test tests/e2e/liveness-live.spec.ts --retries=0
+  ```
+
+  It uploads a synthetic pending receipt for a random commitment (no submission) and expects all three calendars to be
+  reported reachable. The upstream fix that would make pending replies readable is in
+  [proposals/OTS_SERVER_CORS.md](proposals/OTS_SERVER_CORS.md); it has not been sent to anyone.
+
 ## Current browser qualification — 2026-11-05 UTC
 
 On integrated build `85f5bc962b80d2c4`, strict-CSP Chromium156 successfully upgraded historical

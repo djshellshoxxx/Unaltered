@@ -163,3 +163,65 @@ Encode the original receipt bytes in the versioned `UNALTERED-OTS-QR/1` framing 
 Bundle both libraries locally. Decode images in a cancellable worker with byte, pixel, frame and time limits. Keep the existing CSP, network allowlist and no-CDN behavior. Use the browser's Print / Save as PDF function. Prefer saving the digital `.ots` receipt; QR images and paper certificates are supplementary backups, and verification also requires the original document.
 
 **Consequences.** Independent encoding/decoding, shared Python golden vectors, generated parser properties, and A4/Letter PDF raster tests qualify the implemented path. These checks do not establish physical printer/camera reliability or Bitcoin confirmation. New library versions or framing changes require renewed review and qualification; unsupported compression/version flags fail closed. Practical print limits leave oversized receipts available digitally without truncation.
+
+---
+
+## ADR-014: Calendar liveness canary for unreadable pending upgrades
+**Status:** Accepted for agent review on 2026-11-11; live browser qualification pending (see below).
+
+**Context.** Risk R1. All three built-in calendars answer `GET /timestamp/<commitment>` for a pending or unknown
+commitment with `404` and no `Access-Control-Allow-Origin`, so the browser surfaces an opaque `TypeError`, exactly as
+for an outage or a blocked connection ([NETWORK.md](NETWORK.md), [evidence](evidence/cors-continuation-20261105.md)).
+The cause is outside this repository: the published nginx example uses `add_header` without `always`
+([proposal](proposals/OTS_SERVER_CORS.md)). Until now the Verify page could only say "either may be responsible".
+A *completed* commitment's `200` does carry `Access-Control-Allow-Origin: *`. The recorded evidence shows a
+browser-readable `200` on each calendar for one public commitment from an upstream example receipt:
+Alice `57cfa5c4…4eb0e7` (block 428648; `incomplete.txt.ots`, receipt SHA-256 `95673f28…`; Chromium GET 200, ACAO `*`,
+[browser-20261105-network.json](evidence/browser-20261105-network.json), commitment recorded in
+[r1-targets-20261105.json](evidence/r1-targets-20261105.json) `initialSameCommitmentProbe`), Bob `57d46516…1b270a97`
+(block 429355) and Finney `5affdc4e9ca8…1c930912` (block 523367), both with Node and Chromium GET 200, ACAO `*` in
+r1-targets. The agent re-derived each commitment from the hash-matching upstream receipt with python-opentimestamps
+0.4.5 on 2026-11-11; the calendars themselves were not reachable from that container. The evidence therefore supports a
+canary for all three built-in calendars and for no other host.
+
+**Decision.** When an upgrade leaves a receipt pending and a calendar's pending lookup was unreadable, the browser
+Verify view asks that calendar once for its recorded canary commitment (`src/core/ots/liveness.ts`,
+`StampConfig.liveness`, off by default and off in the CLI). It uses the same `netFetch` transport and policy
+(allowlist, HTTPS only, no credentials, no referrer, no cache, redirects refused, 15 s, 256 KiB) and the same
+`parseTimestampBody` parser and limits. The result is per calendar:
+
+- `reachable`: status 200, the body parses as a timestamp rooted at the requested commitment, and it contains a
+  Bitcoin attestation at the recorded height. Shown as "reachable … your receipt is **probably** still waiting for
+  Bitcoin there".
+- `unreachable`: the canary could not be read either (`NET_FAILED`) or timed out. Shown as "unreachable or blocked".
+- `unknown`: no canary recorded, a readable non-200, a malformed, oversized or different timestamp (other height, or
+  pending only), or a policy refusal. Fails closed: never "pending", never "reachable".
+
+Cancellation propagates as `ABORTED`. The canary is never merged into the receipt and never changes `status`, `changed`
+or the bytes offered for download; the existing pending and unreadable notices stay unchanged. At most one canary per
+calendar per upgrade attempt, and none when the pending reply was readable or the receipt became Bitcoin-confirmed.
+
+**Alternatives considered.**
+(1) *Do nothing*: honest but leaves users unable to tell a blocked network from normal waiting, which is the commonest
+case for every pending receipt. (2) *A relay or proxy that adds the header*: rejected by ADR-001 (a server of ours) and
+SPEC section 9; it would also see every user's commitment and IP. (3) *A different calendar provider*: no source-documented
+candidate was browser-qualified (Catallaxy's POST was unreadable, 2026-11-05), and ADR-008 makes a new host a reviewed
+source change; it would not fix the three existing hosts. (4) *`no-cors` or reading opaque responses*: an opaque reply
+exposes neither status nor body, so it cannot separate 404 from an outage and would only hide the problem.
+(5) *The canary* (chosen): no new host, CSP entry or service, and no user data. A stronger pin on the attested Merkle
+root was considered: it is recorded for Bob and Finney but not for Alice, and a synthetic reply cannot reach a real
+Merkle root, so the pin is the recorded block height for all three. That is enough for a reachability hint, which never
+contributes to verification.
+
+**Consequences.** (+) Users see per calendar whether waiting is the likely explanation. (+) Privacy: the canary is a
+fixed public commitment, so it reveals nothing about the user's file; it goes only to a calendar the same page has just
+contacted, so it adds no new party. (−) Up to three extra requests per pending upgrade attempt, and the fixed canary
+path makes the app's requests recognisable as Unaltered to calendar operators (the pending lookup already disclosed the
+IP and timing). (−) "Reachable" does not prove that this receipt's `404` was a pending reply: it may also be "not found"
+on that calendar, hence "probably". (−) A calendar that prunes or changes its old replies turns its canary `unknown`
+(fail closed); the table then needs a new evidenced commitment. (−) A calendar could special-case the canary; the hint is
+not evidence and is not used as such. The preferred fix remains the upstream `always` change; once calendars send ACAO
+on `404`, a readable 404 is shown as ordinary pending and no canary is sent. **Live qualification** (not possible from
+the 2026-11-11 container, whose proxy refuses the calendars):
+`npm run build && UNALTERED_LIVE_LIVENESS=1 npx playwright test tests/e2e/liveness-live.spec.ts --retries=0` on a host
+that reaches the calendars must show all three as reachable.
