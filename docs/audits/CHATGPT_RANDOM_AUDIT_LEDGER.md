@@ -241,3 +241,21 @@
 **Prior exact-head CI:** audit branch source `8b0d207ef94310b526d318f14c8992acaf0607dc`: [CI #42911286973](https://github.com/djshellshoxxx/Unaltered/actions/runs/42911286973) and [archival QR #42911286769](https://github.com/djshellshoxxx/Unaltered/actions/runs/42911286769) both completed **workflow-success**. CI: 12 passing jobs, 1 skipped, 1 **failed informational live-calendar/explorer CORS** check. This new ledger commit requires fresh exact-head CI; do not treat the preceding checks as its own qualification.
 
 No production code, security gates, other owners' branches, main, deployment, release, live wiki or real-world user evidence were modified.
+
+---
+## Thirteenth rotation — 2026-11-10 — OpenTimestamps model and limit contracts
+
+**Source:** unchanged `main` `556fc2d49a4bbc005babd0094c9233ae4ad418ad`; **worker:** this was a distinct source-only phase performed sequentially by one assistant, not a concurrent independent second worker. No runtime test or independent security certification.
+
+**Deterministic, nonrepeating selection:** Re-read untruncated GitHub recursive main tree (1,014 objects). Sorted `src/core/**/*.ts` excluding `*.worker.ts` yielded 35 eligible source paths. Excluded the previous 12 starting paths in ledger order: PNG parser, OTS calendar, archive frames, evidence ZIP, QR decode, network allowlist, OTS operations, core bytes, strip index, strip audio, QR scan, strip detect. FNV-1a unsigned 32-bit of `mainSHA|previous1|...|previous12` = **3560309970**; index **15 of 23** remaining paths (zero-based), selecting **`src/core/ots/types.ts`**. Exclude that path in rotation 14.
+
+**Trust boundary inspected:**
+- `src/core/ots/types.ts:5-27`: operation and attestation types, detached root digest, and the **structural-only** `ProofStatus` definition; neither a Bitcoin attestation tag nor a TypeScript type establishes verified anchoring. Runtime validation must not trust those types from adversarial inputs.
+- `src/core/ots/types.ts:29-68`: pinned OpenTimestamps magic/tags, deliberate unsupported-operation/attestation sets, parser budgets (1 MiB receipt, 20,000 nodes, depth 256, 256 attestations, 16 distinct Bitcoin commitments).
+- `src/core/ots/codec.ts`: actual runtime fingerprint/header/version checks, iterative bounded proof parser, rejection of unsupported operations and heights above uint32, canonical serializer, aggregate budgets, mutation-safe merge rollback. Merely exposing model constants does not bypass runtime parsing.
+- `src/core/ots/verify.ts`: untrusted in-memory `DetachedProof` is reserialized then parsed before verification; file-digest equality, operation replay and independent block-header quorum gate `VERIFIED`. `src/core/ots/bitcoin.ts` checks 80-byte block-header identity and quorum source handling.
+- Existing tests **read, not executed**: `tests/unit/proof-budget.test.ts`, `ots-height-limits.test.ts`, `ots-canonical-order.test.ts`, `ots-verify-replay.test.ts`. These cover parser budgets/rollback, uint32 bounds, reference ordering and forged in-memory commitment rejection. Consult `docs/THREAT_MODEL.md` T6/T7 for proof-forgery and denial-of-service assumptions.
+
+**Disposition:** No new **reproducible** correctness defect, authorization bypass, privacy leak or cryptographic vulnerability established. This code review does not assert a full proof of bounds, network independence, consensus validity, or absence of DoS. External CORS of pending calendar 404s remains an already known limitation, not a new finding. Do not open a public vulnerability issue without reproduction.
+
+**Previous audit exact-head qualification:** `b07cf58e39c718e0ba31b57051b52e0f7c59820c` [CI #42920928951](https://github.com/djshellshoxxx/Unaltered/actions/runs/42920928951) and [QR #42920929082](https://github.com/djshellshoxxx/Unaltered/actions/runs/42920929082) finished with workflow success; CI retains a separate failed **informational** external calendar/CORS check. This new ledger-only head needs its own exact-head CI. No tests run locally. Main, crypto, release controls, other active PRs and live GitHub Wiki untouched.
