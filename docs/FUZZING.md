@@ -56,3 +56,13 @@ minimize inputs. Triage findings, reduce them, then commit a minimal synthetic r
 real sensitive files, photos, private receipts or research packs. Keep campaigns' bulk corpora out of Git; record compact,
 non-sensitive evidence in the handoff. `npm test` also exercises coverage feedback, exception reporting, worker exit and
 parent termination using deliberately faulty test functions. No long campaign runs by default in ordinary CI.
+
+## Recorded campaigns
+
+Bounded, seeded campaigns whose compact reports are committed under `docs/evidence/`. Each is clean only for its
+recorded source, seed and budget; none is exhaustive coverage or an independent audit (REL-2 stays open).
+
+| Date | Report | Source | Seed | Mutations (inputs) | Duration | Result |
+|---|---|---|---|---:|---:|---|
+| 2026-11-04 | [fuzz-20261104.json](evidence/fuzz-20261104.json) | `0b5f18f` | 20261104 | 1,000,000 (1,000,036) | 1171 s | budget-complete, no finding |
+| 2026-11-04 | [fuzz-20261104-ext-20261105.json](evidence/fuzz-20261104-ext-20261105.json) | `459cded` (parser sources equal to the PR48 head) | 20261105 | 1,500,000 (1,500,036) | 1638 s | budget-complete, no finding |

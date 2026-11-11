@@ -12,7 +12,9 @@ Do tasks in order within a milestone unless marked parallel.
 
 ## Authoritative integration status — 2026-11-04
 
-- Candidate: draft [PR47](https://github.com/djshellshoxxx/Unaltered/pull/47), branch `claude/funny-lamport-2jfc0e`.
+- Candidate: draft [PR48](https://github.com/djshellshoxxx/Unaltered/pull/48), branch `claude/quirky-meitner-0jr3pz`.
+  It contains all of draft [PR47](https://github.com/djshellshoxxx/Unaltered/pull/47) (`claude/funny-lamport-2jfc0e`)
+  and supersedes it. Branch dispositions: [BRANCH_LEDGER_20261104.md](BRANCH_LEDGER_20261104.md).
 - Base: main `1b6dd91`. PR34 is already merged into main.
 - Task states, CI run IDs and unreproduced suspects: [ULTRA_RUN_BOARD.md](ULTRA_RUN_BOARD.md).
 - The 2026-10-30 section below is historical. Where the two disagree, this section supersedes it.
@@ -26,6 +28,10 @@ Done (each fix has a regression test that failed on its parent):
   and WebCrypto reads stop on abort, covered by unit tests.
   - Native reads are not themselves cancelled. `awaitAbortable` documents this, so no "native read cancelled" claim
     is made.
+  - Re-verified in the PR48 consolidation: every abortable await in `stream.ts` and `hasher.ts` now maps to an abort
+    test. The two paths that lacked one (the non-Blob BYOB read and the yield between chunks) are covered by
+    `tests/unit/hash-cancel-residual.test.ts`; both tests fail when their guard is removed. The 2026-10-30 item
+    "Resolve documented fallback cancellation residual" below is superseded by this entry.
 - [x] **Firefox/WebKit 2 GiB completion dispatch** on the candidate's hash code (run 41756413597): Firefox 3/3,
   WebKit 3/3, Chromium memory 3/3.
   - Completion only: there is no RSS probe on Firefox or WebKit, so no memory-ceiling claim is made for them.
@@ -37,6 +43,7 @@ Done (each fix has a regression test that failed on its parent):
   as did the offline single-file test.
 - [x] **Dev-only minimatch advisory** (11 moderate entries): accepted risk with a dated rationale in
   `DEPENDENCIES.md`. No upstream lint-chain release accepts the fix yet; runtime audit is 0.
+  Re-verified for PR48: still 11 moderate, dev-only; every latest lint-chain release still declares `minimatch ^10`.
 - [x] **Trusted Types.** Delivery and enforcement are now tested for both builds. Chromium enforces; Firefox and
   WebKit are covered by the CI E2E matrix.
 - [x] **OTS fixes:**
