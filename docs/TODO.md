@@ -31,6 +31,9 @@ Done (each fix has a regression test that failed first):
   receipt-store. Four 300 s campaigns, seed 20261111, no product finding
   ([evidence](evidence/fuzz-20261111.json)). The follow-up review found that a forged frame allocated the declared 16 MiB
   before rejection; this is fixed (7cc087c).
+- [x] **QR image size gate bypass (fixed, 59ad556).** A stuffed `FF 00` at a JPEG marker position let a hidden frame
+  header set the decoded size, while the gate read a later small decoy. Chromium decoded a crafted file as 7000x32 against
+  the 6000 px side limit. Impact: raster memory from a scan image the user selects. Regression test added.
 - [x] **PR backlog ledger** ([PR_BACKLOG_20261111.md](handoff/PR_BACKLOG_20261111.md)). Integrated #71 (CLI code), #74, #75 and #76,
   plus the source and test parts of #77 and #78.
 
@@ -44,6 +47,9 @@ Still open:
   Pending 404 CORS itself remains external.
 - [ ] **Owner:** decide whether to send `docs/proposals/OTS_SERVER_CORS.md` to the opentimestamps-server maintainers or operators.
 - [ ] **Native Spanish review** of the new `upgrade.liveness.*` strings.
+- [ ] **Canary binding (optional hardening).** The canary is bound to the recorded Bitcoin height only. Binding Bob and
+  Finney to their recorded Merkle roots as well would be stricter. A calendar reply does not carry its commitment, so
+  root-matching alone proves nothing. A failing canary is also not proof of an outage (a pruned commitment fails the same way).
 - [ ] **Native evidence** for a never-settling Blob read in Chromium, Firefox and WebKit (only models so far), and the
   Firefox/WebKit error types for unreadable files.
 - [ ] **QR limits in ARCHIVAL_QR_PROTOCOL.md are inconsistent:** 4096 frames × 2873 payload bytes is about 11.2 MiB,
