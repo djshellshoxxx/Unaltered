@@ -1,7 +1,7 @@
 // Dedicated worker: streams the Blob in chunks so memory does not scale with file size (FR-1).
 import { equalBytes } from '../bytes';
 import { UnalteredError } from '../errors';
-import { CROSS_CHECK_MAX, hashSource, readCrossCheckInput } from './stream';
+import { CROSS_CHECK_MAX, hashSource, isReadFailure, readCrossCheckInput } from './stream';
 
 // The WebCrypto differential check (FR-1) runs here so the main thread never copies the file.
 async function cross(blob: Blob, digest: Uint8Array): Promise<'ok' | 'mismatch' | 'skipped'> {
@@ -47,8 +47,9 @@ ctx.onmessage = (ev) => {
       if (!r) return ctx.postMessage({ type: 'cancelled' });
       ctx.postMessage({ type: 'done', digest: r.digest, bytes: r.bytes, cross: await cross(msg.blob, r.digest) });
     })
-    // A typed input failure is the answer for this file; anything else means this worker cannot hash here.
-    .catch((e: unknown) => ctx.postMessage(e instanceof UnalteredError
+    // A typed input failure is the answer for this file; anything else means this worker cannot hash here. A rejected
+    // read is not final in a worker: WebKit's single-file build cannot read the Blob there but can on the main thread.
+    .catch((e: unknown) => ctx.postMessage(e instanceof UnalteredError && !isReadFailure(e)
       ? { type: 'failed', code: e.code, message: e.message }
       : { type: 'error' }));
 };

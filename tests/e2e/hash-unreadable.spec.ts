@@ -56,12 +56,13 @@ async function selectThenBreak(page: Page, change: 'deleted' | 'modified'): Prom
 }
 
 for (const change of ['deleted', 'modified'] as const) {
-  test(`worker path: a file ${change} after selection reports a typed unreadable error without a main-thread re-read`, async ({ page }) => {
+  test(`worker path: a file ${change} after selection falls back once and reports a typed unreadable error`, async ({ page }) => {
     await page.addInitScript(recordWorkerReplies);
     await selectThenBreak(page, change);
     await expect(page.getByRole('alert')).toHaveText(UNREADABLE);
     const w = await page.evaluate(() => ({ replies: (window as WorkerReplies).__hashReplies, starts: (window as WorkerReplies).__hashStarts }));
-    expect(w).toEqual({ replies: [{ type: 'failed', code: 'INPUT_UNREADABLE' }], starts: 1 });
+    // The worker hands the rejected read back ('error'); the main-thread fallback then fails with the typed error.
+    expect(w).toEqual({ replies: [{ type: 'error', code: null }], starts: 1 });
   });
 
   test(`main-thread fallback: a file ${change} after selection reports a typed unreadable error`, async ({ page }) => {

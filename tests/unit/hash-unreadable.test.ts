@@ -154,7 +154,7 @@ describe('a file that becomes unreadable mid-hash', () => {
   });
 });
 
-describe('the hash worker reports an unreadable file as a typed failure', () => {
+describe('the hash worker hands a rejected file read back to the page', () => {
   const replies: unknown[] = [];
   const workerScope = {
     onmessage: null as ((event: MessageEvent) => void) | null,
@@ -172,15 +172,15 @@ describe('the hash worker reports an unreadable file as a typed failure', () => 
     return replies.at(-1);
   }
 
-  // An untyped 'error' reply makes the page re-read the whole file on the main thread and then show a catch-all.
-  it.each(kinds)('a mid-hash %s yields failed/INPUT_UNREADABLE, not an untyped error', async (failure) => {
-    expect(await run(breakingBlob(CHUNK_SIZE + 5, CHUNK_SIZE, 'byob', failure).blob))
-      .toEqual({ type: 'failed', code: 'INPUT_UNREADABLE', message: UNREADABLE });
+  // A rejected read is not final inside a worker: WebKit's offline single-file build cannot read the Blob in its
+  // worker but can on the main thread (CI webkit regression on 4a30914). The worker replies 'error' so the page falls
+  // back; if the main thread cannot read either, it reports the typed INPUT_UNREADABLE (main-thread tests above).
+  it.each(kinds)('a mid-hash %s makes the worker hand back to the page, never a final failure', async (failure) => {
+    expect(await run(breakingBlob(CHUNK_SIZE + 5, CHUNK_SIZE, 'byob', failure).blob)).toEqual({ type: 'error' });
   });
 
-  it.each(kinds)('a cross-check %s yields failed/INPUT_UNREADABLE, not a skipped cross-check', async (failure) => {
-    expect(await run(breakingBlob(CHUNK_SIZE + 5, CHUNK_SIZE, 'arrayBuffer', failure).blob))
-      .toEqual({ type: 'failed', code: 'INPUT_UNREADABLE', message: UNREADABLE });
+  it.each(kinds)('a cross-check %s hands back to the page instead of reporting a skipped cross-check', async (failure) => {
+    expect(await run(breakingBlob(CHUNK_SIZE + 5, CHUNK_SIZE, 'arrayBuffer', failure).blob)).toEqual({ type: 'error' });
   });
 
   it('still completes and cross-checks a readable file', async () => {

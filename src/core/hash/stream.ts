@@ -54,7 +54,20 @@ function unreadable(): UnalteredError {
  * arrayBuffer); the raw message can name the file, so callers only ever see the typed, generic error.
  */
 function readFailure(error: unknown): UnalteredError {
-  return error instanceof UnalteredError ? error : unreadable();
+  if (error instanceof UnalteredError) return error;
+  const typed = unreadable();
+  readFailures.add(typed);
+  return typed;
+}
+
+// Errors made by readFailure. A worker must not treat one as final: some engines (WebKit, single-file build from
+// file://) cannot read the Blob inside a worker at all, while the main thread can. The worker reports these as
+// unavailable so the page falls back; a main-thread read failure is then the typed answer.
+const readFailures = new WeakSet<UnalteredError>();
+
+/** True for an INPUT_UNREADABLE that came from a rejected file read (not a stall). */
+export function isReadFailure(error: unknown): boolean {
+  return error instanceof UnalteredError && readFailures.has(error);
 }
 
 /** WebCrypto needs one input buffer; fill it with bounded backend reads on every engine. */
