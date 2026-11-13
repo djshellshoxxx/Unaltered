@@ -57,6 +57,33 @@ test.describe('browser connectivity notice', () => {
   });
 });
 
+test.describe('technology credits and onion status', () => {
+  test('links original technologies and does not advertise a nonexistent onion endpoint', async ({ page }) => {
+    await page.goto('/index.html#about');
+    await expect(page.getByText('OpenTimestamps was created by Peter Todd', { exact: false })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Original OpenTimestamps reference client' })).toHaveAttribute('href', 'https://github.com/opentimestamps/opentimestamps-client');
+    await expect(page.getByText('No official Unaltered onion service', { exact: false })).toBeVisible();
+  });
+});
+
+test.describe('contextual help and language selector', () => {
+  test('explains calendar and explorer tradeoffs and offers translated flag options', async ({ page }) => {
+    await page.goto('/index.html#settings');
+    await expect(page.getByText('Selecting several calendar servers improves availability', { exact: false })).toBeVisible();
+    await expect(page.getByText('Select at least two independent block explorers', { exact: false })).toBeVisible();
+    await expect(page.locator('#lang summary')).toHaveCount(1);
+    await page.locator('#lang summary').click();
+    await expect(page.locator('#lang input[type=radio]')).toHaveCount(2);
+    await page.locator('#lang input[value=es]').check();
+    await expect(page.locator('#lang summary')).toContainText('Español');
+  });
+  test('explains original file versus .ots receipt on Verify', async ({ page }) => {
+    await page.goto('/index.html#verify');
+    await expect(page.getByText('Choose the exact original file', { exact: false })).toBeVisible();
+    await expect(page.getByText('Choose the .ots receipt downloaded', { exact: false })).toBeVisible();
+  });
+});
+
 test.describe('batch verification', () => {
   test('renders individual results with status and guidance', async ({ page }) => {
     await page.goto('/index.html#verify');

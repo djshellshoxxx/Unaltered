@@ -2,6 +2,32 @@
 // To add a language: copy `en`, translate every value, register it in LANGS. A unit test enforces identical keys.
 
 export const en = {
+  'about.strip.featureTitle': 'Optional local metadata removal',
+  'about.strip.featureBody': 'Before stamping, Unaltered can rewrite supported JPEG, PNG, WAV and MP3 files to remove certain embedded metadata. Processing happens locally. Download and retain the cleaned copy: the receipt fingerprints that cleaned file, not the original.',
+  'about.strip.featureLimits': 'This is not complete anonymization. Visible faces, locations and text, audio content, watermarks, sensor patterns and unsupported metadata may remain. PDF metadata is not stripped. If a format cannot be cleaned safely, the application warns you or rejects the file.',
+  'about.sources.title': 'Origins, source code and independent technologies',
+  'about.sources.intro': 'Unaltered is an independent client-side interface using the open OpenTimestamps receipt format. OpenTimestamps was created by Peter Todd; Bitcoin was introduced under the name Satoshi Nakamoto. These projects are separate from Unaltered.',
+  'about.sources.ots': 'OpenTimestamps protocol and project',
+  'about.sources.client': 'Original OpenTimestamps reference client',
+  'about.sources.server': 'OpenTimestamps reference server',
+  'about.sources.bitcoin': 'Bitcoin project',
+  'about.sources.bitcoinCore': 'Bitcoin Core source code',
+  'about.sources.unaltered': 'Unaltered source repository',
+  'about.sources.explorers': 'Independent Bitcoin explorer services',
+  'about.onion.title': 'Tor and onion service status',
+  'about.onion.body': 'No official Unaltered onion service is published or verified by this application. Tor Browser may help route network requests through Tor, but an ordinary HTTPS site is not an onion service. Never trust an unverified onion address claiming to be Unaltered.',
+  'about.onion.future': 'A future onion mirror would require a maintained Tor service, an authenticated published address, and separately verified calendar and explorer routing. The current build makes no onion-service availability claim.',
+  'help.calendars': 'Selecting several calendar servers improves availability if one is unreachable. Each selected server can observe your timestamp submission; choose only services you trust. One server reduces the number of services contacted but creates a single point of failure.',
+  'help.calendarChoice': 'Calendar {host}: choose based on operator trust, network availability and privacy. There is no verified ranking of reliability or privacy between these servers.',
+  'help.minCalendars': 'This many selected calendar servers must accept the submission. Higher values require more successful responses and may cause stamping to fail if a server is down.',
+  'help.explorers': 'Select at least two independent block explorers so Bitcoin block headers can be cross-checked. Using only one cannot satisfy the default independent-source verification policy.',
+  'help.explorerChoice': 'Explorer {host}: use independent sources to compare Bitcoin block data. Selecting a provider also reveals requests to that operator. No provider is assumed more trustworthy.',
+  'help.verifyFile': 'Choose the exact original file that was timestamped. If you removed metadata before stamping, select the downloaded cleaned copy instead. Unaltered hashes it locally.',
+  'help.verifyReceipt': 'Choose the .ots receipt downloaded when that exact file was stamped, or its upgraded .ots copy. This is proof data, not the original file.',
+  'help.upgradeReceipt': 'Choose a pending .ots receipt to ask its calendar servers for a Bitcoin attestation. You do not need to upload the original file for this step.',
+  'help.batchFiles': 'Choose up to 50 original files. The app hashes them locally and pairs each one with a receipt using the exact filename.',
+  'help.batchReceipts': 'Choose the matching .ots receipts. Each receipt filename must equal the original filename plus .ots.',
+  'help.language': 'Choose the interface language. A language is offered only when its full interface translation is available.',
   'batch.block': 'Bitcoin block: {height}',
   'batch.title': 'Verify multiple files',
   'batch.instructions': 'Choose up to 50 original files and their receipts. Each receipt must be named exactly ORIGINAL_FILENAME.ots. Results are checked individually; no files are uploaded.',
@@ -220,6 +246,32 @@ export type Lang = 'en' | 'es';
 type Table = Record<StringKey, string>;
 
 const es: Table = {
+  'about.strip.featureTitle': 'Eliminación opcional de metadatos locales',
+  'about.strip.featureBody': 'Antes de sellar, Unaltered puede reescribir archivos JPEG, PNG, WAV y MP3 compatibles para eliminar determinados metadatos incrustados. El procesamiento es local. Descarga y conserva la copia limpia: el recibo identifica esa copia, no el archivo original.',
+  'about.strip.featureLimits': 'Esto no garantiza el anonimato. Pueden permanecer caras, lugares y texto visibles, contenido de audio, marcas de agua, patrones del sensor y metadatos no compatibles. No se eliminan metadatos de PDF. Si no es posible limpiar un formato de forma segura, la aplicación advierte o rechaza el archivo.',
+  'about.sources.title': 'Orígenes, código fuente y tecnologías independientes',
+  'about.sources.intro': 'Unaltered es una interfaz independiente que utiliza el formato abierto de recibos OpenTimestamps. OpenTimestamps fue creado por Peter Todd; Bitcoin se presentó bajo el nombre Satoshi Nakamoto. Son proyectos independientes de Unaltered.',
+  'about.sources.ots': 'Protocolo y proyecto OpenTimestamps',
+  'about.sources.client': 'Cliente de referencia original de OpenTimestamps',
+  'about.sources.server': 'Servidor de referencia de OpenTimestamps',
+  'about.sources.bitcoin': 'Proyecto Bitcoin',
+  'about.sources.bitcoinCore': 'Código fuente de Bitcoin Core',
+  'about.sources.unaltered': 'Repositorio de código de Unaltered',
+  'about.sources.explorers': 'Servicios independientes de exploración de Bitcoin',
+  'about.onion.title': 'Estado de Tor y del servicio onion',
+  'about.onion.body': 'Esta aplicación no publica ni verifica ningún servicio onion oficial de Unaltered. Tor Browser puede ayudar a enrutar solicitudes por Tor, pero un sitio HTTPS normal no es un servicio onion. No confíes en direcciones onion no verificadas que afirmen ser Unaltered.',
+  'about.onion.future': 'Un futuro espejo onion necesitaría un servicio Tor mantenido, una dirección publicada y autenticada, y rutas de calendario y exploradores verificadas por separado. La versión actual no afirma disponer de un servicio onion.',
+  'help.calendars': 'Elegir varios servidores de calendario mejora la disponibilidad si uno no responde. Cada servidor seleccionado puede observar tu envío; elige solo servicios de confianza. Uno solo contacta menos servicios, pero crea un punto único de fallo.',
+  'help.calendarChoice': 'Calendario {host}: elige según la confianza en el operador, la disponibilidad y la privacidad. No existe una clasificación verificada de fiabilidad o privacidad.',
+  'help.minCalendars': 'Este número de calendarios seleccionados debe aceptar el envío. Un valor más alto exige más respuestas correctas y puede impedir el sellado si un servidor falla.',
+  'help.explorers': 'Selecciona al menos dos exploradores independientes para contrastar las cabeceras de bloques de Bitcoin. Uno solo no cumple la política de verificación independiente.',
+  'help.explorerChoice': 'Explorador {host}: usa fuentes independientes para comparar los datos de bloques. Las consultas son visibles para el operador. No se supone que un proveedor sea más fiable.',
+  'help.verifyFile': 'Elige el archivo original exacto que sellaste. Si quitaste metadatos, selecciona la copia limpia descargada. Unaltered calcula su huella localmente.',
+  'help.verifyReceipt': 'Elige el recibo .ots descargado al sellar ese archivo, o su copia actualizada. Contiene la prueba, no el archivo original.',
+  'help.upgradeReceipt': 'Elige un recibo .ots pendiente para consultar a los calendarios sobre su confirmación en Bitcoin. No necesitas subir el archivo original.',
+  'help.batchFiles': 'Elige hasta 50 archivos originales. La aplicación los procesa localmente y los empareja por nombre exacto.',
+  'help.batchReceipts': 'Elige los recibos .ots correspondientes. Cada nombre debe ser el del archivo original seguido de .ots.',
+  'help.language': 'Elige el idioma de la interfaz. Solo se ofrecen idiomas con traducción completa.',
   'batch.block': 'Bloque de Bitcoin: {height}',
   'batch.title': 'Verificar varios archivos',
   'batch.instructions': 'Elige hasta 50 archivos originales y sus recibos. Cada recibo debe llamarse exactamente NOMBRE_ORIGINAL.ots. Cada resultado se verifica por separado; no se suben archivos.',
@@ -438,8 +490,8 @@ const es: Table = {
 
 const tables: Record<Lang, Table> = { en, es };
 export const LANGS: readonly { code: Lang; name: string }[] = [
-  { code: 'en', name: 'English' },
-  { code: 'es', name: 'Español' },
+  { code: 'en', name: '🇬🇧 English' },
+  { code: 'es', name: '🇪🇸 Español' },
 ];
 export const TABLES = tables;
 

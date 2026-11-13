@@ -11,26 +11,28 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
   const advanced = el('div', { class: 'advanced' });
   const receipts = el('div', { class: 'receipts' });
 
-  function checkboxes(urls: readonly string[], set: Set<string>, legend: string): HTMLElement {
+  function checkboxes(urls: readonly string[], set: Set<string>, legend: string, help: 'help.calendars' | 'help.explorers', choice: 'help.calendarChoice' | 'help.explorerChoice'): HTMLElement {
     return el(
       'fieldset',
       {},
-      el('legend', {}, legend),
+      el('legend', { title: t(help) }, legend),
+      el('p', { class: 'muted help-text' }, t(help)),
       ...urls.map((u) => {
         const host = new URL(u).host;
         return el(
           'label',
-          { class: 'check' },
+          { class: 'check', title: t(choice, { host }) },
           el('input', {
             type: 'checkbox',
             checked: set.has(u),
+            title: t(choice, { host }),
             onchange: (e: Event) => {
               if ((e.target as HTMLInputElement).checked) set.add(u);
               else set.delete(u);
               renderAdvanced();
             },
           }),
-          el('span', {}, host),
+          el('span', { title: t(choice, { host }) }, host),
         );
       }),
     );
@@ -45,14 +47,16 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
       advanced,
       el('h3', {}, t('settings.advanced')),
       el('p', { class: 'notice warn' }, t('settings.banner')),
-      checkboxes(DEFAULT_CALENDARS, settings.calendars, t('settings.calendars')),
+      checkboxes(DEFAULT_CALENDARS, settings.calendars, t('settings.calendars'), 'help.calendars', 'help.calendarChoice'),
       el(
         'div',
         { class: 'field' },
-        el('label', { for: 'min-cal' }, t('settings.minCalendars')),
+        el('label', { for: 'min-cal', title: t('help.minCalendars') }, t('settings.minCalendars')),
+        el('p', { class: 'muted help-text' }, t('help.minCalendars')),
         el('input', {
           type: 'number',
           id: 'min-cal',
+          title: t('help.minCalendars'),
           min: 1,
           max: Math.max(1, calCount),
           value: String(Math.min(settings.minCalendars, Math.max(1, calCount))),
@@ -63,7 +67,7 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
           },
         }),
       ),
-      checkboxes(DEFAULT_EXPLORERS, settings.explorers, t('settings.explorers')),
+      checkboxes(DEFAULT_EXPLORERS, settings.explorers, t('settings.explorers'), 'help.explorers', 'help.explorerChoice'),
       el('p', { class: 'muted' }, t('settings.explorerNote')),
       ...problems.map((p) => el('p', { class: 'error', role: 'alert' }, p)),
       el('button', { type: 'button', class: 'button', disabled: isDefault(), onclick: () => (restoreDefaults(), renderAdvanced()) }, t('settings.restore')),
@@ -130,24 +134,25 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
     setChildren(receipts, ...kids);
   }
 
-  // WebKit 27.2 emits a style-src-attr CSP violation merely constructing a native select.
-  // Two language choices fit native radios; keep the strict policy and keyboard semantics.
-  const languageChoices = el(
-    'fieldset',
-    { id: 'lang' },
+  // A disclosure-style dropdown avoids WebKit's native-select style-src-attr CSP violation.
+  // Radio options retain keyboard semantics; no popup JavaScript or inline styles.
+  const languageChoices = el('fieldset', { id: 'lang', class: 'language-picker' },
     el('legend', {}, t('settings.language')),
-    ...LANGS.map((l) => el('label', { class: 'check' }, el('input', {
-      type: 'radio',
-      name: 'language',
-      value: l.code,
-      checked: l.code === getLang(),
-      onchange: (e: Event) => {
-        if ((e.target as HTMLInputElement).checked) {
-          setLang(l.code);
-          onLangChange();
-        }
-      },
-    }), el('span', {}, l.name))),
+    el('p', { class: 'muted help-text' }, t('help.language')),
+    el('details', { class: 'language-menu' },
+      el('summary', { title: t('help.language') }, LANGS.find(l => l.code === getLang())?.name ?? 'English'),
+      el('div', { class: 'language-options' }, ...LANGS.map(l =>
+        el('label', { class: 'check', title: l.name },
+          el('input', { type: 'radio', name: 'language', value: l.code,
+            checked: l.code === getLang(),
+            onchange: (event: Event) => {
+              if ((event.target as HTMLInputElement).checked) { setLang(l.code); onLangChange(); }
+            },
+          }),
+          el('span', {}, l.name),
+        ),
+      )),
+    ),
   );
   clear(root);
   setChildren(
