@@ -50,6 +50,8 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Install media metadata inspector
+        run: sudo apt-get update && sudo apt-get install -y libimage-exiftool-perl
       - name: Run opsec-check
         run: bash scripts/opsec-check.sh
 
