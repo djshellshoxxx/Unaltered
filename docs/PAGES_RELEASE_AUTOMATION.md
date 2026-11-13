@@ -1,6 +1,6 @@
 # GitHub Pages release automation
 
-The manual `pages-readiness.yml` workflow is **artifact preparation only**, not publication. It builds the static site twice, compares byte-for-byte checksums, runs the existing project-path and offline hashing browser acceptance, uploads a review artifact and a GitHub Pages-format artifact. It records the exact source commit and checksum manifest in the workflow summary.
+The manual `pages-readiness.yml` workflow is **artifact preparation only**, not publication. It builds the static site, runs the existing project-path and offline hashing browser acceptance, and uploads a review artifact and a GitHub Pages-format artifact. The existing strict readiness and deployment-template contracts remain unchanged. For an additional independent reproducibility audit, build the same source twice in separate directories and run `node scripts/compare-pages-builds.mjs FIRST/dist/web SECOND/dist/web`; this fails on missing, extra, or byte-different files and prints SHA-256 evidence. Record the exact source commit alongside that output.
 
 ## Release operator procedure
 1. Verify final-head CI, QR qualification, source review, and the release requirements applicable to the intended beta.
