@@ -28,6 +28,10 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
               if ((e.target as HTMLInputElement).checked) set.add(u);
               else set.delete(u);
               renderAdvanced();
+              const updated = [...advanced.querySelectorAll<HTMLLabelElement>('label.check')].find(
+                (label) => label.textContent?.trim() === host,
+              );
+              updated?.querySelector<HTMLInputElement>('input')?.focus();
             },
           }),
           el('span', {}, host),
@@ -35,6 +39,10 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
       }),
     );
   }
+
+  // Explanations are visible text, not hover-only tooltips, so keyboard and touch users receive them too.
+  const help = (en: string, es: string): HTMLElement =>
+    el('p', { class: 'muted settings-help' }, getLang() === 'es' ? es : en);
 
   function renderAdvanced(): void {
     const calCount = settings.calendars.size;
@@ -45,11 +53,15 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
       advanced,
       el('h3', {}, t('settings.advanced')),
       el('p', { class: 'notice warn' }, t('settings.banner')),
+      help('Calendar servers accept timestamp commitments, not original file contents. Using independent operators improves availability but each selected operator can observe your network request.',
+        'Los calendarios reciben compromisos de tiempo, no el archivo original. Elegir operadores independientes mejora la disponibilidad, pero cada operador puede observar tu solicitud de red.'),
       checkboxes(DEFAULT_CALENDARS, settings.calendars, t('settings.calendars')),
       el(
         'div',
         { class: 'field' },
         el('label', { for: 'min-cal' }, t('settings.minCalendars')),
+        help('Minimum successful calendar submissions required to accept a stamping attempt. A larger number can reduce availability; it does not by itself prove Bitcoin confirmation.',
+          'Número mínimo de calendarios que deben aceptar el envío. Un número mayor puede reducir la disponibilidad; no demuestra por sí solo la confirmación en Bitcoin.'),
         el('input', {
           type: 'number',
           id: 'min-cal',
@@ -60,9 +72,12 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
             const n = Math.floor(Number((e.target as HTMLInputElement).value));
             settings.minCalendars = Number.isFinite(n) ? Math.max(1, n) : 1;
             renderAdvanced();
+            advanced.querySelector<HTMLInputElement>('#min-cal')?.focus();
           },
         }),
       ),
+      help('Independent Bitcoin explorers are compared during online verification. Disagreement or insufficient responses cannot establish a verified result.',
+        'Se comparan exploradores de Bitcoin independientes durante la verificación. Si discrepan o no responden suficientes, no se puede establecer un resultado verificado.'),
       checkboxes(DEFAULT_EXPLORERS, settings.explorers, t('settings.explorers')),
       el('p', { class: 'muted' }, t('settings.explorerNote')),
       ...problems.map((p) => el('p', { class: 'error', role: 'alert' }, p)),
