@@ -28,6 +28,10 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
               if ((e.target as HTMLInputElement).checked) set.add(u);
               else set.delete(u);
               renderAdvanced();
+              const updated = [...advanced.querySelectorAll<HTMLLabelElement>('label.check')].find(
+                (label) => label.textContent?.trim() === host,
+              );
+              updated?.querySelector<HTMLInputElement>('input')?.focus();
             },
           }),
           el('span', {}, host),
@@ -68,6 +72,7 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
             const n = Math.floor(Number((e.target as HTMLInputElement).value));
             settings.minCalendars = Number.isFinite(n) ? Math.max(1, n) : 1;
             renderAdvanced();
+            advanced.querySelector<HTMLInputElement>('#min-cal')?.focus();
           },
         }),
       ),
