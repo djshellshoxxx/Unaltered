@@ -21,6 +21,8 @@ jobs:
         with:
           node-version: 22
       - run: npm ci --ignore-scripts
+      - name: Install ExifTool for screenshot metadata checks
+        run: sudo apt-get update && sudo apt-get install -y libimage-exiftool-perl
       - run: npm run check
       - run: npm run build
       - name: Install the pinned browser
