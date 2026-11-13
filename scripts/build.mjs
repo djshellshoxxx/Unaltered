@@ -122,6 +122,9 @@ function fill(html, { cspValue, styles, script, favicon = '' }) {
 
 // Multi-file page: SRI on every script/stylesheet (SR-3).
 const sri = (text) => `sha384-${sha(Buffer.from(text), 'sha384', 'base64')}`;
+const siteUrl = 'https://djshellshoxxx.github.io/Unaltered/';
+const seoHead = '<link rel="canonical" href="' + siteUrl + '">' +
+  '<meta property="og:url" content="' + siteUrl + '">';
 const multiHtml = fill(template, {
   cspValue: multiCsp,
   favicon: '<link rel="icon" type="image/png" sizes="64x64" href="./favicon.png">',
@@ -292,7 +295,7 @@ fi
 
 const common = [
   { name: 'favicon.png', data: faviconPng },
-  { name: 'index.html', data: Buffer.from(multiHtml) },
+  { name: 'index.html', data: Buffer.from(multiHtml.replace('</head>', '  ' + seoHead + '\\n</head>')) },
   { name: 'main.js', data: Buffer.from(mainMulti) },
   { name: 'styles.css', data: Buffer.from(css) },
   { name: singleName, data: Buffer.from(singleHtml) },
@@ -328,6 +331,8 @@ const macFiles = withSums([
 rmSync(dist, { recursive: true, force: true });
 mkdirSync(join(dist, 'web'), { recursive: true });
 for (const f of common) if (f.name !== singleName && f.name !== 'LICENSE' && f.name !== cliName) writeFileSync(join(dist, 'web', f.name), f.data);
+writeFileSync(join(dist, 'web', 'robots.txt'), 'User-agent: *\\nAllow: /Unaltered/\\nSitemap: ' + siteUrl + 'sitemap.xml\\n');
+writeFileSync(join(dist, 'web', 'sitemap.xml'), '<?xml version="1.0" encoding="UTF-8"?>\\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>' + siteUrl + '</loc></url></urlset>\\n');
 writeFileSync(join(dist, singleName), singleHtml);
 writeFileSync(join(dist, cliName), cliJs);
 const artefacts = [
