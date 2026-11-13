@@ -15,6 +15,14 @@ does not change its functions, MIT licence, risks, acceptance criteria, or appli
 2. **Keep the receipt:** you download a standard `.ots` proof file. It is the only copy. We keep no accounts and no files.
 3. **Verify:** anyone with the original file and the receipt can check that the file matches and see the Bitcoin block that anchors it.
 
+## Screenshots
+
+Captured from the built single-file app (`dist/unaltered-0.3.1.html`) in headless Chromium.
+
+| Stamp | File selected (local fingerprint) | Verify |
+|---|---|---|
+| ![Unaltered Stamp screen with file drop zone](docs/screenshots/home.png) | ![Unaltered showing a locally computed SHA-256 fingerprint for a selected file](docs/screenshots/file-selected.png) | ![Unaltered Verify screen with file and receipt drop zones](docs/screenshots/verify.png) |
+
 ## What it proves, and what it does not
 
 | Proves | Does **not** prove |
