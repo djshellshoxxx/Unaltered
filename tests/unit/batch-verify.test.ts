@@ -32,6 +32,21 @@ describe('bounded batch verification', () => {
     expect(visited).toEqual([1]);
     expect(result).toHaveLength(1);
   });
+  it('does not turn a cancelled in-flight verification into a misleading error result', async () => {
+    const controller = new AbortController();
+    const visited: string[] = [];
+    const report = { state: 'PENDING' as const, detail: 'Awaiting confirmation' };
+    const results = await verifyBatch(['first', 'cancelled', 'not-started'], async item => {
+      visited.push(item);
+      if (item === 'cancelled') {
+        controller.abort();
+        throw new DOMException('The operation was aborted', 'AbortError');
+      }
+      return report;
+    }, controller.signal);
+    expect(visited).toEqual(['first', 'cancelled']);
+    expect(results).toEqual([{ input: 'first', status: 'PENDING', report }]);
+  });
   it('rejects an empty batch', async () => {
     await expect(verifyBatch([], async () => ({ state: 'PENDING' as const, detail: '' }))).rejects.toThrow();
   });

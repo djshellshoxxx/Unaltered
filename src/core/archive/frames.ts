@@ -80,6 +80,12 @@ export async function recoverReceiptFrames(frames: readonly Uint8Array[]): Promi
     parts.set(index, payload);
   }
   if (!reference || parts.size !== total) fail('missing frames');
+  // Check the partition before allocating: the declared length is attacker-controlled (up to 16 MiB) while the
+  // payloads actually present may be a few bytes. Same errors as the copy loop and final length check below.
+  let present = 0;
+  for (const part of parts.values()) present += part.length;
+  if (present > length) fail('invalid partition');
+  if (present < length) fail('receipt checksum');
   const receipt = new Uint8Array(length);
   let offset = 0;
   for (let i = 0; i < total; i++) {

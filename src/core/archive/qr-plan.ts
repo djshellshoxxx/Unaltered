@@ -35,6 +35,8 @@ export function planArchivalQr(receiptBytes: number, options: QrPlanningOptions 
   if (!Number.isFinite(minModuleMm) || minModuleMm < .25 || minModuleMm > 2 ||
       !Number.isSafeInteger(maxPages) || maxPages < 1 || maxPages > 1000)
     throw new Error('Invalid QR print limits');
+  if (maxPages < 2)
+    throw new Error('Archival QR printing requires at least two pages: certificate and recovery appendix');
   const candidates: QrPlan[] = [];
   for (let version = 1; version <= 40; version++) {
     const modules = version * 4 + 17;

@@ -29,7 +29,7 @@ function fixtureRepo(t) {
   for (const key of ['GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_OBJECT_DIRECTORY', 'GIT_COMMON_DIR']) delete env[key];
   const write = (path, contents) => { mkdirSync(dirname(join(repo, path)), { recursive: true }); writeFileSync(join(repo, path), contents); };
   for (const path of HARNESS) { mkdirSync(dirname(join(repo, path)), { recursive: true }); copyFileSync(join(root, path), join(repo, path)); }
-  write('tests/fuzz/targets.ts', TARGETS);
+  write('tests/fuzz/campaign-targets.ts', TARGETS);
   write('tests/fixtures/ots/sample.ots', 'SYNTHETIC-SEED');
   write('.gitignore', 'node_modules\n');
   symlinkSync(join(root, 'node_modules'), join(repo, 'node_modules'), 'junction');
@@ -38,7 +38,7 @@ function fixtureRepo(t) {
   git('add', '-A');
   git('commit', '-q', '-m', 'fixture');
   const out = join(base, 'out');
-  const run = (extraEnv = {}) => spawnSync(process.execPath, ['scripts/parser-fuzz.mjs', '--iterations', '30', '--seconds', '60', '--seed', '7', '--out', out],
+  const run = (extraEnv = {}, extraArgs = []) => spawnSync(process.execPath, ['scripts/parser-fuzz.mjs', '--iterations', '30', '--seconds', '60', '--seed', '7', '--out', out, ...extraArgs],
     { cwd: repo, env: { ...env, ...extraEnv }, encoding: 'utf8', timeout: 60000 });
   return { repo, out, git, write, run };
 }
@@ -140,4 +140,29 @@ test('campaign report says when the tree differs from the commit and hashes the 
   git('commit', '-q', '-m', 'extra seed');
   write('notes.txt', 'local');
   assert.equal(JSON.parse(run().stdout).sourceDirty, true);
+});
+
+test('--targets limits the campaign to the named targets and refuses unknown names', (t) => {
+  const { git, write, run } = fixtureRepo(t);
+  // Two targets, one asynchronous; seeds exist for both, and a repair hook that marks every mutation it sees.
+  write('tests/fuzz/campaign-targets.ts', `export const TARGETS = ['sample', 'other'];
+export const crc32 = () => 0;
+export const seedCases = async (proofs) => [{ target: 'sample', bytes: Uint8Array.of(0) }, { target: 'other', bytes: Uint8Array.of(1) }, ...proofs.map((bytes) => ({ target: 'sample', bytes }))];
+export const repairCase = (target, bytes) => (target === 'other' ? Uint8Array.of(1, ...bytes) : bytes);
+export async function runCase(target, bytes) { if (target === 'other' && bytes[0] !== 1) throw new Error('repair hook was not applied'); return bytes[0] === 1 ? 'accepted' : 'rejected'; }
+`);
+  git('commit', '-q', '-am', 'two targets');
+  const all = run();
+  assert.equal(all.status, 0, all.stderr);
+  assert.deepEqual(Object.keys(JSON.parse(all.stdout).targets), ['sample', 'other']);
+  const only = run({}, ['--targets', 'other']);
+  assert.equal(only.status, 0, only.stderr);
+  const report = JSON.parse(only.stdout);
+  assert.deepEqual(Object.keys(report.targets), ['other']);
+  assert.equal(report.options.targets, 'other');
+  assert.equal(report.seedExecutions, 1);
+  assert.equal(report.targets.other.accepted + report.targets.other.rejected, 31);
+  const unknown = run({}, ['--targets', 'other,missing']);
+  assert.notEqual(unknown.status, 0);
+  assert.match(unknown.stderr, /Unknown fuzz target\(s\): missing/);
 });

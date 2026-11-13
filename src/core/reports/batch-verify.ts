@@ -23,6 +23,9 @@ export async function verifyBatch<T>(
       const report = await verifyOne(input);
       results.push({ input, status: report.state, report });
     } catch (error) {
+      // Cancellation is not a failed verification. Keep completed results only;
+      // the caller may distinguish an interrupted batch by its shorter length.
+      if (signal?.aborted) break;
       results.push({
         input,
         status: 'ERROR',

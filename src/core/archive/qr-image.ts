@@ -24,6 +24,9 @@ export function qrImageDimensions(bytes: Uint8Array): { width: number; height: n
     while (offset < bytes.length && bytes[offset] === 255) offset++;
     if (offset >= bytes.length) break;
     const marker = bytes[offset++]!;
+    // FF 00 is a stuffed data byte, not a segment: decoders resynchronise on the next marker, so skipping it by a
+    // length would let a hidden frame header decide the decoded size while this gate reads a later decoy.
+    if (marker === 0x00) throw new Error('Invalid JPEG marker');
     if (marker === 0xda || marker === 0xd9) break;
     if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) continue;
     if (offset + 2 > bytes.length) break;

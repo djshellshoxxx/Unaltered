@@ -154,6 +154,10 @@ export const en = {
   'upgrade.alreadyConfirmed': 'This receipt contains Bitcoin timestamp data. Use Verify with the original file to check it.',
   'upgrade.stillPending': 'Not confirmed yet. Try again in a few hours.',
   'upgrade.unreadable': 'This browser could not read the answer from one or more calendar servers. This may be a pending reply that the browser is not allowed to read, or a network problem. Your receipt is still pending. Check again later.',
+  'upgrade.liveness.intro': 'Reachability check: for each calendar server that could not be read, this browser also asked for one fixed, public test receipt that was anchored in Bitcoin years ago. This reveals nothing about your file and is not part of your receipt or its verification.',
+  'upgrade.liveness.reachable': '{host}: reachable. It answered the test lookup, so its answer for your receipt was probably a pending reply that the browser is not allowed to read. Your receipt is probably still waiting for Bitcoin there. Check again in a few hours.',
+  'upgrade.liveness.unreachable': '{host}: unreachable or blocked. The test lookup could not be read either, so this may be a network problem or a block on this connection, not only a pending reply.',
+  'upgrade.liveness.unknown': '{host}: unknown. The test lookup did not return the expected answer, so this check cannot tell whether the server is reachable.',
   'upgrade.download': 'Download upgraded receipt ({name})',
   'upgrade.newFile': 'This is a new file. Your original receipt was not changed. Keep both.',
   'upgrade.unknownCalendar': 'This receipt names calendar servers that this app does not contact: {hosts}. They were skipped.',
@@ -375,6 +379,11 @@ const es: Table = {
   'upgrade.stillPending': 'Aún no está confirmado. Inténtalo de nuevo en unas horas.',
   // TODO(human review): Spanish copy not final.
   'upgrade.unreadable': 'Este navegador no pudo leer la respuesta de uno o más servidores de calendario. Puede ser una respuesta pendiente que el navegador no puede leer o un problema de red. Tu recibo sigue pendiente. Vuelve a comprobarlo más tarde.',
+  // TODO(human review): Spanish copy not final.
+  'upgrade.liveness.intro': 'Comprobación de alcance: para cada servidor de calendario que no se pudo leer, este navegador también pidió un recibo de prueba fijo y público que se ancló en Bitcoin hace años. Esto no revela nada sobre tu archivo y no forma parte de tu recibo ni de su verificación.',
+  'upgrade.liveness.reachable': '{host}: accesible. Respondió a la consulta de prueba, así que su respuesta para tu recibo probablemente era una respuesta pendiente que el navegador no puede leer. Probablemente tu recibo aún espera a Bitcoin en ese servidor. Vuelve a comprobarlo en unas horas.',
+  'upgrade.liveness.unreachable': '{host}: inaccesible o bloqueado. Tampoco se pudo leer la consulta de prueba, así que puede ser un problema de red o un bloqueo en esta conexión, no solo una respuesta pendiente.',
+  'upgrade.liveness.unknown': '{host}: desconocido. La consulta de prueba no devolvió la respuesta esperada, así que esta comprobación no puede saber si el servidor es accesible.',
   'upgrade.download': 'Descargar recibo actualizado ({name})',
   'upgrade.newFile': 'Es un archivo nuevo. Tu recibo original no se modificó. Guarda ambos.',
   'upgrade.unknownCalendar': 'Este recibo nombra servidores de calendario con los que esta aplicación no se conecta: {hosts}. Se omitieron.',

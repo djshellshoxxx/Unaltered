@@ -10,6 +10,7 @@ import { isAbort, safeMessage, UnalteredError } from '../../core/errors';
 import { hashBlob } from '../../core/hash/hasher';
 import { upgrade, type UpgradeResult } from '../../core/ots/calendar';
 import { parseProof } from '../../core/ots/codec';
+import type { CalendarLiveness } from '../../core/ots/liveness';
 import { LIMITS } from '../../core/ots/types';
 import { verify, type VerifyReport, type VerifyState } from '../../core/ots/verify';
 import { announce, dropZone, el, formatBytes, setChildren } from '../dom';
@@ -42,6 +43,12 @@ const LINK_BODY: Partial<Record<VerifyState, StringKey>> = {
   VERIFIED: 'verify.link.VERIFIED',
   PENDING: 'verify.link.PENDING',
   NO_MATCH_FILE: 'verify.link.NO_MATCH_FILE',
+};
+
+const LIVENESS: Record<CalendarLiveness, StringKey> = {
+  reachable: 'upgrade.liveness.reachable',
+  unreachable: 'upgrade.liveness.unreachable',
+  unknown: 'upgrade.liveness.unknown',
 };
 
 const HEX64 = /^[0-9a-f]{64}$/;
@@ -243,7 +250,8 @@ export function mountVerify(root: HTMLElement): VerifyView {
       const bytes = new Uint8Array(await f.arrayBuffer());
       if (!current()) return;
       parseProof(bytes);
-      const result = await upgrade(bytes, { ...stampConfigFromSettings(), signal: controller.signal });
+      // ADR-014: an unreadable pending lookup is followed by one fixed public canary per calendar (no user data).
+      const result = await upgrade(bytes, { ...stampConfigFromSettings(), signal: controller.signal, liveness: true });
       if (!current()) return;
       showUpgrade({ kind: 'upgraded', result, fileName: f.name });
     } catch (e) {
@@ -280,13 +288,24 @@ export function mountVerify(root: HTMLElement): VerifyView {
       kids.push(el('p', { class: 'notice pending', role: 'status' }, t('upgrade.stillPending')));
     }
     if (r.status !== 'bitcoin-confirmed' && r.calendars.some((c) => c.unreadable)) {
-      kids.push(el('p', { class: 'notice pending' }, t('upgrade.unreadable')), referenceUpgradeInstructions());
+      kids.push(el('p', { class: 'notice pending' }, t('upgrade.unreadable')), livenessReport(r), referenceUpgradeInstructions());
     }
     if (r.changed) kids.push(...download());
     if (r.unknownCalendars.length > 0) kids.push(el('p', { class: 'warn' }, t('upgrade.unknownCalendar', { hosts: r.unknownCalendars.join(', ') })));
     const failed = r.calendars.filter((c) => !c.ok);
     if (failed.length > 0) kids.push(el('ul', { class: 'calendars' }, ...failed.map((c) => el('li', {}, `✖ ${new URL(c.url).host} – ${c.error ?? ''}`))));
     return kids;
+  }
+
+  /** Per-calendar canary hints (ADR-014). Not notices: they describe the calendar, never this receipt. */
+  function livenessReport(r: UpgradeResult): Node | null {
+    const byUrl = new Map<string, CalendarLiveness>();
+    for (const c of r.calendars) if (c.unreadable === true && c.liveness && !byUrl.has(c.url)) byUrl.set(c.url, c.liveness);
+    if (byUrl.size === 0) return null;
+    return el('div', { class: 'upgrade-liveness' },
+      el('p', {}, t('upgrade.liveness.intro')),
+      // Calendar replies settle in any order; list hosts alphabetically so the report is stable.
+      el('ul', {}, ...[...byUrl].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([url, state]) => el('li', { 'data-liveness': state }, t(LIVENESS[state], { host: new URL(url).host })))));
   }
 
   // Batch inputs are separate from the single-file Verify workflow. Never match by upload order.

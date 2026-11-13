@@ -15,7 +15,8 @@ await post('Profiler.takePreciseCoverage'); // Exclude module initialization fro
 const seen = new Map();
 parentPort.on('message', async ({ target, bytes }) => {
   try {
-    const outcome = runCase(target, bytes);
+    // Await, so an asynchronous entry point (archival frame recovery hashes with WebCrypto) is checked to completion.
+    const outcome = await runCase(target, bytes);
     if (outcome !== 'accepted' && outcome !== 'rejected') throw new Error('Invalid fuzz oracle outcome');
     const coverage = await post('Profiler.takePreciseCoverage');
     const executed = coverage.result.filter((script) => script.url === workerData.targetUrl).flatMap((script) => executedIntervals(script.functions));
