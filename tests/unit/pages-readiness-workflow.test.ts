@@ -67,7 +67,10 @@ it('both review and official Pages artifacts require install, checks, build and 
   }
   // Conditional or ignored failures could upload artifacts that never passed a gate.
   expect(source).not.toMatch(/^\s*(?:if|continue-on-error):/m);
-  expect(steps.filter((step) => step.run).map((step) => step.run)).toHaveLength(gates.length);
+  const exiftool = index(/^sudo apt-get update && sudo apt-get install -y libimage-exiftool-perl$/);
+  expect(exiftool, 'metadata validation requires ExifTool').toBeGreaterThan(gates[0]!);
+  expect(exiftool).toBeLessThan(gates[1]!);
+  expect(steps.filter((step) => step.run).map((step) => step.run)).toHaveLength(gates.length + 1);
 });
 
 it('existing PR CI uploads one official Pages artifact only after successful Chromium acceptance', () => {
