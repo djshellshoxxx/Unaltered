@@ -200,6 +200,9 @@ export const en = {
   'about.phish.title': 'Beware of copies',
   'about.phish.body': 'The footer shows this version and a build code. Compare it with the published checksums. For the strongest protection save the single-file offline version and check its checksum before use.',
 
+  'settings.help.calendars': 'Calendar servers receive timestamp commitments, not original files. Operators can observe your network requests.',
+  'settings.help.minimum': 'Minimum successful calendar submissions for stamping; this is not Bitcoin confirmation.',
+  'settings.help.explorers': 'Independent Bitcoin explorers are compared during verification. Disagreement cannot establish VERIFIED.',
   'settings.title': 'Settings',
   'settings.language': 'Language',
   'settings.receipts': 'Receipt list on this device',
@@ -426,6 +429,9 @@ const es: Table = {
   'about.phish.title': 'Cuidado con las copias',
   'about.phish.body': 'El pie de página muestra esta versión y un código de compilación. Compáralo con las sumas de verificación publicadas. Para mayor protección guarda la versión sin conexión de un solo archivo y comprueba su suma de verificación antes de usarla.',
 
+  'settings.help.calendars': 'Los calendarios reciben compromisos de tiempo, no archivos originales. Los operadores pueden observar tus solicitudes de red.',
+  'settings.help.minimum': 'Número mínimo de calendarios que deben aceptar el sello; esto no es una confirmación en Bitcoin.',
+  'settings.help.explorers': 'Se comparan exploradores de Bitcoin independientes durante la verificación. Si discrepan, no se puede establecer VERIFICADO.',
   'settings.title': 'Ajustes',
   'settings.language': 'Idioma',
   'settings.receipts': 'Lista de recibos en este dispositivo',

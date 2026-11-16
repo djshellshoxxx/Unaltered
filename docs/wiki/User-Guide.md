@@ -48,7 +48,7 @@ In **Verify**, choose the exact stamped file and its `.ots` receipt. Treat resul
 - **Evidence ZIP:** the browser can export original/receipt bytes plus a manifest, with a **16 MiB combined limit**. Creating a bundle by itself is not verification.
 - **QR certificates:** experimental `UNALTERED-OTS-QR/1` framing can encode the original receipt in printed QR frames. Images are representations/transports of the receipt, **not** substitutes for keeping the exact original `.ots` file. The scanner can reconstruct a receipt when every required frame is readable; subsequently verify that receipt against the stamped file. See [QR protocol](https://github.com/djshellshoxxx/Unaltered/blob/main/docs/ARCHIVAL_QR_PROTOCOL.md).
 
-**CLI availability:** main currently provides a Node verifier for `hash`, `verify`, and `verify-offline`. Additional `inspect`, `verify --json`, `batch`, and `evidence` CLI commands are proposed in [draft PR #71](https://github.com/djshellshoxxx/Unaltered/pull/71); do not treat unmerged code as a released feature.
+**CLI availability:** the source on `main` now includes the CLI extensions integrated through PR #79, including inspection, batch and evidence workflows. Check `node dist/unaltered-cli-0.3.1.mjs --help` against the exact build being used; source integration does not establish a signed production release.
 
 ## Troubleshooting and FAQ
 
@@ -63,3 +63,9 @@ In **Verify**, choose the exact stamped file and its `.ots` receipt. Treat resul
 **Does timestamping make me anonymous or remove all identifying content?** No. IP/timing metadata may be visible to third-party network services. Structural metadata cleaning is format-limited and does not remove identifying content inside pixels/audio.
 
 **Where can I report a suspected security issue?** Use the repository's [private reporting instructions](https://github.com/djshellshoxxx/Unaltered/blob/main/SECURITY.md), not a public issue.
+
+## Website navigation and accessibility
+
+The GitHub Pages site uses **Stamp**, **Verify**, **About** and **Settings**. The QR print/recovery tools are available in Verify. Use the keyboard-accessible navigation and native file selectors; status messages distinguish pending, verified, invalid and unreachable outcomes. If a calendar request fails, retain the original receipt and try the reference CLI instead of interpreting a network error as a negative proof.
+
+Settings explains calendar redundancy, the minimum submission threshold, and independent Bitcoin explorer checks. Changing language should not discard active file selections or QR recovery state. The hosted site is an experimental beta; verify its footer build code against the published artifact before relying on it.
