@@ -23,6 +23,7 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
           { class: 'check' },
           el('input', {
             type: 'checkbox',
+            id: `network-${host}`,
             checked: set.has(u),
             onchange: (e: Event) => {
               if ((e.target as HTMLInputElement).checked) set.add(u);
@@ -36,6 +37,10 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
     );
   }
 
+  // Explanations are visible text, not hover-only tooltips, so keyboard and touch users receive them too.
+  const help = (text: string): HTMLElement =>
+    el('p', { class: 'muted settings-help' }, text);
+
   function renderAdvanced(): void {
     const calCount = settings.calendars.size;
     const problems: string[] = [];
@@ -45,11 +50,13 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
       advanced,
       el('h3', {}, t('settings.advanced')),
       el('p', { class: 'notice warn' }, t('settings.banner')),
+      help(t('settings.help.calendars')),
       checkboxes(DEFAULT_CALENDARS, settings.calendars, t('settings.calendars')),
       el(
         'div',
         { class: 'field' },
         el('label', { for: 'min-cal' }, t('settings.minCalendars')),
+        help(t('settings.help.minimum')),
         el('input', {
           type: 'number',
           id: 'min-cal',
@@ -63,6 +70,7 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
           },
         }),
       ),
+      help(t('settings.help.explorers')),
       checkboxes(DEFAULT_EXPLORERS, settings.explorers, t('settings.explorers')),
       el('p', { class: 'muted' }, t('settings.explorerNote')),
       ...problems.map((p) => el('p', { class: 'error', role: 'alert' }, p)),

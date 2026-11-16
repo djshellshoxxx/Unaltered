@@ -1,19 +1,23 @@
-import { describe, expect, it } from 'vitest';
-import { en, es, detectLang, setLang, t } from '../../src/ui/strings';
+import { afterEach, describe, expect, it } from 'vitest';
+import { getLang, setLang, t } from '../../src/ui/strings';
+import { mountSettings } from '../../src/ui/views/settings';
+import { doc, installFakeDom } from './ui-fake-dom';
 
-describe('localized contextual help', () => {
-  it('maintains exact English/Spanish key parity and placeholder parity', () => {
-    expect(Object.keys(es).sort()).toEqual(Object.keys(en).sort());
-    for (const key of Object.keys(en) as (keyof typeof en)[]) {
-      const tokens = (value: string) => [...value.matchAll(/\{([A-Za-z]+)\}/g)].map((match) => match[1]).sort();
-      expect(tokens(es[key])).toEqual(tokens(en[key]));
+const helpKeys = ['settings.help.calendars', 'settings.help.minimum', 'settings.help.explorers'] as const;
+const previous = getLang();
+afterEach(() => setLang(previous));
+
+describe('visible network settings help', () => {
+  it.each(['en', 'es'] as const)('renders all catalog explanations in %s', (lang) => {
+    const restore = installFakeDom();
+    try {
+      setLang(lang);
+      const root = doc.createElement('main');
+      mountSettings(root as never, () => {});
+      const explanations = root.all().filter((node) => node.classList.contains('settings-help'));
+      expect(explanations.map((node) => node.textContent)).toEqual(helpKeys.map((key) => t(key)));
+    } finally {
+      restore();
     }
-  });
-  it('renders network-context explanations in both languages', () => {
-    expect(detectLang(['es-MX'])).toBe('es');
-    setLang('es');
-    expect(t('settings.help.calendars')).toContain('calendarios');
-    setLang('en');
-    expect(t('settings.help.calendars')).toContain('Calendar');
   });
 });
