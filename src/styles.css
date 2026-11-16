@@ -354,3 +354,6 @@ html[lang="es"] .intro-en { display:none; }
 html[lang="es"] .intro-es { display:block; }
 @media(max-width:760px) { .site-intro,.site-guide { margin:.75rem; padding:1.2rem; } }
 @media(prefers-contrast:more) { .site-steps li,.site-intro { border-width:2px; } }
+
+/* WCAG 2.2 touch-target acceptance for explanatory links at narrow viewports. */
+.site-guide a { display:inline-flex; align-items:center; min-height:44px; padding:.45rem .15rem; }

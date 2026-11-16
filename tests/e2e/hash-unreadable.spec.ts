@@ -56,7 +56,8 @@ async function selectThenBreak(page: Page, change: 'deleted' | 'modified'): Prom
 }
 
 for (const change of ['deleted', 'modified'] as const) {
-  test(`worker path: a file ${change} after selection falls back once and reports a typed unreadable error`, async ({ page }) => {
+  test(`worker path: a file ${change} after selection falls back once and reports a typed unreadable error`, async ({ page, browserName }) => {
+    test.skip(browserName === 'firefox' && change === 'modified', 'Firefox snapshots selected files; modifying the source path does not reliably invalidate the browser File.');
     await page.addInitScript(recordWorkerReplies);
     await selectThenBreak(page, change);
     await expect(page.getByRole('alert')).toHaveText(UNREADABLE);
@@ -65,7 +66,8 @@ for (const change of ['deleted', 'modified'] as const) {
     expect(w).toEqual({ replies: [{ type: 'error', code: null }], starts: 1 });
   });
 
-  test(`main-thread fallback: a file ${change} after selection reports a typed unreadable error`, async ({ page }) => {
+  test(`main-thread fallback: a file ${change} after selection reports a typed unreadable error`, async ({ page, browserName }) => {
+    test.skip(browserName === 'firefox' && change === 'modified', 'Firefox snapshots selected files; modifying the source path does not reliably invalidate the browser File.');
     await page.addInitScript(() => { Reflect.deleteProperty(window, 'Worker'); });
     await selectThenBreak(page, change);
     await expect(page.getByRole('alert')).toHaveText(UNREADABLE);
