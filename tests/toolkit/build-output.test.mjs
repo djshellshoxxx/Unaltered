@@ -142,8 +142,21 @@ for (const [label, newline] of [['CRLF', '\r\n'], ['CR', '\r']]) {
   });
 }
 
+test('hosted Pages metadata has valid line boundaries and stays out of portable pages', () => {
+  const url = 'https://djshellshoxxx.github.io/Unaltered/';
+  assert.equal(text(web.get('robots.txt')), `User-agent: *\nAllow: /Unaltered/\nSitemap: ${url}sitemap.xml\n`);
+  assert.equal(text(web.get('sitemap.xml')), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${url}</loc></url></urlset>\n`);
+  const hosted = text(web.get('index.html')).split('</head>')[0];
+  assert.ok(hosted.includes(`<link rel="canonical" href="${url}">`));
+  assert.ok(hosted.includes(`<meta property="og:url" content="${url}">`));
+  assert.ok(!hosted.includes('\\n'));
+  for (const html of [singleHtml, ...packages.map((p) => text(p.files.get('index.html')))]) {
+    assert.doesNotMatch(html.split('</head>')[0], /rel="canonical"|property="og:url"/);
+  }
+});
+
 test('web and portable artifacts contain only declared runtime and distribution files', () => {
-  assert.deepEqual([...web.keys()].sort(), ['favicon.png', 'index.html', 'main.js', 'styles.css']);
+  assert.deepEqual([...web.keys()].sort(), ['favicon.png', 'index.html', 'main.js', 'robots.txt', 'sitemap.xml', 'styles.css']);
   const common = ['favicon.png', 'index.html', 'main.js', 'styles.css', `${prefix}.html`, `unaltered-cli-${version}.mjs`, 'LICENSE', 'README.txt', 'SHA256SUMS'];
   for (const [i, launcher] of ['Open-Unaltered.cmd', 'open-unaltered.sh', 'Open-Unaltered.command'].entries()) {
     const p = packages[i];
