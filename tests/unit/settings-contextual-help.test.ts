@@ -1,15 +1,29 @@
-import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
-const settings = readFileSync(new URL('../../src/ui/views/settings.ts', import.meta.url), 'utf8');
-describe('Settings accessibility and contextual help', () => {
-  it('provides bilingual visible explanations for the network controls', () => {
-    for (const key of ['calendars', 'minimum', 'explorers']) {
-      expect(settings).toContain("help('settings.help." + key + "')");
-    }
-    expect(settings).toContain("class: 'muted settings-help'");
-  });
-  it('restores keyboard focus after rerendering network options', () => {
-    expect(settings).toContain("updated?.querySelector<HTMLInputElement>('input')?.focus()");
-    expect(settings).toContain("advanced.querySelector<HTMLInputElement>('#min-cal')?.focus()");
-  });
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { DEFAULT_CALENDARS, DEFAULT_EXPLORERS } from '../../src/core/net/allowlist';
+import { restoreDefaults } from '../../src/ui/state';
+import { mountSettings } from '../../src/ui/views/settings';
+import { doc, installFakeDom } from './ui-fake-dom';
+
+let restore: () => void;
+beforeEach(() => { restore = installFakeDom(); });
+afterEach(() => { restoreDefaults(); restore(); });
+
+describe('advanced settings keyboard focus', () => {
+  it.each([DEFAULT_CALENDARS[0]!, DEFAULT_EXPLORERS[0]!, 'min-cal'])(
+    'retains focus on the edited control after rerendering %s',
+    (key) => {
+      const id = key === 'min-cal' ? key : `network-${new URL(key).host}`;
+      const root = doc.createElement('main');
+      doc.body.appendChild(root);
+      mountSettings(root as never, () => {});
+      const control = doc.getElementById(id)!;
+      control.focus();
+      if (id === 'min-cal') control.value = '1';
+      else control.checked = !control.checked;
+      control.dispatch('change');
+      const updated = doc.getElementById(id);
+      expect(updated).not.toBe(control);
+      expect(doc.activeElement).toBe(updated);
+    },
+  );
 });

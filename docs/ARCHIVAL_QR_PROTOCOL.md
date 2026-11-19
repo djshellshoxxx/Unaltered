@@ -28,7 +28,9 @@ No arbitrary text, URL, filename, signature or original file is embedded. QR sym
 
 ## Resource bounds
 
-The initial implementation caps original receipts at 16 MiB and frame count at 4096. These are application limits, not QR-standard limits. The print interface imposes the tighter symbol and page budgets documented below. All input lengths, version bytes, indices, repeated metadata and checksums are validated before export.
+The original-length header has a 16 MiB validation ceiling (16,777,216 bytes), while a set is limited to 4096 frames. Each frame can contain at most 2953 bytes, including its 80-byte header, leaving at most 2873 receipt bytes. These limits apply together: the largest transportable v1 receipt is therefore **4096 × 2873 = 11,767,808 bytes (11.22265625 MiB)**, not 16 MiB. A smaller selected frame capacity lowers this effective limit to `4096 × (frame capacity − 80)`. The encoder rejects a receipt that would require more frames; the recoverer requires payload lengths to sum to the declared receipt length before allocating the output buffer. The header validation ceiling does not promise that every length below it is encodable.
+
+The 16 MiB header and 4096-frame bounds are application limits; 2953 bytes is the QR Model 2 version 40-L byte-mode capacity. The print interface imposes the tighter 64-symbol, module-size and page budgets documented below, so it cannot print receipts as large as the binary transport maximum. All input lengths, version bytes, indices, repeated metadata and checksums are validated before export.
 
 ## Independent recovery
 

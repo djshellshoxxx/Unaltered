@@ -4,7 +4,7 @@ import { summarizeLocalReceipts } from '../../core/reports/receipt-dashboard';
 import { clear, el, setChildren } from '../dom';
 import { isDefault, restoreDefaults, settings } from '../state';
 import { isEnabled, loadReceipts, removeReceipt, setEnabled, storageAvailable } from '../store';
-import { LANGS, getLang, setLang, t, type StringKey } from '../strings';
+import { LANGS, getLang, setLang, t } from '../strings';
 import { groupHex } from '../../core/bytes';
 
 export function mountSettings(root: HTMLElement, onLangChange: () => void): void {
@@ -23,15 +23,12 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
           { class: 'check' },
           el('input', {
             type: 'checkbox',
+            id: `network-${host}`,
             checked: set.has(u),
             onchange: (e: Event) => {
               if ((e.target as HTMLInputElement).checked) set.add(u);
               else set.delete(u);
               renderAdvanced();
-              const updated = [...advanced.querySelectorAll<HTMLLabelElement>('label.check')].find(
-                (label) => label.textContent?.trim() === host,
-              );
-              updated?.querySelector<HTMLInputElement>('input')?.focus();
             },
           }),
           el('span', {}, host),
@@ -41,8 +38,8 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
   }
 
   // Explanations are visible text, not hover-only tooltips, so keyboard and touch users receive them too.
-  const help = (key: StringKey): HTMLElement =>
-    el('p', { class: 'muted settings-help' }, t(key));
+  const help = (text: string): HTMLElement =>
+    el('p', { class: 'muted settings-help' }, text);
 
   function renderAdvanced(): void {
     const calCount = settings.calendars.size;
@@ -53,13 +50,13 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
       advanced,
       el('h3', {}, t('settings.advanced')),
       el('p', { class: 'notice warn' }, t('settings.banner')),
-      help('settings.help.calendars'),
+      help(t('settings.help.calendars')),
       checkboxes(DEFAULT_CALENDARS, settings.calendars, t('settings.calendars')),
       el(
         'div',
         { class: 'field' },
         el('label', { for: 'min-cal' }, t('settings.minCalendars')),
-        help('settings.help.minimum'),
+        help(t('settings.help.minimum')),
         el('input', {
           type: 'number',
           id: 'min-cal',
@@ -70,11 +67,10 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
             const n = Math.floor(Number((e.target as HTMLInputElement).value));
             settings.minCalendars = Number.isFinite(n) ? Math.max(1, n) : 1;
             renderAdvanced();
-            advanced.querySelector<HTMLInputElement>('#min-cal')?.focus();
           },
         }),
       ),
-      help('settings.help.explorers'),
+      help(t('settings.help.explorers')),
       checkboxes(DEFAULT_EXPLORERS, settings.explorers, t('settings.explorers')),
       el('p', { class: 'muted' }, t('settings.explorerNote')),
       ...problems.map((p) => el('p', { class: 'error', role: 'alert' }, p)),

@@ -13,6 +13,17 @@ export interface CertificateContext {
   buildId?: string;
 }
 
+/** A header quorum needs two different hosts; whitespace and letter case cannot create another source. */
+function distinctSources(sources: readonly string[]): boolean {
+  const hosts = new Set<string>();
+  for (const source of sources) {
+    const host = typeof source === 'string' ? source.trim().toLowerCase() : '';
+    if (!host) return false;
+    hosts.add(host);
+  }
+  return hosts.size >= 2;
+}
+
 const hex = (bytes: Uint8Array): string => Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
 
 /** Printable transport of exact .ots bytes, not an unsigned claim of Bitcoin verification. */
@@ -27,7 +38,7 @@ export function createArchivalPrintSheet(symbols: readonly ArchivalQrSymbol[], r
       !Number.isSafeInteger(context.verifiedBitcoin.height) || context.verifiedBitcoin.height < 0 ||
       !/^[0-9a-f]{64}$/i.test(context.verifiedBitcoin.blockHash) ||
       !Number.isFinite(Date.parse(context.verifiedBitcoin.blockTimeUtc)) ||
-      context.verifiedBitcoin.sourcesAgreeing.length < 2)) throw new Error('Verified certificate requires validated block evidence');
+      !distinctSources(context.verifiedBitcoin.sourcesAgreeing))) throw new Error('Verified certificate requires validated block evidence');
   if (context.verifiedBitcoin && context.verificationStatus !== 'verified') throw new Error('Unverified certificate cannot claim block evidence');
   for (const [index, symbol] of symbols.entries()) {
     if (symbol.index !== index || symbol.total !== symbols.length || !Number.isInteger(symbol.version) ||
@@ -116,7 +127,7 @@ export function createArchivalPrintSheet(symbols: readonly ArchivalQrSymbol[], r
     el('li', {}, 'Recompute the identifier: SHA-256 of ASCII "UNALTERED-OTS-QR/1", one zero byte, then the original receipt bytes; compare its first 16 bytes.'),
     el('li', {}, 'Save the recovered bytes unchanged as receipt.ots. This transport does not modify the standard OpenTimestamps format. Verify with the original file and an independent OpenTimestamps implementation.')));
   appendix.appendChild(el('pre', { class: 'archival-spec' }, 'ots info receipt.ots\nots upgrade receipt.ots\nots verify --file ORIGINAL_FILE receipt.ots'));
-  appendix.appendChild(el('p', {}, 'Reference tools: opentimestamps.org · github.com/opentimestamps/opentimestamps-client. Unaltered protocol source: github.com/djshellshoxxx/Unaltered, docs/ARCHIVAL_QR_PROTOCOL.md. Protocol v1 limits: 4096 frames, 2953 bytes per frame, 16 MiB receipt; this print interface limits output to 64 symbols.'));
+  appendix.appendChild(el('p', {}, 'Reference tools: opentimestamps.org · github.com/opentimestamps/opentimestamps-client. Unaltered protocol source: github.com/djshellshoxxx/Unaltered, docs/ARCHIVAL_QR_PROTOCOL.md. Protocol v1: at most 4096 frames of 2953 bytes including the 80-byte header, carrying at most 11,767,808 receipt bytes together. The 16 MiB length-field ceiling is not transport capacity. This print interface uses at most 64 symbols and tighter size limits.'));
   appendix.appendChild(el('p', {}, 'A damaged or missing QR cannot be restored from its label alone. Keep duplicate prints and the digital .ots file. QR error-correction percentages describe approximate codeword recovery, not guaranteed physical damage recovery. A pending receipt may need upgrading before Bitcoin verification; block time is not an exact file-creation time.'));
   footer(appendix);
   return root;

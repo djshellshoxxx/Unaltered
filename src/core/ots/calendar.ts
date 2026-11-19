@@ -54,6 +54,9 @@ export interface BatchStampResult {
   calendars: CalendarResult[];
 }
 
+/** Bounds the Merkle tree and per-file receipts; matches the existing batch-verification limit. */
+export const MAX_STAMP_FILES = 50;
+
 const ACCEPT = { Accept: 'application/vnd.opentimestamps.v1' };
 
 function normBase(u: string): string {
@@ -116,6 +119,7 @@ function merkleTip(leaves: TsNode[]): TsNode {
 
 export async function stampBatch(digests: Uint8Array[], cfg: StampConfig): Promise<BatchStampResult> {
   if (digests.length === 0) throw new UnalteredError('INPUT_INVALID', 'Nothing to stamp.');
+  if (digests.length > MAX_STAMP_FILES) throw new UnalteredError('INPUT_INVALID', `Stamp at most ${MAX_STAMP_FILES} files in one batch.`);
   if (digests.some((d) => d.length !== 32)) throw new UnalteredError('INPUT_INVALID', 'A fingerprint has the wrong length.');
   if (cfg.calendars.length === 0) throw new UnalteredError('INPUT_INVALID', 'No calendar servers are selected.');
   // FR-4: never below one, rounded up. NaN would make `accepted < need` always false, so it falls back to the default M.

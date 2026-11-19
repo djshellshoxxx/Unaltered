@@ -330,8 +330,11 @@ const macFiles = withSums([
 
 rmSync(dist, { recursive: true, force: true });
 mkdirSync(join(dist, 'web'), { recursive: true });
-for (const f of common) if (f.name !== singleName && f.name !== 'LICENSE' && f.name !== cliName) writeFileSync(join(dist, 'web', f.name), f.data);
-writeFileSync(join(dist, 'web', 'index.html'), multiHtml.replace('</head>', '  ' + seoHead + '\n</head>'));
+for (const f of common) {
+  if (f.name === singleName || f.name === 'LICENSE' || f.name === cliName) continue;
+  const content = f.name === 'index.html' ? multiHtml.replace('</head>', `  ${seoHead}\n</head>`) : f.data;
+  writeFileSync(join(dist, 'web', f.name), content);
+}
 writeFileSync(join(dist, 'web', 'robots.txt'), 'User-agent: *\nAllow: /Unaltered/\nSitemap: ' + siteUrl + 'sitemap.xml\n');
 writeFileSync(join(dist, 'web', 'sitemap.xml'), '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>' + siteUrl + '</loc></url></urlset>\n');
 writeFileSync(join(dist, singleName), singleHtml);

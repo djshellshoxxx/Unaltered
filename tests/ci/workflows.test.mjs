@@ -153,7 +153,7 @@ test('no Playwright gate lets a passing retry hide a failed attempt', () => {
   assert.deepEqual(lenient, [], `Playwright runs that retry (config: retries ${retries}) without --retries=0 or --fail-on-flaky-tests`);
 });
 
-test('the Python reference oracle is installed only from a hash-pinned requirements file', () => {
+test('the Python reference and independent QR decoder use reviewed hash-pinned wheels', () => {
   const sources = [...workflows, ...readdirSync(new URL('scripts/', root)).filter((f) => f.endsWith('.sh')).map((f) => `scripts/${f}`)];
   const installs = sources.flatMap((file) => read(file).split('\n')
     .flatMap((line) => line.split(/&&|;/))
@@ -171,6 +171,11 @@ test('the Python reference oracle is installed only from a hash-pinned requireme
   }
   assert.deepEqual(problems, [], 'unpinned reference installs');
   const reviewed = read('docs/DEPENDENCIES.md').split('\n').filter((l) => l.startsWith('|'));
+  const requiredPackages = {
+    'tests/differential/requirements.txt': { opentimestamps: '0.4.5', 'python-bitcoinlib': '0.12.2', pycryptodomex: '3.23.0' },
+    'tests/archival/requirements.txt': { 'zxing-cpp': '3.1.1', pillow: '13.0.0' },
+  };
+  assert.deepEqual([...files].sort(), Object.keys(requiredPackages).sort(), 'all reference tools must be installed from their reviewed requirements');
   for (const req of files) {
     const logical = read(req).replace(/\\\n/g, ' ').split('\n').map((l) => l.replace(/(?:^|\s)#.*$/, '').trim()).filter(Boolean);
     const pins = logical.map((l) => {
@@ -178,7 +183,7 @@ test('the Python reference oracle is installed only from a hash-pinned requireme
       assert.ok(m, `${req}: not an exact, hash-pinned requirement: ${l}`);
       return { name: m[1], version: m[2] };
     });
-    assert.ok(pins.some((p) => p.name === 'opentimestamps' && p.version === '0.4.5'), `${req} does not pin opentimestamps==0.4.5`);
+    assert.deepEqual(Object.fromEntries(pins.map((p) => [p.name, p.version])), requiredPackages[req], `${req} has unreviewed or missing reference packages`);
     for (const { name, version: v } of pins) {
       assert.ok(reviewed.some((l) => l.includes(name) && l.includes(v) && l.includes(req)), `docs/DEPENDENCIES.md records no review of ${name}==${v} as pinned in ${req}`);
     }

@@ -47,8 +47,12 @@ function locate(data: Uint8ClampedArray, w: number, h: number): Located | null {
 /** Finds QR-like areas on a scanned page: connected cells of mixed dark/light ink whose bounding box is roughly
  * square. Text lines are thin and are rejected by shape. Fixed windows can cut through symbols that are not
  * centred on the page; these candidates follow the actual print layout. Bounded: at most 64 candidates.
+ * Retry detection uses a looser fill ratio for rotated symbols and stops after its first candidate.
  */
-function symbolCandidates(px: Uint8ClampedArray, width: number, height: number): Region[] {
+export function symbolCandidates(px: Uint8ClampedArray, width: number, height: number,
+  mode: 'decode' | 'retry' = 'decode'): Region[] {
+  const minimumFill = mode === 'retry' ? .5 : .6;
+  const limit = mode === 'retry' ? 1 : MAX_QR_SYMBOLS_PER_IMAGE;
   const cell = Math.max(4, Math.round(Math.min(width, height) / 160));
   const cw = Math.ceil(width / cell); const ch = Math.ceil(height / cell);
   const mixed = new Uint8Array(cw * ch);
@@ -75,11 +79,11 @@ function symbolCandidates(px: Uint8ClampedArray, width: number, height: number):
     }
     const bw = x1 - x0 + 1; const bh = y1 - y0 + 1;
     // QR symbols fill most of their box; require a plausible size and near-square shape.
-    if (bw * cell < 42 || bh * cell < 42 || bw > bh * 1.4 || bh > bw * 1.4 || count < bw * bh * .6) continue;
+    if (bw * cell < 42 || bh * cell < 42 || bw > bh * 1.4 || bh > bw * 1.4 || count < bw * bh * minimumFill) continue;
     const pad = Math.ceil(Math.max(bw, bh) * cell * .08);
     const rx = Math.max(0, x0 * cell - pad); const ry = Math.max(0, y0 * cell - pad);
     out.push({ x: rx, y: ry, w: Math.min(width, (x1 + 1) * cell + pad) - rx, h: Math.min(height, (y1 + 1) * cell + pad) - ry });
-    if (out.length >= MAX_QR_SYMBOLS_PER_IMAGE) break;
+    if (out.length >= limit) break;
   }
   return out;
 }

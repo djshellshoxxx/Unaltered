@@ -10,6 +10,7 @@ if (!left || !right || process.argv.length !== 4) {
   process.exit(1);
 }
 function manifest(root) {
+  if (!lstatSync(root).isDirectory()) throw new Error('expected a Pages artifact directory');
   const files = [];
   function visit(dir) {
     for (const name of readdirSync(dir).sort()) {
