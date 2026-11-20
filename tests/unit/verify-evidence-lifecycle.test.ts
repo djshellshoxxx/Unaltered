@@ -70,6 +70,17 @@ async function settle(): Promise<void> {
 }
 
 describe('evidence exports belong to the selected file and receipt', () => {
+  it('explains the existing size limit before reading either selected file', () => {
+    Object.defineProperty(original, 'size', { value: 16 * 1024 * 1024 });
+    const originalRead = vi.spyOn(original, 'arrayBuffer');
+    const receiptRead = vi.spyOn(receipt, 'arrayBuffer');
+    button(t('evidence.downloadZip')).dispatch('click');
+    expect(root.querySelector('.verify-result')!.textContent).toBe(t('evidence.limit'));
+    expect(originalRead).not.toHaveBeenCalled();
+    expect(receiptRead).not.toHaveBeenCalled();
+    expect(button(t('verify.check')).disabled).toBe(false);
+  });
+
   it('starts only one export while the input read is held', async () => {
     const held = deferred<ArrayBuffer>();
     const read = vi.spyOn(original, 'arrayBuffer').mockReturnValue(held.promise);

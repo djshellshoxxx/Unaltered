@@ -160,7 +160,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
     abort = controller;
     renderActions();
     try {
-      if (selectedFile.size + selectedReceipt.size > 16 * 1024 * 1024) throw new Error(t('evidence.limit'));
+      if (selectedFile.size + selectedReceipt.size > 16 * 1024 * 1024) throw new UnalteredError('INPUT_INVALID', t('evidence.limit'));
       const [original, proof] = await awaitAbortable(Promise.all([selectedFile.arrayBuffer(), selectedReceipt.arrayBuffer()]), controller.signal);
       if (!current()) return;
       const archive = await awaitAbortable(createEvidenceZip(new Uint8Array(original), new Uint8Array(proof)), controller.signal);
