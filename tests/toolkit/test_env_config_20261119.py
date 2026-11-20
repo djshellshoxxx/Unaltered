@@ -100,6 +100,40 @@ class EnvInteroperabilityTests(unittest.TestCase):
             module["write_env"](self.path, {"AUTO_UPDATE_MODE": "public\nOTHER=value"})
         self.assertEqual(self.path.read_text(), original)
 
+    def test_updater_preserves_unicode_separators_inside_literal_values(self):
+        module = runpy.run_path(str(SCRIPTS / "setup_updates.py"))
+        for separator in ("\u0085", "\u2028", "\u2029"):
+            with self.subTest(separator=repr(separator)):
+                original = f'DEVELOPER_NAME="One{separator}Two"\nENABLE_AUTO_UPDATE=FALSE\n'
+                self.path.write_text(original, encoding="utf-8")
+                module["write_env"](self.path, {"ENABLE_AUTO_UPDATE": "FALSE"})
+                self.assertEqual(self.path.read_text(encoding="utf-8"), original)
+                self.assertEqual(module["parse_env"](self.path)["DEVELOPER_NAME"], f"One{separator}Two")
+
+    @unittest.skipUnless(os.name == "posix", "requires a controllable C locale")
+    def test_version_writer_preserves_utf8_configuration_in_non_utf8_locale(self):
+        original = 'DEVELOPER_NAME="\u674e \u0418\u0432\u0430\u043d"\nVERSION_PATCH=1\n'
+        self.path.write_text(original, encoding="utf-8")
+        cmake = self.root / "CMakeLists.txt"
+        cmake.write_text('# \u674e \u0418\u0432\u0430\u043d\nproject(Example VERSION 1.0.1)\n', encoding="utf-8")
+        code = (
+            "import runpy, sys; "
+            "module = runpy.run_path(sys.argv[1]); "
+            "version = dict(major=1, minor=0, patch=2, build=3); "
+            "module['update_version_in_env'](sys.argv[2], version); "
+            "module['update_cmake_version'](sys.argv[3], version)"
+        )
+        result = subprocess.run(
+            [sys.executable, "-X", "utf8=0", "-c", code, str(SCRIPTS / "bump_version.py"),
+             str(self.path), str(self.root)], capture_output=True, text=True, encoding="utf-8", timeout=10,
+            env={**os.environ, "LC_ALL": "C", "PYTHONCOERCECLOCALE": "0"},
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        module = runpy.run_path(str(SCRIPTS / "env_config.py"))
+        self.assertEqual(module["parse_env"](self.path)["DEVELOPER_NAME"], "\u674e \u0418\u0432\u0430\u043d")
+        self.assertIn("VERSION_PATCH=2\n", self.path.read_text(encoding="utf-8"))
+        self.assertEqual(cmake.read_text(encoding="utf-8"), '# \u674e \u0418\u0432\u0430\u043d\nproject(Example VERSION 1.0.2)\n')
+
     def test_appcast_treats_project_text_as_xml_text(self):
         module = runpy.run_path(str(SCRIPTS / "setup_updates.py"))
         title = 'Amp & <enclosure url="https://example.invalid/extra"/>'

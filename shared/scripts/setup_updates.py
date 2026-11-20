@@ -17,7 +17,8 @@ parse_env = _env["parse_env"]
 def write_env(path: Path, values: dict[str, str]) -> None:
     # Validate and quote every replacement before changing the existing file.
     values = {key: _env["env_literal"](value) for key, value in values.items()}
-    existing = path.read_text(encoding="utf-8", errors="ignore").splitlines() if path.exists() else []
+    # Match parse_env's LF-delimited records: Unicode separators are value data.
+    existing = path.read_text(encoding="utf-8").split("\n") if path.exists() else []
     updated_keys = set()
     lines = []
     for line in existing:
