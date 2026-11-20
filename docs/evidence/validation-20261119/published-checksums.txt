@@ -1,0 +1,5 @@
+unaltered-cli-0.3.1.mjs: OK
+unaltered-0.3.1-linux.tar.gz: OK
+unaltered-0.3.1-macos.zip: OK
+unaltered-0.3.1.html: OK
+unaltered-0.3.1.zip: OK
