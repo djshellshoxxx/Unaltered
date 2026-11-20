@@ -8,6 +8,7 @@ import { pairEvidenceFiles } from '../../core/reports/batch-pair';
 import { verifyBatch } from '../../core/reports/batch-verify';
 import { isAbort, safeMessage, UnalteredError } from '../../core/errors';
 import { hashBlob } from '../../core/hash/hasher';
+import { awaitAbortable } from '../../core/hash/stream';
 import { upgrade, type UpgradeResult } from '../../core/ots/calendar';
 import { parseProof } from '../../core/ots/codec';
 import type { CalendarLiveness } from '../../core/ots/liveness';
@@ -77,6 +78,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
   let receipt: File | null = null;
   let prefill: string | null = null;
   let busy = false;
+  let exporting = false;
   let abort: AbortController | null = null;
   let generation = 0;
 
@@ -111,6 +113,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
   function resetVerification(): void {
     generation++;
     busy = false;
+    exporting = false;
     abort?.abort();
     abort = null;
     show(null);
@@ -140,31 +143,48 @@ export function mountVerify(root: HTMLElement): VerifyView {
   function renderActions(): void {
     setChildren(
       actions,
-      el('button', { type: 'button', class: 'button primary big', disabled: busy || !receipt || (!file && !prefill), onclick: () => void run() }, busy ? t('verify.checking') : t('verify.check')),
-      busy ? el('button', { type: 'button', class: 'button', onclick: () => { resetVerification(); renderActions(); } }, t('common.cancel')) : null,
-      file && receipt && !busy ? el('button', { type: 'button', class: 'button', onclick: () => void downloadEvidenceBundle() }, t('evidence.downloadZip')) : null,
+      el('button', { type: 'button', class: 'button primary big', disabled: busy || exporting || !receipt || (!file && !prefill), onclick: () => void run() }, busy ? t('verify.checking') : t('verify.check')),
+      busy || exporting ? el('button', { type: 'button', class: 'button', onclick: () => { resetVerification(); renderActions(); } }, t('common.cancel')) : null,
+      file && receipt && !busy ? el('button', { type: 'button', class: 'button', disabled: exporting, onclick: () => void downloadEvidenceBundle() }, exporting ? t('evidence.preparing') : t('evidence.downloadZip')) : null,
     );
   }
 
   async function downloadEvidenceBundle(): Promise<void> {
-    if (!file || !receipt || busy) return;
+    if (!file || !receipt || busy || exporting) return;
+    const selectedFile = file;
+    const selectedReceipt = receipt;
+    const operation = ++generation;
+    const controller = new AbortController();
+    const current = (): boolean => operation === generation && !controller.signal.aborted && out.isConnected;
+    exporting = true;
+    abort = controller;
+    renderActions();
     try {
-      if (file.size + receipt.size > 16 * 1024 * 1024) throw new Error(t('evidence.limit'));
-      const [original, proof] = await Promise.all([file.arrayBuffer(), receipt.arrayBuffer()]);
-      const archive = await createEvidenceZip(new Uint8Array(original), new Uint8Array(proof));
+      if (selectedFile.size + selectedReceipt.size > 16 * 1024 * 1024) throw new Error(t('evidence.limit'));
+      const [original, proof] = await awaitAbortable(Promise.all([selectedFile.arrayBuffer(), selectedReceipt.arrayBuffer()]), controller.signal);
+      if (!current()) return;
+      const archive = await awaitAbortable(createEvidenceZip(new Uint8Array(original), new Uint8Array(proof)), controller.signal);
+      if (!current()) return;
       const blob = new Blob([archive as BlobPart], { type: 'application/zip' });
       const url = URL.createObjectURL(blob);
       const link = el('a', { href: url, download: 'unaltered-evidence.zip' });
-      link.click();
-      // Defer revocation until after the browser has consumed the click.
-      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      try { link.click(); } finally {
+        // Defer revocation until after the browser has consumed the click, even if the click itself fails.
+        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      }
     } catch (error) {
-      show({ kind: 'error', message: safeMessage(error) });
+      if (current()) show(isAbort(error) ? null : { kind: 'error', message: safeMessage(error) });
+    } finally {
+      if (current()) {
+        exporting = false;
+        abort = null;
+        renderActions();
+      }
     }
   }
 
   async function run(): Promise<void> {
-    if (!receipt) return;
+    if (!receipt || busy || exporting) return;
     const selectedReceipt = receipt;
     const selectedFile = file;
     const selectedPrefill = prefill;
