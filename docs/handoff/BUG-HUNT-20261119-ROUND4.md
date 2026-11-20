@@ -5,10 +5,11 @@ Branch: `audit/bugs-round4-20261119`.
 
 ## Result
 
-No additional reproducible defect was found in the reviewed evidence-export,
-batch-verification, and localization integration. This round changes only this
-handoff. It does not claim that the newly added native-browser assertions have
-executed or that the candidate is release-qualified.
+The initial scoped review found no additional reproducible application-runtime
+defect in the evidence-export, batch-verification, and localization integration.
+The coordinator's subsequent full typecheck found a test-typing blocker, repaired
+in `63ffc06` as described below. The newly added native-browser assertions have
+not executed here, and the candidate is not release-qualified by these checks.
 
 ## Independent review
 
@@ -44,6 +45,26 @@ The browser probe observes only main-window native reads and digest operations;
 it is not a general browser memory or worker-internals instrument. Worker count
 assertions establish construction counts, not a separate memory guarantee.
 
+## Follow-up compiler finding and repair
+
+The fourth code-audit worker's full TypeScript check reported five `TS2352`
+diagnostics in the new browser test. Its direct casts from the browser's `window`
+to a structural type requiring `__lifecycleProbe` asserted a property that had
+not been declared on `Window`. These errors were in the reviewed baseline; the
+compiler version remained TypeScript 6.0.3 during the dependency update.
+
+The repair declares the test-owned property as optional on `Window` and narrows
+it at access sites. Installing the probe establishes the property explicitly;
+waiting for a read checks its optional release callback; releasing or observing
+the probe checks initialization before access. Read/digest completion accounting,
+download checks, and every ownership assertion remain in place. No unchecked
+`any` or double assertion was introduced.
+
+One full `tsc --noEmit` run at a 384 MiB Node heap passed with no diagnostics after
+the repair. Targeted lint passed, and all ten browser cases still collected. The
+code-only commit was handed to the dependency worker for qualification against
+the updated lint dependencies; it does not depend on this handoff file.
+
 ## Verification
 
 ```sh
@@ -52,6 +73,13 @@ node node_modules/vitest/vitest.mjs run \
   tests/unit/verify-batch-lifecycle.test.ts \
   tests/unit/bugs-sweep-unsupported-cleaning.test.ts --maxWorkers=1
 # 3 files, 14 tests passed.
+
+node --max-old-space-size=384 node_modules/typescript/bin/tsc --noEmit
+# Passed after the probe typing repair; no diagnostics.
+
+node --max-old-space-size=384 node_modules/eslint/bin/eslint.js \
+  tests/e2e/verify-export-batch-lifecycle.spec.ts
+# Passed after the probe typing repair.
 
 node node_modules/@playwright/test/cli.js test \
   tests/e2e/verify-export-batch-lifecycle.spec.ts --list --retries=0
@@ -63,7 +91,7 @@ git diff --check
 Native Chromium, Firefox, and WebKit assertions remain pending. The coordinator
 previously established that local Chromium cannot launch because socket setup
 is denied. This worker did not retry the launch, change flags, dispatch a
-workflow, or mutate remote state. Full typechecking, dependency qualification,
+workflow, or mutate remote state. The final combined dependency qualification,
 full-suite testing, and exact-head hosted evidence remain centralized with the
 coordinator and the other fourth-round workers.
 
