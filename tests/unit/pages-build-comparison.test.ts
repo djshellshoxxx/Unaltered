@@ -38,7 +38,11 @@ it('fails when bytes differ and emits no successful checksum records', () => {
 it('rejects linked directories at the root and within both artifacts', () => {
   const linked = join(root, 'linked');
   symlinkSync(left, linked, 'junction');
-  expect(compare(linked, right).status).toBe(1);
+  // A trailing separator or dot makes lstat follow a directory symlink on POSIX.
+  for (const path of [linked, `${linked}/`, `${linked}/.`, `${linked}/./`]) {
+    expect(compare(path, right).status, path).toBe(1);
+    expect(compare(right, path).status, path).toBe(1);
+  }
   const external = join(root, 'external');
   mkdirSync(external);
   writeFileSync(join(external, 'shared.txt'), 'shared');
