@@ -22,13 +22,15 @@ interface LifecycleProbe {
   pendingDigests: number;
   release?: () => void;
 }
-type ProbeWindow = Window & { __lifecycleProbe: LifecycleProbe };
+declare global {
+  interface Window { __lifecycleProbe?: LifecycleProbe }
+}
 
 /** Gate only the completion of one real native read; hashing and downloads still use the browser. */
 async function installProbe(page: Page, heldName: string | null = null): Promise<void> {
   await page.evaluate((heldName) => {
     const probe: LifecycleProbe = { reads: [], workers: 0, downloads: [], pendingReads: 0, pendingDigests: 0 };
-    (window as ProbeWindow).__lifecycleProbe = probe;
+    window.__lifecycleProbe = probe;
     const read = File.prototype.arrayBuffer;
     File.prototype.arrayBuffer = async function (): Promise<ArrayBuffer> {
       probe.reads.push(this.name);
@@ -62,21 +64,21 @@ async function installProbe(page: Page, heldName: string | null = null): Promise
 }
 
 async function waitForRead(page: Page): Promise<void> {
-  await page.waitForFunction(() => !!(window as ProbeWindow).__lifecycleProbe.release);
+  await page.waitForFunction(() => !!window.__lifecycleProbe?.release);
 }
 
 async function releaseAndSettle(page: Page): Promise<void> {
   await page.evaluate(async () => {
-    const probe = (window as ProbeWindow).__lifecycleProbe;
-    if (!probe.release) throw new Error('The native file read has not reached its gate');
+    const probe = window.__lifecycleProbe;
+    if (!probe?.release) throw new Error('The native file read has not reached its gate');
     probe.release();
     delete probe.release;
     // One task boundary drains the promise continuations that start native crypto, if any.
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
   });
   await page.waitForFunction(() => {
-    const probe = (window as ProbeWindow).__lifecycleProbe;
-    return probe.pendingReads === 0 && probe.pendingDigests === 0;
+    const probe = window.__lifecycleProbe;
+    return probe !== undefined && probe.pendingReads === 0 && probe.pendingDigests === 0;
   });
   // The final digest's microtasks must finish before checking whether a download was attempted.
   await page.evaluate(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
@@ -84,7 +86,9 @@ async function releaseAndSettle(page: Page): Promise<void> {
 
 async function observed(page: Page): Promise<{ reads: string[]; workers: number; downloads: string[] }> {
   return page.evaluate(() => {
-    const { reads, workers, downloads } = (window as ProbeWindow).__lifecycleProbe;
+    const probe = window.__lifecycleProbe;
+    if (!probe) throw new Error('The lifecycle probe has not been installed');
+    const { reads, workers, downloads } = probe;
     return { reads, workers, downloads };
   });
 }
