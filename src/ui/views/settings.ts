@@ -11,7 +11,7 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
   const advanced = el('div', { class: 'advanced' });
   const receipts = el('div', { class: 'receipts' });
 
-  function checkboxes(urls: readonly string[], set: Set<string>, legend: string): HTMLElement {
+  function checkboxes(urls: readonly string[], set: Set<string>, legend: string, helpId: string): HTMLElement {
     return el(
       'fieldset',
       {},
@@ -24,6 +24,7 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
           el('input', {
             type: 'checkbox',
             id: `network-${host}`,
+            'aria-describedby': helpId,
             checked: set.has(u),
             onchange: (e: Event) => {
               if ((e.target as HTMLInputElement).checked) set.add(u);
@@ -38,8 +39,8 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
   }
 
   // Explanations are visible text, not hover-only tooltips, so keyboard and touch users receive them too.
-  const help = (text: string): HTMLElement =>
-    el('p', { class: 'muted settings-help' }, text);
+  const help = (id: string, text: string): HTMLElement =>
+    el('p', { id, class: 'muted settings-help' }, text);
 
   function renderAdvanced(): void {
     const calCount = settings.calendars.size;
@@ -50,16 +51,17 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
       advanced,
       el('h3', {}, t('settings.advanced')),
       el('p', { class: 'notice warn' }, t('settings.banner')),
-      help(t('settings.help.calendars')),
-      checkboxes(DEFAULT_CALENDARS, settings.calendars, t('settings.calendars')),
+      help('calendars-help', t('settings.help.calendars')),
+      checkboxes(DEFAULT_CALENDARS, settings.calendars, t('settings.calendars'), 'calendars-help'),
       el(
         'div',
         { class: 'field' },
         el('label', { for: 'min-cal' }, t('settings.minCalendars')),
-        help(t('settings.help.minimum')),
+        help('min-cal-help', t('settings.help.minimum')),
         el('input', {
           type: 'number',
           id: 'min-cal',
+          'aria-describedby': 'min-cal-help',
           min: 1,
           max: Math.max(1, calCount),
           value: String(Math.min(settings.minCalendars, Math.max(1, calCount))),
@@ -70,8 +72,8 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
           },
         }),
       ),
-      help(t('settings.help.explorers')),
-      checkboxes(DEFAULT_EXPLORERS, settings.explorers, t('settings.explorers')),
+      help('explorers-help', t('settings.help.explorers')),
+      checkboxes(DEFAULT_EXPLORERS, settings.explorers, t('settings.explorers'), 'explorers-help'),
       el('p', { class: 'muted' }, t('settings.explorerNote')),
       ...problems.map((p) => el('p', { class: 'error', role: 'alert' }, p)),
       el('button', { type: 'button', class: 'button', disabled: isDefault(), onclick: () => (restoreDefaults(), renderAdvanced()) }, t('settings.restore')),

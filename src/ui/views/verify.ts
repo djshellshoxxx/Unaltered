@@ -129,10 +129,10 @@ export function mountVerify(root: HTMLElement): VerifyView {
             el('button', { type: 'button', class: 'button small', onclick: () => ((prefill = null), resetVerification(), renderInputs(), renderActions()) }, t('common.remove')),
           )
         : null,
-      dropZone({ id: 'verify-file', label: t('verify.dropFile'), hint: t('verify.dropFileHint'), onFiles: (f) => ((file = f[0] ?? null), (prefill = file ? null : prefill), resetVerification(), renderInputs(), renderActions()) }),
+      dropZone({ id: 'verify-file', label: t('verify.dropFile'), hint: t('verify.dropFileHint'), help: t('help.verifyFile'), onFiles: (f) => ((file = f[0] ?? null), (prefill = file ? null : prefill), resetVerification(), renderInputs(), renderActions()) }),
       file ? el('p', { class: 'picked' }, `${file.name} · ${formatBytes(file.size)}`) : null,
       el('h3', {}, t('verify.step2')),
-      dropZone({ id: 'verify-receipt', label: t('verify.dropReceipt'), hint: t('verify.dropReceiptHint'), accept: '.ots', onFiles: (f) => ((receipt = f[0] ?? null), resetVerification(), renderInputs(), renderActions()) }),
+      dropZone({ id: 'verify-receipt', label: t('verify.dropReceipt'), hint: t('verify.dropReceiptHint'), help: t('help.verifyReceipt'), accept: '.ots', onFiles: (f) => ((receipt = f[0] ?? null), resetVerification(), renderInputs(), renderActions()) }),
       receipt ? el('p', { class: 'picked' }, `${receipt.name} · ${formatBytes(receipt.size)}`) : null,
     );
   }
@@ -226,7 +226,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
     const hadActionFocus = upActions.contains(document.activeElement);
     setChildren(
       upInputs,
-      dropZone({ id: 'upgrade-receipt', label: t('upgrade.drop'), hint: t('verify.dropReceiptHint'), accept: '.ots', onFiles: (f) => { resetUpgrade(); upFile = f[0] ?? null; renderUpgrade(); } }),
+      dropZone({ id: 'upgrade-receipt', label: t('upgrade.drop'), hint: t('verify.dropReceiptHint'), help: t('help.upgradeReceipt'), accept: '.ots', onFiles: (f) => { resetUpgrade(); upFile = f[0] ?? null; renderUpgrade(); } }),
       upFile ? el('p', { class: 'picked' }, `${upFile.name} · ${formatBytes(upFile.size)}`) : null,
     );
     setChildren(upActions,
@@ -384,9 +384,9 @@ export function mountVerify(root: HTMLElement): VerifyView {
     setChildren(batchRoot,
       el('h3', {}, t('batch.title')),
       el('p', { class: 'muted' }, t('batch.instructions')),
-      dropZone({ id: 'batch-files', label: t('batch.files'), hint: t('batch.fileHint'), multiple: true,
+      dropZone({ id: 'batch-files', label: t('batch.files'), hint: t('batch.fileHint'), help: t('help.batchFiles'), multiple: true,
         onFiles: files => { batchGeneration++; batchController?.abort(); batchBusy = false; batchFiles = files; setChildren(batchResults); renderBatchActions(); } }),
-      dropZone({ id: 'batch-receipts', label: t('batch.receipts'), hint: t('batch.receiptHint'), multiple: true, accept: '.ots',
+      dropZone({ id: 'batch-receipts', label: t('batch.receipts'), hint: t('batch.receiptHint'), help: t('help.batchReceipts'), multiple: true, accept: '.ots',
         onFiles: files => { batchGeneration++; batchController?.abort(); batchBusy = false; batchReceipts = files; setChildren(batchResults); renderBatchActions(); } }),
       batchActions,
       batchResults,
