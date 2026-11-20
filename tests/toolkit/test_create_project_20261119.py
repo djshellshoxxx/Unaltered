@@ -1,11 +1,15 @@
 """Offline starter-generator safety regressions; no SDK, network, or credentials."""
 import os
+import runpy
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -130,6 +134,62 @@ class CreateProjectTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertTrue(self.destination.is_symlink())
         self.assertFalse((self.base / "missing").exists())
+
+    def assert_reparse_point_is_refused(self, target):
+        with patch.object(sys, "path", [str(CREATE_PROJECT.parent), *sys.path]):
+            validate = runpy.run_path(str(CREATE_PROJECT))["validate_copy_paths"]
+        original_lstat = Path.lstat
+
+        def lstat(path, *args, **kwargs):
+            info = original_lstat(path, *args, **kwargs)
+            if path == target:
+                return SimpleNamespace(st_mode=info.st_mode,
+                                       st_file_attributes=stat.FILE_ATTRIBUTE_REPARSE_POINT)
+            return info
+
+        # A Windows junction is directory-shaped and is not a POSIX symlink.
+        # Python 3.10/3.11 expose its reparse attributes but lack is_junction.
+        with (patch.object(Path, "lstat", lstat),
+              patch.object(Path, "is_junction", return_value=False, create=True)):
+            with self.assertRaises(ValueError):
+                validate(self.starter, self.destination)
+
+    def test_destination_reparse_point_is_refused_without_junction_helper(self):
+        marker = self.sentinel()
+        self.assert_reparse_point_is_refused(self.destination)
+        self.assertTrue(marker.exists())
+
+    def test_template_reparse_points_are_refused_without_junction_helper(self):
+        marker = self.sentinel()
+        directory = self.starter / "directory-shaped-link"
+        directory.mkdir()
+        for target in (directory, self.starter / "README.md"):
+            with self.subTest(target=target.name):
+                self.assert_reparse_point_is_refused(target)
+        self.assertTrue(marker.exists())
+
+    @unittest.skipUnless(os.name == "nt", "requires native Windows junctions")
+    def test_windows_destination_junction_is_refused(self):
+        outside = self.base / "outside"
+        marker = self.sentinel(outside)
+        self.parent.mkdir()
+        subprocess.run(["cmd", "/d", "/c", "mklink", "/J", str(self.destination), str(outside)],
+                       check=True, capture_output=True, text=True, timeout=10)
+        result = self.run_create("--force")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertTrue(self.destination.exists())
+        self.assertTrue(marker.exists())
+
+    @unittest.skipUnless(os.name == "nt", "requires native Windows junctions")
+    def test_windows_template_junction_is_refused_before_overwrite(self):
+        marker = self.sentinel()
+        outside = self.base / "outside"
+        outside.mkdir()
+        subprocess.run(["cmd", "/d", "/c", "mklink", "/J", str(self.starter / "linked"), str(outside)],
+                       check=True, capture_output=True, text=True, timeout=10)
+        result = self.run_create("--force")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertTrue(marker.exists())
 
     @unittest.skipUnless(os.name == "posix", "requires symlinks")
     def test_linked_template_file_cannot_copy_external_content(self):

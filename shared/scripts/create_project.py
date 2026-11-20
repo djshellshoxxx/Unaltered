@@ -46,7 +46,16 @@ def validate_copy_paths(src: Path, dest: Path) -> None:
             raise ValueError("Starter is missing a required template file.")
 
     def is_link(path: Path) -> bool:
-        return path.is_symlink() or (hasattr(path, "is_junction") and path.is_junction())
+        try:
+            info = path.lstat()
+        except FileNotFoundError:
+            return False
+        # Path.is_junction only exists on Python 3.12+. Reparse attributes are
+        # available on older Windows Python, including directory-shaped links.
+        attributes = getattr(info, "st_file_attributes", None)
+        return stat.S_ISLNK(info.st_mode) or (
+            attributes is not None and bool(attributes & stat.FILE_ATTRIBUTE_REPARSE_POINT)
+        )
 
     if is_link(dest) or (dest.exists() and not dest.is_dir()):
         raise ValueError("Destination must be a directory, not a link or other file.")
