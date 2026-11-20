@@ -415,3 +415,20 @@ jobs:
       - name: Run
         shell: bash
         run: bash scripts/r1-acceptance.sh | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Live calendar liveness canary (informational)
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: node node_modules/@playwright/test/cli.js test tests/e2e/liveness-live.spec.ts --retries=0 --reporter=json --output=test-results/liveness > liveness-results.json
+        env:
+          CI: "true"
+          UNALTERED_LIVE_LIVENESS: "1"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: calendar-liveness-evidence
+          path: |
+            liveness-results.json
+            test-results/liveness
+          if-no-files-found: warn
+          retention-days: 7
