@@ -1,5 +1,7 @@
 // stripMetadata (SPEC 5.2): allowlist rewriters for JPEG and PNG. Digest must be computed over `output`.
-import { detectKind } from './detect';
+import { UnalteredError } from '../errors';
+import { awaitAbortable } from '../hash/stream';
+import { detectBlob } from './detect';
 import { cleanMp3, cleanWav, selfCheckAudio } from './audio';
 import { cleanJpeg } from './jpeg';
 import { cleanPng } from './png';
@@ -15,14 +17,15 @@ export type StripOutcome =
 
 export const MAX_STRIP_BYTES = 256 * 1024 * 1024;
 
-export async function stripMetadata(blob: Blob): Promise<StripOutcome> {
-  const head = new Uint8Array(await blob.slice(0, 16).arrayBuffer());
-  const kind = detectKind(head);
+export async function stripMetadata(blob: Blob, signal?: AbortSignal): Promise<StripOutcome> {
+  const kind = await detectBlob(blob, signal);
+  if (signal?.aborted) throw new UnalteredError('ABORTED', 'Cancelled.');
   if (kind !== 'jpeg' && kind !== 'png' && kind !== 'wav' && kind !== 'mp3') {
     return { kind: 'unsupported', reason: 'This file type may contain hidden data we cannot remove.' };
   }
   if (blob.size > MAX_STRIP_BYTES) return { kind: 'rejected', reason: 'This image is too large to clean safely in the browser.' };
-  const bytes = new Uint8Array(await blob.arrayBuffer());
+  const bytes = new Uint8Array(await awaitAbortable(blob.arrayBuffer(), signal));
+  if (signal?.aborted) throw new UnalteredError('ABORTED', 'Cancelled.');
   if (kind === 'wav' || kind === 'mp3') {
     const r = kind === 'wav' ? cleanWav(bytes) : cleanMp3(bytes);
     if (r.kind !== 'cleaned') return r;

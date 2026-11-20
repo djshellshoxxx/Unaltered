@@ -6,6 +6,7 @@ import { serializeProof } from '../../src/core/ots/codec';
 import { revokeAll } from '../../src/ui/download';
 import { setLang, t } from '../../src/ui/strings';
 import { mountStamp, type StampView } from '../../src/ui/views/stamp';
+import { makeJpeg } from '../helpers/images';
 import { doc, type FElement, installFakeDom } from './ui-fake-dom';
 
 vi.mock('../../src/core/hash/hasher', () => ({ hashBlob: vi.fn() }));
@@ -23,11 +24,14 @@ const cards = (): FElement[] => root.all().filter((node) => node.classList.conta
 const button = (owner: FElement, key: Parameters<typeof t>[0]): FElement => owner.all().find(
   (node) => node.tagName === 'BUTTON' && node.textContent === t(key),
 )!;
-function select(count: number, prefix = 'file'): void {
+function selectFiles(files: File[]): void {
   const picker = root.querySelector('#stamp-file')!;
-  picker.files = Array.from({ length: count }, (_, i) => new File(['abc'], `${prefix}-${i}.txt`));
+  picker.files = files;
   picker.dispatch('change');
   for (const card of cards()) Object.assign(card, { remove() { card.parentNode?.removeChild(card); } });
+}
+function select(count: number, prefix = 'file'): void {
+  selectFiles(Array.from({ length: count }, (_, i) => new File(['abc'], `${prefix}-${i}.txt`)));
 }
 
 beforeEach(() => {
@@ -73,6 +77,53 @@ function heldHashes(): { finished: (() => void)[]; names: string[]; maxActive: (
 }
 
 describe('bounded Stamp file processing', () => {
+  for (const stage of ['detection', 'cleaning header', 'cleaning body'] as const) {
+    for (const action of ['common.cancel', 'common.remove'] as const) {
+      it(`${action} releases a slot during a stalled native ${stage} read`, async () => {
+        const heldFile = (name: string) => {
+          const file = new File([makeJpeg() as BlobPart], name);
+          let reject!: (error: unknown) => void;
+          const pending = new Promise<ArrayBuffer>((_resolve, fail) => { reject = fail; });
+          let started = false;
+          const read = (): Promise<ArrayBuffer> => { started = true; return pending; };
+          if (stage === 'cleaning body') file.arrayBuffer = read;
+          else {
+            const slice = file.slice.bind(file);
+            let reads = 0;
+            file.slice = (start, end, type): Blob => {
+              const head = slice(start, end, type);
+              if (++reads === (stage === 'detection' ? 1 : 2)) head.arrayBuffer = read;
+              return head;
+            };
+          }
+          return { file, reject, started: () => started };
+        };
+        const first = heldFile('first.jpg');
+        const second = heldFile('second.jpg');
+        selectFiles([first.file, second.file, new File(['abc'], 'next.txt')]);
+        try {
+          await vi.waitFor(() => expect(first.started() && second.started()).toBe(true));
+          expect(hashBlob).not.toHaveBeenCalled();
+          const firstCard = cards()[0]!;
+          const nextCard = cards()[2]!;
+          expect(nextCard.textContent).toContain(t('stamp.queued'));
+          button(firstCard, action).dispatch('click');
+          await vi.waitFor(() => expect(nextCard.querySelector('.digest')).not.toBeNull());
+          expect(hashBlob).toHaveBeenCalledOnce();
+          expect((vi.mocked(hashBlob).mock.calls[0]![0] as File).name).toBe('next.txt');
+          if (action === 'common.cancel') expect(firstCard.querySelector('.error')?.textContent).toBe(t('stamp.cancelled'));
+          else expect(firstCard.isConnected).toBe(false);
+        } finally {
+          for (const card of cards()) button(card, 'common.remove')?.dispatch('click');
+          // A native read cannot be cancelled. Its late failure must be consumed after the item was removed.
+          first.reject(new Error('late native read failure'));
+          second.reject(new Error('late native read failure'));
+          await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        }
+      });
+    }
+  }
+
   it('processes at most two files concurrently and drains the waiting files in selection order', async () => {
     const held = heldHashes();
     select(5);

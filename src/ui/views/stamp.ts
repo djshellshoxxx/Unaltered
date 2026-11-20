@@ -130,11 +130,11 @@ export function mountStamp(root: HTMLElement): StampView {
   async function process(it: Item, signal: AbortSignal): Promise<void> {
     refreshItem(it);
     try {
-      it.kind = await detectBlob(it.file);
+      it.kind = await detectBlob(it.file, signal);
       throwIfCancelled(signal);
       let target: Blob = it.file;
       if (isImage(it.kind) && it.strip) {
-        const out = await stripMetadata(it.file);
+        const out = await stripMetadata(it.file, signal);
         throwIfCancelled(signal);
         it.outcome = out;
         if (out.kind === 'rejected') {
