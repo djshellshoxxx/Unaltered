@@ -8,19 +8,10 @@ import sys
 import os
 import re
 from datetime import datetime
+from pathlib import Path
+from runpy import run_path
 
-def read_env_file(env_path):
-    """Read the .env file and return as dictionary"""
-    env_vars = {}
-    if os.path.exists(env_path):
-        with open(env_path, 'r') as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith('#'):
-                    if '=' in line:
-                        key, value = line.split('=', 1)
-                        env_vars[key] = value.strip('"').strip("'")
-    return env_vars
+read_env_file = run_path(str(Path(__file__).with_name("env_config.py")))["parse_env"]
 
 def write_env_file(env_path, env_vars):
     """Write the updated .env file preserving comments and structure"""

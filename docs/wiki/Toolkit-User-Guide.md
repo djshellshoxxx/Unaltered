@@ -18,3 +18,5 @@ The wrapper does not accept or store an app-specific password. The removed passw
 Configuration options must be single-line text. Values in the generated `.env` are quoted so shell expansion cannot execute project names, signing identifiers, or paths when the file is loaded.
 
 For project versions, `bump_version.py` updates version numbers in the target project's `.env`. The tools are distinct from Unaltered's fingerprinting, receipts, verification and release artifacts. See [Toolkit Codebase Map](Codebase-Map.md).
+
+The Python helpers read `.env` values as literal data. They decode the starter generator's quote, backslash, dollar-sign and backtick escapes without expanding variables or executing commands. Updater configuration rewrites preserve those literals. Keep `env_config.py` beside the helper scripts when copying the toolkit.

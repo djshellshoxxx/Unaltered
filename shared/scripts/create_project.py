@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 
 from find_starter_repo import locate
+from env_config import env_literal
 
 
 PLACEHOLDER_SUFFIXES = {".cpp", ".h", ".cmake", ".txt", ".md", ".env", ".example"}
@@ -80,13 +81,8 @@ def replace_text(root: Path, replacements: dict[str, str]) -> None:
             path.write_text(text, encoding="utf-8")
 
 
-def env_literal(value: str) -> str:
-    """Quote a single-line value for the shell-compatible generated .env."""
-    return '"' + re.sub(r'([\\"$`])', r'\\\1', value) + '"'
-
-
 def write_env(path: Path, values: dict[str, str]) -> None:
-    values = {key: env_literal(value) for key, value in values.items()}
+    values = {key: env_literal(value, always_quote=True) for key, value in values.items()}
     lines = [
         "# Project Configuration",
         f"PROJECT_NAME={values['PROJECT_NAME']}",
@@ -98,7 +94,7 @@ def write_env(path: Path, values: dict[str, str]) -> None:
         f"PLUGIN_CODE={values['PLUGIN_CODE']}",
         f"PLUGIN_MANUFACTURER_CODE={values['PLUGIN_MANUFACTURER_CODE']}",
         "",
-        f"PROJECT_PATH={env_literal(str(path.parent))}",
+        f"PROJECT_PATH={env_literal(str(path.parent), always_quote=True)}",
         "",
         "# Version Information",
         "VERSION_MAJOR=1",

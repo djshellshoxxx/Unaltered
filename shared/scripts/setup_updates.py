@@ -5,23 +5,17 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from runpy import run_path
 from urllib.parse import urlparse
 
 
-def parse_env(path: Path) -> dict[str, str]:
-    values: dict[str, str] = {}
-    if not path.exists():
-        return values
-    for raw_line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        values[key.strip()] = value.strip().strip('"').strip("'")
-    return values
+_env = run_path(str(Path(__file__).with_name("env_config.py")))
+parse_env = _env["parse_env"]
 
 
 def write_env(path: Path, values: dict[str, str]) -> None:
+    # Validate and quote every replacement before changing the existing file.
+    values = {key: _env["env_literal"](value) for key, value in values.items()}
     existing = path.read_text(encoding="utf-8", errors="ignore").splitlines() if path.exists() else []
     updated_keys = set()
     lines = []

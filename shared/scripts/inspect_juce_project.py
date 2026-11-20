@@ -7,23 +7,14 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from runpy import run_path
 
 
 TRUTHY = {"1", "true", "yes", "on"}
 
 
-def parse_env_file(path: Path) -> dict[str, str]:
-    values: dict[str, str] = {}
-    if not path.exists():
-        return values
-
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        values[key.strip()] = value.strip().strip('"').strip("'")
-    return values
+# Load the adjacent trusted helper by path so isolated Python (-I) never needs a cwd import.
+parse_env_file = run_path(str(Path(__file__).with_name("env_config.py")))["parse_env"]
 
 
 def is_truthy(value: str | None) -> bool:
