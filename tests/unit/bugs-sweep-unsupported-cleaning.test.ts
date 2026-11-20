@@ -42,7 +42,11 @@ describe('unsupported cleaning keeps the original-file warning distinct from use
         ? 'We could not safely clean this file. It may contain hidden data. The receipt will apply to the original file.'
         : 'No pudimos limpiar este archivo de forma segura. Puede contener datos ocultos. El recibo se aplicará al archivo original.');
       expect(root.textContent).not.toContain(t('stamp.stripOffWarn'));
-      expect(stripMetadata).toHaveBeenCalledExactlyOnceWith(original);
+      const signal = vi.mocked(hashBlob).mock.calls[0]![1]!.signal!;
+      expect(signal).toBeInstanceOf(AbortSignal);
+      expect(signal.aborted).toBe(false);
+      expect(detectBlob).toHaveBeenCalledExactlyOnceWith(original, signal);
+      expect(stripMetadata).toHaveBeenCalledExactlyOnceWith(original, signal);
       expect(vi.mocked(hashBlob).mock.calls[0]![0]).toBe(original);
       expect(root.textContent).not.toContain(t('stamp.cleanedNotice'));
       expect(createButton().disabled).toBe(true);
@@ -54,6 +58,7 @@ describe('unsupported cleaning keeps the original-file warning distinct from use
       const cleaning = checkboxes()[0]!;
       cleaning.checked = false;
       cleaning.dispatch('change');
+      expect(signal.aborted).toBe(true);
       await vi.waitFor(() => expect(root.querySelector('.digest')).not.toBeNull());
       expect(root.textContent).toContain(t('stamp.stripOffWarn'));
       expect(checkboxes()[1]!.checked).toBe(false);
