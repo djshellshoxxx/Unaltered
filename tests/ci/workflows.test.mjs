@@ -57,6 +57,35 @@ const allSteps = () => workflows.flatMap((wf) => {
 const wildcard = (pattern) => new RegExp(`^${pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.')}$`, 'i');
 const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+test('the Windows job requires both native junction regressions on Python 3.11 without skips', () => {
+  const lines = job('.github/workflows/ci.yml', 'windows');
+  assert.ok(lines.includes('    runs-on: windows-latest'), 'junction evidence must run on native Windows');
+  const list = steps(lines);
+  const setup = list.findIndex(s => /^actions\/setup-python@/.test(s.uses ?? ''));
+  const native = list.findIndex(s => s.name === 'Require native Windows starter junction regressions');
+  assert.ok(setup >= 0 && native > setup, 'install Python before requiring native junction evidence');
+  const referenceSetup = steps(job('.github/workflows/ci.yml', 'differential')).find(s => /^actions\/setup-python@/.test(s.uses ?? ''));
+  assert.equal(list[setup].uses, referenceSetup?.uses, 'reuse the reviewed setup-python action pin');
+  const start = lines.indexOf(`      - uses: ${list[setup].uses}`);
+  let end = start + 1;
+  while (end < lines.length && !/^ {6}- /.test(lines[end])) end++;
+  assert.match(lines.slice(start, end).join('\n'), /^ {10}python-version: "3\.11"$/m,
+    'exercise Python before Path.is_junction was introduced');
+  for (const index of [setup, native]) {
+    assert.equal(list[index].if, undefined, 'required native evidence must not be conditional');
+    assert.equal(list[index]['continue-on-error'], undefined, 'required native evidence must fail the job');
+  }
+  const step = list[native];
+  assert.equal(step.shell, 'python');
+  assert.match(step.run, /if os\.name != "nt" or sys\.version_info\[:2\] != \(3, 11\):\n +raise SystemExit/);
+  assert.match(step.run, /runpy\.run_path\("tests\/toolkit\/test_create_project_20261119\.py"\)/);
+  for (const name of ['test_windows_destination_junction_is_refused', 'test_windows_template_junction_is_refused_before_overwrite']) {
+    assert.ok(step.run.includes(`"${name}"`), `missing native junction case ${name}`);
+  }
+  assert.match(step.run, /if result\.testsRun != 2 or result\.skipped or not result\.wasSuccessful\(\):\n +raise SystemExit\(1\)/,
+    'missing, skipped, or unsuccessful tests cannot establish native junction qualification');
+});
+
 test('the Windows job checks the Windows zip itself, with the Verify-Checksums.ps1 it ships', () => {
   const build = read('scripts/build.mjs');
   // Package names are written either inline ([`${prefix}.zip`, makeZip(prefixed(windowsFiles))]) or through the
