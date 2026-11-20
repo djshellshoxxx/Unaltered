@@ -189,3 +189,34 @@ test('the Python reference and independent QR decoder use reviewed hash-pinned w
     }
   }
 });
+
+test('QR qualification requires the installed independent decoder during the browser run', () => {
+  const lines = job('.github/workflows/qr-qualification.yml', 'print-scan');
+  const list = steps(lines);
+  const install = list.findIndex(s => /zxing_qr\.py probe/.test(s.run ?? ''));
+  const browser = list.findIndex(s => /playwright test --config=playwright\.qr\.config\.ts/.test(s.run ?? ''));
+  assert.ok(install >= 0 && browser > install, 'the independent decoder must be installed and probed before the browser tests');
+  assert.match(list[install].run, /UNALTERED_QR_PYTHON=.*GITHUB_ENV/);
+  assert.match(list[browser].run, /--retries=0/);
+  for (const index of [install, browser]) {
+    assert.equal(list[index].if, undefined, 'the required step must not be conditional');
+    assert.equal(list[index]['continue-on-error'], undefined, 'the required step must fail the job');
+  }
+  const start = lines.indexOf(`      - name: ${list[browser].name}`);
+  assert.ok(start >= 0, 'browser step must be named');
+  let end = start + 1;
+  while (end < lines.length && !/^ {6}- /.test(lines[end])) end++;
+  assert.match(lines.slice(start, end).join('\n'), /^ {10}UNALTERED_REQUIRE_QR_DECODER: "1"$/m,
+    'missing required-decoder mode silently skips independent recovery');
+});
+
+test('QR qualification validates the complete independent evidence before uploading it', () => {
+  const list = steps(job('.github/workflows/qr-qualification.yml', 'print-scan'));
+  const browser = list.findIndex(s => /playwright test --config=playwright\.qr\.config\.ts/.test(s.run ?? ''));
+  const evidence = list.findIndex(s => s.run === 'node scripts/check-qr-qualification.mjs');
+  const upload = list.findIndex(s => /actions\/upload-artifact@/.test(s.uses ?? ''));
+  assert.ok(browser >= 0 && evidence > browser && upload > evidence,
+    'a passing browser command alone does not prove every expected certificate ran');
+  assert.equal(list[evidence].if, undefined);
+  assert.equal(list[evidence]['continue-on-error'], undefined);
+});

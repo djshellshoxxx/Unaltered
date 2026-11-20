@@ -99,8 +99,12 @@ reference recoverer, and the result must equal the original `.ots` byte for byte
 symbol's version, error-correction level and mask must also equal the label printed under it. Cases: three receipt
 sizes (325, 3145 and 12,217 bytes) at each of L, M, Q and H on A4, automatic correction on A4 and US Letter, and
 12,217 bytes at H on US Letter (15 certificates, 1 to 35 symbols, QR versions 13 to 22, all eight masks seen).
-It is opt-in and skips with a setup message unless the hash-pinned test packages in `tests/archival/requirements.txt`
-are installed and `UNALTERED_QR_PYTHON` points at that interpreter.
+Local runs skip with a setup message unless the hash-pinned test packages in `tests/archival/requirements.txt`
+are installed and `UNALTERED_QR_PYTHON` points at that interpreter. CI installs those packages and sets
+`UNALTERED_REQUIRE_QR_DECODER=1`, so an unavailable decoder or rasterizer fails qualification instead of skipping.
+After the browser suite, `node scripts/check-qr-qualification.mjs` requires all 15 expected reports, successful
+independent recovery, matching symbol labels and page counts, and SHA-256 bindings to the saved receipts and PDFs.
+The evidence check validates the recorded results; the preceding browser suite performs the actual decoding.
 
 **Distortion corpus.** `tests/archival/qr_distort.py` produces seeded camera-like variants of printed pages and
 `tests/qualification/qr-robustness.spec.ts` (opt-in, `UNALTERED_QR_ROBUSTNESS=1`) measures in-app and zxing-cpp
