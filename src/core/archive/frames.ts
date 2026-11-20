@@ -68,7 +68,8 @@ export async function recoverReceiptFrames(frames: readonly Uint8Array[]): Promi
     if (!count || count > MAX_FRAMES || index >= count || !original || original > MAX_RECEIPT ||
         encoded !== original || payloadLength !== frame.length - HEADER) fail('invalid lengths or indices');
     if (!reference) {
-      reference = frame;
+      // WebCrypto below yields. Keep integrity metadata, like payloads, independent of caller-owned buffers.
+      reference = frame.slice(0, HEADER);
       total = count;
       length = original;
     } else if (count !== total || original !== length ||
