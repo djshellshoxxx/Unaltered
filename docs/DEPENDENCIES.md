@@ -3,7 +3,48 @@
 Goal: **as few as possible**, and only audited or independently verifiable ones.
 "Audited" is not "certified": no JavaScript library we found has a formal certification (e.g., FIPS validation of the shipped JS). What exists is independent audit reports of varying age and scope. Verify scope before relying on it.
 
-Historical research tables below were reviewed on 2026-10-09, with adoption records dated separately. Current audit-preparation review: 2026-10-30; see the new snapshot before the historical REL-1 record. The dated snapshot supersedes planning statuses such as “candidate pin” and “decision pending” without rewriting the historical research or claiming that its external sources were rechecked.
+Historical research tables below were reviewed on 2026-10-09, with adoption records dated separately. The latest dependency snapshot is 2026-11-19. Dated snapshots supersede older planning statuses and advisory decisions without rewriting the historical research or claiming that all its external sources were rechecked.
+
+## Supported lint-chain advisory repair — 2026-11-19
+
+Dependency commit `b217110` updates exact development pins `eslint` from 10.14.0 to **10.15.0** and
+`typescript-eslint` from 8.72.1 to **8.73.0**. Unlike the November 4 snapshot below, supported upstream ranges now
+include the patched minimatch family. The generated lockfile resolves **minimatch 11.0.9**, satisfying all three
+consumers: ESLint and config-array require `^11.0.5`; typescript-estree requires `^11.0.1`. No override was added.
+Primary registry manifests and all changed package records are saved in
+[dependency-upgrade-20261119.json](evidence/dependency-upgrade-20261119.json).
+
+The change addresses [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249).
+The immediately preceding [round-three report](evidence/npm-audit-20261119-round3.json) had nine moderate affected
+package entries from that one advisory, all development-only. After the update, both the
+[full audit](evidence/npm-audit-20261119-round4.json) and the
+[runtime audit](evidence/npm-runtime-audit-20261119-round4.json) report **zero vulnerabilities**. This closes the
+recorded advisory in this dependency tree according to the registry data checked; it does not establish that all
+possible dependency defects are absent.
+
+Lockfile review:
+
+- Fourteen existing development package records change, and one development-only package is added:
+  `@isaacs/nonrecursive-glob-match@1.1.0`, declared by minimatch. Its published manifest has no runtime dependencies,
+  uses the existing BlueOak-1.0.0 license family, and includes built JavaScript exports. Its manifest, exports,
+  integrity and source imports were reviewed; no independent source security audit is claimed.
+- The existing compatible `ignore@7.0.14`, `brace-expansion@5.0.12` and `semver@7.8.5` records are retained, avoiding
+  incidental patch updates proposed during lockfile resolution. Their versions satisfy the new parents' ranges.
+- Production package records and all other direct pins are unchanged. TypeScript remains 6.0.3, Playwright remains
+  1.64.1, and `@eslint/js` remains 10.0.1. typescript-eslint's declared peers accept ESLint 10 and TypeScript 6.0.3.
+  Its new optional `@typescript/native` peer is not installed.
+- Lockfile SHA-256: `543c31f82c9e84a67fac81a7fa9de18ae4371194330e7c0cd2af9d522d6745ef`.
+
+On Linux with Node 24.22.3/npm 11.19.1, a fresh `npm ci --ignore-scripts --no-audit --no-fund` installed 141 packages,
+and full ESLint passed. `npm audit signatures --fetch-timeout=30000 --fetch-retries=0` exited successfully, verifying
+**141 installed package registry signatures and 59 attestations**. Provenance authentication is separate from a
+source audit. Install scripts remain disabled.
+
+Full TypeScript checking exposed five `TS2352` diagnostics in the newly added browser lifecycle test's required
+`Window` probe assertions; the compiler version is unchanged. The fourth bug worker repaired them in `63ffc06`
+and reported a passing full compiler check on that worker's tree. The integration coordinator owns final combined
+source checks, full application tests, builds and native qualification. See the
+[fourth code-audit handoff](handoff/CODE-AUDIT-20261119-ROUND4.md) for commands and scope.
 
 ## Integration snapshot — 2026-11-04 (minimatch advisory decision)
 
