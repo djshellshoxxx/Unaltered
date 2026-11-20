@@ -1,5 +1,6 @@
 """Offline starter-generator safety regressions; no SDK, network, or credentials."""
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -194,6 +195,26 @@ class CreateProjectTests(unittest.TestCase):
         result = self.run_create()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("APP_SPECIFIC_PASSWORD=\n", (self.destination / ".env").read_text())
+
+    @unittest.skipUnless(os.name == "posix" and shutil.which("sh"), "requires a POSIX shell")
+    def test_generated_env_treats_project_values_as_data(self):
+        name = 'Maker $(touch env-marker) `touch other-marker` "quoted" \\ backslash'
+        result = self.run_create("--developer-name", name)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        loaded = subprocess.run(
+            ["sh", "-c", '. "$1"; printf "%s" "$DEVELOPER_NAME"', "_", str(self.destination / ".env")],
+            cwd=self.base, capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(loaded.returncode, 0, loaded.stderr)
+        self.assertFalse((self.base / "env-marker").exists(), "generated .env executed command substitution")
+        self.assertFalse((self.base / "other-marker").exists(), "generated .env executed backticks")
+        self.assertEqual(loaded.stdout, name)
+
+    def test_control_characters_are_rejected_before_overwrite(self):
+        marker = self.sentinel()
+        result = self.run_create("--force", "--bundle-id", "valid.id\nUNEXPECTED_KEY=value")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertTrue(marker.exists())
 
 
 if __name__ == "__main__":

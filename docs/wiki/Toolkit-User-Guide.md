@@ -15,4 +15,6 @@ The wrapper validates the starter before overwriting a destination: it requires 
 
 The wrapper does not accept or store an app-specific password. The removed password option fails without repeating its value. Configure notarization credentials separately in the system keychain; the generated `.env` leaves its password field empty.
 
+Configuration options must be single-line text. Values in the generated `.env` are quoted so shell expansion cannot execute project names, signing identifiers, or paths when the file is loaded.
+
 For project versions, `bump_version.py` updates version numbers in the target project's `.env`. The tools are distinct from Unaltered's fingerprinting, receipts, verification and release artifacts. See [Toolkit Codebase Map](Codebase-Map.md).

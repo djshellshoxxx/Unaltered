@@ -80,19 +80,25 @@ def replace_text(root: Path, replacements: dict[str, str]) -> None:
             path.write_text(text, encoding="utf-8")
 
 
+def env_literal(value: str) -> str:
+    """Quote a single-line value for the shell-compatible generated .env."""
+    return '"' + re.sub(r'([\\"$`])', r'\\\1', value) + '"'
+
+
 def write_env(path: Path, values: dict[str, str]) -> None:
+    values = {key: env_literal(value) for key, value in values.items()}
     lines = [
         "# Project Configuration",
         f"PROJECT_NAME={values['PROJECT_NAME']}",
-        f'PRODUCT_NAME="{values["PRODUCT_NAME"]}"',
+        f"PRODUCT_NAME={values['PRODUCT_NAME']}",
         f"PROJECT_BUNDLE_ID={values['PROJECT_BUNDLE_ID']}",
-        f'DEVELOPER_NAME="{values["DEVELOPER_NAME"]}"',
+        f"DEVELOPER_NAME={values['DEVELOPER_NAME']}",
         "",
         "# JUCE Plugin Codes (4-letter identifiers)",
         f"PLUGIN_CODE={values['PLUGIN_CODE']}",
         f"PLUGIN_MANUFACTURER_CODE={values['PLUGIN_MANUFACTURER_CODE']}",
         "",
-        f'PROJECT_PATH="{path.parent}"',
+        f"PROJECT_PATH={env_literal(str(path.parent))}",
         "",
         "# Version Information",
         "VERSION_MAJOR=1",
@@ -103,8 +109,8 @@ def write_env(path: Path, values: dict[str, str]) -> None:
         "# Apple Developer Settings (for code signing/notarization)",
         f"APPLE_ID={values['APPLE_ID']}",
         f"TEAM_ID={values['TEAM_ID']}",
-        f'APP_CERT="{values["APP_CERT"]}"',
-        f'INSTALLER_CERT="{values["INSTALLER_CERT"]}"',
+        f"APP_CERT={values['APP_CERT']}",
+        f"INSTALLER_CERT={values['INSTALLER_CERT']}",
         "# Configure notarization credentials separately in the system keychain.",
         "APP_SPECIFIC_PASSWORD=",
         "",
@@ -182,6 +188,9 @@ def main() -> int:
     args = parser.parse_args()
     if args.app_specific_password is not None:
         parser.error("Password input is no longer supported; configure notarization credentials in the system keychain.")
+    for value in vars(args).values():
+        if isinstance(value, str) and any(ord(char) < 32 or ord(char) == 127 for char in value):
+            parser.error("Project options must be single-line text without control characters.")
 
     starter = Path(args.starter).resolve() if args.starter else locate([])
     if not starter and args.clone_missing:
