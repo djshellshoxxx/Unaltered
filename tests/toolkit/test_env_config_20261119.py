@@ -11,6 +11,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+from xml.etree import ElementTree
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS = ROOT / "shared/scripts"
@@ -98,6 +99,17 @@ class EnvInteroperabilityTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             module["write_env"](self.path, {"AUTO_UPDATE_MODE": "public\nOTHER=value"})
         self.assertEqual(self.path.read_text(), original)
+
+    def test_appcast_treats_project_text_as_xml_text(self):
+        module = runpy.run_path(str(SCRIPTS / "setup_updates.py"))
+        title = 'Amp & <enclosure url="https://example.invalid/extra"/>'
+        version = "1.0 & preview"
+        appcast = self.root / "appcast.xml"
+        module["ensure_appcast"](appcast, title, version)
+        tree = ElementTree.parse(appcast)
+        self.assertEqual(tree.findtext("channel/title"), title)
+        self.assertEqual(tree.findtext("channel/item/title"), f"Version {version}")
+        self.assertEqual(tree.findall(".//enclosure"), [])
 
 
 if __name__ == "__main__":

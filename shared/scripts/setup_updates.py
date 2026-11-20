@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 from runpy import run_path
 from urllib.parse import urlparse
+from xml.sax.saxutils import escape
 
 
 _env = run_path(str(Path(__file__).with_name("env_config.py")))
@@ -59,11 +60,11 @@ def ensure_appcast(path: Path, title: str, version: str) -> None:
     contents = f"""<?xml version=\"1.0\" encoding=\"utf-8\"?>
 <rss version=\"2.0\">
   <channel>
-    <title>{title}</title>
+    <title>{escape(title)}</title>
     <link></link>
     <description>Auto-update feed placeholder</description>
     <item>
-      <title>Version {version}</title>
+      <title>Version {escape(version)}</title>
       <description>Initial appcast placeholder</description>
     </item>
   </channel>
