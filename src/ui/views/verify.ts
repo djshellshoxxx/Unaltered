@@ -67,6 +67,7 @@ export interface VerifyView {
 // What an output area shows, kept as data so a language switch can render it again without repeating the work.
 type Shown =
   | { kind: 'working' }
+  | { kind: 'evidence-limit' }
   | { kind: 'report'; report: VerifyReport; hex: string; fromLink: boolean; certificate: ArchivalCertificateView }
   | { kind: 'upgraded'; result: UpgradeResult; fileName: string }
   | { kind: 'error'; message: string }
@@ -160,7 +161,10 @@ export function mountVerify(root: HTMLElement): VerifyView {
     abort = controller;
     renderActions();
     try {
-      if (selectedFile.size + selectedReceipt.size > 16 * 1024 * 1024) throw new UnalteredError('INPUT_INVALID', t('evidence.limit'));
+      if (selectedFile.size + selectedReceipt.size > 16 * 1024 * 1024) {
+        show({ kind: 'evidence-limit' });
+        return;
+      }
       const [original, proof] = await awaitAbortable(Promise.all([selectedFile.arrayBuffer(), selectedReceipt.arrayBuffer()]), controller.signal);
       if (!current()) return;
       const archive = await awaitAbortable(createEvidenceZip(new Uint8Array(original), new Uint8Array(proof)), controller.signal);
@@ -287,6 +291,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
   function render(next: Shown): Node | null {
     if (!next) return null;
     if (next.kind === 'working') return el('p', { role: 'status' }, t('verify.working'));
+    if (next.kind === 'evidence-limit') return el('p', { class: 'error', role: 'alert' }, t('evidence.limit'));
     if (next.kind === 'error') return el('p', { class: 'error', role: 'alert' }, next.message);
     if (next.kind === 'report') {
       const reportCard = renderReport(next.report, next.hex, next.fromLink, out);
