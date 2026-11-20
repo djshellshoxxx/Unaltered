@@ -1,6 +1,6 @@
-# INACTIVE TEMPLATE: documentation only; GitHub does not load workflows from docs/templates/.
-# Owner activation requires separate publication authorization and the gates in docs/PAGES.md.
-# Do not copy into .github/workflows/ as part of preparation.
+# Installed manual publication workflow; it runs only after an explicitly authorized dispatch.
+# Publication requires the exact reviewed default-branch commit and the gates in docs/PAGES.md.
+# The documentation template remains in docs/templates/pages-deployment.yml.
 name: Authorized Pages publication
 
 on:
@@ -45,6 +45,7 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
+          cache: npm
       - run: npm ci --ignore-scripts
       - name: Install ExifTool for screenshot metadata checks
         run: sudo apt-get update && sudo apt-get install -y libimage-exiftool-perl

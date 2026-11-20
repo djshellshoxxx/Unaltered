@@ -4,14 +4,14 @@ import { summarizeLocalReceipts } from '../../core/reports/receipt-dashboard';
 import { clear, el, setChildren } from '../dom';
 import { isDefault, restoreDefaults, settings } from '../state';
 import { isEnabled, loadReceipts, removeReceipt, setEnabled, storageAvailable } from '../store';
-import { LANGS, getLang, setLang, t, type StringKey } from '../strings';
+import { LANGS, getLang, setLang, t } from '../strings';
 import { groupHex } from '../../core/bytes';
 
 export function mountSettings(root: HTMLElement, onLangChange: () => void): void {
   const advanced = el('div', { class: 'advanced' });
   const receipts = el('div', { class: 'receipts' });
 
-  function checkboxes(urls: readonly string[], set: Set<string>, legend: string): HTMLElement {
+  function checkboxes(urls: readonly string[], set: Set<string>, legend: string, helpId: string): HTMLElement {
     return el(
       'fieldset',
       {},
@@ -23,15 +23,13 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
           { class: 'check' },
           el('input', {
             type: 'checkbox',
+            id: `network-${host}`,
+            'aria-describedby': helpId,
             checked: set.has(u),
             onchange: (e: Event) => {
               if ((e.target as HTMLInputElement).checked) set.add(u);
               else set.delete(u);
               renderAdvanced();
-              const updated = [...advanced.querySelectorAll<HTMLLabelElement>('label.check')].find(
-                (label) => label.textContent?.trim() === host,
-              );
-              updated?.querySelector<HTMLInputElement>('input')?.focus();
             },
           }),
           el('span', {}, host),
@@ -41,8 +39,8 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
   }
 
   // Explanations are visible text, not hover-only tooltips, so keyboard and touch users receive them too.
-  const help = (key: StringKey): HTMLElement =>
-    el('p', { class: 'muted settings-help' }, t(key));
+  const help = (id: string, text: string): HTMLElement =>
+    el('p', { id, class: 'muted settings-help' }, text);
 
   function renderAdvanced(): void {
     const calCount = settings.calendars.size;
@@ -53,16 +51,17 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
       advanced,
       el('h3', {}, t('settings.advanced')),
       el('p', { class: 'notice warn' }, t('settings.banner')),
-      help('settings.help.calendars'),
-      checkboxes(DEFAULT_CALENDARS, settings.calendars, t('settings.calendars')),
+      help('calendars-help', t('settings.help.calendars')),
+      checkboxes(DEFAULT_CALENDARS, settings.calendars, t('settings.calendars'), 'calendars-help'),
       el(
         'div',
         { class: 'field' },
         el('label', { for: 'min-cal' }, t('settings.minCalendars')),
-        help('settings.help.minimum'),
+        help('min-cal-help', t('settings.help.minimum')),
         el('input', {
           type: 'number',
           id: 'min-cal',
+          'aria-describedby': 'min-cal-help',
           min: 1,
           max: Math.max(1, calCount),
           value: String(Math.min(settings.minCalendars, Math.max(1, calCount))),
@@ -70,12 +69,11 @@ export function mountSettings(root: HTMLElement, onLangChange: () => void): void
             const n = Math.floor(Number((e.target as HTMLInputElement).value));
             settings.minCalendars = Number.isFinite(n) ? Math.max(1, n) : 1;
             renderAdvanced();
-            advanced.querySelector<HTMLInputElement>('#min-cal')?.focus();
           },
         }),
       ),
-      help('settings.help.explorers'),
-      checkboxes(DEFAULT_EXPLORERS, settings.explorers, t('settings.explorers')),
+      help('explorers-help', t('settings.help.explorers')),
+      checkboxes(DEFAULT_EXPLORERS, settings.explorers, t('settings.explorers'), 'explorers-help'),
       el('p', { class: 'muted' }, t('settings.explorerNote')),
       ...problems.map((p) => el('p', { class: 'error', role: 'alert' }, p)),
       el('button', { type: 'button', class: 'button', disabled: isDefault(), onclick: () => (restoreDefaults(), renderAdvanced()) }, t('settings.restore')),

@@ -3,7 +3,48 @@
 Goal: **as few as possible**, and only audited or independently verifiable ones.
 "Audited" is not "certified": no JavaScript library we found has a formal certification (e.g., FIPS validation of the shipped JS). What exists is independent audit reports of varying age and scope. Verify scope before relying on it.
 
-Historical research tables below were reviewed on 2026-10-09, with adoption records dated separately. Current audit-preparation review: 2026-10-30; see the new snapshot before the historical REL-1 record. The dated snapshot supersedes planning statuses such as “candidate pin” and “decision pending” without rewriting the historical research or claiming that its external sources were rechecked.
+Historical research tables below were reviewed on 2026-10-09, with adoption records dated separately. The latest dependency snapshot is 2026-11-19. Dated snapshots supersede older planning statuses and advisory decisions without rewriting the historical research or claiming that all its external sources were rechecked.
+
+## Supported lint-chain advisory repair — 2026-11-19
+
+Dependency commit `b217110` updates exact development pins `eslint` from 10.14.0 to **10.15.0** and
+`typescript-eslint` from 8.72.1 to **8.73.0**. Unlike the November 4 snapshot below, supported upstream ranges now
+include the patched minimatch family. The generated lockfile resolves **minimatch 11.0.9**, satisfying all three
+consumers: ESLint and config-array require `^11.0.5`; typescript-estree requires `^11.0.1`. No override was added.
+Primary registry manifests and all changed package records are saved in
+[dependency-upgrade-20261119.json](evidence/dependency-upgrade-20261119.json).
+
+The change addresses [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249).
+The immediately preceding [round-three report](evidence/npm-audit-20261119-round3.json) had nine moderate affected
+package entries from that one advisory, all development-only. After the update, both the
+[full audit](evidence/npm-audit-20261119-round4.json) and the
+[runtime audit](evidence/npm-runtime-audit-20261119-round4.json) report **zero vulnerabilities**. This closes the
+recorded advisory in this dependency tree according to the registry data checked; it does not establish that all
+possible dependency defects are absent.
+
+Lockfile review:
+
+- Fourteen existing development package records change, and one development-only package is added:
+  `@isaacs/nonrecursive-glob-match@1.1.0`, declared by minimatch. Its published manifest has no runtime dependencies,
+  uses the existing BlueOak-1.0.0 license family, and includes built JavaScript exports. Its manifest, exports,
+  integrity and source imports were reviewed; no independent source security audit is claimed.
+- The existing compatible `ignore@7.0.14`, `brace-expansion@5.0.12` and `semver@7.8.5` records are retained, avoiding
+  incidental patch updates proposed during lockfile resolution. Their versions satisfy the new parents' ranges.
+- Production package records and all other direct pins are unchanged. TypeScript remains 6.0.3, Playwright remains
+  1.64.1, and `@eslint/js` remains 10.0.1. typescript-eslint's declared peers accept ESLint 10 and TypeScript 6.0.3.
+  Its new optional `@typescript/native` peer is not installed.
+- Lockfile SHA-256: `543c31f82c9e84a67fac81a7fa9de18ae4371194330e7c0cd2af9d522d6745ef`.
+
+On Linux with Node 24.22.3/npm 11.19.1, a fresh `npm ci --ignore-scripts --no-audit --no-fund` installed 141 packages,
+and full ESLint passed. `npm audit signatures --fetch-timeout=30000 --fetch-retries=0` exited successfully, verifying
+**141 installed package registry signatures and 59 attestations**. Provenance authentication is separate from a
+source audit. Install scripts remain disabled.
+
+Full TypeScript checking exposed five `TS2352` diagnostics in the newly added browser lifecycle test's required
+`Window` probe assertions; the compiler version is unchanged. The fourth bug worker repaired them in `63ffc06`
+and reported a passing full compiler check on that worker's tree. The integration coordinator owns final combined
+source checks, full application tests, builds and native qualification. See the
+[fourth code-audit handoff](handoff/CODE-AUDIT-20261119-ROUND4.md) for commands and scope.
 
 ## Integration snapshot — 2026-11-04 (minimatch advisory decision)
 
@@ -135,6 +176,13 @@ Pin exact versions at M0-1 via `npm install --save-exact --save-dev <pkg>`; revi
 | 2026-11-04 | minimatch re-verification (worker-deps, no change) | 10.2.6 (locked); latest 10.x 10.2.6; 11.0.4 latest 11.x | deps worker | `npm view` of eslint 10.14.0 (`minimatch ^10.2.6`), @eslint/config-array 0.23.5 (`^10.2.4`), @typescript-eslint/typescript-estree 8.72.1 (`^10.2.2`), typescript-eslint 8.72.1 (latest); `npm audit --json` before: 11 moderate, 0 high/critical, all dev-only (GHSA-g3hv-75wg-m249, `minimatch <11.0.1`); `npm audit --omit=dev`: 0 | Still open. No exact-pin upgrade of a devDependency resolves the entries: every latest lint-chain release keeps `^10.x` ranges. Lockfile SHA-256 unchanged (`836f4e61…262df`). No override, no new dependency. `npm run check` passed (opsec, typecheck, lint, 288 passed / 2 skipped vitest) |
 | 2026-11-04 | opentimestamps, python-bitcoinlib, pycryptodomex (PyPI, python) | 0.4.5, 0.12.2, 3.23.0: version and wheel SHA-256 pins in `tests/differential/requirements.txt` | integration session | PyPI JSON metadata: declared dependencies, upload dates, published SHA-256 of each listed wheel. `pip --require-hashes` re-hashed the Linux x86_64 wheels on install (Python 3.12 and 3.13); the other platforms' hashes are as PyPI publishes them | Dev/CI only: differential job and `scripts/r1-acceptance.sh`, installed with `--require-hashes --only-binary :all:`. Before this, `pip install opentimestamps==0.4.5` resolved the newest pycryptodomex (`>=3.3.1`) and python-bitcoinlib (`>=0.9.0,<0.13.0`) on every run, with no hash. The 2026-10-14 row records no hash. python-bitcoinlib 0.12.2 is the newest version the range allows. pycryptodomex 3.23.0 (2025-05-17) was chosen over 3.24.x (October 2026) as the longest-aged release. No code review of the wheels is claimed. Pip is not covered by Dependabot, so a bump is a manual edit plus a new row here |
 | 2026-11-11 | `@types/node` 26.6.5 to 26.6.6; `typescript-eslint` 8.72.0 to 8.72.1 (dev-only direct pins) | 26.6.6; 8.72.1 | deps worker: Dependabot PRs #56 and #57, integrated by `git cherry-pick -x` (93b9d41, 86c8d73) onto main 6c02ce7; lockfile also moves transitive `ignore` 7.0.13 to 7.0.14 | npm registry tarballs; integrity values from the Dependabot lockfile commits. Lockfile SHA-256 `215bdb1d…54d9` (6c02ce7) to `a4be2e41…458c4a`. `npm ci --ignore-scripts` passed; `npm run check` passed (opsec PASS; vitest 73 files passed, 1 skipped; 581 tests passed, 5 skipped; `node --test` 130 run, 128 pass, 0 fail, 2 skipped). `npm audit --omit=dev`: 0 before, 0 after. Full `npm audit`: 10 moderate before and after, all dev-only, all `minimatch` 10.2.6 (GHSA-g3hv-75wg-m249, fixed in >=11.0.1), still open; no override applied. `npm audit signatures`: unverified, TUF metadata download returned HTTP 403 (`tuf-repo-cdn.sigstore.dev`) |
+
+## Validation-tool consolidation — 2026-11-19
+
+| Date | Package | Version | Reviewer | Diff reviewed against | Notes |
+|---|---|---|---|---|---|
+| 2026-11-19 | zxing-cpp, pillow | 3.1.1, 13.0.0: existing version and SHA-256 pins in `tests/archival/requirements.txt` | consolidation review | The previously committed decoder requirements are now installed by QR qualification. A Python 3.12 Linux installation verified the pinned wheel hashes and the decoder probe reported zxing-cpp 3.1.1. | Test-only, never shipped. CI uses `--require-hashes --only-binary :all: --no-deps`, probes the decoder and PDF rasterizer before running, and retains the independent-decoder reports. This is installation and integration verification, not an audit of the third-party wheels. |
+| 2026-11-19 | eslint, vitest | 10.14.0, 5.1.0 | consolidation review | Dependabot PRs #93 and #94; package and lockfile changes retained by merge. Both individual heads had successful native and browser CI before integration. | Development dependencies only. Combined-head verification is recorded in the November 19 handoff; source-branch CI alone does not qualify the combined tree. |
 
 ## Fuzz-runner Git prerequisite — 2026-11-05
 

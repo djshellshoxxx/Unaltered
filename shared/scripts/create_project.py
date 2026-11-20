@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 
 from find_starter_repo import locate
+from env_config import env_literal
 
 
 PLACEHOLDER_SUFFIXES = {".cpp", ".h", ".cmake", ".txt", ".md", ".env", ".example"}
@@ -36,6 +37,44 @@ def copytree(src: Path, dest: Path) -> None:
     shutil.copytree(src, dest, ignore=ignore)
 
 
+def validate_copy_paths(src: Path, dest: Path) -> None:
+    """Validate the entire copied tree before --force may remove a destination."""
+    if not src.is_dir():
+        raise ValueError("Starter must be an existing directory.")
+    for required in ("scripts/init_plugin_project.sh", ".env.example", "CMakeLists.txt"):
+        if not (src / required).is_file():
+            raise ValueError("Starter is missing a required template file.")
+
+    def is_link(path: Path) -> bool:
+        try:
+            info = path.lstat()
+        except FileNotFoundError:
+            return False
+        # Path.is_junction only exists on Python 3.12+. Reparse attributes are
+        # available on older Windows Python, including directory-shaped links.
+        attributes = getattr(info, "st_file_attributes", None)
+        return stat.S_ISLNK(info.st_mode) or (
+            attributes is not None and bool(attributes & stat.FILE_ATTRIBUTE_REPARSE_POINT)
+        )
+
+    if is_link(dest) or (dest.exists() and not dest.is_dir()):
+        raise ValueError("Destination must be a directory, not a link or other file.")
+    resolved_dest = dest.resolve()
+    if resolved_dest.is_relative_to(src) or src.is_relative_to(resolved_dest):
+        raise ValueError("Starter and destination must not contain each other.")
+
+    def walk_error(error: OSError) -> None:
+        raise error
+
+    for directory, directories, files in os.walk(src, onerror=walk_error, followlinks=False):
+        directories[:] = [name for name in directories if name not in EXCLUDES]
+        for name in [*directories, *(name for name in files if name not in EXCLUDES)]:
+            path = Path(directory) / name
+            mode = path.lstat().st_mode
+            if is_link(path) or not (stat.S_ISDIR(mode) or stat.S_ISREG(mode)):
+                raise ValueError("Starter must contain only regular files and directories, without links.")
+
+
 def replace_text(root: Path, replacements: dict[str, str]) -> None:
     for path in root.rglob("*"):
         if not path.is_file():
@@ -52,18 +91,19 @@ def replace_text(root: Path, replacements: dict[str, str]) -> None:
 
 
 def write_env(path: Path, values: dict[str, str]) -> None:
+    values = {key: env_literal(value, always_quote=True) for key, value in values.items()}
     lines = [
         "# Project Configuration",
         f"PROJECT_NAME={values['PROJECT_NAME']}",
-        f'PRODUCT_NAME="{values["PRODUCT_NAME"]}"',
+        f"PRODUCT_NAME={values['PRODUCT_NAME']}",
         f"PROJECT_BUNDLE_ID={values['PROJECT_BUNDLE_ID']}",
-        f'DEVELOPER_NAME="{values["DEVELOPER_NAME"]}"',
+        f"DEVELOPER_NAME={values['DEVELOPER_NAME']}",
         "",
         "# JUCE Plugin Codes (4-letter identifiers)",
         f"PLUGIN_CODE={values['PLUGIN_CODE']}",
         f"PLUGIN_MANUFACTURER_CODE={values['PLUGIN_MANUFACTURER_CODE']}",
         "",
-        f'PROJECT_PATH="{path.parent}"',
+        f"PROJECT_PATH={env_literal(str(path.parent), always_quote=True)}",
         "",
         "# Version Information",
         "VERSION_MAJOR=1",
@@ -74,9 +114,10 @@ def write_env(path: Path, values: dict[str, str]) -> None:
         "# Apple Developer Settings (for code signing/notarization)",
         f"APPLE_ID={values['APPLE_ID']}",
         f"TEAM_ID={values['TEAM_ID']}",
-        f'APP_CERT="{values["APP_CERT"]}"',
-        f'INSTALLER_CERT="{values["INSTALLER_CERT"]}"',
-        f"APP_SPECIFIC_PASSWORD={values['APP_SPECIFIC_PASSWORD']}",
+        f"APP_CERT={values['APP_CERT']}",
+        f"INSTALLER_CERT={values['INSTALLER_CERT']}",
+        "# Configure notarization credentials separately in the system keychain.",
+        "APP_SPECIFIC_PASSWORD=",
         "",
         "# GitHub Settings",
         f"GITHUB_USER={values['GITHUB_USER']}",
@@ -140,7 +181,9 @@ def main() -> int:
     parser.add_argument("--team-id", default="")
     parser.add_argument("--app-cert", default="")
     parser.add_argument("--installer-cert", default="")
-    parser.add_argument("--app-specific-password", default="")
+    # Recognize the removed flag only to reject it without echoing a secret in
+    # argparse's unknown-argument diagnostic. Do not advertise or persist it.
+    parser.add_argument("--app-specific-password", help=argparse.SUPPRESS)
     parser.add_argument("--enable-diagnostics", action="store_true")
     parser.add_argument("--visage", action="store_true")
     parser.add_argument("--create-github", action="store_true")
@@ -148,6 +191,11 @@ def main() -> int:
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--no-init-git", action="store_true")
     args = parser.parse_args()
+    if args.app_specific_password is not None:
+        parser.error("Password input is no longer supported; configure notarization credentials in the system keychain.")
+    for value in vars(args).values():
+        if isinstance(value, str) and any(ord(char) < 32 or ord(char) == 127 for char in value):
+            parser.error("Project options must be single-line text without control characters.")
 
     starter = Path(args.starter).resolve() if args.starter else locate([])
     if not starter and args.clone_missing:
@@ -171,6 +219,11 @@ def main() -> int:
     manufacturer_code = generate_4letter_code(developer_name)
 
     destination = Path(args.destination_parent).resolve() / project_folder
+    try:
+        validate_copy_paths(starter, destination)
+    except (OSError, ValueError) as error:
+        print(f"Project paths are not safe to copy: {error}", file=sys.stderr)
+        return 1
     if destination.exists():
         if not args.force:
             print(f"Destination already exists: {destination}. Use --force to overwrite.", file=sys.stderr)
@@ -204,7 +257,6 @@ def main() -> int:
             "TEAM_ID": args.team_id,
             "APP_CERT": args.app_cert,
             "INSTALLER_CERT": args.installer_cert,
-            "APP_SPECIFIC_PASSWORD": args.app_specific_password,
             "GITHUB_USER": args.github_user,
             "GITHUB_REPO": project_folder,
             "ENABLE_DIAGNOSTICS": "true" if args.enable_diagnostics else "false",

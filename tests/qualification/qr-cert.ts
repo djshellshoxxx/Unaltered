@@ -12,12 +12,15 @@ export const ABSENT_MESSAGE = 'Independent QR decoder absent. To run: python3 -m
   '.venv-qr/bin/pip install --require-hashes --no-deps -r tests/archival/requirements.txt && ' +
   'export UNALTERED_QR_PYTHON="$PWD/.venv-qr/bin/python" (needs zxing-cpp, Pillow and pdftoppm).';
 
-/** The interpreter with zxing-cpp and Pillow, or null when the opt-in decoder is not installed. */
+/** Local runs may skip absent tools; required qualification must fail instead. */
 export function qrPython(): string | null {
   const python = process.env.UNALTERED_QR_PYTHON ?? 'python3';
-  const probe = spawnSync(python, ['-I', ZXING_TOOL, 'probe'], { encoding: 'utf8' });
-  const tool = spawnSync('pdftoppm', ['-v'], { encoding: 'utf8' });
-  return probe.status === 0 && tool.status === 0 ? python : null;
+  const options = { encoding: 'utf8', timeout: 10_000 } as const;
+  const probe = spawnSync(python, ['-I', ZXING_TOOL, 'probe'], options);
+  const tool = spawnSync('pdftoppm', ['-v'], options);
+  if (probe.status === 0 && tool.status === 0) return python;
+  if (process.env.UNALTERED_REQUIRE_QR_DECODER === '1') throw new Error(ABSENT_MESSAGE);
+  return null;
 }
 
 export function runJson<T>(python: string, args: string[], timeout = 600_000): { status: number; value: T } {

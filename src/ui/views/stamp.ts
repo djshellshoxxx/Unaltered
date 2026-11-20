@@ -3,13 +3,18 @@ import { archivalCertificateControls, type ArchivalCertificateView } from '../ar
 import { groupHex } from '../../core/bytes';
 import { isAbort, safeMessage, UnalteredError } from '../../core/errors';
 import { hashBlob, type HashResult } from '../../core/hash/hasher';
-import { calendarsOf, stampBatch, type CalendarResult } from '../../core/ots/calendar';
+import { calendarsOf, MAX_STAMP_FILES, stampBatch, type CalendarResult } from '../../core/ots/calendar';
 import { MIME, detectBlob, stripMetadata, type FileKind, type StripOutcome } from '../../core/strip';
 import { announce, copyText, dropZone, el, formatBytes, setChildren } from '../dom';
 import { cleanedName, downloadLink, receiptName, revokeAll, revokeOwner } from '../download';
 import { stampConfigFromSettings } from '../state';
 import { addReceipt, isEnabled } from '../store';
 import { t } from '../strings';
+
+type ItemError =
+  | { kind: 'cancelled' }
+  | { kind: 'rejected'; reason: string }
+  | { kind: 'failure'; message: string };
 
 interface Item {
   id: number;
@@ -20,7 +25,8 @@ interface Item {
   hash: HashResult | null;
   progress: number;
   busy: boolean;
-  error: string | null;
+  queued: boolean;
+  error: ItemError | null;
   downloadedCleaned: boolean;
   ackHidden: boolean;
   ackOrientation: boolean;
@@ -36,8 +42,15 @@ function throwIfCancelled(signal: AbortSignal): void {
   if (signal.aborted) throw new UnalteredError('ABORTED', 'Cancelled.');
 }
 
+function itemErrorText(error: ItemError): string {
+  if (error.kind === 'cancelled') return t('stamp.cancelled');
+  if (error.kind === 'rejected') return t('stamp.rejected', { reason: error.reason });
+  return error.message;
+}
+
 // Kinds the cleaner can rewrite (images and audio).
 const isImage = (k: FileKind): boolean => k === 'jpeg' || k === 'png' || k === 'wav' || k === 'mp3';
+const MAX_CONCURRENT_FILES = 2;
 
 export interface StampView {
   /** Re-renders every visible string in the current language from the retained state; never restarts work. */
@@ -48,12 +61,16 @@ export function mountStamp(root: HTMLElement): StampView {
   revokeAll();
   let nextId = 1;
   const items: Item[] = [];
+  const pending: Item[] = [];
+  let active = 0;
   let stamping = false;
   let stampAbort: AbortController | null = null;
   let lastCalendars: CalendarResult[] | null = null;
   let stampError: string | null = null;
+  let selectionError: 'stamp.batchLimit' | 'stamp.batchBusy' | null = null;
 
   const list = el('div', { class: 'items', role: 'list' });
+  const selectionNotice = el('div', { class: 'selection-notice' });
   const actions = el('div', { class: 'actions' });
   const result = el('div', { class: 'stamp-result', 'aria-live': 'polite' });
 
@@ -72,12 +89,12 @@ export function mountStamp(root: HTMLElement): StampView {
     return it.ackHidden;
   }
 
-  async function process(it: Item): Promise<void> {
+  function enqueue(it: Item): void {
     it.abort.abort();
     revokeOwner(it);
     it.abort = new AbortController();
-    const signal = it.abort.signal;
     it.busy = true;
+    it.queued = true;
     it.error = null;
     it.hash = null;
     it.outcome = null;
@@ -92,16 +109,47 @@ export function mountStamp(root: HTMLElement): StampView {
     it.ackOrientation = false;
     refreshItem(it);
     refreshActions();
+    pending.push(it);
+    drain();
+  }
+
+  function drain(): void {
+    while (active < MAX_CONCURRENT_FILES && pending.length > 0) {
+      const it = pending.shift()!;
+      if (!items.includes(it) || it.abort.signal.aborted) continue;
+      it.queued = false;
+      active++;
+      void process(it, it.abort.signal).finally(() => {
+        active--;
+        drain();
+      });
+    }
+  }
+
+  function cancel(it: Item): void {
+    it.abort.abort();
+    if (it.queued) {
+      pending.splice(pending.indexOf(it), 1);
+      it.queued = false;
+      it.busy = false;
+      it.error = { kind: 'cancelled' };
+      refreshItem(it);
+      refreshActions();
+    }
+  }
+
+  async function process(it: Item, signal: AbortSignal): Promise<void> {
+    refreshItem(it);
     try {
-      it.kind = await detectBlob(it.file);
+      it.kind = await detectBlob(it.file, signal);
       throwIfCancelled(signal);
       let target: Blob = it.file;
       if (isImage(it.kind) && it.strip) {
-        const out = await stripMetadata(it.file);
+        const out = await stripMetadata(it.file, signal);
         throwIfCancelled(signal);
         it.outcome = out;
         if (out.kind === 'rejected') {
-          it.error = t('stamp.rejected', { reason: out.reason });
+          it.error = { kind: 'rejected', reason: out.reason };
           it.busy = false;
           refreshItem(it);
           refreshActions();
@@ -109,20 +157,22 @@ export function mountStamp(root: HTMLElement): StampView {
         }
         if (out.kind === 'cleaned') target = out.output;
       }
-      it.hash = await hashBlob(target, {
+      const hash = await hashBlob(target, {
         signal,
         onProgress: (done) => {
           it.progress = target.size === 0 ? 1 : done / target.size;
           refreshProgress(it);
         },
       });
+      throwIfCancelled(signal);
+      it.hash = hash;
     } catch (e) {
       if (isAbort(e) || signal.aborted) {
         // A newer run or Remove owns the item now; only the item's own Cancel leaves it here to settle.
         if (it.abort.signal !== signal || !items.includes(it)) return;
-        it.error = t('stamp.cancelled');
+        it.error = { kind: 'cancelled' };
       } else {
-        it.error = safeMessage(e);
+        it.error = { kind: 'failure', message: safeMessage(e) };
       }
     }
     it.busy = false;
@@ -149,17 +199,17 @@ export function mountStamp(root: HTMLElement): StampView {
       ),
     );
     if (it.busy) {
-      kids.push(el('label', { class: 'progress-label' }, t('stamp.working'), el('progress', { max: 1, value: it.progress })));
-      kids.push(el('button', { type: 'button', class: 'button small', onclick: () => it.abort.abort() }, t('common.cancel')));
+      kids.push(el('label', { class: 'progress-label' }, t(it.queued ? 'stamp.queued' : 'stamp.working'), el('progress', { max: 1, value: it.progress })));
+      kids.push(el('button', { type: 'button', class: 'button small', onclick: () => cancel(it) }, t('common.cancel')));
     }
-    if (it.error) kids.push(el('p', { class: 'error', role: 'alert' }, it.error));
+    if (it.error) kids.push(el('p', { class: 'error', role: 'alert' }, itemErrorText(it.error)));
 
     if (!it.busy && !it.error && isImage(it.kind)) {
       kids.push(
         el(
           'label',
           { class: 'check' },
-          el('input', { type: 'checkbox', checked: it.strip, disabled: stamping, onchange: (e: Event) => ((it.strip = (e.target as HTMLInputElement).checked), void process(it)) }),
+          el('input', { type: 'checkbox', checked: it.strip, disabled: stamping, onchange: (e: Event) => ((it.strip = (e.target as HTMLInputElement).checked), enqueue(it)) }),
           el('span', {}, t('stamp.stripLabel')),
         ),
       );
@@ -304,12 +354,15 @@ export function mountStamp(root: HTMLElement): StampView {
   }
 
   function remove(it: Item): void {
+    if (stamping || !items.includes(it)) return;
     const hadFocus = it.card.contains(document.activeElement);
     it.abort.abort();
+    if (it.queued) pending.splice(pending.indexOf(it), 1);
     revokeOwner(it);
     it.certificate?.view.dispose();
     items.splice(items.indexOf(it), 1);
     it.card.remove();
+    selectionError = null;
     if (items.length === 0) {
       lastCalendars = null;
       stampError = null;
@@ -320,6 +373,13 @@ export function mountStamp(root: HTMLElement): StampView {
   }
 
   function add(files: File[]): void {
+    if (files.length === 0) return;
+    // Keep an in-flight Merkle batch stable and reject the whole addition rather than silently truncating it.
+    selectionError = stamping ? 'stamp.batchBusy' : files.length > MAX_STAMP_FILES - items.length ? 'stamp.batchLimit' : null;
+    if (selectionError) {
+      refreshActions();
+      return;
+    }
     for (const file of files) {
       const it: Item = {
         id: nextId++,
@@ -330,6 +390,7 @@ export function mountStamp(root: HTMLElement): StampView {
         hash: null,
         progress: 0,
         busy: true,
+        queued: true,
         error: null,
         downloadedCleaned: false,
         ackHidden: false,
@@ -343,12 +404,14 @@ export function mountStamp(root: HTMLElement): StampView {
       };
       items.push(it);
       list.appendChild(it.card);
-      void process(it);
+      enqueue(it);
     }
     refreshActions();
   }
 
   async function createReceipt(): Promise<void> {
+    if (stamping || items.length === 0 || !items.every(ready)) return;
+    const submitted = items.slice();
     stamping = true;
     stampError = null;
     lastCalendars = null;
@@ -356,11 +419,11 @@ export function mountStamp(root: HTMLElement): StampView {
     refreshActions();
     items.forEach(refreshItem);
     try {
-      const digests = items.map((i) => i.hash!.digest);
+      const digests = submitted.map((i) => i.hash!.digest);
       const cfg = stampConfigFromSettings(stampAbort.signal);
       const r = await stampBatch(digests, cfg);
       lastCalendars = r.calendars;
-      items.forEach((it, i) => (it.proof = r.proofs[i]!));
+      submitted.forEach((it, i) => (it.proof = r.proofs[i]!));
       announce(t('stamp.done'), root);
     } catch (e) {
       if (!isAbort(e)) {
@@ -370,11 +433,13 @@ export function mountStamp(root: HTMLElement): StampView {
     }
     stamping = false;
     stampAbort = null;
+    if (selectionError === 'stamp.batchBusy') selectionError = null;
     items.forEach(refreshItem);
     refreshActions();
   }
 
   function refreshActions(): void {
+    setChildren(selectionNotice, selectionError ? el('p', { class: 'error', role: 'alert' }, t(selectionError, { max: MAX_STAMP_FILES })) : null);
     const stamped = items.length > 0 && items.every((i) => i.proof);
     const allReady = items.length > 0 && items.every(ready);
     const kids: (Node | null)[] = [];
@@ -444,7 +509,8 @@ export function mountStamp(root: HTMLElement): StampView {
       el('p', { class: 'lead' }, t('copy.stays')),
       el('p', {}, t('copy.notTrue')),
       essentialGuides(),
-      dropZone({ id: 'stamp-file', label: t('stamp.drop'), hint: t('stamp.dropHint'), multiple: true, onFiles: add }),
+      dropZone({ id: 'stamp-file', label: t('stamp.drop'), hint: t('stamp.dropHint', { max: MAX_STAMP_FILES }), help: t('help.stampFiles'), multiple: true, onFiles: add }),
+      selectionNotice,
       list,
       actions,
       result,

@@ -10,6 +10,10 @@ import subprocess
 import json
 import re
 from datetime import datetime
+from pathlib import Path
+from runpy import run_path
+
+parse_env = run_path(str(Path(__file__).with_name("env_config.py")))["parse_env"]
 
 def get_git_history(since_tag=None):
     """Get git commits since last tag or specified tag"""
@@ -112,14 +116,7 @@ def generate_ai_release_notes(commits, version, project_root):
     
     # Load environment variables
     env_path = os.path.join(project_root, '.env')
-    env_vars = {}
-    if os.path.exists(env_path):
-        with open(env_path, 'r') as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith('#') and '=' in line:
-                    key, value = line.split('=', 1)
-                    env_vars[key] = value.strip('"').strip("'")
+    env_vars = parse_env(env_path)
     
     openrouter_key = env_vars.get('OPENROUTER_KEY_PRIVATE', os.environ.get('OPENROUTER_KEY_PRIVATE'))
     openai_key = env_vars.get('OPENAI_API_KEY', os.environ.get('OPENAI_API_KEY'))

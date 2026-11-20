@@ -1,4 +1,4 @@
-import { decodeRasterFrames } from './qr-decode';
+import { decodeRasterFrames, symbolCandidates } from './qr-decode';
 import { MAX_QR_SYMBOLS_PER_IMAGE } from './qr-limits';
 
 type Raster = { data: Uint8ClampedArray; width: number; height: number };
@@ -81,39 +81,6 @@ function missingSymbols(frames: readonly Uint8Array[]): boolean {
   return false;
 }
 
-/** Finds a dense, roughly square ink area (the decoder's symbol-candidate shape test, with a looser fill ratio so a
- * rotated symbol's bounding box still qualifies), so pages without QR symbols, such as the certificate appendix,
- * do not pay for retry passes. */
-function hasSymbolLikeArea(image: Raster): boolean {
-  const { data, width, height } = image;
-  const cell = Math.max(4, Math.round(Math.min(width, height) / 160));
-  const cw = Math.ceil(width / cell); const ch = Math.ceil(height / cell);
-  const mixed = new Uint8Array(cw * ch);
-  for (let cy = 0; cy < ch; cy++) for (let cx = 0; cx < cw; cx++) {
-    let dark = 0; let n = 0;
-    for (let y = cy * cell; y < Math.min(height, (cy + 1) * cell); y += 2) for (let x = cx * cell; x < Math.min(width, (cx + 1) * cell); x += 2) {
-      const i = (y * width + x) * 4; if (data[i]! + data[i + 1]! + data[i + 2]! < 384) dark++; n++;
-    }
-    if (dark / n >= .12 && dark / n <= .88) mixed[cy * cw + cx] = 1;
-  }
-  const seen = new Uint8Array(cw * ch); const stack: number[] = [];
-  for (let start = 0; start < mixed.length; start++) {
-    if (!mixed[start] || seen[start]) continue;
-    let x0 = cw, y0 = ch, x1 = 0, y1 = 0, count = 0;
-    seen[start] = 1; stack.push(start);
-    while (stack.length) {
-      const at = stack.pop()!; const x = at % cw; const y = (at - x) / cw; count++;
-      x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
-      for (const next of [x + 1 < cw ? at + 1 : -1, x > 0 ? at - 1 : -1, y + 1 < ch ? at + cw : -1, y > 0 ? at - cw : -1]) {
-        if (next >= 0 && mixed[next] && !seen[next]) { seen[next] = 1; stack.push(next); }
-      }
-    }
-    const bw = x1 - x0 + 1; const bh = y1 - y0 + 1;
-    if (bw * cell >= 42 && bh * cell >= 42 && bw <= bh * 1.4 && bh <= bw * 1.4 && count >= bw * bh * .5) return true;
-  }
-  return false;
-}
-
 /** The worker's decode: one normal pass; if a printed page evidently lost a symbol (or shows a QR-like area but no
  * frame), a few time-bounded deskew passes. Frames are de-duplicated by exact bytes. */
 export function scanFrames(input: Raster, now: () => number = () => Date.now()): Uint8Array[] {
@@ -122,7 +89,7 @@ export function scanFrames(input: Raster, now: () => number = () => Date.now()):
   const frames = decodeRasterFrames(image.data, image.width, image.height);
   const firstPass = now() - started;
   const seen = new Set(frames.map(key));
-  if (!(frames.length ? missingSymbols(frames) : hasSymbolLikeArea(image))) return frames;
+  if (!(frames.length ? missingSymbols(frames) : symbolCandidates(image.data, image.width, image.height, 'retry').length)) return frames;
   for (const degrees of RETRY_DEGREES) {
     if (now() - started + firstPass * 1.5 > QR_RETRY_BUDGET_MS) break;
     let more: Uint8Array[];

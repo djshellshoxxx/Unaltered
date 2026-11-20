@@ -57,6 +57,35 @@ const allSteps = () => workflows.flatMap((wf) => {
 const wildcard = (pattern) => new RegExp(`^${pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.')}$`, 'i');
 const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+test('the Windows job requires both native junction regressions on Python 3.11 without skips', () => {
+  const lines = job('.github/workflows/ci.yml', 'windows');
+  assert.ok(lines.includes('    runs-on: windows-latest'), 'junction evidence must run on native Windows');
+  const list = steps(lines);
+  const setup = list.findIndex(s => /^actions\/setup-python@/.test(s.uses ?? ''));
+  const native = list.findIndex(s => s.name === 'Require native Windows starter junction regressions');
+  assert.ok(setup >= 0 && native > setup, 'install Python before requiring native junction evidence');
+  const referenceSetup = steps(job('.github/workflows/ci.yml', 'differential')).find(s => /^actions\/setup-python@/.test(s.uses ?? ''));
+  assert.equal(list[setup].uses, referenceSetup?.uses, 'reuse the reviewed setup-python action pin');
+  const start = lines.indexOf(`      - uses: ${list[setup].uses}`);
+  let end = start + 1;
+  while (end < lines.length && !/^ {6}- /.test(lines[end])) end++;
+  assert.match(lines.slice(start, end).join('\n'), /^ {10}python-version: "3\.11"$/m,
+    'exercise Python before Path.is_junction was introduced');
+  for (const index of [setup, native]) {
+    assert.equal(list[index].if, undefined, 'required native evidence must not be conditional');
+    assert.equal(list[index]['continue-on-error'], undefined, 'required native evidence must fail the job');
+  }
+  const step = list[native];
+  assert.equal(step.shell, 'python');
+  assert.match(step.run, /if os\.name != "nt" or sys\.version_info\[:2\] != \(3, 11\):\n +raise SystemExit/);
+  assert.match(step.run, /runpy\.run_path\("tests\/toolkit\/test_create_project_20261119\.py"\)/);
+  for (const name of ['test_windows_destination_junction_is_refused', 'test_windows_template_junction_is_refused_before_overwrite']) {
+    assert.ok(step.run.includes(`"${name}"`), `missing native junction case ${name}`);
+  }
+  assert.match(step.run, /if result\.testsRun != 2 or result\.skipped or not result\.wasSuccessful\(\):\n +raise SystemExit\(1\)/,
+    'missing, skipped, or unsuccessful tests cannot establish native junction qualification');
+});
+
 test('the Windows job checks the Windows zip itself, with the Verify-Checksums.ps1 it ships', () => {
   const build = read('scripts/build.mjs');
   // Package names are written either inline ([`${prefix}.zip`, makeZip(prefixed(windowsFiles))]) or through the
@@ -153,7 +182,7 @@ test('no Playwright gate lets a passing retry hide a failed attempt', () => {
   assert.deepEqual(lenient, [], `Playwright runs that retry (config: retries ${retries}) without --retries=0 or --fail-on-flaky-tests`);
 });
 
-test('the Python reference oracle is installed only from a hash-pinned requirements file', () => {
+test('the Python reference and independent QR decoder use reviewed hash-pinned wheels', () => {
   const sources = [...workflows, ...readdirSync(new URL('scripts/', root)).filter((f) => f.endsWith('.sh')).map((f) => `scripts/${f}`)];
   const installs = sources.flatMap((file) => read(file).split('\n')
     .flatMap((line) => line.split(/&&|;/))
@@ -171,6 +200,11 @@ test('the Python reference oracle is installed only from a hash-pinned requireme
   }
   assert.deepEqual(problems, [], 'unpinned reference installs');
   const reviewed = read('docs/DEPENDENCIES.md').split('\n').filter((l) => l.startsWith('|'));
+  const requiredPackages = {
+    'tests/differential/requirements.txt': { opentimestamps: '0.4.5', 'python-bitcoinlib': '0.12.2', pycryptodomex: '3.23.0' },
+    'tests/archival/requirements.txt': { 'zxing-cpp': '3.1.1', pillow: '13.0.0' },
+  };
+  assert.deepEqual([...files].sort(), Object.keys(requiredPackages).sort(), 'all reference tools must be installed from their reviewed requirements');
   for (const req of files) {
     const logical = read(req).replace(/\\\n/g, ' ').split('\n').map((l) => l.replace(/(?:^|\s)#.*$/, '').trim()).filter(Boolean);
     const pins = logical.map((l) => {
@@ -178,9 +212,40 @@ test('the Python reference oracle is installed only from a hash-pinned requireme
       assert.ok(m, `${req}: not an exact, hash-pinned requirement: ${l}`);
       return { name: m[1], version: m[2] };
     });
-    assert.ok(pins.some((p) => p.name === 'opentimestamps' && p.version === '0.4.5'), `${req} does not pin opentimestamps==0.4.5`);
+    assert.deepEqual(Object.fromEntries(pins.map((p) => [p.name, p.version])), requiredPackages[req], `${req} has unreviewed or missing reference packages`);
     for (const { name, version: v } of pins) {
       assert.ok(reviewed.some((l) => l.includes(name) && l.includes(v) && l.includes(req)), `docs/DEPENDENCIES.md records no review of ${name}==${v} as pinned in ${req}`);
     }
   }
+});
+
+test('QR qualification requires the installed independent decoder during the browser run', () => {
+  const lines = job('.github/workflows/qr-qualification.yml', 'print-scan');
+  const list = steps(lines);
+  const install = list.findIndex(s => /zxing_qr\.py probe/.test(s.run ?? ''));
+  const browser = list.findIndex(s => /playwright test --config=playwright\.qr\.config\.ts/.test(s.run ?? ''));
+  assert.ok(install >= 0 && browser > install, 'the independent decoder must be installed and probed before the browser tests');
+  assert.match(list[install].run, /UNALTERED_QR_PYTHON=.*GITHUB_ENV/);
+  assert.match(list[browser].run, /--retries=0/);
+  for (const index of [install, browser]) {
+    assert.equal(list[index].if, undefined, 'the required step must not be conditional');
+    assert.equal(list[index]['continue-on-error'], undefined, 'the required step must fail the job');
+  }
+  const start = lines.indexOf(`      - name: ${list[browser].name}`);
+  assert.ok(start >= 0, 'browser step must be named');
+  let end = start + 1;
+  while (end < lines.length && !/^ {6}- /.test(lines[end])) end++;
+  assert.match(lines.slice(start, end).join('\n'), /^ {10}UNALTERED_REQUIRE_QR_DECODER: "1"$/m,
+    'missing required-decoder mode silently skips independent recovery');
+});
+
+test('QR qualification validates the complete independent evidence before uploading it', () => {
+  const list = steps(job('.github/workflows/qr-qualification.yml', 'print-scan'));
+  const browser = list.findIndex(s => /playwright test --config=playwright\.qr\.config\.ts/.test(s.run ?? ''));
+  const evidence = list.findIndex(s => s.run === 'node scripts/check-qr-qualification.mjs');
+  const upload = list.findIndex(s => /actions\/upload-artifact@/.test(s.uses ?? ''));
+  assert.ok(browser >= 0 && evidence > browser && upload > evidence,
+    'a passing browser command alone does not prove every expected certificate ran');
+  assert.equal(list[evidence].if, undefined);
+  assert.equal(list[evidence]['continue-on-error'], undefined);
 });
