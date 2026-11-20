@@ -6,7 +6,7 @@ import { serializeProof } from '../../src/core/ots/codec';
 import { revokeAll } from '../../src/ui/download';
 import { setLang, t } from '../../src/ui/strings';
 import { mountStamp, type StampView } from '../../src/ui/views/stamp';
-import { makeJpeg } from '../helpers/images';
+import { makeJpeg, makePng } from '../helpers/images';
 import { doc, type FElement, installFakeDom } from './ui-fake-dom';
 
 vi.mock('../../src/core/hash/hasher', () => ({ hashBlob: vi.fn() }));
@@ -151,12 +151,39 @@ describe('bounded Stamp file processing', () => {
     expect(doc.activeElement).toBe(root.querySelector('#stamp-file'));
     setLang('es');
     view.relabel();
+    expect(queued.querySelector('.error')?.textContent).toBe(t('stamp.cancelled'));
     expect(hashBlob).toHaveBeenCalledTimes(2);
     held.finished[0]!();
     await vi.waitFor(() => expect(hashBlob).toHaveBeenCalledTimes(3));
     expect(held.names).toEqual(['file-0.txt', 'file-1.txt', 'file-3.txt']);
     held.finished[1]!();
     held.finished[2]!();
+  });
+
+  it('relabels an active cancellation without restarting file processing', async () => {
+    heldHashes();
+    select(1);
+    await vi.waitFor(() => expect(hashBlob).toHaveBeenCalledOnce());
+    const card = cards()[0]!;
+    button(card, 'common.cancel').dispatch('click');
+    await vi.waitFor(() => expect(card.querySelector('.error')?.textContent).toBe(t('stamp.cancelled')));
+    setLang('es');
+    view.relabel();
+    expect(card.querySelector('.error')?.textContent).toBe(t('stamp.cancelled'));
+    expect(hashBlob).toHaveBeenCalledOnce();
+    expect(card.querySelector('progress')).toBeNull();
+  });
+
+  it('relabels a metadata rejection while retaining the parser reason and selected file', async () => {
+    selectFiles([new File([makePng({ badCrc: true }) as BlobPart], 'damaged.png')]);
+    const card = cards()[0]!;
+    const reason = 'A PNG chunk failed its integrity check.';
+    await vi.waitFor(() => expect(card.querySelector('.error')?.textContent).toBe(t('stamp.rejected', { reason })));
+    setLang('es');
+    view.relabel();
+    expect(card.querySelector('.error')?.textContent).toBe(t('stamp.rejected', { reason }));
+    expect(card.querySelector('.item-name')?.textContent).toBe('damaged.png');
+    expect(hashBlob).not.toHaveBeenCalled();
   });
 
   for (const index of [0, 2]) {

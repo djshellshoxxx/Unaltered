@@ -11,6 +11,11 @@ import { stampConfigFromSettings } from '../state';
 import { addReceipt, isEnabled } from '../store';
 import { t } from '../strings';
 
+type ItemError =
+  | { kind: 'cancelled' }
+  | { kind: 'rejected'; reason: string }
+  | { kind: 'failure'; message: string };
+
 interface Item {
   id: number;
   file: File;
@@ -21,7 +26,7 @@ interface Item {
   progress: number;
   busy: boolean;
   queued: boolean;
-  error: string | null;
+  error: ItemError | null;
   downloadedCleaned: boolean;
   ackHidden: boolean;
   ackOrientation: boolean;
@@ -35,6 +40,12 @@ interface Item {
 
 function throwIfCancelled(signal: AbortSignal): void {
   if (signal.aborted) throw new UnalteredError('ABORTED', 'Cancelled.');
+}
+
+function itemErrorText(error: ItemError): string {
+  if (error.kind === 'cancelled') return t('stamp.cancelled');
+  if (error.kind === 'rejected') return t('stamp.rejected', { reason: error.reason });
+  return error.message;
 }
 
 // Kinds the cleaner can rewrite (images and audio).
@@ -121,7 +132,7 @@ export function mountStamp(root: HTMLElement): StampView {
       pending.splice(pending.indexOf(it), 1);
       it.queued = false;
       it.busy = false;
-      it.error = t('stamp.cancelled');
+      it.error = { kind: 'cancelled' };
       refreshItem(it);
       refreshActions();
     }
@@ -138,7 +149,7 @@ export function mountStamp(root: HTMLElement): StampView {
         throwIfCancelled(signal);
         it.outcome = out;
         if (out.kind === 'rejected') {
-          it.error = t('stamp.rejected', { reason: out.reason });
+          it.error = { kind: 'rejected', reason: out.reason };
           it.busy = false;
           refreshItem(it);
           refreshActions();
@@ -159,9 +170,9 @@ export function mountStamp(root: HTMLElement): StampView {
       if (isAbort(e) || signal.aborted) {
         // A newer run or Remove owns the item now; only the item's own Cancel leaves it here to settle.
         if (it.abort.signal !== signal || !items.includes(it)) return;
-        it.error = t('stamp.cancelled');
+        it.error = { kind: 'cancelled' };
       } else {
-        it.error = safeMessage(e);
+        it.error = { kind: 'failure', message: safeMessage(e) };
       }
     }
     it.busy = false;
@@ -191,7 +202,7 @@ export function mountStamp(root: HTMLElement): StampView {
       kids.push(el('label', { class: 'progress-label' }, t(it.queued ? 'stamp.queued' : 'stamp.working'), el('progress', { max: 1, value: it.progress })));
       kids.push(el('button', { type: 'button', class: 'button small', onclick: () => cancel(it) }, t('common.cancel')));
     }
-    if (it.error) kids.push(el('p', { class: 'error', role: 'alert' }, it.error));
+    if (it.error) kids.push(el('p', { class: 'error', role: 'alert' }, itemErrorText(it.error)));
 
     if (!it.busy && !it.error && isImage(it.kind)) {
       kids.push(
