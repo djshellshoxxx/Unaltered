@@ -5,7 +5,7 @@ import { fromHex, groupHex, toHex } from '../../core/bytes';
 import { createVerificationReportJson } from '../../core/reports/verification';
 import { createEvidenceZip } from '../../core/reports/evidence-zip';
 import { pairEvidenceFiles } from '../../core/reports/batch-pair';
-import { verifyBatch } from '../../core/reports/batch-verify';
+import { verifyBatch, type BatchResult } from '../../core/reports/batch-verify';
 import { isAbort, safeMessage, UnalteredError } from '../../core/errors';
 import { hashBlob } from '../../core/hash/hasher';
 import { awaitAbortable } from '../../core/hash/stream';
@@ -335,17 +335,51 @@ export function mountVerify(root: HTMLElement): VerifyView {
   let batchBusy = false;
   let batchController: AbortController | null = null;
   let batchGeneration = 0;
+  type BatchShown =
+    | { kind: 'working' | 'cancelled' | 'pair-error' }
+    | { kind: 'error'; message: string }
+    | { kind: 'results'; results: BatchResult<ReturnType<typeof pairEvidenceFiles>[number]>[] }
+    | null;
+  let batchShown: BatchShown = null;
   const batchResults = el('div', { class: 'batch-results', 'aria-live': 'polite' });
   const batchActions = el('div', { class: 'actions' });
+
+  function showBatch(next: BatchShown): void {
+    batchShown = next;
+    if (next === null) setChildren(batchResults);
+    else if (next.kind === 'working' || next.kind === 'cancelled')
+      setChildren(batchResults, el('p', { role: 'status' }, t(next.kind === 'working' ? 'batch.working' : 'batch.cancelled')));
+    else if (next.kind === 'pair-error')
+      setChildren(batchResults, el('p', { role: 'alert', class: 'error' }, t('batch.pairError')));
+    else if (next.kind === 'error')
+      setChildren(batchResults, el('p', { class: 'error', role: 'alert' }, next.message));
+    else if (next.kind === 'results')
+      setChildren(batchResults, el('ul', {}, ...next.results.map(item =>
+        el('li', {},
+          el('strong', {}, item.input.fileName + ': '),
+          el('span', {}, item.status === 'ERROR' ? t('batch.error') : item.status),
+          item.status !== 'ERROR' ? el('p', { class: 'muted' }, item.report.detail) : null,
+          item.status === 'VERIFIED' && item.report.bitcoin
+            ? el('p', {}, t('batch.block', { height: item.report.bitcoin.height })) : null,
+        ),
+      )));
+  }
+
+  function stopBatch(next: BatchShown): void {
+    batchGeneration++;
+    batchController?.abort();
+    batchController = null;
+    batchBusy = false;
+    showBatch(next);
+  }
+
   function renderBatchActions(): void {
     setChildren(batchActions,
       el('p', {}, t('batch.selected', { files: batchFiles.length, receipts: batchReceipts.length })),
       el('button', { type: 'button', class: 'button primary', disabled: batchBusy || !batchFiles.length || !batchReceipts.length,
         onclick: () => void runBatch() }, t('batch.run')),
       batchBusy ? el('button', { type: 'button', class: 'button', onclick: () => {
-        batchGeneration++;
-        batchController?.abort();
-        batchBusy = false;
+        stopBatch({ kind: 'cancelled' });
         renderBatchActions();
       } }, t('common.cancel')) : null,
     );
@@ -358,7 +392,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
     try {
       pairs = pairEvidenceFiles(files.map(f => f.name), receipts.map(f => f.name));
     } catch {
-      setChildren(batchResults, el('p', { role: 'alert', class: 'error' }, t('batch.pairError')));
+      showBatch({ kind: 'pair-error' });
       return;
     }
     const controller = new AbortController();
@@ -366,7 +400,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
     batchController = controller;
     batchBusy = true;
     renderBatchActions();
-    setChildren(batchResults, el('p', { role: 'status' }, t('batch.working')));
+    showBatch({ kind: 'working' });
     try {
       const result = await verifyBatch(pairs, async pair => {
         if (controller.signal.aborted) throw new UnalteredError('ABORTED', 'Cancelled');
@@ -375,23 +409,15 @@ export function mountVerify(root: HTMLElement): VerifyView {
         checkReceiptSize(receipt);
         const hashed = await hashBlob(f, { signal: controller.signal });
         if (controller.signal.aborted) throw new UnalteredError('ABORTED', 'Cancelled');
-        const proof = new Uint8Array(await receipt.arrayBuffer());
+        const proof = new Uint8Array(await awaitAbortable(receipt.arrayBuffer(), controller.signal));
         if (controller.signal.aborted) throw new UnalteredError('ABORTED', 'Cancelled');
         return verify(hashed.digest, proof, verifyConfigFromSettings(controller.signal));
       }, controller.signal);
       if (generation !== batchGeneration || controller.signal.aborted) return;
-      setChildren(batchResults, el('ul', {}, ...result.map(item =>
-        el('li', {},
-          el('strong', {}, item.input.fileName + ': '),
-          el('span', {}, item.status === 'ERROR' ? t('batch.error') : item.status),
-          item.status !== 'ERROR' ? el('p', { class: 'muted' }, item.report.detail) : null,
-          item.status === 'VERIFIED' && item.report.bitcoin
-            ? el('p', {}, t('batch.block', { height: item.report.bitcoin.height })) : null,
-        ),
-      )));
+      showBatch({ kind: 'results', results: result });
     } catch (error) {
       if (generation === batchGeneration && !controller.signal.aborted)
-        setChildren(batchResults, el('p', { class: 'error', role: 'alert' }, safeMessage(error)));
+        showBatch({ kind: 'error', message: safeMessage(error) });
     } finally {
       if (generation === batchGeneration) {
         batchBusy = false;
@@ -405,13 +431,14 @@ export function mountVerify(root: HTMLElement): VerifyView {
       el('h3', {}, t('batch.title')),
       el('p', { class: 'muted' }, t('batch.instructions')),
       dropZone({ id: 'batch-files', label: t('batch.files'), hint: t('batch.fileHint'), help: t('help.batchFiles'), multiple: true,
-        onFiles: files => { batchGeneration++; batchController?.abort(); batchBusy = false; batchFiles = files; setChildren(batchResults); renderBatchActions(); } }),
+        onFiles: files => { stopBatch(null); batchFiles = files; renderBatchActions(); } }),
       dropZone({ id: 'batch-receipts', label: t('batch.receipts'), hint: t('batch.receiptHint'), help: t('help.batchReceipts'), multiple: true, accept: '.ots',
-        onFiles: files => { batchGeneration++; batchController?.abort(); batchBusy = false; batchReceipts = files; setChildren(batchResults); renderBatchActions(); } }),
+        onFiles: files => { stopBatch(null); batchReceipts = files; renderBatchActions(); } }),
       batchActions,
       batchResults,
     );
     renderBatchActions();
+    showBatch(batchShown);
   }
 
   function renderFrame(): void {
