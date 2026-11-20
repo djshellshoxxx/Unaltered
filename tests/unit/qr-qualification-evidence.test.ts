@@ -96,6 +96,7 @@ it.each([
   ['invalid QR version', (r: any) => { r.value.symbols[0].version = 41; r.printed.labels[0].version = 41; }],
   ['invalid correction level', (r: any) => { r.value.symbols[0].ec = 'Z'; r.printed.labels[0].level = 'Z'; }],
   ['invalid frame length', (r: any) => { r.value.symbols[0].bytes = 80; r.printed.labels[0].frameBytes = 80; }],
+  ['inconsistent frame payload total', (r: any) => { r.value.symbols[0].bytes++; r.printed.labels[0].frameBytes++; }],
   ['missing page evidence', (r: any) => { r.value.symbols_per_page = []; }],
   ['inconsistent page count', (r: any) => { r.value.pages++; }],
 ] as const)('rejects %s', (_reason, edit) => {

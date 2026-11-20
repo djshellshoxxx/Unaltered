@@ -44,15 +44,18 @@ function check(directory) {
     assert.equal(v.pdf_sha256, hash(pdf));
     assert.ok(Array.isArray(printed.labels) && integer(printed.labels.length, 1, 4096));
     assert.ok(Array.isArray(v.symbols)); assert.equal(v.symbols.length, printed.labels.length);
+    let payloadBytes = 0;
     for (const [index, label] of printed.labels.entries()) {
       assert.equal(label.index, index); assert.equal(label.total, printed.labels.length);
       assert.ok(integer(label.version, 1, 40) && /^[LMQH]$/.test(label.level));
       assert.ok(integer(label.mask, 0, 7) && integer(label.frameBytes, 81, 2953));
+      payloadBytes += label.frameBytes - 80;
       if (c.level !== 'auto') assert.equal(label.level, c.level);
       assert.deepEqual(v.symbols[index], {
         index, bytes: label.frameBytes, version: label.version, ec: label.level, mask: label.mask,
       }, `${key(c)}: decoded symbol differs from its printed label`);
     }
+    assert.equal(payloadBytes, receipt.length, `${key(c)}: frame payloads do not cover the saved receipt`);
     const perPage = [Math.min(2, printed.labels.length)];
     for (let remaining = printed.labels.length - perPage[0]; remaining > 0; remaining -= 4) perPage.push(Math.min(4, remaining));
     perPage.push(0); // The human-readable appendix contains no QR symbol.
