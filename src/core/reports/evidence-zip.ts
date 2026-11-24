@@ -17,8 +17,9 @@ function u32(data: Uint8Array, at: number, n: number): void { new DataView(data.
 
 /** Stored ZIP, no compression or external dependencies. Bounded to avoid excessive browser allocations. */
 export async function createEvidenceZip(original: Uint8Array, receipt: Uint8Array): Promise<Uint8Array> {
-  if (!original.length || !receipt.length || original.length + receipt.length > MAX_BYTES)
-    throw new Error('Evidence bundle inputs must be nonempty and at most 16 MiB combined');
+  if (!receipt.length) throw new Error('The evidence receipt must not be empty');
+  if (original.length + receipt.length > MAX_BYTES)
+    throw new Error('Evidence bundle inputs must be at most 16 MiB combined');
   // Snapshot once, before any await: the caller may reuse its buffers while hashes are computed.
   // The manifest digests, stored ZIP entries and CRCs must describe the same exact bytes.
   const originalBytes = Uint8Array.from(original);

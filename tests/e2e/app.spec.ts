@@ -67,6 +67,26 @@ test.describe('batch verification', () => {
     await expect(page.locator('.batch-results')).toContainText('evidence.txt');
     await expect(page.locator('.batch-results')).toContainText('INVALID_PROOF');
   });
+  test('pairs an original with the receipt name saved by Stamp', async ({ page, context }) => {
+    await installNetwork(context);
+    const original = { name: '.note.txt', mimeType: 'text/plain', buffer: NOTE };
+    await page.goto('/index.html#stamp');
+    await page.setInputFiles('#stamp-file', original);
+    await page.getByLabel(/I understand and want to continue/).check();
+    await page.getByRole('button', { name: 'Create receipt' }).click();
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('link', { name: /Download receipt/ }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe('_note.txt.ots');
+    await page.locator('#nav-verify').click();
+    await page.setInputFiles('#batch-files', original);
+    await page.setInputFiles('#batch-receipts', {
+      name: download.suggestedFilename(), mimeType: 'application/octet-stream', buffer: readFileSync((await download.path())!),
+    });
+    await page.getByRole('button', { name: 'Verify batch' }).click();
+    await expect(page.locator('.batch-results li')).toContainText('.note.txt: PENDING');
+  });
   test('rejects missing matching receipts before verification', async ({ page }) => {
     await page.goto('/index.html#verify');
     await page.locator('#batch-files').setInputFiles({ name: 'a.txt', mimeType: 'text/plain', buffer: Buffer.from('a') });

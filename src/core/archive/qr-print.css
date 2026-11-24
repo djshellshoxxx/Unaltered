@@ -27,6 +27,7 @@
 @page archival-a4 { size: A4 portrait; margin: 10mm; }
 @page archival-letter { size: letter portrait; margin: 10mm; }
 @media print {
+  :root:has(body > .archival-preview) { color-scheme: light; background: #fff; }
   body:has(> .archival-preview) { background: #fff; }
   body:has(> .archival-preview) > :not(.archival-preview) { display: none !important; }
   .archival-preview { margin: 0; padding: 0; width: auto; max-width: none; background: #fff; }

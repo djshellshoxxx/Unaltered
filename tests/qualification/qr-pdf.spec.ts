@@ -51,6 +51,10 @@ for (const paper of ['a4', 'letter'] as const) {
     const frames: Uint8Array[] = [];
     for (const file of readdirSync(directory).filter(name => name.endsWith('.ppm')).sort()) {
       const image = ppm(readFileSync(resolve(directory, file)));
+      // A dark screen theme must not put an ink border in the physical page margins.
+      for (const pixel of [0, image.width - 1, (image.height - 1) * image.width, image.width * image.height - 1]) {
+        expect(Array.from(image.data.subarray(pixel * 4, pixel * 4 + 3))).toEqual([255, 255, 255]);
+      }
       frames.push(...decodeRasterFrames(image.data, image.width, image.height));
     }
     expect(await recoverReceiptFrames(frames.reverse())).toEqual(new Uint8Array(original));

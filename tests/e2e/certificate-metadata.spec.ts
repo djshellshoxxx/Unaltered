@@ -7,6 +7,7 @@ test('document label is opt-in, escaped, and never embedded in QR receipt bytes'
   await page.getByLabel('Choose a .ots receipt for a QR certificate').setInputFiles({
     name: 'private-document.ots', mimeType: 'application/octet-stream', buffer: receipt,
   });
+  await expect(page.locator('.archival-import .picked')).toHaveText(`private-document.ots · ${receipt.length} B`);
   const label = page.getByRole('textbox', { name: 'Document title or filename' });
   await expect(label).toBeDisabled();
   await page.getByRole('button', { name: 'Preview QR certificate', exact: true }).click();

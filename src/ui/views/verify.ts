@@ -15,7 +15,7 @@ import type { CalendarLiveness } from '../../core/ots/liveness';
 import { LIMITS } from '../../core/ots/types';
 import { verify, type VerifyReport, type VerifyState } from '../../core/ots/verify';
 import { announce, dropZone, el, formatBytes, setChildren } from '../dom';
-import { downloadLink, revokeAll, revokeOwner, upgradedName } from '../download';
+import { downloadLink, receiptName, revokeAll, revokeOwner, upgradedName } from '../download';
 import { stampConfigFromSettings, verifyConfigFromSettings } from '../state';
 import { t, type StringKey } from '../strings';
 import { localNodeInstructions, referenceUpgradeInstructions } from './about';
@@ -395,7 +395,7 @@ export function mountVerify(root: HTMLElement): VerifyView {
     const receipts = [...batchReceipts];
     let pairs: ReturnType<typeof pairEvidenceFiles>;
     try {
-      pairs = pairEvidenceFiles(files.map(f => f.name), receipts.map(f => f.name));
+      pairs = pairEvidenceFiles(files.map(f => f.name), receipts.map(f => f.name), receiptName);
     } catch {
       showBatch({ kind: 'pair-error' });
       return;
@@ -543,7 +543,7 @@ export function renderReport(r: VerifyReport, hex: string, fromLink: boolean, ow
   }
   if (r.state === 'PENDING') card.appendChild(el('p', { class: 'notice pending' }, t('copy.pendingNotProof')));
   card.appendChild(downloadLink('Download verification report (JSON)', 'unaltered-verification-report.json',
-    new Blob([createVerificationReportJson(hex, r)], { type: 'application/json' }),
+    new Blob([createVerificationReportJson(hex, r, fromLink ? 'share-link' : 'file')], { type: 'application/json' }),
     'application/json', undefined, owner ? { owner, key: 'verification-report' } : undefined));
   return card;
 }

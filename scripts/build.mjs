@@ -115,9 +115,10 @@ const buildHash = hex256(Buffer.from(cliJs + '\0' + mainMulti + '\0' + workerJs 
 
 // One pass with a replacer function: string replacements would expand `$&`, `$'` and similar patterns inside the
 // bundle or CSS, and sequential passes would fill a token that an earlier value happened to contain.
-function fill(html, { cspValue, styles, script, favicon = '' }) {
+function fill(html, { cspValue, styles, script, favicon = '', offerDownloads = false }) {
   const values = { CSP: cspValue, STYLES: styles, SCRIPT: script, VERSION: version, BUILD: buildHash, FAVICON: favicon };
-  return html.replace(/\{\{(CSP|STYLES|SCRIPT|VERSION|BUILD|FAVICON)\}\}/g, (_, key) => values[key]);
+  const page = html.replace(/\{\{#DOWNLOADS\}\}([\s\S]*?)\{\{\/DOWNLOADS\}\}/g, (_, links) => offerDownloads ? links : '');
+  return page.replace(/\{\{(CSP|STYLES|SCRIPT|VERSION|BUILD|FAVICON)\}\}/g, (_, key) => values[key]);
 }
 
 // Multi-file page: SRI on every script/stylesheet (SR-3).
@@ -126,6 +127,7 @@ const siteUrl = 'https://djshellshoxxx.github.io/Unaltered/';
 const seoHead = '<link rel="canonical" href="' + siteUrl + '">' +
   '<meta property="og:url" content="' + siteUrl + '">';
 const multiHtml = fill(template, {
+  offerDownloads: true,
   cspValue: multiCsp,
   favicon: '<link rel="icon" type="image/png" sizes="64x64" href="./favicon.png">',
   styles: `<link rel="stylesheet" href="./styles.css" integrity="${sri(css)}">`,
@@ -338,6 +340,8 @@ for (const f of common) {
 writeFileSync(join(dist, 'web', 'robots.txt'), 'User-agent: *\nAllow: /Unaltered/\nSitemap: ' + siteUrl + 'sitemap.xml\n');
 writeFileSync(join(dist, 'web', 'sitemap.xml'), '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>' + siteUrl + '</loc></url></urlset>\n');
 writeFileSync(join(dist, singleName), singleHtml);
+writeFileSync(join(dist, 'web', singleName), singleHtml);
+writeFileSync(join(dist, 'web', 'SHA256SUMS'), `${hex256(Buffer.from(singleHtml))}  ${singleName}\n`);
 writeFileSync(join(dist, cliName), cliJs);
 const artefacts = [
   [archive.windows, makeZip(prefixed(windowsFiles))],

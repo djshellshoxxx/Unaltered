@@ -246,13 +246,13 @@ describe('cli batch', () => {
 });
 
 describe('cli evidence', () => {
-  it('writes the browser evidence ZIP and refuses to overwrite an existing file', async () => {
+  it.each(['abc', ''])('writes the browser evidence ZIP for %j and refuses to overwrite it', async original => {
     const d = tmp();
     const file = join(d, 'a.txt');
     const ots = join(d, 'a.txt.ots');
     const out = join(d, 'bundle.zip');
-    const receipt = pendingProof('abc');
-    writeFileSync(file, 'abc');
+    const receipt = pendingProof(original);
+    writeFileSync(file, original);
     writeFileSync(ots, receipt);
     const { o, io } = capture();
     expect(await run(['evidence', file, ots, out], io)).toBe(0);
@@ -261,7 +261,7 @@ describe('cli evidence', () => {
     expect(zip.readUInt32LE(0)).toBe(0x04034b50);
     const text = zip.toString('latin1');
     expect(text).toContain('UNALTERED-EVIDENCE-BUNDLE/1');
-    expect(text).toContain(ABC);
+    expect(text).toContain(hexOf(sha(original)));
     expect(text).toContain(hexOf(sha(receipt)));
     expect(o.out).toContain('verification: NOT_PERFORMED');
     expect(fetchSpy).not.toHaveBeenCalled();

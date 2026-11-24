@@ -1,6 +1,30 @@
 import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import { pathToFileURL } from 'node:url';
 import { expect, test } from '@playwright/test';
+import { groupHex } from '../../src/core/bytes';
 import { installHashWorkerEvidence, requireHashWorkerCompletion } from './hash-worker-evidence';
+
+test('downloaded offline app matches the offered checksum and reopens without a connection', async ({ page, context }, testInfo) => {
+  await page.goto('/Unaltered/');
+  const pending = page.waitForEvent('download');
+  await page.getByRole('link', { name: 'Download the offline app' }).click();
+  const download = await pending;
+  const saved = testInfo.outputPath(download.suggestedFilename());
+  await download.saveAs(saved);
+  const digest = createHash('sha256').update(await readFile(saved)).digest('hex');
+  const sumsHref = await page.getByRole('link', { name: 'Download SHA-256 checksums' }).getAttribute('href');
+  const sums = await page.request.get(new URL(sumsHref!, page.url()).href);
+  expect(sums.ok()).toBe(true);
+  expect(await sums.text()).toBe(`${digest}  ${download.suggestedFilename()}\n`);
+
+  await context.setOffline(true);
+  await page.goto(pathToFileURL(saved).href);
+  const bytes = Buffer.from('offline copy from Pages');
+  await page.setInputFiles('#stamp-file', { name: 'offline.txt', mimeType: 'text/plain', buffer: bytes });
+  await expect(page.locator('.item .digest')).toHaveText(groupHex(createHash('sha256').update(bytes).digest('hex')));
+  await expect(page.getByRole('link', { name: 'Download the offline app' })).toHaveCount(0);
+});
 
 test('Pages project path loads assets and hashes offline with a real worker', async ({ page, context }) => {
   const bytes = Buffer.from('Synthetic GitHub Pages base-path acceptance fixture.');

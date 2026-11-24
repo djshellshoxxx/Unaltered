@@ -1,4 +1,4 @@
-/** Offline manifest for a future evidence ZIP. No proof verification is implied. */
+/** Offline manifest for an evidence ZIP. No proof verification is implied. */
 export interface EvidenceEntry { size: number; sha256: string }
 export interface EvidenceManifest {
   format: 'UNALTERED-EVIDENCE-BUNDLE/1';
@@ -12,7 +12,7 @@ const digest = async (bytes: Uint8Array): Promise<EvidenceEntry> => {
   return { size: bytes.byteLength, sha256: Array.from(hash, b => b.toString(16).padStart(2, '0')).join('') };
 };
 export async function createEvidenceManifest(original: Uint8Array, receipt: Uint8Array): Promise<EvidenceManifest> {
-  if (!original.byteLength || !receipt.byteLength) throw new Error('Evidence file and receipt must not be empty');
+  if (!receipt.byteLength) throw new Error('The evidence receipt must not be empty');
   return {
     format: 'UNALTERED-EVIDENCE-BUNDLE/1',
     original: await digest(original),

@@ -82,6 +82,10 @@
   <div id="live" class="sr-only" aria-live="polite" role="status"></div>
 
   <footer>
+    {{#DOWNLOADS}}
+    <p class="intro-en"><a href="./unaltered-{{VERSION}}.html" download>Download the offline app</a> · <a href="./SHA256SUMS" download>Download SHA-256 checksums</a></p>
+    <p class="intro-es"><a href="./unaltered-{{VERSION}}.html" download>Descargar la aplicación sin conexión</a> · <a href="./SHA256SUMS" download>Descargar las sumas SHA-256</a></p>
+    {{/DOWNLOADS}}
     <p><small><a id="footer-cdl" href="https://djshellshoxxx.github.io/circuitdriftlabs/development/crypto-libertarian/" target="_blank" rel="noreferrer noopener">Circuit Drift Labs · Crypto Libertarian wing</a></small></p>
     <p><small><span id="footer-version-label">Version</span> <span id="version">{{VERSION}}</span> · <span id="footer-build-label">build</span> <span id="build-hash">{{BUILD}}</span></small></p>
     <p><small id="footer-note">Compare the build code with the published checksums. Beware of copies of this page on other sites.</small></p>

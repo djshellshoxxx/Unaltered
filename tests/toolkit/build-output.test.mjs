@@ -156,7 +156,9 @@ test('hosted Pages metadata has valid line boundaries and stays out of portable 
 });
 
 test('web and portable artifacts contain only declared runtime and distribution files', () => {
-  assert.deepEqual([...web.keys()].sort(), ['favicon.png', 'index.html', 'main.js', 'robots.txt', 'sitemap.xml', 'styles.css']);
+  assert.deepEqual([...web.keys()].sort(), ['SHA256SUMS', 'favicon.png', 'index.html', 'main.js', 'robots.txt', 'sitemap.xml', 'styles.css', `${prefix}.html`]);
+  assert.deepEqual(web.get(`${prefix}.html`), readFileSync(join(base.dist, `${prefix}.html`)));
+  assert.equal(text(web.get('SHA256SUMS')), `${sha256(web.get(`${prefix}.html`))}  ${prefix}.html\n`);
   const hosted = 'https://djshellshoxxx.github.io/Unaltered/';
   assert.ok(text(web.get('index.html')).includes('rel="canonical" href="' + hosted + '"'));
   assert.equal(text(web.get('robots.txt')), 'User-agent: *\nAllow: /Unaltered/\nSitemap: ' + hosted + 'sitemap.xml\n');

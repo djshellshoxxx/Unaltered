@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { archivalReceiptFixture } from '../helpers/archival-receipt';
@@ -77,4 +78,44 @@ test('QR archive file inputs stay inside a 320 CSS px column at WebKit intrinsic
   await page.locator('.archival-import input[type=file], .archival-recovery input[type=file]')
     .evaluateAll(inputs => { for (const input of inputs) (input as HTMLElement).style.setProperty('width', '347px'); });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+});
+
+test('a slower earlier certificate cannot replace the last receipt selected for print', async ({ page, context }) => {
+  await installNetwork(context);
+  await page.goto('/index.html#stamp');
+  const document = Buffer.from('latest stamped document');
+  await page.locator('#stamp-file').setInputFiles({ name: 'latest.txt', mimeType: 'text/plain', buffer: document });
+  await page.getByLabel(/I understand and want to continue/).check();
+  await page.getByRole('button', { name: 'Create receipt', exact: true }).click();
+  const stampedPreview = page.locator('#stamp .archival-controls button').filter({ hasText: 'Preview QR certificate' });
+  await expect(stampedPreview).toBeVisible();
+
+  await page.locator('#nav-verify').click();
+  await page.evaluate(() => {
+    const original = File.prototype.arrayBuffer;
+    File.prototype.arrayBuffer = async function () {
+      if (this.name === 'earlier.ots') {
+        await new Promise<void>(resolve => window.addEventListener('finish-test-receipt-read', () => resolve(), { once: true }));
+      }
+      return original.call(this);
+    };
+  });
+  await page.getByLabel('Choose a .ots receipt for a QR certificate').setInputFiles({
+    name: 'earlier.ots', mimeType: 'application/octet-stream', buffer: Buffer.from(archivalReceiptFixture(100)),
+  });
+  const earlier = page.locator('.archival-import').getByRole('button', { name: 'Preview QR certificate', includeHidden: true });
+  await earlier.click();
+  await expect(earlier).toBeDisabled();
+
+  await page.locator('#nav-stamp').click();
+  await stampedPreview.click();
+  const sheet = page.locator('.unaltered-archival-sheet');
+  const latestDigest = createHash('sha256').update(document).digest('hex');
+  await expect(sheet).toContainText(latestDigest);
+  await page.evaluate(() => window.dispatchEvent(new Event('finish-test-receipt-read')));
+  await expect(earlier).toBeEnabled();
+  await page.emulateMedia({ media: 'print' });
+  await expect(sheet).toHaveCount(1);
+  await expect(sheet).toBeVisible();
+  await expect(sheet).toContainText(latestDigest);
 });

@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import fc from 'fast-check';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { describe, expect, it } from 'vitest';
 import { concat, fromHex, toHex } from '../../src/core/bytes';
@@ -150,6 +152,40 @@ describe('verify (FR-7, SR-10)', () => {
     const f = routerFetch(...Object.entries(hdrs).map(([h, m]) => explorer(h, m)));
     return { sources: Object.keys(hdrs).map((h) => esploraSource(`https://${h}`, { fetchImpl: f })), minSources: 2 };
   };
+
+  it('keeps every generated batch receipt bound to its original through confirmation', async () => {
+    const files = fc.array(fc.uint8Array({ maxLength: 512 }), { minLength: 1, maxLength: 5 });
+    await fc.assert(fc.asyncProperty(files, fc.integer({ min: 1, max: 900_000 }), async (originals, height) => {
+      const digests = originals.map(file => new Uint8Array(createHash('sha256').update(file).digest()));
+      const upgrades = new Map<string, TsNode>();
+      const headers: Record<number, Uint8Array> = {};
+      const calendars = routerFetch(...CAL.map(url => calendar(hostOf(url), {
+        onDigest(commitment) {
+          const { tree, root } = chainFor(commitment, height);
+          upgrades.set(toHex(commitment), tree);
+          headers[height] = makeHeader(root).raw;
+          return { msg: commitment, attestations: [{ kind: 'pending', uri: url }], children: [] };
+        },
+        upgrades,
+      })));
+      const config = cfgWith(calendars);
+      const batch = await stampBatch(digests, config);
+      expect(batch.proofs).toHaveLength(originals.length);
+      expect(upgrades.size).toBe(1);
+      const explorers = sources({ 'mempool.space': headers, 'blockstream.info': headers });
+      for (const [index, proof] of batch.proofs.entries()) {
+        const original = digests[index]!;
+        expect((await verify(original, proof, explorers)).state).toBe('PENDING');
+        const upgraded = await upgrade(proof, config);
+        expect(upgraded.changed).toBe(true);
+        const result = await verify(original, upgraded.ots, explorers);
+        expect(result.state).toBe('VERIFIED');
+        expect(result.bitcoin?.height).toBe(height);
+        const different = new Uint8Array(createHash('sha256').update(originals[index]!).update('!').digest());
+        expect((await verify(different, upgraded.ots, explorers)).state).toBe('NO_MATCH_FILE');
+      }
+    }), { seed: 20261123, numRuns: 40 });
+  });
 
   it('VERIFIED when file, commitment and two explorers agree', async () => {
     const { ots, root } = build();
