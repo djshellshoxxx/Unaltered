@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Unaltered — Bitcoin-backed file timestamping and verification</title>
-  <meta name="description" content="Create portable OpenTimestamps receipts, verify Bitcoin-backed timestamps, and recover printable QR archives. Files are processed locally.">
+  <title>Free File Timestamp &amp; Bitcoin Proof Verification | Unaltered</title>
+  <meta name="description" content="Timestamp files using OpenTimestamps and verify Bitcoin-anchored proof receipts. SHA-256 hashing runs locally without uploading your files.">
   <meta name="robots" content="index,follow">
   <meta name="theme-color" content="#0e1116">
   <meta property="og:type" content="website">
@@ -29,9 +29,11 @@
   <a class="skip" id="skip" href="#app">Skip to content</a>
   <noscript><p class="error">Unaltered needs JavaScript to fingerprint files on your device. Nothing is uploaded.</p></noscript>
 
-  <header>
-    <p class="brand">Unaltered</p>
-    <nav aria-label="Main">
+  <header itemscope itemtype="https://schema.org/SoftwareApplication">
+    <meta itemprop="applicationCategory" content="UtilitiesApplication">
+    <meta itemprop="operatingSystem" content="Any">
+    <a class="brand" itemprop="name" href="#">Unaltered</a>
+    <nav id="main-nav" aria-label="Main">
       <a id="nav-stamp" href="#stamp">Stamp</a>
       <a id="nav-verify" href="#verify">Verify</a>
       <a id="nav-about" href="#about">About</a>
@@ -39,7 +41,7 @@
     </nav>
   </header>
 
-  <section class="site-intro" aria-label="Unaltered introduction">
+  <section id="site-intro" class="site-intro" aria-label="Unaltered introduction">
     <div class="intro-en">
       <p class="eyebrow">EXPERIMENTAL BETA · CLIENT-SIDE · OPEN STANDARD</p>
       <h1>Proof of existence. Without surrendering your files.</h1>
@@ -63,7 +65,7 @@
     <section id="settings" aria-labelledby="settings-h" hidden><h2 id="settings-h" tabindex="-1">Settings</h2></section>
   </main>
 
-  <section class="site-guide" aria-label="How Unaltered works">
+  <section id="site-guide" class="site-guide" aria-label="How Unaltered works">
     <div class="intro-en">
       <h2>How it works</h2>
       <ol class="site-steps"><li><strong>Choose a file</strong><span>Its bytes remain on your device.</span></li><li><strong>Fingerprint locally</strong><span>Your browser computes SHA-256.</span></li><li><strong>Request a timestamp</strong><span>Calendars receive blinded commitments, not your file.</span></li><li><strong>Keep the receipt</strong><span>Save the standard .ots file; pending receipts need upgrading.</span></li><li><strong>Verify independently</strong><span>Use the original file and upgraded receipt to check Bitcoin evidence.</span></li></ol>
@@ -83,8 +85,8 @@
 
   <footer>
     {{#DOWNLOADS}}
-    <p class="intro-en"><a href="./unaltered-{{VERSION}}.html" download>Download the offline app</a> · <a href="./SHA256SUMS" download>Download SHA-256 checksums</a></p>
-    <p class="intro-es"><a href="./unaltered-{{VERSION}}.html" download>Descargar la aplicación sin conexión</a> · <a href="./SHA256SUMS" download>Descargar las sumas SHA-256</a></p>
+    <p class="intro-en"><a href="./unaltered-{{VERSION}}.html" download="unaltered-{{VERSION}}.html">Download the offline app</a> · <a href="./SHA256SUMS" download>Download SHA-256 checksums</a></p>
+    <p class="intro-es"><a href="./unaltered-{{VERSION}}.html" download="unaltered-{{VERSION}}.html">Descargar la aplicación sin conexión</a> · <a href="./SHA256SUMS" download>Descargar las sumas SHA-256</a></p>
     {{/DOWNLOADS}}
     <p><small><a id="footer-cdl" href="https://djshellshoxxx.github.io/circuitdriftlabs/development/crypto-libertarian/" target="_blank" rel="noreferrer noopener">Circuit Drift Labs · Crypto Libertarian wing</a></small></p>
     <p><small><span id="footer-version-label">Version</span> <span id="version">{{VERSION}}</span> · <span id="footer-build-label">build</span> <span id="build-hash">{{BUILD}}</span></small></p>

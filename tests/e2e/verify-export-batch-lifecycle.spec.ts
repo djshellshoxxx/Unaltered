@@ -145,7 +145,7 @@ test.describe('evidence export lifecycle in the browser', () => {
     await expect(page.getByRole('button', { name: TABLES.es['evidence.preparing'], exact: true })).toBeDisabled();
     await expect(page.getByRole('button', { name: 'Comprobar', exact: true })).toBeDisabled();
     await expect(page.getByRole('button', { name: 'Cancelar', exact: true })).toBeEnabled();
-    await expect(page.locator('#verify .picked')).toHaveText([
+    await expect(page.locator('#verify .inputs .picked')).toHaveText([
       `kept.txt · ${CONTENT.length} B`, `kept.txt.ots · ${PENDING.length} B`,
     ]);
 

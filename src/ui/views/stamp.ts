@@ -508,13 +508,13 @@ export function mountStamp(root: HTMLElement): StampView {
       el('h2', { id: 'stamp-h', tabindex: -1 }, t('stamp.title')),
       el('p', { class: 'lead' }, t('copy.stays')),
       el('p', {}, t('copy.notTrue')),
-      essentialGuides(),
       dropZone({ id: 'stamp-file', label: t('stamp.drop'), hint: t('stamp.dropHint', { max: MAX_STAMP_FILES }), help: t('help.stampFiles'), multiple: true, onFiles: add }),
       selectionNotice,
       list,
       actions,
       result,
       el('p', { class: 'muted' }, t('copy.visibleToServers')),
+      essentialGuides(),
     );
   }
 

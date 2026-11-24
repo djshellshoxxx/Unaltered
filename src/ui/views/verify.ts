@@ -509,7 +509,7 @@ export function renderReport(r: VerifyReport, hex: string, fromLink: boolean, ow
     detailRows.push(
       el('dt', {}, t('verify.d.block')),
       el('dd', {}, String(r.bitcoin.height)),
-      el('dt', {}, 'Bitcoin block hash'),
+      el('dt', {}, t('verify.d.blockHash')),
       el('dd', {}, el('code', { class: 'digest' }, r.bitcoin.blockHash)),
       el('dt', {}, t('verify.d.time')),
       el('dd', {}, t(fromLink ? 'verify.d.noLater.link' : 'verify.d.noLater', { time: r.bitcoin.blockTimeUtc })),
@@ -542,7 +542,7 @@ export function renderReport(r: VerifyReport, hex: string, fromLink: boolean, ow
     );
   }
   if (r.state === 'PENDING') card.appendChild(el('p', { class: 'notice pending' }, t('copy.pendingNotProof')));
-  card.appendChild(downloadLink('Download verification report (JSON)', 'unaltered-verification-report.json',
+  card.appendChild(downloadLink(t('verify.downloadReport'), 'unaltered-verification-report.json',
     new Blob([createVerificationReportJson(hex, r, fromLink ? 'share-link' : 'file')], { type: 'application/json' }),
     'application/json', undefined, owner ? { owner, key: 'verification-report' } : undefined));
   return card;

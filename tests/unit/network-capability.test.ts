@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { networkCapabilityText } from '../../src/core/net/capability';
+import { networkCapabilityText } from '../../src/ui/strings';
 
 describe('network capability copy', () => {
   it('never claims the service is reachable from navigator.onLine', () => {

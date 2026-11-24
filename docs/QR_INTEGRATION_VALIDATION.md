@@ -170,5 +170,5 @@ UNALTERED_QR_ROBUSTNESS=1 npx playwright test -c playwright.qr.config.ts --retri
 - Print output is bounded to 64 symbols; larger receipts remain digital and are not truncated.
 - Image recovery accepts PNG/JPEG scans, exported PNGs and raw binary frames, not PDF files directly.
 - Compression and a separate link-only certificate mode are not included in this integration.
-- The technical recovery appendix is English; the application controls have English and Spanish translations.
+- The application, certificate and technical recovery appendix support English and Spanish.
 - Merge and public Pages deployment must be reported separately.

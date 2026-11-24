@@ -114,12 +114,13 @@ export function announce(message: string, owner?: HTMLElement): void {
 
 export interface DropZoneOptions {
   id: string;
-  label: string;
-  hint: string;
+  label: string | Text;
+  hint?: string;
   help?: string;
   accept?: string;
   multiple?: boolean;
   onFiles: (files: File[]) => void;
+  onClear?: () => void;
 }
 
 /** Keyboard-accessible file picker with drag and drop. The native input stays focusable and labelled. */
@@ -128,7 +129,7 @@ export function dropZone(o: DropZoneOptions): HTMLElement {
   const helpId = o.help ? `${o.id}-help` : undefined;
   const describedBy = [hintId, helpId].filter(Boolean).join(' ') || undefined;
   const input = el('input', { type: 'file', id: o.id, class: 'file-input', multiple: o.multiple === true, accept: o.accept, 'aria-describedby': describedBy });
-  const zone = el('label', { class: 'drop', for: o.id, title: o.help }, el('span', { class: 'drop-title' }, o.label), el('span', { class: 'drop-hint', id: hintId }, o.hint));
+  const zone = el('label', { class: 'drop', for: o.id, title: o.help }, el('span', { class: 'drop-title' }, o.label), o.hint ? el('span', { class: 'drop-hint', id: hintId }, o.hint) : null);
   const wrap = el('div', { class: 'drop-wrap' }, input, zone,
     o.help ? el('p', { id: helpId, class: 'muted help-text' }, o.help) : null);
   input.addEventListener('change', () => {
@@ -136,6 +137,7 @@ export function dropZone(o: DropZoneOptions): HTMLElement {
     // Reset before consumers can replace the input or throw, so the same file can be chosen again.
     input.value = '';
     if (files.length > 0) o.onFiles(o.multiple ? files : files.slice(0, 1));
+    else o.onClear?.();
   });
   wrap.addEventListener('dragover', (e) => {
     e.preventDefault();

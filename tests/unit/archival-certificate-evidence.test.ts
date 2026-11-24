@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { encodeArchivalQr } from '../../src/core/archive/qr-encode';
 import { createArchivalPrintSheet, type CertificateContext } from '../../src/core/archive/qr-print';
 import { archivalReceiptFixture } from '../helpers/archival-receipt';
+import { setLang } from '../../src/ui/strings';
 import { doc, FElement, installFakeDom } from './ui-fake-dom';
 
 const sha256Hex = async (bytes: Uint8Array): Promise<string> =>
@@ -15,7 +16,7 @@ beforeEach(() => {
     return tag === 'canvas' ? Object.assign(node, { getContext: () => ({ fillStyle: '', fillRect() {} }) }) : node;
   });
 });
-afterEach(() => { vi.restoreAllMocks(); restoreDom(); });
+afterEach(() => { setLang('en'); vi.restoreAllMocks(); restoreDom(); });
 
 describe('verified certificate evidence', () => {
   // The Verify flow requires a quorum of at least two independent explorers. One host counted twice is not a quorum,
@@ -52,5 +53,11 @@ describe('verified certificate evidence', () => {
     const sheet = createArchivalPrintSheet(symbols, await sha256Hex(receipt), receipt.length, 'a4', undefined, context);
     expect(sheet.textContent).toContain('Verified against matching original file and independent Bitcoin header quorum');
     expect(sheet.textContent).toContain('Independent header sources agreeing: mempool.space, blockstream.info');
+    expect(sheet.textContent).not.toContain('not independently verified');
+    setLang('es');
+    sheet.relabel();
+    expect(sheet.textContent).toContain('Se verificó la coincidencia del archivo original');
+    expect(sheet.textContent).toContain('Fuentes independientes que coinciden en la cabecera: mempool.space, blockstream.info');
+    expect(sheet.textContent).toContain('44 / 32 / SHA-256 del recibo original');
   });
 });

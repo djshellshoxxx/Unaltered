@@ -44,6 +44,12 @@ export const en = {
   'help.batchFiles': 'Choose up to 50 original files. The app hashes them locally and pairs each one with a receipt using the exact filename.',
   'help.batchReceipts': 'Choose the matching .ots receipts. Each receipt filename must equal the original filename plus .ots.',
   'lang.code': 'en',
+  'home.title': 'Free File Timestamp & Bitcoin Proof Verification | Unaltered',
+  'landmark.navigation': 'Main',
+  'landmark.intro': 'Unaltered introduction',
+  'landmark.guide': 'How Unaltered works',
+  'network.online': 'Browser reports online. Stamping, receipt upgrades and Bitcoin verification require reachable external services; this is not a server health check. File hashing stays local.',
+  'network.offline': 'Browser reports offline. Hashing and local file inspection remain available; calendar stamping, receipt upgrades and live Bitcoin verification may be unavailable. Existing receipts are not automatically invalid.',
   'common.copy': 'Copy',
   'common.copied': 'Copied',
   'common.copyFailed': 'Copy failed',
@@ -141,6 +147,8 @@ export const en = {
   'verify.d.fingerprint': 'Fingerprint',
   'verify.d.fromLink': '(from link)',
   'verify.d.block': 'Bitcoin block',
+  'verify.d.blockHash': 'Bitcoin block hash',
+  'verify.downloadReport': 'Download verification report (JSON)',
   'verify.d.time': 'Block time',
   'verify.d.noLater': 'This file existed no later than about {time} (UTC)',
   'verify.d.noLater.link': 'This fingerprint existed no later than about {time} (UTC)',
@@ -274,6 +282,12 @@ const es: Table = {
   'guide.backup.receipt': 'Conserva el recibo .ots descargado y cualquier copia actualizada posteriormente.',
   'guide.backup.copies': 'Guarda copias en dos ubicaciones independientes. Un recibo por sí solo no puede reconstruir el archivo original.',
   'lang.code': 'es',
+  'home.title': 'Sellado de tiempo gratuito y verificación de pruebas de Bitcoin | Unaltered',
+  'landmark.navigation': 'Principal',
+  'landmark.intro': 'Introducción a Unaltered',
+  'landmark.guide': 'Cómo funciona Unaltered',
+  'network.online': 'El navegador indica que hay conexión. Para sellar, actualizar recibos y verificar con Bitcoin, los servicios externos deben estar disponibles. Este aviso no comprueba si responden. La huella se calcula en tu dispositivo.',
+  'network.offline': 'El navegador indica que no hay conexión. Puedes calcular huellas e inspeccionar archivos en tu dispositivo. Es posible que no puedas sellar, actualizar recibos ni verificar con Bitcoin en línea. Perder la conexión no invalida los recibos existentes.',
   'help.stampFiles': 'Elige los archivos que quieres sellar. Si quitas metadatos, conserva la copia limpia descargada: el recibo corresponde a esa copia exacta.',
   'help.verifyFile': 'Elige el archivo original exacto que sellaste. Si quitaste metadatos, selecciona la copia limpia descargada. Unaltered calcula su huella localmente.',
   'help.verifyReceipt': 'Elige el recibo .ots descargado al sellar ese archivo, o su copia actualizada. Contiene la prueba, no el archivo original.',
@@ -377,6 +391,8 @@ const es: Table = {
   'verify.d.fingerprint': 'Huella digital',
   'verify.d.fromLink': '(del enlace)',
   'verify.d.block': 'Bloque de Bitcoin',
+  'verify.d.blockHash': 'Hash del bloque de Bitcoin',
+  'verify.downloadReport': 'Descargar informe de verificación (JSON)',
   'verify.d.time': 'Hora del bloque',
   'verify.d.noLater': 'Este archivo existía a más tardar hacia {time} (UTC)',
   // TODO(human review): Spanish copy not final (DRAFT).
@@ -500,4 +516,9 @@ export function t(key: StringKey, vars?: Record<string, string | number>): strin
   if (!vars) return s;
   // One pass: substituted text (a host name, a core error message) is never itself treated as a template.
   return s.replace(/\{([A-Za-z]+)\}/g, (m, k: string) => (Object.prototype.hasOwnProperty.call(vars, k) ? String(vars[k]) : m));
+}
+
+/** Connectivity is a browser hint. Reachability and Bitcoin confirmation require separate checks. */
+export function networkCapabilityText(online: boolean): string {
+  return t(online ? 'network.online' : 'network.offline');
 }

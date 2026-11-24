@@ -147,6 +147,9 @@ test('hosted Pages metadata has valid line boundaries and stays out of portable 
   assert.equal(text(web.get('robots.txt')), `User-agent: *\nAllow: /Unaltered/\nSitemap: ${url}sitemap.xml\n`);
   assert.equal(text(web.get('sitemap.xml')), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${url}</loc></url></urlset>\n`);
   const hosted = text(web.get('index.html')).split('</head>')[0];
+  assert.ok(hosted.includes('<title>Free File Timestamp &amp; Bitcoin Proof Verification | Unaltered</title>'));
+  assert.ok(hosted.includes('SHA-256 hashing runs locally without uploading your files.'));
+  assert.match(text(web.get('index.html')), /<header itemscope itemtype="https:\/\/schema\.org\/SoftwareApplication">[\s\S]*?itemprop="name"[^>]*>Unaltered<\/a>/);
   assert.ok(hosted.includes(`<link rel="canonical" href="${url}">`));
   assert.ok(hosted.includes(`<meta property="og:url" content="${url}">`));
   assert.ok(!hosted.includes('\\n'));

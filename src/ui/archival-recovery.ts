@@ -3,7 +3,7 @@ import { scanQrImage } from '../core/archive/qr-scan';
 import { MAX_QR_IMAGE_BYTES } from '../core/archive/qr-image';
 import { parseProof } from '../core/ots/codec';
 import { isAbort } from '../core/errors';
-import { el, setChildren } from './dom';
+import { dropZone, el, setChildren } from './dom';
 import { downloadLink, revokeOwner } from './download';
 import { archiveText as t } from './archive-strings';
 
@@ -13,7 +13,7 @@ export function archivalRecoveryPanel(): { root: HTMLElement; relabel(): void; d
   let generation = 0;
   let controller: AbortController | null = null;
   const root = el('section', { class: 'archival-recovery' });
-  const input = el('input', { type: 'file', multiple: true, accept: '.png,.jpg,.jpeg,.bin', 'aria-label': t('archive.scanInput') });
+  const label = document.createTextNode(t('archive.scanInput'));
   const status = el('p', { role: 'status' }, t('archive.scanHint'));
   const result = el('div');
   const heading = el('h3', {}, t('archive.recoveryTitle'));
@@ -29,10 +29,14 @@ export function archivalRecoveryPanel(): { root: HTMLElement; relabel(): void; d
   };
   const run = el('button', { type: 'button', class: 'button', disabled: true, onclick: () => { void recover(); } }, t('archive.recover'));
   const stop = el('button', { type: 'button', class: 'button', disabled: true, onclick: cancel }, t('archive.cancelScan'));
-  input.addEventListener('change', () => {
-    cancel(); files = Array.from(input.files ?? []); input.value = '';
+  function select(selected: File[]): void {
+    cancel(); files = selected;
     run.disabled = !files.length;
     show('archive.selected', { count: files.length });
+  }
+  const input = dropZone({
+    id: 'archive-scans', multiple: true, accept: '.png,.jpg,.jpeg,.bin', label,
+    onFiles: select, onClear: () => select([]),
   });
   async function recover(): Promise<void> {
     if (controller) return;
@@ -78,7 +82,7 @@ export function archivalRecoveryPanel(): { root: HTMLElement; relabel(): void; d
   const relabel = (): void => {
     heading.textContent = t('archive.recoveryTitle');
     intro.textContent = t('archive.recoveryIntro');
-    input.setAttribute('aria-label', t('archive.scanInput'));
+    label.data = t('archive.scanInput');
     run.textContent = t('archive.recover');
     stop.textContent = t('archive.cancelScan');
     status.textContent = t(...shown);

@@ -41,5 +41,15 @@ test('optional document label survives language switching without opting in auto
   await expect(page.getByRole('checkbox', { name: 'Incluir un título o nombre de archivo opcional en el certificado' })).toBeChecked();
   await expect(page.getByRole('textbox', { name: 'Título del documento o nombre de archivo' })).toHaveValue('My chosen document');
   await page.getByRole('button', { name: 'Vista previa del certificado QR', exact: true }).click();
-  await expect(page.locator('.unaltered-archival-sheet')).toContainText('My chosen document');
+  const sheet = page.locator('.unaltered-archival-sheet');
+  await expect(sheet).toContainText('Etiqueta del documento (indicada por el usuario, sin autenticar): My chosen document');
+  await expect(sheet).toContainText('Especificación para la recuperación sin conexión');
+  const firstCanvas = await sheet.locator('canvas').first().elementHandle();
+  expect(firstCanvas).toBeTruthy();
+  const pixels = await firstCanvas!.evaluate((canvas: HTMLCanvasElement) => canvas.toDataURL());
+  await page.locator('#nav-settings').click();
+  await page.getByRole('radio', { name: 'English', exact: true }).check();
+  await expect(sheet).toContainText('Offline recovery specification');
+  await expect(sheet).toContainText('Document label (user supplied, not authenticated): My chosen document');
+  expect(await firstCanvas!.evaluate((canvas: HTMLCanvasElement) => canvas.isConnected && canvas.toDataURL())).toBe(pixels);
 });

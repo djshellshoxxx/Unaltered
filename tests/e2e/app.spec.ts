@@ -54,7 +54,24 @@ test.describe('browser connectivity notice', () => {
     await context.setOffline(true);
     await expect(page.locator('#network-capability')).toContainText('Browser reports offline');
     await expect(page.locator('#network-capability')).toContainText('Hashing');
+    await page.getByRole('link', { name: 'Settings', exact: true }).click();
+    await page.getByRole('radio', { name: 'Español', exact: true }).check();
+    await expect(page.locator('#network-capability')).toContainText('no hay conexión');
+    await expect(page.getByRole('navigation', { name: 'Principal' })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Cómo funciona Unaltered' })).toHaveCount(1);
+    await expect(page).toHaveTitle('Ajustes · Unaltered');
     await context.setOffline(false);
+    await expect(page.locator('#network-capability')).toContainText('indica que hay conexión');
+  });
+
+  test('keeps the published homepage title after startup and back navigation', async ({ page }) => {
+    await page.goto('/Unaltered/');
+    const homeTitle = 'Free File Timestamp & Bitcoin Proof Verification | Unaltered';
+    await expect(page).toHaveTitle(homeTitle);
+    await page.locator('#nav-verify').click();
+    await expect(page).toHaveTitle('Verify · Unaltered');
+    await page.goBack();
+    await expect(page).toHaveTitle(homeTitle);
   });
 });
 
@@ -588,6 +605,8 @@ test.describe('accessibility (WCAG 2.2 AA)', () => {
     await page.goto('/index.html');
     await page.keyboard.press('Tab');
     await expect(page.locator('#skip')).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(page.locator('header .brand')).toBeFocused();
     await page.keyboard.press('Tab');
     await expect(page.locator('#nav-stamp')).toBeFocused();
     await page.locator('#stamp-file').focus();

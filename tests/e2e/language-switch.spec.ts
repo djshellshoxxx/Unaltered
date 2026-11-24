@@ -77,7 +77,7 @@ test('a verification result and its inputs survive a language switch and are sho
   await switchToSpanish(page);
   await page.goto(`/index.html#verify`);
   await expect(page.locator('.result-PENDING h3')).toHaveText('Aún sin confirmar');
-  await expect(page.locator('#verify .picked')).toContainText('kept.ots');
+  await expect(page.locator('#verify .inputs .picked')).toContainText('kept.ots');
   await expect(page.locator('#verify .notice code.digest')).toBeVisible(); // fingerprint from the link is kept
   await expect(page.getByRole('button', { name: 'Comprobar', exact: true })).toBeEnabled();
   expect((await counters(page)).reads).toEqual(['kept.ots']); // not re-run
