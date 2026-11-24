@@ -63,14 +63,14 @@ test('certificate input, options and prepared QR pixels survive language changes
   await page.getByLabel('Choose a .ots receipt for a QR certificate').setInputFiles({
     name: 'kept.ots', mimeType: 'application/octet-stream', buffer: original,
   });
-  await expect(page.locator('.archival-import .picked')).toHaveText('kept.ots');
+  await expect(page.locator('.archival-import .picked')).toHaveText(`kept.ots · ${original.length} B`);
   await page.locator('.archival-import summary').click();
   await page.locator('.archival-import input[value="H"]').check();
   await page.locator('.archival-import input[value="letter"]').check();
 
   await switchLanguage(page, 'Español');
   await expect(page.getByLabel('Elegir un recibo .ots para el certificado QR')).toBeVisible();
-  await expect(page.locator('.archival-import .picked')).toHaveText('kept.ots');
+  await expect(page.locator('.archival-import .picked')).toHaveText(`kept.ots · ${original.length} B`);
   await expect(page.locator('.archival-import input[value="H"]')).toBeChecked();
   await expect(page.locator('.archival-import input[value="letter"]')).toBeChecked();
   await expect(page.locator('.archival-import details')).toHaveAttribute('open', '');
