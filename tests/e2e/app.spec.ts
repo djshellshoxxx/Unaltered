@@ -54,7 +54,24 @@ test.describe('browser connectivity notice', () => {
     await context.setOffline(true);
     await expect(page.locator('#network-capability')).toContainText('Browser reports offline');
     await expect(page.locator('#network-capability')).toContainText('Hashing');
+    await page.getByRole('link', { name: 'Settings', exact: true }).click();
+    await page.getByRole('radio', { name: 'Español', exact: true }).check();
+    await expect(page.locator('#network-capability')).toContainText('no hay conexión');
+    await expect(page.getByRole('navigation', { name: 'Principal' })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Cómo funciona Unaltered' })).toHaveCount(1);
+    await expect(page).toHaveTitle('Ajustes · Unaltered');
     await context.setOffline(false);
+    await expect(page.locator('#network-capability')).toContainText('indica que hay conexión');
+  });
+
+  test('keeps the published homepage title after startup and back navigation', async ({ page }) => {
+    await page.goto('/Unaltered/');
+    const homeTitle = 'Free File Timestamp & Bitcoin Proof Verification | Unaltered';
+    await expect(page).toHaveTitle(homeTitle);
+    await page.locator('#nav-verify').click();
+    await expect(page).toHaveTitle('Verify · Unaltered');
+    await page.goBack();
+    await expect(page).toHaveTitle(homeTitle);
   });
 });
 
@@ -66,6 +83,26 @@ test.describe('batch verification', () => {
     await page.getByRole('button', { name: 'Verify batch' }).click();
     await expect(page.locator('.batch-results')).toContainText('evidence.txt');
     await expect(page.locator('.batch-results')).toContainText('INVALID_PROOF');
+  });
+  test('pairs an original with the receipt name saved by Stamp', async ({ page, context }) => {
+    await installNetwork(context);
+    const original = { name: '.note.txt', mimeType: 'text/plain', buffer: NOTE };
+    await page.goto('/index.html#stamp');
+    await page.setInputFiles('#stamp-file', original);
+    await page.getByLabel(/I understand and want to continue/).check();
+    await page.getByRole('button', { name: 'Create receipt' }).click();
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('link', { name: /Download receipt/ }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe('_note.txt.ots');
+    await page.locator('#nav-verify').click();
+    await page.setInputFiles('#batch-files', original);
+    await page.setInputFiles('#batch-receipts', {
+      name: download.suggestedFilename(), mimeType: 'application/octet-stream', buffer: readFileSync((await download.path())!),
+    });
+    await page.getByRole('button', { name: 'Verify batch' }).click();
+    await expect(page.locator('.batch-results li')).toContainText('.note.txt: PENDING');
   });
   test('rejects missing matching receipts before verification', async ({ page }) => {
     await page.goto('/index.html#verify');
@@ -568,6 +605,8 @@ test.describe('accessibility (WCAG 2.2 AA)', () => {
     await page.goto('/index.html');
     await page.keyboard.press('Tab');
     await expect(page.locator('#skip')).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(page.locator('header .brand')).toBeFocused();
     await page.keyboard.press('Tab');
     await expect(page.locator('#nav-stamp')).toBeFocused();
     await page.locator('#stamp-file').focus();

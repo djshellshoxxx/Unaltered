@@ -1,0 +1,14 @@
+test_committed_file_is_exactly_what_the_spec_generator_builds (test_golden_v2.GoldenV2Tests.test_committed_file_is_exactly_what_the_spec_generator_builds) ... ok
+test_reference_recovers_every_accept_vector_in_any_order (test_golden_v2.GoldenV2Tests.test_reference_recovers_every_accept_vector_in_any_order) ... ok
+test_reference_rejects_every_reject_vector (test_golden_v2.GoldenV2Tests.test_reference_rejects_every_reject_vector) ... ok
+test_two_independent_python_constructions_agree (test_golden_v2.GoldenV2Tests.test_two_independent_python_constructions_agree) ... ok
+test_vector_set_covers_boundaries (test_golden_v2.GoldenV2Tests.test_vector_set_covers_boundaries) ... ok
+test_corruption_and_missing_frames (test_recover_reference.RecoveryTests.test_corruption_and_missing_frames) ... ok
+test_cross_language_golden_vector (test_recover_reference.RecoveryTests.test_cross_language_golden_vector) ... ok
+test_invalid_version_and_duplicate (test_recover_reference.RecoveryTests.test_invalid_version_and_duplicate) ... ok
+test_roundtrip_and_reordering (test_recover_reference.RecoveryTests.test_roundtrip_and_reordering) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.004s
+
+OK

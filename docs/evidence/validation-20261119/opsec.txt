@@ -1,0 +1,17 @@
+== 1. git identity (effective for this repo)
+  [ ok ] author email is a no-reply address
+       author name = Unaltered contributors  (confirm this is your project handle, not your real name)
+  [ ok ] committer email is a no-reply address
+       committer name = Unaltered contributors  (confirm this is your project handle, not your real name)
+== 2. history emails (commit authors/committers, tag taggers, commit and tag messages)
+  [ ok ] all author/committer/tagger emails and emails in messages are no-reply
+== 3. emails in tracked text files (HEAD, index and working tree)
+  [ ok ] no personal emails found
+== 4. personal paths in tracked text files (HEAD, index and working tree)
+  [ ok ] no home-directory paths found
+== 5. package.json author
+  [ ok ] no author fields
+== 6. embedded metadata in tracked images, documents, audio and video (HEAD, index and working tree)
+  [warn] not inspected by any check (binary, not a known media type; e.g. archives): docs/evidence/consolidation-20261030-logs.zip, docs/evidence/verification-swarm-20261105.zip
+
+opsec-check: PASS

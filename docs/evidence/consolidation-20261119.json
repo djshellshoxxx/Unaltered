@@ -1,0 +1,296 @@
+{
+  "recordedAt": "2026-11-19T18:45:44.752894-08:00",
+  "repository": "djshellshoxxx/Unaltered",
+  "pullRequest": 96,
+  "productVersion": "0.3.1",
+  "environment": {
+    "os": "Linux",
+    "node": "v24.22.3",
+    "npm": "11.19.1",
+    "python": "3.12.14",
+    "nodeHeapMiB": 384
+  },
+  "centralChecks": {
+    "sourceCommit": "49ea5ad67eb9fd1950cf4dfa5514befaf06c6d4d",
+    "sourceTree": "9528b242b8909c986b0f049d1ecffe25a8fa65af",
+    "checks": [
+      {
+        "name": "install",
+        "command": [
+          "npm",
+          "ci",
+          "--ignore-scripts",
+          "--no-audit",
+          "--no-fund"
+        ],
+        "exitCode": 0,
+        "seconds": 2.694
+      },
+      {
+        "name": "typecheck",
+        "command": [
+          "node",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "exitCode": 0,
+        "seconds": 10.77
+      },
+      {
+        "name": "lint",
+        "command": [
+          "node",
+          "node_modules/eslint/bin/eslint.js",
+          "."
+        ],
+        "exitCode": 0,
+        "seconds": 11.12
+      },
+      {
+        "name": "vitest",
+        "command": [
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers=1"
+        ],
+        "exitCode": 0,
+        "seconds": 72.443
+      },
+      {
+        "name": "node-suite",
+        "command": [
+          "node",
+          "--test",
+          "--test-concurrency=1",
+          "tests/fuzz/executor.test.mjs",
+          "tests/fuzz/campaign.test.mjs",
+          "tests/fuzz/oracles.test.mjs",
+          "tests/toolkit/benchmark-render.test.mjs",
+          "tests/toolkit/build-output.test.mjs",
+          "tests/r1/r1-calendars.test.mjs",
+          "tests/r1/r1-acceptance.test.mjs",
+          "tests/ci/workflows.test.mjs",
+          "tests/toolkit/opsec-check.test.mjs",
+          "tests/toolkit/network-check.test.mjs"
+        ],
+        "exitCode": 0,
+        "seconds": 17.297
+      }
+    ]
+  },
+  "testCounts": {
+    "vitest": {
+      "filesPassed": 94,
+      "filesSkipped": 1,
+      "passed": 771,
+      "skipped": 2,
+      "failed": 0,
+      "total": 773,
+      "skipReasons": [
+        "UNALTERED_BIG opt-in virtual 2 GiB test",
+        "UNALTERED_REAL_FILES opt-in real-file 2 GiB test"
+      ]
+    },
+    "node": {
+      "passed": 140,
+      "skipped": 3,
+      "failed": 0,
+      "total": 143,
+      "skipReasons": [
+        "PowerShell unavailable; Windows checksum adversarial-list test runs in Windows CI",
+        "Root-only dubious-ownership case unavailable",
+        "Root and unshare required for isolated dotted-hostname identity case"
+      ]
+    },
+    "pythonToolkit": {
+      "sourceCommit": "3059236fdea47badb0c1722f22bac95d433bb9d1",
+      "sourceFilesUnchangedSince": true,
+      "passed": 68,
+      "skipped": 2,
+      "failed": 0,
+      "total": 70,
+      "skipReasons": [
+        "Two real Windows junction tests require native Windows; now required by the existing Windows CI job"
+      ]
+    },
+    "pythonArchival": {
+      "sourceCommit": "4a14f319e621114f2d45016bd56ecba71599eaf7",
+      "sourceFilesUnchangedSince": true,
+      "passed": 9,
+      "skipped": 0,
+      "failed": 0,
+      "total": 9
+    }
+  },
+  "reproducibleBuild": {
+    "sourceCommit": "05e26d0fe060e41a9d53810f2e5739e62b375a13",
+    "qualifiedSourceCheckpoint": "49ea5ad67eb9fd1950cf4dfa5514befaf06c6d4d",
+    "builds": [
+      {
+        "index": 1,
+        "exitCode": 0,
+        "seconds": 0.827,
+        "files": {
+          "RELEASE-NOTES.md": "cba5dea4bad8b731b447213663172fbb3ca1705c466aef646f4aa9b0810a53bc",
+          "SHA256SUMS": "bd854c81fa6537d31a9f116184af59396a9d8796049061722bc9a402029f5be9",
+          "unaltered-0.3.1-linux.tar.gz": "4599d3586d484096a308da2e6745572594a687f66ff03cbbe234d72b3cb06584",
+          "unaltered-0.3.1-macos.zip": "66d295bbf1ceb9bff68fdd3ff302e9a6cf9466b81dd985bdacbe4fbbf631809e",
+          "unaltered-0.3.1.html": "9a5abb0aac431af69a1a89dd59295f9ea07b516eee3ac21cfa4a98dc79b668b6",
+          "unaltered-0.3.1.zip": "d774c266fa46143e6f67e49039f9be840ee5d39da62c834ec235e32257f5eaad",
+          "unaltered-cli-0.3.1.mjs": "203537b2f72732f590f7d1c77a2ddab9762d450539c56834b6cf6f4cabff1f37",
+          "web/favicon.png": "b0c89ece3a0242003d9de0e62a493a04ad3f77ba52c58eb542428e792a32a9f6",
+          "web/index.html": "16146ea605100f688cf6470a161e2fc4130b94a7c9c2683f0f3b197810eba509",
+          "web/main.js": "659033206c9226691e326775e8edcbb0dfb5f2eb01e30eb6aaca863b8c03ff63",
+          "web/robots.txt": "aa9bda735a742fcf651ab9f9c315fc5d6c426c313786a2bfe5011f936a99ab64",
+          "web/sitemap.xml": "03ef4e53f9e31063004cdbe47e161b7e21fdcd7d9cbb2ee5a523f20efd288db9",
+          "web/styles.css": "ebf61c06c3e696d1088d96420e0e2f0aa503343ce2a3d4f4d4d3e2da2407d8c3"
+        }
+      },
+      {
+        "index": 2,
+        "exitCode": 0,
+        "seconds": 0.84,
+        "files": {
+          "RELEASE-NOTES.md": "cba5dea4bad8b731b447213663172fbb3ca1705c466aef646f4aa9b0810a53bc",
+          "SHA256SUMS": "bd854c81fa6537d31a9f116184af59396a9d8796049061722bc9a402029f5be9",
+          "unaltered-0.3.1-linux.tar.gz": "4599d3586d484096a308da2e6745572594a687f66ff03cbbe234d72b3cb06584",
+          "unaltered-0.3.1-macos.zip": "66d295bbf1ceb9bff68fdd3ff302e9a6cf9466b81dd985bdacbe4fbbf631809e",
+          "unaltered-0.3.1.html": "9a5abb0aac431af69a1a89dd59295f9ea07b516eee3ac21cfa4a98dc79b668b6",
+          "unaltered-0.3.1.zip": "d774c266fa46143e6f67e49039f9be840ee5d39da62c834ec235e32257f5eaad",
+          "unaltered-cli-0.3.1.mjs": "203537b2f72732f590f7d1c77a2ddab9762d450539c56834b6cf6f4cabff1f37",
+          "web/favicon.png": "b0c89ece3a0242003d9de0e62a493a04ad3f77ba52c58eb542428e792a32a9f6",
+          "web/index.html": "16146ea605100f688cf6470a161e2fc4130b94a7c9c2683f0f3b197810eba509",
+          "web/main.js": "659033206c9226691e326775e8edcbb0dfb5f2eb01e30eb6aaca863b8c03ff63",
+          "web/robots.txt": "aa9bda735a742fcf651ab9f9c315fc5d6c426c313786a2bfe5011f936a99ab64",
+          "web/sitemap.xml": "03ef4e53f9e31063004cdbe47e161b7e21fdcd7d9cbb2ee5a523f20efd288db9",
+          "web/styles.css": "ebf61c06c3e696d1088d96420e0e2f0aa503343ce2a3d4f4d4d3e2da2407d8c3"
+        }
+      }
+    ],
+    "identical": true,
+    "publishedChecksumsExitCode": 0
+  },
+  "dependencies": {
+    "packageLockSha256": "543c31f82c9e84a67fac81a7fa9de18ae4371194330e7c0cd2af9d522d6745ef",
+    "fullAuditVulnerabilities": 0,
+    "runtimeAuditVulnerabilities": 0,
+    "verifiedRegistrySignatures": 141,
+    "verifiedAttestations": 59,
+    "evidence": "dependency-upgrade-20261119.json"
+  },
+  "fuzz": {
+    "evidence": "fuzz-20261119.json",
+    "sourceCommit": "3059236fdea47badb0c1722f22bac95d433bb9d1",
+    "executed": 15746,
+    "mutations": 15643,
+    "seconds": 60,
+    "status": "budget-complete",
+    "findings": 0,
+    "scope": "QR frame parser, QR image headers, trusted headers, receipt storage; bounded local synthetic campaign"
+  },
+  "opsec": {
+    "result": "PASS",
+    "uninspectedUnchangedArchives": [
+      "docs/evidence/consolidation-20261030-logs.zip",
+      "docs/evidence/verification-swarm-20261105.zip"
+    ],
+    "publicationRequirement": "Repeat after staging the final documentation; scan final added commits with verified Gitleaks before advancing the remote branch."
+  },
+  "resolvedFailures": [
+    {
+      "scope": "Earlier full typecheck",
+      "exitCode": 137,
+      "result": "Killed before diagnostics; subsequent bounded-heap full checks passed."
+    },
+    {
+      "scope": "First full integrated Vitest run",
+      "passed": 768,
+      "failed": 2,
+      "skipped": 2,
+      "cause": "Mock expected stripMetadata(original) after cancellation added a required signal in this call path. Existing behavior assertions retained; shared-signal checks added."
+    },
+    {
+      "scope": "New native lifecycle test compilation",
+      "diagnostic": "TS2352",
+      "count": 5,
+      "result": "Optional Window probe declaration and runtime narrowing; final combined-source typecheck passed."
+    }
+  ],
+  "pendingQualification": [
+    "Final published-head native CI and browser assertions",
+    "Actual 15-case PDF/raster/independent QR matrix",
+    "Native Python 3.11 Windows junction execution",
+    "Opt-in Firefox/WebKit 2 GiB completion",
+    "Live calendar CORS/canary evidence and external service behavior",
+    "Physical QR, human accessibility/Spanish/usability, Tor/native-browser reviews",
+    "Independent human audit, second-person rebuild, signing and owner release controls"
+  ],
+  "nativeBrowserLocal": {
+    "result": "Blocked before assertions",
+    "reason": "ProcessSingleton socket setup denied by execution environment",
+    "securityRestrictionsBypassed": false
+  },
+  "reviewRounds": 4,
+  "separateReviewLanesPerRound": [
+    "code",
+    "bugs",
+    "security"
+  ],
+  "logs": [
+    {
+      "path": "validation-20261119/install.txt",
+      "sha256": "5e07a3906cf9ee4888df34e782206e28331be0237aa1ccc8d01e01e8e9a16a9b",
+      "bytes": 176
+    },
+    {
+      "path": "validation-20261119/vitest.txt",
+      "sha256": "51e8c7b3f93151d3205be746cb5f14f5ef93d424801fbbeac77f7b1832459aad",
+      "bytes": 431,
+      "originalSha256": "6371a8cd28e44aad580586d79707232ad24585d0c629adcf8c1005c8cfdac66e",
+      "normalization": "Extra terminal newlines removed; log content otherwise unchanged."
+    },
+    {
+      "path": "validation-20261119/node-suite.txt",
+      "sha256": "e28440674271ecb9310746590e223b837dddc531b1aa0646f361617d09033af1",
+      "bytes": 12071
+    },
+    {
+      "path": "validation-20261119/python-toolkit.txt",
+      "sha256": "e672b62829eea7420341bdc4df9465a7dd829bfef11c35180bf6a7f695102ca4",
+      "bytes": 11615
+    },
+    {
+      "path": "validation-20261119/python-archival.txt",
+      "sha256": "517bb3ac00653933daa74cb2516b1c6b95b3d521ad51c4bc0f1649a838dcdab6",
+      "bytes": 1228
+    },
+    {
+      "path": "validation-20261119/build-1.txt",
+      "sha256": "38c241a8ea7cc5e6dc53b3d5ae70f87d82e2f2e8f60cc6df61c9e887ed3435ad",
+      "bytes": 84
+    },
+    {
+      "path": "validation-20261119/build-2.txt",
+      "sha256": "38c241a8ea7cc5e6dc53b3d5ae70f87d82e2f2e8f60cc6df61c9e887ed3435ad",
+      "bytes": 84
+    },
+    {
+      "path": "validation-20261119/published-checksums.txt",
+      "sha256": "32a5618afb4763bb3ad5f6c05472442773397bbdc5e1f4257daeb62a9eadb2b0",
+      "bytes": 140
+    },
+    {
+      "path": "validation-20261119/opsec.txt",
+      "sha256": "097e972b34619ac22fd3adaa68c4d437dcb1b1f76f3335034c11d4e8ea3b154d",
+      "bytes": 1075
+    },
+    {
+      "path": "validation-20261119/vitest-before-matcher-repair.txt",
+      "sha256": "ee969d1c67eee1e91b78a62d37f70dd9b09af20c8d53c800f24de8ffa8669907",
+      "bytes": 3668,
+      "originalSha256": "0cdfad04f6b29a0364d665e195272afb94c165cb2b9b8e3199f5720aa23636ea",
+      "normalization": "Extra terminal newlines removed; log content otherwise unchanged."
+    }
+  ]
+}

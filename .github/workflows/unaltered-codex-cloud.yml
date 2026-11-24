@@ -18,12 +18,18 @@ jobs:
     outputs:
       changed: ${{ steps.package.outputs.changed }}
       validation: ${{ steps.validate.outcome }}
+      base_sha: ${{ steps.base.outputs.sha }}
     steps:
       - name: Checkout latest main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           persist-credentials: false
+      - name: Capture trusted source base before agent execution
+        id: base
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Test the trusted publication scope boundary
+        run: python3 .github/scripts/test_cloud_scope_guard.py
       - name: Check key and pending cloud PRs
         id: gate
         env:
@@ -67,28 +73,25 @@ jobs:
             evidence and focused validation. Don't redo another branch's work.
             Only modify src/, tests/, docs/ and scripts/, excluding
             scripts/build.mjs, docs/OPSEC.md, docs/SPEC.md, docs/RELEASE.md,
-            trust and host policies. No changes to .github/, dependencies,
+            all src/core/net/, src/core/hash/ and src/core/ots/ code,
+            cryptographic primitives, trust/host policy and release controls.
+            Only scripts/parser-fuzz.mjs may change under scripts/.
+            The trusted scope guard is authoritative and stricter than directory ownership.
+            No changes to .github/, dependencies,
             third-party assets, release metadata or signing keys.
             Run npm run check after changes; preserve real failure evidence.
             Do not push, merge, sign, release, deploy, download user files,
             add external hosts, collect analytics, or make privacy claims
             beyond verified behavior. Produce exact test and handoff results.
-      - name: Validate modified paths
+      - name: Validate every committed, indexed and working-tree path
         if: steps.gate.outputs.run_agent == 'true'
         id: scope
+        env:
+          BASE_SHA: ${{ steps.base.outputs.sha }}
         run: |
           set -euo pipefail
-          while IFS= read -r file; do
-            [ -n "$file" ] || continue
-            case "$file" in
-              src/*|tests/*|docs/*|scripts/*|unaltered-codex-report.txt) ;;
-              *) echo "::error::Disallowed path: $file"; exit 1 ;;
-            esac
-            case "$file" in
-              scripts/build.mjs|docs/OPSEC.md|docs/SPEC.md|docs/RELEASE.md|docs/DECISIONS.md|*secret*|*credential*|*.env*)
-                echo "::error::Protected path: $file"; exit 1 ;;
-            esac
-          done < <(git ls-files -m -o --exclude-standard)
+          # Run the guard from captured trusted Git bytes, never an agent-edited working-tree copy.
+          /usr/bin/git --no-replace-objects --no-pager -c core.fsmonitor=false show --end-of-options "$BASE_SHA:.github/scripts/cloud_scope_guard.py" | /usr/bin/python3 -I - "$BASE_SHA"
       - name: Run OPSEC, typecheck, lint and tests
         if: steps.gate.outputs.run_agent == 'true' && steps.scope.outcome == 'success'
         id: validate
@@ -101,15 +104,22 @@ jobs:
           name: unaltered-report-${{ github.run_id }}
           path: unaltered-codex-report.txt
           if-no-files-found: ignore
-      - name: Package patch
+      - name: Package patch only after rechecking the trusted boundary
         if: steps.gate.outputs.run_agent == 'true' && steps.scope.outcome == 'success'
         id: package
+        env:
+          BASE_SHA: ${{ steps.base.outputs.sha }}
         run: |
+          set -euo pipefail
+          # Validation runs changed code, so check again after it has finished.
+          /usr/bin/git --no-replace-objects --no-pager -c core.fsmonitor=false show --end-of-options "$BASE_SHA:.github/scripts/cloud_scope_guard.py" | /usr/bin/python3 -I - "$BASE_SHA"
+          git reset --soft "$BASE_SHA"
           git add -A -- src tests docs scripts
-          if git diff --cached --quiet; then
+          /usr/bin/git --no-replace-objects --no-pager -c core.fsmonitor=false show --end-of-options "$BASE_SHA:.github/scripts/cloud_scope_guard.py" | /usr/bin/python3 -I - "$BASE_SHA"
+          if git diff --cached --quiet "$BASE_SHA"; then
             echo 'changed=false' >> "$GITHUB_OUTPUT"
           else
-            git diff --cached --binary > unaltered-changes.patch
+            git diff --cached --binary "$BASE_SHA" > unaltered-changes.patch
             echo 'changed=true' >> "$GITHUB_OUTPUT"
           fi
       - name: Upload patch
@@ -134,15 +144,27 @@ jobs:
         with:
           ref: main
           persist-credentials: false
+      - name: Refuse a different publication base
+        env:
+          BASE_SHA: ${{ needs.develop.outputs.base_sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$BASE_SHA"
       - name: Download patch
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: unaltered-patch-${{ github.run_id }}
-          path: unaltered-staging
-      - name: Apply patch as data
+          path: ${{ runner.temp }}/unaltered-staging
+      - name: Apply patch as data and revalidate in the privileged checkout
+        env:
+          BASE_SHA: ${{ needs.develop.outputs.base_sha }}
         run: |
-          git apply --check --binary unaltered-staging/unaltered-changes.patch
-          git apply --binary unaltered-staging/unaltered-changes.patch
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$BASE_SHA"
+          git apply --check --index --binary "$RUNNER_TEMP/unaltered-staging/unaltered-changes.patch"
+          git apply --index --binary "$RUNNER_TEMP/unaltered-staging/unaltered-changes.patch"
+          # --index includes new/deleted paths; the guard also independently reads untracked/mode/symlink state.
+          /usr/bin/git --no-replace-objects --no-pager -c core.fsmonitor=false show --end-of-options "$BASE_SHA:.github/scripts/cloud_scope_guard.py" | /usr/bin/python3 -I - "$BASE_SHA"
       - name: Open review PR
         id: pr
         uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
@@ -160,8 +182,9 @@ jobs:
           body: |
             API-funded development run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
             Local validation: ${{ needs.develop.outputs.validation }}.
-            Require review and exact-head CI; no release or deployment.
-          draft: ${{ needs.develop.outputs.validation != 'success' }}
+            Trusted source base: ${{ needs.develop.outputs.base_sha }}.
+            Require review and exact-head CI; no automatic merge, release or deployment.
+          draft: true
           delete-branch: true
       - name: Dispatch full CI
         if: steps.pr.outputs.pull-request-branch != ''

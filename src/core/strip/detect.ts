@@ -1,4 +1,7 @@
 // File type detection by magic bytes. Never trusts the extension (STR-1).
+import { UnalteredError } from '../errors';
+import { awaitAbortable } from '../hash/stream';
+
 export type FileKind = 'jpeg' | 'png' | 'gif' | 'webp' | 'wav' | 'mp3' | 'heic' | 'pdf' | 'video' | 'zip' | 'other';
 
 const startsWith = (b: Uint8Array, sig: number[], off = 0): boolean => sig.every((v, i) => b[off + i] === v);
@@ -24,6 +27,10 @@ export function detectKind(head: Uint8Array): FileKind {
   return 'other';
 }
 
-export async function detectBlob(blob: Blob): Promise<FileKind> {
-  return detectKind(new Uint8Array(await blob.slice(0, 16).arrayBuffer()));
+export async function detectBlob(blob: Blob, signal?: AbortSignal): Promise<FileKind> {
+  if (signal?.aborted) throw new UnalteredError('ABORTED', 'Cancelled.');
+  // Native reads cannot be cancelled, but a stalled read must not retain a cancelled preprocessing slot.
+  const head = await awaitAbortable(blob.slice(0, 16).arrayBuffer(), signal);
+  if (signal?.aborted) throw new UnalteredError('ABORTED', 'Cancelled.');
+  return detectKind(new Uint8Array(head));
 }

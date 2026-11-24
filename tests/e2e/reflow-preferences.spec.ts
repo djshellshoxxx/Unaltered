@@ -60,3 +60,36 @@ test('reduced motion and supported forced colors preserve operable keyboard cont
   await expect(spanish).toBeFocused();
   expect(await spanish.evaluate((control) => getComputedStyle(control).outlineStyle)).toBe('solid');
 });
+
+test('mobile task links bring the file picker into view and preserve work when returning home', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await page.goto('/Unaltered/');
+  const intro = page.locator('.site-intro');
+  await expect(intro).toBeVisible();
+  await intro.getByRole('link', { name: 'Stamp a file', exact: true }).click();
+  await expect(intro).toBeHidden();
+  await expect(page.locator('#stamp-h')).toBeFocused();
+
+  const picker = page.locator('#stamp-file');
+  await expect(picker).toBeInViewport({ ratio: 1 });
+  const pickerBox = (await picker.boundingBox())!;
+  const helpBox = (await page.locator('#stamp-file-help').boundingBox())!;
+  expect(pickerBox.y + pickerBox.height).toBeLessThanOrEqual(helpBox.y);
+
+  await picker.setInputFiles({ name: 'kept.txt', mimeType: 'text/plain', buffer: Buffer.from('navigation') });
+  await expect(page.locator('.item-name')).toHaveText('kept.txt');
+  const home = page.locator('header .brand');
+  await home.focus();
+  await page.keyboard.press('Enter');
+  await expect(intro).toBeVisible();
+  await expect(home).toBeFocused();
+  await intro.getByRole('link', { name: 'Stamp a file', exact: true }).click();
+  await expect(page.locator('.item-name')).toHaveText('kept.txt');
+
+  const shared = await page.context().newPage();
+  await shared.setViewportSize({ width: 360, height: 740 });
+  await shared.goto('/Unaltered/#h=' + 'ab'.repeat(32));
+  await expect(shared.locator('.site-intro')).toBeHidden();
+  await expect(shared.locator('#verify-h')).toBeInViewport({ ratio: 1 });
+  await expect(shared.locator('#verify .notice code.digest')).toBeVisible();
+});

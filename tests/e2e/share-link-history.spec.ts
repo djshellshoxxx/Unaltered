@@ -18,7 +18,7 @@ async function chooseFileAndReceipt(page: Page, receipt = 'receipt.ots'): Promis
 
 async function expectKept(page: Page): Promise<void> {
   await expect(page.locator('#verify')).toBeVisible();
-  await expect(page.locator('#verify .picked').first()).toContainText('mine.txt');
+  await expect(page.locator('#verify .inputs .picked').first()).toContainText('mine.txt');
   await expect(page.locator('#verify').getByText(PREFILLED)).toHaveCount(0);
 }
 

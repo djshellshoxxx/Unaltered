@@ -2,7 +2,7 @@
 // Read-only release evidence: compare two independently built Pages directories.
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, lstatSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+import { join, relative, resolve, sep } from 'node:path';
 
 const [left, right] = process.argv.slice(2);
 if (!left || !right || process.argv.length !== 4) {
@@ -10,6 +10,10 @@ if (!left || !right || process.argv.length !== 4) {
   process.exit(1);
 }
 function manifest(root) {
+  // Strip trailing separators/dot segments before lstat; otherwise a path such
+  // as "artifact-link/" follows the final symlink on POSIX systems.
+  root = resolve(root);
+  if (!lstatSync(root).isDirectory()) throw new Error('expected a Pages artifact directory');
   const files = [];
   function visit(dir) {
     for (const name of readdirSync(dir).sort()) {

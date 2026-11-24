@@ -1,10 +1,25 @@
 import { describe, expect, it } from 'vitest';
+import { receiptName } from '../../src/ui/download';
 import { pairEvidenceFiles } from '../../src/core/reports/batch-pair';
 
 describe('batch file/receipt pairing', () => {
   it('pairs exact original filenames with .ots receipts regardless of input order', () => {
     const result = pairEvidenceFiles(['a.txt', 'b.txt'], ['b.txt.ots', 'a.txt.ots']);
     expect(result).toEqual([{ fileName: 'a.txt', receiptName: 'a.txt.ots' }, { fileName: 'b.txt', receiptName: 'b.txt.ots' }]);
+  });
+  it('pairs browser downloads by their exact sanitized or shortened names and preserves explicit sibling names', () => {
+    const long = 'a'.repeat(205);
+    const originals = [long, '.draft', 'a?b', 'other?.txt'];
+    const receipts = ['_draft.ots', 'a_b.ots', 'other?.txt.ots', 'a'.repeat(196) + '.ots'];
+    expect(pairEvidenceFiles(originals, receipts, receiptName).map(pair => pair.receiptName)).toEqual([
+      receipts[3], receipts[0], receipts[1], receipts[2],
+    ]);
+  });
+  it('rejects colliding download names even with an unrelated extra receipt or reversed inputs', () => {
+    const names = ['a?', 'a_'];
+    for (const originals of [names, [...names].reverse()]) {
+      expect(() => pairEvidenceFiles(originals, ['a_.ots', 'unused.ots'], receiptName)).toThrow(/ambiguous/);
+    }
   });
   it('rejects missing and duplicate names instead of silently pairing wrong files', () => {
     expect(() => pairEvidenceFiles(['a.txt'], ['b.txt.ots'])).toThrow();

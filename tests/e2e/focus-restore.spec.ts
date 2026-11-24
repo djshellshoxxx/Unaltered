@@ -22,7 +22,7 @@ test('verify: choosing a file keeps focus on the file input', async ({ page }) =
   await page.goto('/index.html#verify');
   await page.locator('#verify-file').focus();
   await page.setInputFiles('#verify-file', { name: 'mine.txt', mimeType: 'text/plain', buffer: Buffer.from('hello mine') });
-  await expect(page.locator('#verify .picked')).toContainText('mine.txt');
+  await expect(page.locator('#verify .inputs .picked')).toContainText('mine.txt');
   await expect(page.locator('#verify-file')).toBeFocused();
   expect(await activeTag(page)).toBe('INPUT');
 });
@@ -31,7 +31,7 @@ test('verify: choosing a receipt keeps focus on the receipt input', async ({ pag
   await page.goto('/index.html#verify');
   await page.locator('#verify-receipt').focus();
   await page.setInputFiles('#verify-receipt', { name: 'r.ots', mimeType: 'application/octet-stream', buffer: Buffer.from('junk') });
-  await expect(page.locator('#verify .picked')).toContainText('r.ots');
+  await expect(page.locator('#verify .inputs .picked')).toContainText('r.ots');
   await expect(page.locator('#verify-receipt')).toBeFocused();
 });
 

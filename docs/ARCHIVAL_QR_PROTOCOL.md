@@ -28,7 +28,9 @@ No arbitrary text, URL, filename, signature or original file is embedded. QR sym
 
 ## Resource bounds
 
-The initial implementation caps original receipts at 16 MiB and frame count at 4096. These are application limits, not QR-standard limits. The print interface imposes the tighter symbol and page budgets documented below. All input lengths, version bytes, indices, repeated metadata and checksums are validated before export.
+The original-length header has a 16 MiB validation ceiling (16,777,216 bytes), while a set is limited to 4096 frames. Each frame can contain at most 2953 bytes, including its 80-byte header, leaving at most 2873 receipt bytes. These limits apply together: the largest transportable v1 receipt is therefore **4096 × 2873 = 11,767,808 bytes (11.22265625 MiB)**, not 16 MiB. A smaller selected frame capacity lowers this effective limit to `4096 × (frame capacity − 80)`. The encoder rejects a receipt that would require more frames; the recoverer requires payload lengths to sum to the declared receipt length before allocating the output buffer. The header validation ceiling does not promise that every length below it is encodable.
+
+The 16 MiB header and 4096-frame bounds are application limits; 2953 bytes is the QR Model 2 version 40-L byte-mode capacity. The print interface imposes the tighter 64-symbol, module-size and page budgets documented below, so it cannot print receipts as large as the binary transport maximum. All input lengths, version bytes, indices, repeated metadata and checksums are validated before export.
 
 ## Independent recovery
 
@@ -97,8 +99,12 @@ reference recoverer, and the result must equal the original `.ots` byte for byte
 symbol's version, error-correction level and mask must also equal the label printed under it. Cases: three receipt
 sizes (325, 3145 and 12,217 bytes) at each of L, M, Q and H on A4, automatic correction on A4 and US Letter, and
 12,217 bytes at H on US Letter (15 certificates, 1 to 35 symbols, QR versions 13 to 22, all eight masks seen).
-It is opt-in and skips with a setup message unless the hash-pinned test packages in `tests/archival/requirements.txt`
-are installed and `UNALTERED_QR_PYTHON` points at that interpreter.
+Local runs skip with a setup message unless the hash-pinned test packages in `tests/archival/requirements.txt`
+are installed and `UNALTERED_QR_PYTHON` points at that interpreter. CI installs those packages and sets
+`UNALTERED_REQUIRE_QR_DECODER=1`, so an unavailable decoder or rasterizer fails qualification instead of skipping.
+After the browser suite, `node scripts/check-qr-qualification.mjs` requires all 15 expected reports, successful
+independent recovery, matching symbol labels and page counts, and SHA-256 bindings to the saved receipts and PDFs.
+The evidence check validates the recorded results; the preceding browser suite performs the actual decoding.
 
 **Distortion corpus.** `tests/archival/qr_distort.py` produces seeded camera-like variants of printed pages and
 `tests/qualification/qr-robustness.spec.ts` (opt-in, `UNALTERED_QR_ROBUSTNESS=1`) measures in-app and zxing-cpp

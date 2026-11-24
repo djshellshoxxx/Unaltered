@@ -84,8 +84,8 @@ plug-in projects. It is not part of the Unaltered app, its build or its release 
 | `skills/_third_party_licenses/` | Licence and notice files for bundled third-party skill material |
 | `.github/agents/feature-auditor.agent.md` | Instructions for an audit agent that checks a project's source against its specification |
 
-The project-creation script expects a separate `JUCE-Plugin-Starter` checkout, which is not in this repository. The
-scripts were byte-compiled and `create_project.py --help` ran; they have no functional tests. See the
+The project-creation script expects a separate `JUCE-Plugin-Starter` checkout, which is not in this repository. Offline
+functional tests cover its source/destination validation and credential rejection using synthetic templates. See the
 [toolkit user guide](docs/wiki/Toolkit-User-Guide.md). The app documentation starts at
 [docs/wiki/Home.md](docs/wiki/Home.md).
 

@@ -5,7 +5,7 @@ import { archivalReceiptFixture } from '../helpers/archival-receipt';
 import { ABSENT_MESSAGE, type Level, type Paper, printCertificate, qrPython, runJson, ZXING_TOOL } from './qr-cert';
 
 /**
- * Opt-in third-party decoder verification (ARCHIVAL_QR_PROTOCOL.md production prerequisite).
+ * Third-party decoder verification (required in CI, optional in local development).
  * The app prints a real Chromium PDF; pdftoppm rasterises it; zxing-cpp (not jsQR) decodes every symbol;
  * scripts/recover-archival-qr.py (not TypeScript) reassembles; the result must equal the original .ots bytes.
  * zxing's own reading of each symbol's version, ECC level and mask must equal the printed label.
@@ -33,7 +33,7 @@ test.describe('independent zxing-cpp decoding of printed certificates', () => {
       const printed = await printCertificate(page, original, level, paper, pdf);
       const { status, value } = runJson<Report>(python!, [ZXING_TOOL, 'recover-pdf', '--pdf', pdf,
         '--original', resolve(directory, 'original.ots'), '--dpi', '150', '--work', directory]);
-      writeFileSync(resolve(directory, 'zxing-report.json'), JSON.stringify({ size: original.length, level, paper, printed, value }, null, 1));
+      writeFileSync(resolve(directory, 'zxing-report.json'), JSON.stringify({ fixture: size, size: original.length, level, paper, status, printed, value }, null, 1));
       expect(value.error).toBeUndefined();
       expect(value.recovered).toBe(true);
       expect(value.identical).toBe(true);

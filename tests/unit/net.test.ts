@@ -68,8 +68,23 @@ describe('architecture guards', () => {
     expect(offenders).toEqual([]);
   });
 
+  function referencedUrls(file: string, source: string): string[] {
+    // The schema identifier on the static header is metadata. The same URL in a resource attribute is audited.
+    if (file === 'src/index.html') {
+      source = source.replace('<header itemscope itemtype="https://schema.org/SoftwareApplication">', '<header>');
+    }
+    return source.match(/https?:\/\/[^\s'"`)<>]+/g) ?? [];
+  }
+
+  it('still audits a resource URL that matches the schema metadata identifier', () => {
+    const schema = 'https://schema.org/SoftwareApplication';
+    const html = `<header itemscope itemtype="${schema}"><img src="${schema}"></header>`;
+    expect(referencedUrls('src/index.html', html)).toEqual([schema]);
+    expect(referencedUrls('src/main.ts', `loadImage("${schema}")`)).toEqual([schema]);
+  });
+
   it('no third-party origins are referenced outside the allowlist (SR-2)', () => {
-    const urls = src.flatMap((f) => (readFileSync(f, 'utf8').match(/https?:\/\/[^\s'"`)<>]+/g) ?? []).map((u) => [f, u] as const));
+    const urls = src.flatMap((f) => referencedUrls(f, readFileSync(f, 'utf8')).map((u) => [f, u] as const));
     const allowedPrefixes = ['http://ns.adobe.com/', 'https://github.com/', 'https://opentimestamps.org', 'https://pypi.org/', 'https://bitcoin.org/', 'https://docs.github.com', 'http://localhost', 'https://${', 'https://x', 'https://evil.example'];
     // Permit this exact static project link only in the HTML template, not in scripts or styles.
     const bad = urls.filter(([file, u]) => !(file === 'src/index.html' && u === projectWing) &&

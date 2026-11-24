@@ -36,7 +36,8 @@ node_modules/.bin/playwright test tests/e2e/pages-base-path.spec.ts --retries=0
 
 The browser test serves the site under `/Unaltered/`, checks relative asset loading and fragment navigation, and hashes a
 synthetic file offline after the page loads. It requires a real worker completion with the expected byte count and SHA-256.
-Offline here means an already loaded page can hash; there is no service worker or guarantee of an offline reload.
+The footer also offers a standalone HTML download and its SHA-256 checksum. Save the HTML to reopen the app offline.
+Reloading the hosted URL offline depends on browser caching. The site does not install a service worker.
 Calendar submission/upgrading and Bitcoin explorer queries still need network access and remain subject to remote CORS
 policy. The test does not contact those services or establish their live availability.
 
@@ -44,12 +45,9 @@ Production publication remains a separate authorized maintainer action. Review t
 signing, accessibility and operational gates in [RELEASE.md](RELEASE.md) before enabling deployment. No production release
 or Pages deployment is authorized by this preparation workflow.
 
-After explicit publication authorization, maintainers can separately enable GitHub Actions as the Pages source and add
-a protected deployment job using a reviewed, full-SHA-pinned `actions/deploy-pages`. That job must depend on successful
-preparation, use the `github-pages` environment and grant only its required `pages: write` and `id-token: write`
-permissions. GitHub's documented arrangement consumes the artifact from the same workflow run; an expired readiness
-artifact requires a fresh qualified run. A generic downloaded review ZIP is not a replacement for that Pages artifact.
-The readiness workflow remains preparation only. The separate deployment template below is not installed as an active workflow.
+The installed [Authorized Pages publication workflow](../.github/workflows/pages-deployment.yml) rebuilds the reviewed
+`main` commit and deploys its own qualified artifact through the `github-pages` environment. The readiness workflow
+provides a separate artifact for review. See the [release operator procedure](PAGES_RELEASE_AUTOMATION.md).
 
 Action review on 2026-11-05: the official MIT-licensed
 [`actions/upload-pages-artifact` v5.0.0](https://github.com/actions/upload-pages-artifact/releases/tag/v5.0.0) resolves to
@@ -89,10 +87,8 @@ apply to new codespaces after owner authorization, not the current codespace, ev
 devcontainer permission or repository-setting change was made here. A successful dispatch alone would not establish
 runner availability or a passing CI result.
 
-`docs/templates/pages-deployment.yml` is an **inactive, not installed** deployment template. GitHub only discovers
-[workflow files under `.github/workflows/`](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax); keeping the template under `docs/templates/` does not register or dispatch it.
-It changes no site assets, adds no backend, embeds no secrets, and does not invoke `configure-pages` or configure the
-repository. Its presence is preparation, not publication authorization or evidence of a successful deployment.
+The template under `docs/templates/` documents the publication workflow installed in `.github/workflows/`.
+Only the installed workflow is available in Actions.
 
 The template repeats the existing readiness job because that workflow does not expose `workflow_call`; calling it as a
 reusable workflow would fail. Contract tests keep the readiness steps, environment and time limit aligned with that
@@ -124,10 +120,8 @@ Only after separate explicit owner authorization to publish, the repository owne
    these controls are available and configured for this repository before continuing. Merely referencing the environment
    in YAML can create an **unprotected** environment; this template cannot install protection rules or inspect settings.
    GitHub documents these [environment controls and automatic creation behavior](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments).
-3. In **Settings → Pages → Build and deployment**, select **GitHub Actions** as the source. Separately review an activation
-   PR that copies `docs/templates/pages-deployment.yml` to `.github/workflows/pages-deployment.yml`, reverify all action
-   pins, and merge that activation change to the protected default branch. Review and record the resulting full commit
-   SHA, including the activation change. Neither setting nor workflow installation is performed by preparation.
+3. Verify **Settings → Pages → Build and deployment** uses **GitHub Actions** and the reviewed publication workflow is
+   present on the default branch. Record the full default-branch commit SHA.
 4. Using an authorized account, open **Actions → Authorized Pages publication → Run workflow**, select the default
    branch, enter that full SHA as `reviewed_commit`, and select `authorize_deployment` only with explicit owner publication
    authorization. Leaving its default `false` cannot publish. A moved branch head must be reviewed again and entered as

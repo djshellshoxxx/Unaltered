@@ -1,5 +1,15 @@
 # Completion and validation record
 
+## Current continuation — 2026-11-19
+
+See [the current consolidation record](handoff/CONSOLIDATION-20261119.md) and
+[PR96](https://github.com/djshellshoxxx/Unaltered/pull/96). They supersede the active-candidate and completion
+claims in older dated sections below. Four sets of code, bug and security workers completed the recorded repairs
+and reviews; the 94-branch inventory, current dependency evidence and exact local validation are linked there.
+Hosted qualification of the final published source and external release controls remain explicit gates.
+
+## Historical status links
+
 Current November5 recovery, published PR51, acceptance results and remaining gates:
 [autonomous development checkpoint](handoff/AUTONOMOUS-DEVELOPMENT-LATEST.md).
 Older dated records below remain historical. No production release is claimed.

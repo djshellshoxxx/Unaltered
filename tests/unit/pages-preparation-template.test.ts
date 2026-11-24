@@ -219,7 +219,7 @@ it('allows only reviewed official full-SHA action contracts and no credential ov
     expect(step.with?.['ssh-key']).toBeUndefined();
   }
   expect(actions.find((step) => step.uses.startsWith('actions/checkout@')).with).toEqual({ 'persist-credentials': false });
-  expect(actions.find((step) => step.uses.startsWith('actions/setup-node@')).with).toEqual({ 'node-version': 22 });
+  expect(actions.find((step) => step.uses.startsWith('actions/setup-node@')).with).toEqual({ 'node-version': 22, cache: 'npm' });
   expect(deploy.steps[0].uses.split('@')[0]).toBe('actions/deploy-pages');
 });
 

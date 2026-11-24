@@ -4,7 +4,7 @@ import type { QrPaper, QrPreference } from '../core/archive/qr-plan';
 import { parseProof } from '../core/ots/codec';
 import { toHex } from '../core/bytes';
 import { LIMITS } from '../core/ots/types';
-import { el } from './dom';
+import { dropZone, el, formatBytes } from './dom';
 import { downloadLink, revokeOwner } from './download';
 import { archiveText as t } from './archive-strings';
 
@@ -13,6 +13,8 @@ interface CertificatePreview {
   relabel(): void;
 }
 let activePreview: CertificatePreview | null = null;
+// Every receipt panel prints to the same sheet. Order requests across panels, including those still reading.
+let previewRequest = 0;
 
 export interface ArchivalCertificateView {
   root: HTMLElement;
@@ -25,7 +27,6 @@ export function archivalCertificateControls(readReceipt: () => Promise<Uint8Arra
   verified?: { receiptSha256: string; fileSha256: string; bitcoin: NonNullable<CertificateContext['verifiedBitcoin']> }): ArchivalCertificateView {
   let preference: QrPreference = 'auto';
   let paper: QrPaper = 'a4';
-  let operation = 0;
   let includeLabel = false;
   let documentLabel = '';
   let busy = false;
@@ -70,20 +71,24 @@ export function archivalCertificateControls(readReceipt: () => Promise<Uint8Arra
   const button = el('button', { type: 'button', class: 'button small', title: t('archive.previewHelp'), onclick: () => { void preview(); } }, t('archive.preview'));
   async function preview(): Promise<void> {
     if (busy || disposed) return;
-    const generation = ++operation;
+    const request = ++previewRequest;
+    const current = (): boolean => request === previewRequest && !disposed && root.isConnected;
+    activePreview?.close(false);
     const selected = { preference, paper };
     const approvedLabel = includeLabel ? documentLabel.trim() : '';
     busy = true; button.disabled = true; show('archive.preparing');
     try {
-      const bytes = (await readReceipt()).slice();
+      const receipt = await readReceipt();
+      if (!current()) return;
+      const bytes = receipt.slice();
       if (bytes.length > LIMITS.maxInputBytes) throw new Error('Receipt too large');
       const proof = parseProof(bytes);
       // Yield before CPU-bound matrix generation so status and cancellation/navigation can paint.
       await new Promise<void>(resolve => setTimeout(resolve, 0));
-      if (generation !== operation || !root.isConnected) return;
+      if (!current()) return;
       const { symbols, plan } = await encodeArchivalQr(bytes, selected);
       const sha = toHex(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)));
-      if (generation !== operation || !root.isConnected) return;
+      if (!current()) return;
       const evidenceMatches = verified && verified.receiptSha256 === sha &&
         verified.fileSha256 === toHex(proof.digest);
       const sheet = createArchivalPrintSheet(symbols, sha, bytes.length, plan.paper, toHex(proof.digest), {
@@ -94,7 +99,6 @@ export function archivalCertificateControls(readReceipt: () => Promise<Uint8Arra
         appVersion: document.getElementById('version')?.textContent?.trim() || 'unknown',
         buildId: document.getElementById('build-hash')?.textContent?.trim() || 'unknown',
       });
-      activePreview?.close(false);
       const heading = el('h2', { tabindex: -1 }, t('archive.previewTitle'));
       const previewRoot = el('section', { class: 'archival-preview', 'aria-label': t('archive.previewTitle') });
       const toolbar = el('div', { class: 'archival-toolbar' });
@@ -133,6 +137,7 @@ export function archivalCertificateControls(readReceipt: () => Promise<Uint8Arra
       const presentation: CertificatePreview = {
         close,
         relabel() {
+          sheet.relabel();
           heading.textContent = t('archive.previewTitle');
           previewRoot.setAttribute('aria-label', t('archive.previewTitle'));
           printButton.textContent = t('archive.print');
@@ -151,9 +156,11 @@ export function archivalCertificateControls(readReceipt: () => Promise<Uint8Arra
       document.body.appendChild(previewRoot); activePreview = ownPreview = presentation;
       heading.focus(); heading.scrollIntoView({ block: 'start' }); show('archive.ready');
     } catch {
-      if (generation === operation && root.isConnected) show('archive.failed');
+      if (current()) show('archive.failed');
     } finally {
-      if (generation === operation) { busy = false; button.disabled = false; }
+      busy = false;
+      button.disabled = false;
+      if (request !== previewRequest) { statusKey = null; status.textContent = ''; }
     }
   }
   root.appendChild(advanced); root.appendChild(labelOption); root.appendChild(labelInput);
@@ -177,7 +184,7 @@ export function archivalCertificateControls(readReceipt: () => Promise<Uint8Arra
       ownPreview?.relabel();
     },
     dispose() {
-      disposed = true; operation++;
+      disposed = true;
       ownPreview?.close(false);
       root.remove();
     },
@@ -186,28 +193,31 @@ export function archivalCertificateControls(readReceipt: () => Promise<Uint8Arra
 let nextPanelId = 1;
 
 export function archivalCertificateImport(): ArchivalCertificateView {
-  const input = el('input', { type: 'file', accept: '.ots', 'aria-label': t('archive.receiptInput') });
+  const label = document.createTextNode(t('archive.receiptInput'));
+  const picked = el('p', { class: 'picked', role: 'status' });
   const heading = el('h3', {}, t('archive.title'));
   const intro = el('p', { class: 'muted' }, t('archive.intro'));
-  const root = el('section', { class: 'archival-import' }, heading, intro, input);
+  const root = el('section', { class: 'archival-import' }, heading, intro);
   let controls: ArchivalCertificateView | null = null;
-  input.addEventListener('change', () => {
-    const selected = input.files?.[0] ?? null;
-    input.value = '';
-    controls?.dispose(); controls = null;
+  function select(files: File[]): void {
+    const selected = files[0];
+    controls?.dispose();
+    controls = null;
+    picked.textContent = selected ? `${selected.name} · ${formatBytes(selected.size)}` : '';
     if (!selected) return;
     controls = archivalCertificateControls(async () => {
       if (selected.size > LIMITS.maxInputBytes) throw new Error('Receipt too large');
       return new Uint8Array(await selected.arrayBuffer());
     });
     root.appendChild(controls.root);
-  });
+  }
+  root.append(dropZone({ id: 'archive-receipt', accept: '.ots', label, onFiles: select, onClear: () => select([]) }), picked);
   return {
     root,
     relabel() {
       heading.textContent = t('archive.title');
       intro.textContent = t('archive.intro');
-      input.setAttribute('aria-label', t('archive.receiptInput'));
+      label.data = t('archive.receiptInput');
       controls?.relabel();
     },
     dispose() { controls?.dispose(); controls = null; root.remove(); },

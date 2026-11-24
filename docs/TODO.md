@@ -1,5 +1,22 @@
 # TODO
 
+## Current continuation — 2026-11-19
+
+Authoritative status: [consolidation and qualification record](handoff/CONSOLIDATION-20261119.md),
+[PR96](https://github.com/djshellshoxxx/Unaltered/pull/96). Older dated checklists below are historical.
+
+- [x] Reconcile all 94 remote branches and recover the applicable missing Pages/cloud-guard changes.
+- [x] Recover the seven fixes listed as lost or unuploaded in the previous PR96 handoff.
+- [x] Repair and review preprocessing cancellation, evidence-export ownership, batch state and retained localization.
+- [x] Require the independent QR decoder and complete, consistent 15-case evidence.
+- [x] Harden starter paths and literal configuration, preserve Unicode, and escape update-feed text.
+- [x] Wire real Windows junction regressions into the existing native job without allowing silent skips.
+- [x] Resolve the development-only minimatch advisory with supported upstream dependency versions.
+- [ ] Complete required hosted CI and QR qualification on the final published source, including the new browser journeys and Windows junction cases.
+- [ ] Complete outstanding calendar, physical QR, human-review and release controls listed in the current record.
+
+## Historical status links
+
 Current November 5 implementation, local qualification and remaining external gates: [autonomous checkpoint](handoff/AUTONOMOUS-DEVELOPMENT-LATEST.md). Older dated records below remain historical; production publication is not authorized by local test results.
 
 Active continuation: [continuous development ledger](CONTINUOUS_PROGRESS_20261104.md), branch

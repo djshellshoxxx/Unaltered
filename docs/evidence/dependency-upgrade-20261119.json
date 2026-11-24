@@ -1,0 +1,335 @@
+{
+  "recordedDate": "2026-11-19",
+  "baselineCommit": "1b75b950eb151562415c362e676c569fdd80de55",
+  "dependencyCommit": "b217110e216dca2c1c2ca36329ee6738182351f5",
+  "runtime": {
+    "node": "v24.22.3",
+    "npm": "11.19.1",
+    "platform": "Linux"
+  },
+  "fileSha256": {
+    "package.json": "53a6f9e53d06cfe7777da3d454908251c23b6af681bd3dd0affcd75063062bc1",
+    "package-lock.json": "543c31f82c9e84a67fac81a7fa9de18ae4371194330e7c0cd2af9d522d6745ef"
+  },
+  "directPinChanges": {
+    "eslint": [
+      "10.14.0",
+      "10.15.0"
+    ],
+    "typescript-eslint": [
+      "8.72.1",
+      "8.73.0"
+    ]
+  },
+  "changedPackageRecords": [
+    {
+      "path": "node_modules/@eslint/config-array",
+      "before": "0.23.5",
+      "after": "0.23.6",
+      "dev": true,
+      "integrity": "sha512-WrTH7nioI9QPY4NZGnsywmecswJdgeq4BCM76qok9VgjTO29ZgUzUvcuJLVPYVQM4uDbaPBU0M33R9DIxI8X3w=="
+    },
+    {
+      "path": "node_modules/@isaacs/nonrecursive-glob-match",
+      "before": null,
+      "after": "1.1.0",
+      "dev": true,
+      "integrity": "sha512-GPm/Dbvk5RLmhRnxXIa7nTpK0xtl4E0wj0MslsuNiJ1FIROU+2+9lgUC/dgF7Ey4QCWhfEsgxilMRMCdHPfDfw=="
+    },
+    {
+      "path": "node_modules/@typescript-eslint/eslint-plugin",
+      "before": "8.72.1",
+      "after": "8.73.0",
+      "dev": true,
+      "integrity": "sha512-UkygMFer53Yzn29MCYFTHf34hGXf5KJhiDWfIm1tXtXRrym1CS6l5H9Y3yCtPWChpC0/f93H88gdj8tN0dd4kw=="
+    },
+    {
+      "path": "node_modules/@typescript-eslint/parser",
+      "before": "8.72.1",
+      "after": "8.73.0",
+      "dev": true,
+      "integrity": "sha512-AuL45bVcmssHfZ3Di3cs9Q0l4gBm4ZFVrJOQEE7VpqW+PVgQaEwSwazz4TVIiFabXkk6U51EprYDwqw+HR8ePw=="
+    },
+    {
+      "path": "node_modules/@typescript-eslint/project-service",
+      "before": "8.72.1",
+      "after": "8.73.0",
+      "dev": true,
+      "integrity": "sha512-/pEf8Rc4Mjk+qJnY0uO1+Gadeal8uv50xpuic+srG2vIVatA0XxvWMUeMtFvs6OCHqftiQ7/+qH4aehG5stzIA=="
+    },
+    {
+      "path": "node_modules/@typescript-eslint/scope-manager",
+      "before": "8.72.1",
+      "after": "8.73.0",
+      "dev": true,
+      "integrity": "sha512-/TjD738Iq2rzj5z0ixVOi+TsvgjAzZPLPaH1yWdDBytR/HTR5gMpyYWZeCe5WTQZLwk3ho8AV7U3muoQCRtXBQ=="
+    },
+    {
+      "path": "node_modules/@typescript-eslint/tsconfig-utils",
+      "before": "8.72.1",
+      "after": "8.73.0",
+      "dev": true,
+      "integrity": "sha512-lmtCFOfYaJfpqZywGuXi4FpNtE+NQ+YLe3T0K9rtEDcW8ZuGWvfI++pj8r05sYMI8vWT2CYK4rWyedmD6Rp4og=="
+    },
+    {
+      "path": "node_modules/@typescript-eslint/type-utils",
+      "before": "8.72.1",
+      "after": "8.73.0",
+      "dev": true,
+      "integrity": "sha512-MOC9i4xy1F7KcDde7Ip8jf1SrRiALb2Km4UWxGNjUE2YlhjIEo1ayE27GHIwIQyfWuHTmEonQT14uyurlyC6aA=="
+    },
+    {
+      "path": "node_modules/@typescript-eslint/types",
+      "before": "8.72.1",
+      "after": "8.73.0",
+      "dev": true,
+      "integrity": "sha512-O/1ytYzflF16QDKXx4/qOXg1IuZp+n7hr9t+S0nv7N/2Tl8rJiNCshztV1gcSUvHbPtoX3+zmNbtSAyVbzxVfw=="
+    },
+    {
+      "path": "node_modules/@typescript-eslint/typescript-estree",
+      "before": "8.72.1",
+      "after": "8.73.0",
+      "dev": true,
+      "integrity": "sha512-InjlBkSdWceIwIBWSwS3ENUp+i0O02PGX3Zv2wnihWJC1WDVGvG7mTHuf8b57uAaITj94d6tRPDH+sUEtXdRQQ=="
+    },
+    {
+      "path": "node_modules/@typescript-eslint/utils",
+      "before": "8.72.1",
+      "after": "8.73.0",
+      "dev": true,
+      "integrity": "sha512-j2SVJJvVkXdUL0WcEzo4vEH1mO1vIi8KlVukcYA2MgMZvYN2LlZR4PmsW+GTSxSW24j6Q/EP7+MOifLtg5hmsA=="
+    },
+    {
+      "path": "node_modules/@typescript-eslint/visitor-keys",
+      "before": "8.72.1",
+      "after": "8.73.0",
+      "dev": true,
+      "integrity": "sha512-k4lsFVpRZICbltkIEEH4hZRkwXkqDF1GHBpClKQOHQY+RkoZAAuyc1ci3I6p+CB6v3U4jaHIUshc4RzzQXZWLg=="
+    },
+    {
+      "path": "node_modules/eslint",
+      "before": "10.14.0",
+      "after": "10.15.0",
+      "dev": true,
+      "integrity": "sha512-+5Wg4p+ze3sG1WErYgUO/3H1IQIfFBymVUA0Fo/XTeBOLS6UQIUekpSJ8sdRkn7O7wjh84b55w/roqavH2aScg=="
+    },
+    {
+      "path": "node_modules/minimatch",
+      "before": "10.2.6",
+      "after": "11.0.9",
+      "dev": true,
+      "integrity": "sha512-KCFkfyjqerNlSstjlhIGNXIKZGA/6O4V4RlhZ+Dsr621SPPw0mzlypE9D9ZOoPiVefHID+j7/XuMMlqfD/F60Q=="
+    },
+    {
+      "path": "node_modules/typescript-eslint",
+      "before": "8.72.1",
+      "after": "8.73.0",
+      "dev": true,
+      "integrity": "sha512-+EnKy9rkYPun4l+kG2bDuYWQ6y1tGVgdR/tY1U9AC6h21CjEwOoc7gsjwe0FXB8uWFzk4QiCFbuRWgX758PiAg=="
+    }
+  ],
+  "productionPackageRecordsUnchanged": true,
+  "retainedCompatibleTransitives": {
+    "ignore": "7.0.14",
+    "brace-expansion": "5.0.12",
+    "semver": "7.8.5"
+  },
+  "overrides": null,
+  "registryMetadata": {
+    "eslint@10.15.0": {
+      "version": "10.15.0",
+      "engines": {
+        "node": "^20.19.0 || ^22.13.0 || >=24"
+      },
+      "dependencies": {
+        "ajv": "^6.14.0",
+        "debug": "^4.3.2",
+        "espree": "^11.2.0",
+        "ignore": "^5.2.0",
+        "esquery": "^1.7.0",
+        "esutils": "^2.0.2",
+        "find-up": "^5.0.0",
+        "is-glob": "^4.0.0",
+        "minimatch": "^11.0.5",
+        "optionator": "^0.9.3",
+        "cross-spawn": "^7.0.6",
+        "glob-parent": "^6.0.2",
+        "imurmurhash": "^0.1.4",
+        "@eslint/core": "^1.2.1",
+        "eslint-scope": "^9.1.2",
+        "@humanfs/node": "^0.16.8",
+        "@types/estree": "^1.0.6",
+        "fast-deep-equal": "^3.1.3",
+        "natural-compare": "^1.4.0",
+        "file-entry-cache": "11.1.5 || >11.1.6 <12",
+        "@eslint/plugin-kit": "^0.7.3",
+        "eslint-visitor-keys": "^5.0.1",
+        "@eslint/config-array": "^0.23.6",
+        "@humanwhocodes/retry": "^0.4.2",
+        "escape-string-regexp": "^4.0.0",
+        "@eslint/config-helpers": "^0.7.0",
+        "@eslint-community/regexpp": "^4.12.2",
+        "@eslint-community/eslint-utils": "^4.8.0",
+        "@humanwhocodes/module-importer": "^1.0.1",
+        "json-stable-stringify-without-jsonify": "^1.0.1"
+      },
+      "peerDependencies": {
+        "jiti": "*"
+      },
+      "dist.integrity": "sha512-+5Wg4p+ze3sG1WErYgUO/3H1IQIfFBymVUA0Fo/XTeBOLS6UQIUekpSJ8sdRkn7O7wjh84b55w/roqavH2aScg==",
+      "dist.tarball": "https://registry.npmjs.org/eslint/-/eslint-10.15.0.tgz",
+      "repository": {
+        "url": "git+https://github.com/eslint/eslint.git",
+        "type": "git"
+      }
+    },
+    "@eslint/config-array@0.23.6": {
+      "version": "0.23.6",
+      "engines": {
+        "node": "^20.19.0 || ^22.13.0 || >=24"
+      },
+      "dependencies": {
+        "debug": "^4.3.1",
+        "minimatch": "^11.0.5",
+        "@eslint/object-schema": "^3.0.5"
+      },
+      "dist.integrity": "sha512-WrTH7nioI9QPY4NZGnsywmecswJdgeq4BCM76qok9VgjTO29ZgUzUvcuJLVPYVQM4uDbaPBU0M33R9DIxI8X3w==",
+      "dist.tarball": "https://registry.npmjs.org/@eslint/config-array/-/config-array-0.23.6.tgz"
+    },
+    "typescript-eslint@8.73.0": {
+      "version": "8.73.0",
+      "engines": {
+        "node": "^18.18.0 || ^20.9.0 || >=21.1.0"
+      },
+      "dependencies": {
+        "@typescript-eslint/utils": "8.73.0",
+        "@typescript-eslint/parser": "8.73.0",
+        "@typescript-eslint/eslint-plugin": "8.73.0",
+        "@typescript-eslint/typescript-estree": "8.73.0"
+      },
+      "peerDependencies": {
+        "eslint": "^8.57.0 || ^9.0.0 || ^10.0.0",
+        "typescript": ">=4.8.4 <6.1.0"
+      },
+      "dist.integrity": "sha512-+EnKy9rkYPun4l+kG2bDuYWQ6y1tGVgdR/tY1U9AC6h21CjEwOoc7gsjwe0FXB8uWFzk4QiCFbuRWgX758PiAg==",
+      "dist.tarball": "https://registry.npmjs.org/typescript-eslint/-/typescript-eslint-8.73.0.tgz",
+      "repository": {
+        "url": "https://github.com/typescript-eslint/typescript-eslint.git",
+        "type": "git",
+        "directory": "packages/typescript-eslint"
+      }
+    },
+    "@typescript-eslint/typescript-estree@8.73.0": {
+      "version": "8.73.0",
+      "engines": {
+        "node": "^18.18.0 || ^20.9.0 || >=21.1.0"
+      },
+      "dependencies": {
+        "debug": "^4.4.3",
+        "semver": "^7.7.3",
+        "minimatch": "^11.0.1",
+        "tinyglobby": "^0.2.15",
+        "ts-api-utils": "^2.5.0",
+        "@typescript-eslint/types": "8.73.0",
+        "@typescript-eslint/visitor-keys": "8.73.0",
+        "@typescript-eslint/tsconfig-utils": "8.73.0",
+        "@typescript-eslint/project-service": "8.73.0"
+      },
+      "peerDependencies": {
+        "typescript": ">=4.8.4 <6.1.0",
+        "@typescript/native": "npm:typescript@>=7.1.0-dev.20261009.1 || >=7.1.0-beta <7.1.0-dev"
+      },
+      "dist.integrity": "sha512-InjlBkSdWceIwIBWSwS3ENUp+i0O02PGX3Zv2wnihWJC1WDVGvG7mTHuf8b57uAaITj94d6tRPDH+sUEtXdRQQ==",
+      "dist.tarball": "https://registry.npmjs.org/@typescript-eslint/typescript-estree/-/typescript-estree-8.73.0.tgz"
+    },
+    "minimatch@11.0.9": {
+      "version": "11.0.9",
+      "engines": {
+        "node": "20 || >=22"
+      },
+      "dependencies": {
+        "brace-expansion": "^5.0.12",
+        "@isaacs/nonrecursive-glob-match": "^1.1.0"
+      },
+      "license": "BlueOak-1.0.0",
+      "dist.integrity": "sha512-KCFkfyjqerNlSstjlhIGNXIKZGA/6O4V4RlhZ+Dsr621SPPw0mzlypE9D9ZOoPiVefHID+j7/XuMMlqfD/F60Q==",
+      "dist.tarball": "https://registry.npmjs.org/minimatch/-/minimatch-11.0.9.tgz"
+    },
+    "@isaacs/nonrecursive-glob-match@1.1.0": {
+      "version": "1.1.0",
+      "license": "BlueOak-1.0.0",
+      "scripts": {
+        "snap": "tap",
+        "test": "tap",
+        "format": "prettier --write .",
+        "prepare": "tshy && bash scripts/build.sh",
+        "presnap": "npm run prepare",
+        "pretest": "npm run prepare",
+        "typedoc": "typedoc",
+        "preversion": "npm test",
+        "postversion": "npm publish",
+        "prepublishOnly": "git push origin --follow-tags"
+      },
+      "dist.integrity": "sha512-GPm/Dbvk5RLmhRnxXIa7nTpK0xtl4E0wj0MslsuNiJ1FIROU+2+9lgUC/dgF7Ey4QCWhfEsgxilMRMCdHPfDfw==",
+      "dist.tarball": "https://registry.npmjs.org/@isaacs/nonrecursive-glob-match/-/nonrecursive-glob-match-1.1.0.tgz"
+    }
+  },
+  "validation": {
+    "lockedInstall": {
+      "command": "npm ci --ignore-scripts --no-audit --no-fund",
+      "exitCode": 0,
+      "installedPackages": 141
+    },
+    "lint": {
+      "command": "node --max-old-space-size=384 node_modules/eslint/bin/eslint.js .",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "command": "node --max-old-space-size=384 node_modules/typescript/bin/tsc --noEmit",
+      "exitCode": 2,
+      "diagnostics": 5,
+      "file": "tests/e2e/verify-export-batch-lifecycle.spec.ts",
+      "diagnosticCode": "TS2352",
+      "lines": [
+        31,
+        65,
+        70,
+        78,
+        87
+      ],
+      "note": "Required-probe Window assertions on the supplied baseline; TypeScript remains 6.0.3. The fourth bug worker repaired them in 63ffc067b9c48cc4e2fc56c0138db4005f7cb1fd and reported a passing full compiler check on that worker tree. Final combined-source qualification remains with the integration coordinator."
+    },
+    "fullAudit": {
+      "command": "npm audit --json",
+      "vulnerabilityCount": 0,
+      "report": "npm-audit-20261119-round4.json"
+    },
+    "runtimeAudit": {
+      "command": "npm audit --omit=dev --json",
+      "vulnerabilityCount": 0,
+      "report": "npm-runtime-audit-20261119-round4.json"
+    },
+    "signatures": {
+      "command": "npm audit signatures --fetch-timeout=30000 --fetch-retries=0",
+      "exitCode": 0,
+      "registrySignaturesVerified": 141,
+      "attestationsVerified": 59
+    },
+    "diffCheck": {
+      "command": "git diff --check",
+      "exitCode": 0
+    },
+    "externalBugWorkerFollowup": {
+      "commit": "63ffc067b9c48cc4e2fc56c0138db4005f7cb1fd",
+      "reportedTypecheckExit": 0,
+      "reportedTargetedLintExit": 0,
+      "reportedCollectedBrowserCases": 10,
+      "attribution": "Fourth bug-hunt worker; not rerun by this dependency lane."
+    }
+  },
+  "scopeLimits": [
+    "No claim that zero reported advisories proves absence of all dependency defects.",
+    "Signatures and attestations authenticate provenance; they are not a source security audit.",
+    "Full application unit tests, builds, native browsers, and final integrated-source qualification are coordinated separately."
+  ]
+}

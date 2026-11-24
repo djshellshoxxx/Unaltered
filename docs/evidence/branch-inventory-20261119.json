@@ -1,0 +1,3094 @@
+{
+  "schema": "unaltered.branch-review.v1",
+  "review_recorded_utc": "2026-11-20",
+  "comparison_candidate": "53f62eb70d83f92ce174e30412a4ff2ab95a85ac",
+  "scope": "Local snapshot of all actual refs/remotes/origin branches; symbolic origin/HEAD excluded. No remote mutation or qualification claim.",
+  "symbolic_ref_excluded": {
+    "ref": "refs/remotes/origin/HEAD",
+    "target": "refs/remotes/origin/main"
+  },
+  "counts": {
+    "actual_remote_branches": 94,
+    "ancestor_branches": 41,
+    "nonancestor_branches": 53,
+    "nonancestor_all_changed_blobs_identical": 6,
+    "nonancestor_documentation_only_differences": 12,
+    "nonancestor_with_product_file_differences": 35
+  },
+  "product_path_definition": [
+    "src/",
+    "scripts/",
+    "tests/",
+    "shared/",
+    ".github/",
+    "package.json",
+    "package-lock.json"
+  ],
+  "same_and_different_definition": "Paths changed from merge-base(candidate, branch) to branch, compared by their branch-tip and candidate blobs. Ancestry is a separate complete containment proof. A missing file is compared as missing, not ignored.",
+  "followup_recovery_commits": {
+    "b554ea8": "b554ea858dce9a38d3f77f9f84541246566d5ced",
+    "2eb0c12": "2eb0c1224f199db45d7cb486dea3211556cff154",
+    "d1f98de": "d1f98de81c2991477f29e8961e1bc2a168ade170",
+    "681eedd": "681eeddf2b14ebb478dd0cc3a097f49cfa5bb616",
+    "b748441": "b748441afcf826e33cb344358de601fc6eee2fc6"
+  },
+  "limits": [
+    "This snapshot is not a live PR status or remote-CI result.",
+    "A differing blob or unique patch-id is not proof of unique behavior.",
+    "Superseded means no missing applicable intended behavior found in the reviewed source/test comparison, not byte equality or a formal equivalence proof.",
+    "Historical and deferred content stays on its original branch; it has not been silently merged or deleted."
+  ],
+  "branches": [
+    {
+      "branch": "automation/api-funded-unaltered-cloud-20261103",
+      "head": "e5c9b231565f4e15258b9cb8d4309a3ef0b2503a",
+      "base": "e550b5ac83c3dee5af33701ce599f6bb2ffb09bb",
+      "ancestor": false,
+      "changed": [
+        ".github/workflows/unaltered-codex-cloud.yml"
+      ],
+      "identical": [
+        ".github/workflows/unaltered-codex-cloud.yml"
+      ],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Equivalent",
+      "review_note": "Changed workflow blob is identical. This is an inventory finding, not an activation or dispatch. E1."
+    },
+    {
+      "branch": "automation/unaltered-cloud-autointegrate-20261103",
+      "head": "d35291677bf41355160b61ae9aa9b18eff782aa3",
+      "base": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "ancestor": false,
+      "changed": [
+        ".github/workflows/unaltered-codex-cloud.yml"
+      ],
+      "identical": [],
+      "differing": [
+        ".github/workflows/unaltered-codex-cloud.yml"
+      ],
+      "product_differences": [
+        ".github/workflows/unaltered-codex-cloud.yml"
+      ],
+      "disposition": "Deferred",
+      "review_note": "PR41 has a unique automation workflow; keep separate from product consolidation and do not activate. A1.",
+      "merge_preview": {
+        "clean": true,
+        "changed": [
+          ".github/workflows/unaltered-codex-cloud.yml"
+        ],
+        "product_differences": [
+          ".github/workflows/unaltered-codex-cloud.yml"
+        ]
+      }
+    },
+    {
+      "branch": "automation/unaltered-four-parallel-agents-20261103",
+      "head": "db519a9e2c279b4f6ba58e3a4d6339723a372bd0",
+      "base": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "ancestor": false,
+      "changed": [
+        ".github/workflows/unaltered-codex-cloud.yml"
+      ],
+      "identical": [],
+      "differing": [
+        ".github/workflows/unaltered-codex-cloud.yml"
+      ],
+      "product_differences": [
+        ".github/workflows/unaltered-codex-cloud.yml"
+      ],
+      "disposition": "Deferred",
+      "review_note": "PR42 adds the four-agent automation variant; keep separate and do not activate. A1.",
+      "merge_preview": {
+        "clean": true,
+        "changed": [
+          ".github/workflows/unaltered-codex-cloud.yml"
+        ],
+        "product_differences": [
+          ".github/workflows/unaltered-codex-cloud.yml"
+        ]
+      }
+    },
+    {
+      "branch": "chatgpt/acceptance-cancellation-20261102",
+      "head": "03f3ac80cfe6f3014162967b5e05bff95ec350b6",
+      "base": "7a040323f415d0f4c1c48b84e97739451669b00f",
+      "ancestor": false,
+      "changed": [
+        "docs/gates/SCREEN_READER_SCRIPT.md",
+        "src/core/hash/hasher.ts",
+        "src/core/hash/hasher.worker.ts",
+        "src/core/hash/stream.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/e2e/hash-worker-evidence.spec.ts",
+        "tests/e2e/hash-worker-evidence.ts",
+        "tests/e2e/memory.spec.ts",
+        "tests/unit/hash.test.ts"
+      ],
+      "identical": [
+        "tests/e2e/hash-worker-evidence.ts",
+        "tests/e2e/memory.spec.ts"
+      ],
+      "differing": [
+        "docs/gates/SCREEN_READER_SCRIPT.md",
+        "src/core/hash/hasher.ts",
+        "src/core/hash/hasher.worker.ts",
+        "src/core/hash/stream.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/e2e/hash-worker-evidence.spec.ts",
+        "tests/unit/hash.test.ts"
+      ],
+      "product_differences": [
+        "src/core/hash/hasher.ts",
+        "src/core/hash/hasher.worker.ts",
+        "src/core/hash/stream.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/e2e/hash-worker-evidence.spec.ts",
+        "tests/unit/hash.test.ts"
+      ],
+      "disposition": "Superseded",
+      "review_note": "Later hash streaming, cancellation, and stall controls cover the reviewed fixes; replay conflicts with current implementation. H1.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          "src/core/hash/hasher.ts",
+          "src/core/hash/stream.ts",
+          "tests/e2e/app.spec.ts",
+          "tests/e2e/hash-worker-evidence.spec.ts",
+          "tests/unit/hash.test.ts"
+        ],
+        "product_differences": [
+          "src/core/hash/hasher.ts",
+          "src/core/hash/stream.ts",
+          "tests/e2e/app.spec.ts",
+          "tests/e2e/hash-worker-evidence.spec.ts",
+          "tests/unit/hash.test.ts"
+        ]
+      }
+    },
+    {
+      "branch": "chatgpt/accessibility-help-20261112",
+      "head": "804b38321e8faefe2850532085049c26dfd17faa",
+      "base": "804b38321e8faefe2850532085049c26dfd17faa",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "chatgpt/archival-qr-optimizer-20261108",
+      "head": "cb703a4703dc49ec20c65f19f90bbcc6e68b27cf",
+      "base": "e1e941524ab4a44b4d590d0e12ee50e472634b1a",
+      "ancestor": false,
+      "changed": [
+        ".github/workflows/ci.yml",
+        "docs/ARCHIVAL_QR_PROTOCOL.md",
+        "docs/QR_ENCODER_REUSE.md",
+        "scripts/recover-archival-qr.py",
+        "src/core/archive/frames.ts",
+        "src/core/archive/qr-encode.ts",
+        "src/core/archive/qr-plan.ts",
+        "src/core/archive/qr-print.css",
+        "src/core/archive/qr-print.ts",
+        "src/styles.css",
+        "src/ui/archival-recovery.ts",
+        "src/ui/views/stamp.ts",
+        "src/ui/views/verify.ts",
+        "src/vendor/qrcodegen.ts",
+        "tests/archival/golden-v1.hex",
+        "tests/archival/test_recover_reference.py",
+        "tests/e2e/app.spec.ts",
+        "tests/e2e/helpers.ts",
+        "tests/unit/archival-qr-encode.test.ts",
+        "tests/unit/archival-qr-frames.test.ts",
+        "tests/unit/archival-qr-plan.test.ts"
+      ],
+      "identical": [
+        "scripts/recover-archival-qr.py",
+        "src/core/archive/qr-encode.ts",
+        "src/vendor/qrcodegen.ts",
+        "tests/archival/golden-v1.hex",
+        "tests/archival/test_recover_reference.py",
+        "tests/unit/archival-qr-encode.test.ts"
+      ],
+      "differing": [
+        ".github/workflows/ci.yml",
+        "docs/ARCHIVAL_QR_PROTOCOL.md",
+        "docs/QR_ENCODER_REUSE.md",
+        "src/core/archive/frames.ts",
+        "src/core/archive/qr-plan.ts",
+        "src/core/archive/qr-print.css",
+        "src/core/archive/qr-print.ts",
+        "src/styles.css",
+        "src/ui/archival-recovery.ts",
+        "src/ui/views/stamp.ts",
+        "src/ui/views/verify.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/e2e/helpers.ts",
+        "tests/unit/archival-qr-frames.test.ts",
+        "tests/unit/archival-qr-plan.test.ts"
+      ],
+      "product_differences": [
+        ".github/workflows/ci.yml",
+        "src/core/archive/frames.ts",
+        "src/core/archive/qr-plan.ts",
+        "src/core/archive/qr-print.css",
+        "src/core/archive/qr-print.ts",
+        "src/styles.css",
+        "src/ui/archival-recovery.ts",
+        "src/ui/views/stamp.ts",
+        "src/ui/views/verify.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/e2e/helpers.ts",
+        "tests/unit/archival-qr-frames.test.ts",
+        "tests/unit/archival-qr-plan.test.ts"
+      ],
+      "disposition": "Superseded",
+      "review_note": "QR planning, printing, recovery, and fixtures have later integrated implementations with stricter bounds. Q1.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          ".github/workflows/ci.yml",
+          "docs/ARCHIVAL_QR_PROTOCOL.md",
+          "docs/QR_ENCODER_REUSE.md",
+          "src/core/archive/frames.ts",
+          "src/core/archive/qr-plan.ts",
+          "src/core/archive/qr-print.css",
+          "src/core/archive/qr-print.ts",
+          "src/styles.css",
+          "src/ui/archival-recovery.ts",
+          "src/ui/views/stamp.ts",
+          "src/ui/views/verify.ts",
+          "tests/e2e/app.spec.ts",
+          "tests/e2e/helpers.ts",
+          "tests/unit/archival-qr-frames.test.ts",
+          "tests/unit/archival-qr-plan.test.ts"
+        ],
+        "product_differences": [
+          ".github/workflows/ci.yml",
+          "src/core/archive/frames.ts",
+          "src/core/archive/qr-plan.ts",
+          "src/core/archive/qr-print.css",
+          "src/core/archive/qr-print.ts",
+          "src/styles.css",
+          "src/ui/archival-recovery.ts",
+          "src/ui/views/stamp.ts",
+          "src/ui/views/verify.ts",
+          "tests/e2e/app.spec.ts",
+          "tests/e2e/helpers.ts",
+          "tests/unit/archival-qr-frames.test.ts",
+          "tests/unit/archival-qr-plan.test.ts"
+        ]
+      }
+    },
+    {
+      "branch": "chatgpt/archival-qr-protocol-phase1-20261108",
+      "head": "ab46b7ae6f8af78d5aff439db1acf76753e0f849",
+      "base": "e1e941524ab4a44b4d590d0e12ee50e472634b1a",
+      "ancestor": false,
+      "changed": [
+        "docs/ARCHIVAL_QR_PROTOCOL.md",
+        "src/core/archive/frames.ts",
+        "tests/unit/archival-qr-frames.test.ts"
+      ],
+      "identical": [],
+      "differing": [
+        "docs/ARCHIVAL_QR_PROTOCOL.md",
+        "src/core/archive/frames.ts",
+        "tests/unit/archival-qr-frames.test.ts"
+      ],
+      "product_differences": [
+        "src/core/archive/frames.ts",
+        "tests/unit/archival-qr-frames.test.ts"
+      ],
+      "disposition": "Superseded",
+      "review_note": "Initial frame transport is represented by the current guarded frame protocol and independent vectors. Q1.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          "docs/ARCHIVAL_QR_PROTOCOL.md",
+          "src/core/archive/frames.ts",
+          "tests/unit/archival-qr-frames.test.ts"
+        ],
+        "product_differences": [
+          "src/core/archive/frames.ts",
+          "tests/unit/archival-qr-frames.test.ts"
+        ]
+      }
+    },
+    {
+      "branch": "chatgpt/browser-compat-20261112",
+      "head": "010d6b028ac9ca6a7a642149ce024b295c3fc0da",
+      "base": "010d6b028ac9ca6a7a642149ce024b295c3fc0da",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "chatgpt/calendar-evidence-20261102",
+      "head": "76caf3e84c940ca902540686d4c891e820862fbb",
+      "base": "76caf3e84c940ca902540686d4c891e820862fbb",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "chatgpt/cli-docs-20261112",
+      "head": "9ae07434d809554c1c3a4275cde898d058e5dae1",
+      "base": "9ae07434d809554c1c3a4275cde898d058e5dae1",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "chatgpt/context-help-language-menu-20261108",
+      "head": "9eacdd93ef2c8276a20b8038096dcc5448dae211",
+      "base": "7b62c660b4b585c0e651151e738f260a171095a5",
+      "ancestor": false,
+      "changed": [
+        "src/main.ts",
+        "src/styles.css",
+        "src/ui/strings.ts",
+        "src/ui/views/about.ts",
+        "src/ui/views/settings.ts",
+        "src/ui/views/verify.ts",
+        "tests/e2e/app.spec.ts"
+      ],
+      "identical": [],
+      "differing": [
+        "src/main.ts",
+        "src/styles.css",
+        "src/ui/strings.ts",
+        "src/ui/views/about.ts",
+        "src/ui/views/settings.ts",
+        "src/ui/views/verify.ts",
+        "tests/e2e/app.spec.ts"
+      ],
+      "product_differences": [
+        "src/main.ts",
+        "src/styles.css",
+        "src/ui/strings.ts",
+        "src/ui/views/about.ts",
+        "src/ui/views/settings.ts",
+        "src/ui/views/verify.ts",
+        "tests/e2e/app.spec.ts"
+      ],
+      "disposition": "Superseded",
+      "review_note": "PR64 help behavior restored in `41e6314`; radio language controls retain the documented WebKit/CSP compatibility decision. U1.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          "src/main.ts",
+          "src/styles.css",
+          "src/ui/strings.ts",
+          "src/ui/views/about.ts",
+          "src/ui/views/settings.ts",
+          "src/ui/views/verify.ts",
+          "tests/e2e/app.spec.ts"
+        ],
+        "product_differences": [
+          "src/main.ts",
+          "src/styles.css",
+          "src/ui/strings.ts",
+          "src/ui/views/about.ts",
+          "src/ui/views/settings.ts",
+          "src/ui/views/verify.ts",
+          "tests/e2e/app.spec.ts"
+        ]
+      }
+    },
+    {
+      "branch": "chatgpt/docs-refresh-20261112",
+      "head": "29a828df8320de5d504d04ab533e6586dd40429d",
+      "base": "29a828df8320de5d504d04ab533e6586dd40429d",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "chatgpt/evidence-report-phase1-20261108",
+      "head": "4a2b253e31a14af15c058fd05effc6ff98d73ee8",
+      "base": "4d3b3ab1097e7bf6ba5a203d607b9638cc4dd01f",
+      "ancestor": false,
+      "changed": [
+        "src/core/net/capability.ts",
+        "src/core/reports/batch-pair.ts",
+        "src/core/reports/batch-verify.ts",
+        "src/core/reports/evidence-manifest.ts",
+        "src/core/reports/evidence-zip.ts",
+        "src/core/reports/receipt-dashboard.ts",
+        "src/core/reports/verification.ts",
+        "src/index.html",
+        "src/main.ts",
+        "src/ui/strings.ts",
+        "src/ui/views/settings.ts",
+        "src/ui/views/verify.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/unit/batch-pair.test.ts",
+        "tests/unit/batch-verify.test.ts",
+        "tests/unit/evidence-manifest.test.ts",
+        "tests/unit/evidence-zip.test.ts",
+        "tests/unit/network-capability.test.ts",
+        "tests/unit/receipt-dashboard.test.ts",
+        "tests/unit/verification-report.test.ts"
+      ],
+      "identical": [
+        "src/core/reports/evidence-manifest.ts",
+        "tests/unit/evidence-manifest.test.ts"
+      ],
+      "differing": [
+        "src/core/net/capability.ts",
+        "src/core/reports/batch-pair.ts",
+        "src/core/reports/batch-verify.ts",
+        "src/core/reports/evidence-zip.ts",
+        "src/core/reports/receipt-dashboard.ts",
+        "src/core/reports/verification.ts",
+        "src/index.html",
+        "src/main.ts",
+        "src/ui/strings.ts",
+        "src/ui/views/settings.ts",
+        "src/ui/views/verify.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/unit/batch-pair.test.ts",
+        "tests/unit/batch-verify.test.ts",
+        "tests/unit/evidence-zip.test.ts",
+        "tests/unit/network-capability.test.ts",
+        "tests/unit/receipt-dashboard.test.ts",
+        "tests/unit/verification-report.test.ts"
+      ],
+      "product_differences": [
+        "src/core/net/capability.ts",
+        "src/core/reports/batch-pair.ts",
+        "src/core/reports/batch-verify.ts",
+        "src/core/reports/evidence-zip.ts",
+        "src/core/reports/receipt-dashboard.ts",
+        "src/core/reports/verification.ts",
+        "src/index.html",
+        "src/main.ts",
+        "src/ui/strings.ts",
+        "src/ui/views/settings.ts",
+        "src/ui/views/verify.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/unit/batch-pair.test.ts",
+        "tests/unit/batch-verify.test.ts",
+        "tests/unit/evidence-zip.test.ts",
+        "tests/unit/network-capability.test.ts",
+        "tests/unit/receipt-dashboard.test.ts",
+        "tests/unit/verification-report.test.ts"
+      ],
+      "disposition": "Superseded",
+      "review_note": "Reports, batch matching, dashboard, and capability features are present with later snapshot, cancellation, and bounds fixes. R1.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          "src/core/net/capability.ts",
+          "src/core/reports/batch-pair.ts",
+          "src/core/reports/batch-verify.ts",
+          "src/core/reports/evidence-zip.ts",
+          "src/core/reports/receipt-dashboard.ts",
+          "src/core/reports/verification.ts",
+          "src/index.html",
+          "src/main.ts",
+          "src/ui/views/verify.ts",
+          "tests/unit/batch-pair.test.ts",
+          "tests/unit/batch-verify.test.ts",
+          "tests/unit/evidence-zip.test.ts",
+          "tests/unit/network-capability.test.ts",
+          "tests/unit/receipt-dashboard.test.ts",
+          "tests/unit/verification-report.test.ts"
+        ],
+        "product_differences": [
+          "src/core/net/capability.ts",
+          "src/core/reports/batch-pair.ts",
+          "src/core/reports/batch-verify.ts",
+          "src/core/reports/evidence-zip.ts",
+          "src/core/reports/receipt-dashboard.ts",
+          "src/core/reports/verification.ts",
+          "src/index.html",
+          "src/main.ts",
+          "src/ui/views/verify.ts",
+          "tests/unit/batch-pair.test.ts",
+          "tests/unit/batch-verify.test.ts",
+          "tests/unit/evidence-zip.test.ts",
+          "tests/unit/network-capability.test.ts",
+          "tests/unit/receipt-dashboard.test.ts",
+          "tests/unit/verification-report.test.ts"
+        ]
+      }
+    },
+    {
+      "branch": "chatgpt/localization-20261112",
+      "head": "0b91691169a459c803ac30ddcd308dd0393e394f",
+      "base": "0b91691169a459c803ac30ddcd308dd0393e394f",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "chatgpt/modern-ui-refresh-20261108",
+      "head": "3a0a4b07b2986dadac019850adfb63d39c49456c",
+      "base": "5d54257a587473b3e5e52353b113ee134b3eff56",
+      "ancestor": false,
+      "changed": [
+        "src/core/net/capability.ts",
+        "src/styles.css",
+        "tests/unit/network-capability.test.ts"
+      ],
+      "identical": [
+        "src/core/net/capability.ts",
+        "tests/unit/network-capability.test.ts"
+      ],
+      "differing": [
+        "src/styles.css"
+      ],
+      "product_differences": [
+        "src/styles.css"
+      ],
+      "disposition": "Superseded",
+      "review_note": "Two changed blobs are identical; only earlier CSS differs. Later presentation retains product behavior. U1.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          "src/styles.css"
+        ],
+        "product_differences": [
+          "src/styles.css"
+        ]
+      }
+    },
+    {
+      "branch": "chatgpt/pages-beta-ux-20261108",
+      "head": "9ca6454a0da2b9616842784f7e2a3f238c16f205",
+      "base": "e1e941524ab4a44b4d590d0e12ee50e472634b1a",
+      "ancestor": false,
+      "changed": [
+        "src/index.html",
+        "src/main.ts",
+        "src/styles.css",
+        "src/ui/views/about.ts",
+        "tests/toolkit/build-output.test.mjs"
+      ],
+      "identical": [],
+      "differing": [
+        "src/index.html",
+        "src/main.ts",
+        "src/styles.css",
+        "src/ui/views/about.ts",
+        "tests/toolkit/build-output.test.mjs"
+      ],
+      "product_differences": [
+        "src/index.html",
+        "src/main.ts",
+        "src/styles.css",
+        "src/ui/views/about.ts",
+        "tests/toolkit/build-output.test.mjs"
+      ],
+      "disposition": "Superseded",
+      "review_note": "PR58 landing/process guide/help intent is represented by current Pages presentation and contextual help. U1.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          "src/index.html",
+          "src/main.ts",
+          "src/styles.css",
+          "src/ui/views/about.ts",
+          "tests/toolkit/build-output.test.mjs"
+        ],
+        "product_differences": [
+          "src/index.html",
+          "src/main.ts",
+          "src/styles.css",
+          "src/ui/views/about.ts",
+          "tests/toolkit/build-output.test.mjs"
+        ]
+      }
+    },
+    {
+      "branch": "chatgpt/pages-presentation-preserve-features-20261112",
+      "head": "c8d87770b5b40e520bf346cb0f080da67c4b348f",
+      "base": "c8d87770b5b40e520bf346cb0f080da67c4b348f",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "chatgpt/pages-readiness-npm-cache-20261105",
+      "head": "092829b8a57e01acaf4c2ca257c79ed5c311906e",
+      "base": "1b896212131ede3b6143b60d2af61357cddcdb86",
+      "ancestor": false,
+      "changed": [
+        ".github/workflows/pages-readiness.yml"
+      ],
+      "identical": [],
+      "differing": [
+        ".github/workflows/pages-readiness.yml"
+      ],
+      "product_differences": [
+        ".github/workflows/pages-readiness.yml"
+      ],
+      "disposition": "Recovered",
+      "review_note": "PR53 contained one missing cache setting; recovered in `b554ea8` and kept consistent across publication/template steps in `2eb0c12`. C1.",
+      "merge_preview": {
+        "clean": true,
+        "changed": [
+          ".github/workflows/pages-readiness.yml"
+        ],
+        "product_differences": [
+          ".github/workflows/pages-readiness.yml"
+        ]
+      }
+    },
+    {
+      "branch": "chatgpt/pages-release-automation-20261112",
+      "head": "d11a1c66f483da6a20482df300da77ba5426b1bd",
+      "base": "d11a1c66f483da6a20482df300da77ba5426b1bd",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "chatgpt/paper-search-sort-parameter-20261104",
+      "head": "dde46eab7d1dfdaace9579cee004053c82568412",
+      "base": "d9b4fdc379b4e8d834c05ea6c7328806dc3c2fac",
+      "ancestor": false,
+      "changed": [
+        ".github/workflows/ci.yml",
+        "HANDOFF.md",
+        "docs/BRANCH_LEDGER_20261104.md",
+        "docs/DEPENDENCIES.md",
+        "docs/FUZZING.md",
+        "docs/TODO.md",
+        "docs/diagnostics/read-stall-ab-20261102.md",
+        "docs/evidence/fuzz-20261104-ext-20261105.json",
+        "docs/prompts/CONSOLIDATE_PARALLEL_20261104.md",
+        "skills/paper-search/scripts/search.sh",
+        "tests/toolkit/test_search_sort_20261104.py",
+        "tests/unit/hash-cancel-residual.test.ts"
+      ],
+      "identical": [
+        "docs/BRANCH_LEDGER_20261104.md",
+        "docs/diagnostics/read-stall-ab-20261102.md",
+        "docs/evidence/fuzz-20261104-ext-20261105.json",
+        "docs/prompts/CONSOLIDATE_PARALLEL_20261104.md",
+        "skills/paper-search/scripts/search.sh",
+        "tests/toolkit/test_search_sort_20261104.py"
+      ],
+      "differing": [
+        ".github/workflows/ci.yml",
+        "HANDOFF.md",
+        "docs/DEPENDENCIES.md",
+        "docs/FUZZING.md",
+        "docs/TODO.md",
+        "tests/unit/hash-cancel-residual.test.ts"
+      ],
+      "product_differences": [
+        ".github/workflows/ci.yml",
+        "tests/unit/hash-cancel-residual.test.ts"
+      ],
+      "disposition": "Superseded",
+      "review_note": "Search sort script and regression test are among six identical changed blobs; other differences are earlier CI/hash tests and notes. R2.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          ".github/workflows/ci.yml",
+          "HANDOFF.md",
+          "docs/DEPENDENCIES.md",
+          "tests/unit/hash-cancel-residual.test.ts"
+        ],
+        "product_differences": [
+          ".github/workflows/ci.yml",
+          "tests/unit/hash-cancel-residual.test.ts"
+        ]
+      }
+    },
+    {
+      "branch": "chatgpt/qr-recovery-favicon-integration-20261108",
+      "head": "177cd3298156ce933e68bcab56f256caca3cb0f7",
+      "base": "7b62c660b4b585c0e651151e738f260a171095a5",
+      "ancestor": false,
+      "changed": [
+        ".github/workflows/qr-qualification.yml",
+        "docs/ARCHIVAL_QR_PROTOCOL.md",
+        "docs/DEPENDENCIES.md",
+        "docs/QR_ENCODER_REUSE.md",
+        "docs/QR_INTEGRATION_VALIDATION.md",
+        "docs/superpowers/plans/2026-11-08-qr-recovery-favicon.md",
+        "package-lock.json",
+        "package.json",
+        "playwright.qr.config.ts",
+        "scripts/build.mjs",
+        "scripts/recover-archival-qr.py",
+        "src/assets/favicon.png.b64",
+        "src/core/archive/frames.ts",
+        "src/core/archive/qr-capacities.ts",
+        "src/core/archive/qr-decode.ts",
+        "src/core/archive/qr-encode.ts",
+        "src/core/archive/qr-image.ts",
+        "src/core/archive/qr-limits.ts",
+        "src/core/archive/qr-plan.ts",
+        "src/core/archive/qr-print.css",
+        "src/core/archive/qr-print.ts",
+        "src/core/archive/qr-scan.ts",
+        "src/core/archive/qr-scan.worker.ts",
+        "src/core/hash/hasher.ts",
+        "src/index.html",
+        "src/main.ts",
+        "src/ui/archival-certificate.ts",
+        "src/ui/archival-recovery.ts",
+        "src/ui/archive-strings.ts",
+        "src/ui/archive-tools.ts",
+        "src/ui/dom.ts",
+        "src/ui/favicon.ts",
+        "src/ui/views/stamp.ts",
+        "src/vendor/qrcodegen-LICENSE.txt",
+        "src/vendor/qrcodegen.ts",
+        "tests/archival/golden-v1.hex",
+        "tests/archival/test_recover_reference.py",
+        "tests/e2e/archival-qr.spec.ts",
+        "tests/e2e/favicon.spec.ts",
+        "tests/e2e/serve.mjs",
+        "tests/helpers/archival-receipt.ts",
+        "tests/helpers/qr-raster.ts",
+        "tests/qualification/qr-pdf.spec.ts",
+        "tests/toolkit/build-output.test.mjs",
+        "tests/unit/archival-qr-decode.test.ts",
+        "tests/unit/archival-qr-encode.test.ts",
+        "tests/unit/archival-qr-frames.test.ts",
+        "tests/unit/archival-qr-plan.test.ts",
+        "tests/unit/distributed-license.test.ts",
+        "tests/unit/favicon.test.ts",
+        "tests/unit/main-routing.test.ts",
+        "tests/unit/qr-image-bounds.test.ts",
+        "tests/unit/qr-scan-worker.test.ts",
+        "tests/unit/ui-dom.test.ts"
+      ],
+      "identical": [
+        "docs/QR_ENCODER_REUSE.md",
+        "docs/superpowers/plans/2026-11-08-qr-recovery-favicon.md",
+        "scripts/recover-archival-qr.py",
+        "src/assets/favicon.png.b64",
+        "src/core/archive/qr-capacities.ts",
+        "src/core/archive/qr-encode.ts",
+        "src/core/archive/qr-limits.ts",
+        "src/core/hash/hasher.ts",
+        "src/ui/favicon.ts",
+        "src/vendor/qrcodegen-LICENSE.txt",
+        "src/vendor/qrcodegen.ts",
+        "tests/archival/golden-v1.hex",
+        "tests/archival/test_recover_reference.py",
+        "tests/e2e/favicon.spec.ts",
+        "tests/e2e/serve.mjs",
+        "tests/helpers/archival-receipt.ts",
+        "tests/helpers/qr-raster.ts",
+        "tests/qualification/qr-pdf.spec.ts",
+        "tests/unit/archival-qr-decode.test.ts",
+        "tests/unit/archival-qr-encode.test.ts",
+        "tests/unit/distributed-license.test.ts",
+        "tests/unit/favicon.test.ts",
+        "tests/unit/main-routing.test.ts",
+        "tests/unit/qr-image-bounds.test.ts",
+        "tests/unit/ui-dom.test.ts"
+      ],
+      "differing": [
+        ".github/workflows/qr-qualification.yml",
+        "docs/ARCHIVAL_QR_PROTOCOL.md",
+        "docs/DEPENDENCIES.md",
+        "docs/QR_INTEGRATION_VALIDATION.md",
+        "package-lock.json",
+        "package.json",
+        "playwright.qr.config.ts",
+        "scripts/build.mjs",
+        "src/core/archive/frames.ts",
+        "src/core/archive/qr-decode.ts",
+        "src/core/archive/qr-image.ts",
+        "src/core/archive/qr-plan.ts",
+        "src/core/archive/qr-print.css",
+        "src/core/archive/qr-print.ts",
+        "src/core/archive/qr-scan.ts",
+        "src/core/archive/qr-scan.worker.ts",
+        "src/index.html",
+        "src/main.ts",
+        "src/ui/archival-certificate.ts",
+        "src/ui/archival-recovery.ts",
+        "src/ui/archive-strings.ts",
+        "src/ui/archive-tools.ts",
+        "src/ui/dom.ts",
+        "src/ui/views/stamp.ts",
+        "tests/e2e/archival-qr.spec.ts",
+        "tests/toolkit/build-output.test.mjs",
+        "tests/unit/archival-qr-frames.test.ts",
+        "tests/unit/archival-qr-plan.test.ts",
+        "tests/unit/qr-scan-worker.test.ts"
+      ],
+      "product_differences": [
+        ".github/workflows/qr-qualification.yml",
+        "package-lock.json",
+        "package.json",
+        "scripts/build.mjs",
+        "src/core/archive/frames.ts",
+        "src/core/archive/qr-decode.ts",
+        "src/core/archive/qr-image.ts",
+        "src/core/archive/qr-plan.ts",
+        "src/core/archive/qr-print.css",
+        "src/core/archive/qr-print.ts",
+        "src/core/archive/qr-scan.ts",
+        "src/core/archive/qr-scan.worker.ts",
+        "src/index.html",
+        "src/main.ts",
+        "src/ui/archival-certificate.ts",
+        "src/ui/archival-recovery.ts",
+        "src/ui/archive-strings.ts",
+        "src/ui/archive-tools.ts",
+        "src/ui/dom.ts",
+        "src/ui/views/stamp.ts",
+        "tests/e2e/archival-qr.spec.ts",
+        "tests/toolkit/build-output.test.mjs",
+        "tests/unit/archival-qr-frames.test.ts",
+        "tests/unit/archival-qr-plan.test.ts",
+        "tests/unit/qr-scan-worker.test.ts"
+      ],
+      "disposition": "Superseded",
+      "review_note": "QR recovery/favicon stack has later integrated hardened implementations; 25 changed blobs already identical. Q1.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          ".github/workflows/qr-qualification.yml",
+          "docs/ARCHIVAL_QR_PROTOCOL.md",
+          "docs/DEPENDENCIES.md",
+          "docs/QR_INTEGRATION_VALIDATION.md",
+          "playwright.qr.config.ts",
+          "src/core/archive/frames.ts",
+          "src/core/archive/qr-decode.ts",
+          "src/core/archive/qr-image.ts",
+          "src/core/archive/qr-plan.ts",
+          "src/core/archive/qr-print.css",
+          "src/core/archive/qr-print.ts",
+          "src/core/archive/qr-scan.ts",
+          "src/core/archive/qr-scan.worker.ts",
+          "src/main.ts",
+          "src/ui/archival-certificate.ts",
+          "src/ui/archival-recovery.ts",
+          "src/ui/archive-strings.ts",
+          "src/ui/archive-tools.ts",
+          "src/ui/views/stamp.ts",
+          "tests/e2e/archival-qr.spec.ts",
+          "tests/toolkit/build-output.test.mjs",
+          "tests/unit/archival-qr-frames.test.ts",
+          "tests/unit/archival-qr-plan.test.ts",
+          "tests/unit/qr-scan-worker.test.ts"
+        ],
+        "product_differences": [
+          ".github/workflows/qr-qualification.yml",
+          "src/core/archive/frames.ts",
+          "src/core/archive/qr-decode.ts",
+          "src/core/archive/qr-image.ts",
+          "src/core/archive/qr-plan.ts",
+          "src/core/archive/qr-print.css",
+          "src/core/archive/qr-print.ts",
+          "src/core/archive/qr-scan.ts",
+          "src/core/archive/qr-scan.worker.ts",
+          "src/main.ts",
+          "src/ui/archival-certificate.ts",
+          "src/ui/archival-recovery.ts",
+          "src/ui/archive-strings.ts",
+          "src/ui/archive-tools.ts",
+          "src/ui/views/stamp.ts",
+          "tests/e2e/archival-qr.spec.ts",
+          "tests/toolkit/build-output.test.mjs",
+          "tests/unit/archival-qr-frames.test.ts",
+          "tests/unit/archival-qr-plan.test.ts",
+          "tests/unit/qr-scan-worker.test.ts"
+        ]
+      }
+    },
+    {
+      "branch": "chatgpt/repeat-file-selection-fix-20261108",
+      "head": "72c796707413371bad31dc6f7877c8a6269e5f5d",
+      "base": "7b62c660b4b585c0e651151e738f260a171095a5",
+      "ancestor": false,
+      "changed": [
+        "src/ui/dom.ts",
+        "tests/e2e/app.spec.ts"
+      ],
+      "identical": [],
+      "differing": [
+        "src/ui/dom.ts",
+        "tests/e2e/app.spec.ts"
+      ],
+      "product_differences": [
+        "src/ui/dom.ts",
+        "tests/e2e/app.spec.ts"
+      ],
+      "disposition": "Superseded",
+      "review_note": "Current dropZone resets input before callbacks and retains repeat-selection regression coverage. U1.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          "src/ui/dom.ts",
+          "tests/e2e/app.spec.ts"
+        ],
+        "product_differences": [
+          "src/ui/dom.ts",
+          "tests/e2e/app.spec.ts"
+        ]
+      }
+    },
+    {
+      "branch": "chatgpt/seo-hardening-20261112",
+      "head": "7fddeb6a7f2c9cdea17385926314418a835fc17e",
+      "base": "7fddeb6a7f2c9cdea17385926314418a835fc17e",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "chatgpt/unaltered-cdl-seo-20261108",
+      "head": "311ec02425cbdc176b94c9e9f265d125b7a529f6",
+      "base": "7b62c660b4b585c0e651151e738f260a171095a5",
+      "ancestor": false,
+      "changed": [
+        "scripts/build.mjs",
+        "src/index.html",
+        "src/styles.css",
+        "tests/unit/cdl-seo.test.ts"
+      ],
+      "identical": [],
+      "differing": [
+        "scripts/build.mjs",
+        "src/index.html",
+        "src/styles.css",
+        "tests/unit/cdl-seo.test.ts"
+      ],
+      "product_differences": [
+        "scripts/build.mjs",
+        "src/index.html",
+        "src/styles.css",
+        "tests/unit/cdl-seo.test.ts"
+      ],
+      "disposition": "Superseded",
+      "review_note": "PR63 visual identity and hosted metadata intent represented by later presentation/SEO work; portable archives remain portable. U1.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          "scripts/build.mjs",
+          "src/index.html",
+          "src/styles.css",
+          "tests/unit/cdl-seo.test.ts"
+        ],
+        "product_differences": [
+          "scripts/build.mjs",
+          "src/index.html",
+          "src/styles.css",
+          "tests/unit/cdl-seo.test.ts"
+        ]
+      }
+    },
+    {
+      "branch": "chatgpt/zero-codex-continuation-spec-20261109",
+      "head": "5b03393f90e7b37141832b4470c44f67f0384707",
+      "base": "556fc2d49a4bbc005babd0094c9233ae4ad418ad",
+      "ancestor": false,
+      "changed": [
+        "docs/CHATGPT_ZERO_CODEX_CONTINUATION.md"
+      ],
+      "identical": [
+        "docs/CHATGPT_ZERO_CODEX_CONTINUATION.md"
+      ],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Equivalent",
+      "review_note": "The sole changed continuation-spec file is identical. E1."
+    },
+    {
+      "branch": "chatgpt/zero-codex/audit-png-20261110",
+      "head": "3f3086e4fa710fc9fe74b9746e57e63aca21ae88",
+      "base": "556fc2d49a4bbc005babd0094c9233ae4ad418ad",
+      "ancestor": false,
+      "changed": [
+        "docs/audits/CHATGPT_RANDOM_AUDIT_LEDGER.md"
+      ],
+      "identical": [
+        "docs/audits/CHATGPT_RANDOM_AUDIT_LEDGER.md"
+      ],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Equivalent",
+      "review_note": "The sole changed audit-ledger file is identical. E1."
+    },
+    {
+      "branch": "chatgpt/zero-codex/batch-cancel-result-20261110",
+      "head": "64a7a821374c3575fb65f85c85b2435caccabcdf",
+      "base": "556fc2d49a4bbc005babd0094c9233ae4ad418ad",
+      "ancestor": false,
+      "changed": [
+        "docs/handoff/CHATGPT_ZERO_CODEX_LATEST.md",
+        "src/core/reports/batch-verify.ts",
+        "tests/unit/batch-verify.test.ts"
+      ],
+      "identical": [
+        "src/core/reports/batch-verify.ts",
+        "tests/unit/batch-verify.test.ts"
+      ],
+      "differing": [
+        "docs/handoff/CHATGPT_ZERO_CODEX_LATEST.md"
+      ],
+      "product_differences": [],
+      "disposition": "Represented",
+      "review_note": "Both source/test blobs identical; only rolling historical handoff differs. R1."
+    },
+    {
+      "branch": "chatgpt/zero-codex/batch-empty-names-20261110",
+      "head": "6dfcfdfd6d2d34504177ce15a333be79ed04db47",
+      "base": "556fc2d49a4bbc005babd0094c9233ae4ad418ad",
+      "ancestor": false,
+      "changed": [
+        "docs/handoff/CHATGPT_ZERO_CODEX_LATEST.md",
+        "src/core/reports/batch-pair.ts",
+        "tests/unit/batch-pair.test.ts"
+      ],
+      "identical": [
+        "src/core/reports/batch-pair.ts",
+        "tests/unit/batch-pair.test.ts"
+      ],
+      "differing": [
+        "docs/handoff/CHATGPT_ZERO_CODEX_LATEST.md"
+      ],
+      "product_differences": [],
+      "disposition": "Represented",
+      "review_note": "Both source/test blobs identical; only rolling historical handoff differs. R1."
+    },
+    {
+      "branch": "chatgpt/zero-codex/dashboard-time-order-20261110",
+      "head": "a2f0c62d065d79521ad1b468ab6274fe5659cf6c",
+      "base": "556fc2d49a4bbc005babd0094c9233ae4ad418ad",
+      "ancestor": false,
+      "changed": [
+        "docs/handoff/CHATGPT_ZERO_CODEX_LATEST.md",
+        "src/core/reports/receipt-dashboard.ts",
+        "tests/unit/receipt-dashboard.test.ts"
+      ],
+      "identical": [
+        "src/core/reports/receipt-dashboard.ts",
+        "tests/unit/receipt-dashboard.test.ts"
+      ],
+      "differing": [
+        "docs/handoff/CHATGPT_ZERO_CODEX_LATEST.md"
+      ],
+      "product_differences": [],
+      "disposition": "Represented",
+      "review_note": "Both source/test blobs identical; only rolling historical handoff differs. R1."
+    },
+    {
+      "branch": "chatgpt/zero-codex/docs-wiki-20261110",
+      "head": "260719ebe141243b32931b67b0b2ab30744dde2d",
+      "base": "556fc2d49a4bbc005babd0094c9233ae4ad418ad",
+      "ancestor": false,
+      "changed": [
+        "docs/handoff/CHATGPT_ZERO_CODEX_LATEST.md",
+        "docs/handoffs/CHATGPT_DOCS_MAINTENANCE_LATEST.md",
+        "docs/wiki/Developer-Guide.md",
+        "docs/wiki/Home.md",
+        "docs/wiki/Toolkit-Developer-Guide.md",
+        "docs/wiki/Toolkit-User-Guide.md",
+        "docs/wiki/User-Guide.md",
+        "docs/wiki/_Sidebar.md"
+      ],
+      "identical": [
+        "docs/handoffs/CHATGPT_DOCS_MAINTENANCE_LATEST.md",
+        "docs/wiki/Home.md",
+        "docs/wiki/_Sidebar.md"
+      ],
+      "differing": [
+        "docs/handoff/CHATGPT_ZERO_CODEX_LATEST.md",
+        "docs/wiki/Developer-Guide.md",
+        "docs/wiki/Toolkit-Developer-Guide.md",
+        "docs/wiki/Toolkit-User-Guide.md",
+        "docs/wiki/User-Guide.md"
+      ],
+      "product_differences": [],
+      "disposition": "Superseded",
+      "review_note": "Three changed files identical; five wiki/handoff files differ from later maintained documentation. Preserve old history. D1."
+    },
+    {
+      "branch": "chatgpt/zero-codex/evidence-zip-snapshot-20261110",
+      "head": "aa2382bfeff2ea376dca7c96cc65b62447dd3ce7",
+      "base": "556fc2d49a4bbc005babd0094c9233ae4ad418ad",
+      "ancestor": false,
+      "changed": [
+        "docs/handoff/CHATGPT_ZERO_CODEX_LATEST.md",
+        "src/core/reports/evidence-zip.ts",
+        "tests/unit/evidence-zip.test.ts"
+      ],
+      "identical": [
+        "src/core/reports/evidence-zip.ts",
+        "tests/unit/evidence-zip.test.ts"
+      ],
+      "differing": [
+        "docs/handoff/CHATGPT_ZERO_CODEX_LATEST.md"
+      ],
+      "product_differences": [],
+      "disposition": "Represented",
+      "review_note": "Both source/test blobs identical; only rolling historical handoff differs. R1."
+    },
+    {
+      "branch": "chatgpt/zero-codex/qr-plan-page-limit-20261110",
+      "head": "90031b315cd85cfa75d0f85e471f8c1640dff64e",
+      "base": "556fc2d49a4bbc005babd0094c9233ae4ad418ad",
+      "ancestor": false,
+      "changed": [
+        "docs/handoff/CHATGPT_ZERO_CODEX_LATEST.md",
+        "src/core/archive/qr-plan.ts",
+        "tests/unit/archival-qr-plan.test.ts"
+      ],
+      "identical": [
+        "src/core/archive/qr-plan.ts",
+        "tests/unit/archival-qr-plan.test.ts"
+      ],
+      "differing": [
+        "docs/handoff/CHATGPT_ZERO_CODEX_LATEST.md"
+      ],
+      "product_differences": [],
+      "disposition": "Represented",
+      "review_note": "Both planner/test blobs identical; only rolling historical handoff differs. Q1."
+    },
+    {
+      "branch": "claude/busy-albattani-o9cgal",
+      "head": "05f9628fe39fcba1fad4471d15c7d5527c72a524",
+      "base": "7b62c660b4b585c0e651151e738f260a171095a5",
+      "ancestor": false,
+      "changed": [
+        ".github/workflows/qr-qualification.yml",
+        "docs/ARCHIVAL_QR_PROTOCOL.md",
+        "docs/DEPENDENCIES.md",
+        "docs/QR_ENCODER_REUSE.md",
+        "docs/QR_INTEGRATION_VALIDATION.md",
+        "docs/superpowers/plans/2026-11-08-qr-recovery-favicon.md",
+        "package-lock.json",
+        "package.json",
+        "playwright.qr.config.ts",
+        "scripts/build.mjs",
+        "scripts/recover-archival-qr.py",
+        "src/assets/favicon.png.b64",
+        "src/core/archive/frames.ts",
+        "src/core/archive/qr-capacities.ts",
+        "src/core/archive/qr-decode.ts",
+        "src/core/archive/qr-encode.ts",
+        "src/core/archive/qr-image.ts",
+        "src/core/archive/qr-limits.ts",
+        "src/core/archive/qr-plan.ts",
+        "src/core/archive/qr-print.css",
+        "src/core/archive/qr-print.ts",
+        "src/core/archive/qr-scan.ts",
+        "src/core/archive/qr-scan.worker.ts",
+        "src/core/hash/hasher.ts",
+        "src/index.html",
+        "src/main.ts",
+        "src/ui/archival-certificate.ts",
+        "src/ui/archival-recovery.ts",
+        "src/ui/archive-strings.ts",
+        "src/ui/archive-tools.ts",
+        "src/ui/dom.ts",
+        "src/ui/favicon.ts",
+        "src/ui/views/stamp.ts",
+        "src/vendor/qrcodegen-LICENSE.txt",
+        "src/vendor/qrcodegen.ts",
+        "tests/archival/golden-v1.hex",
+        "tests/archival/test_recover_reference.py",
+        "tests/e2e/archival-qr.spec.ts",
+        "tests/e2e/favicon.spec.ts",
+        "tests/e2e/serve.mjs",
+        "tests/helpers/archival-receipt.ts",
+        "tests/helpers/qr-raster.ts",
+        "tests/qualification/qr-pdf.spec.ts",
+        "tests/toolkit/build-output.test.mjs",
+        "tests/unit/archival-qr-decode.test.ts",
+        "tests/unit/archival-qr-encode.test.ts",
+        "tests/unit/archival-qr-frames.test.ts",
+        "tests/unit/archival-qr-plan.test.ts",
+        "tests/unit/archival-qr-print-scale.test.ts",
+        "tests/unit/distributed-license.test.ts",
+        "tests/unit/favicon.test.ts",
+        "tests/unit/main-routing.test.ts",
+        "tests/unit/qr-image-bounds.test.ts",
+        "tests/unit/qr-scan-worker.test.ts",
+        "tests/unit/ui-dom.test.ts"
+      ],
+      "identical": [
+        "docs/QR_ENCODER_REUSE.md",
+        "docs/superpowers/plans/2026-11-08-qr-recovery-favicon.md",
+        "playwright.qr.config.ts",
+        "scripts/recover-archival-qr.py",
+        "src/assets/favicon.png.b64",
+        "src/core/archive/qr-capacities.ts",
+        "src/core/archive/qr-encode.ts",
+        "src/core/archive/qr-limits.ts",
+        "src/core/archive/qr-print.css",
+        "src/core/archive/qr-scan.ts",
+        "src/core/hash/hasher.ts",
+        "src/ui/favicon.ts",
+        "src/vendor/qrcodegen-LICENSE.txt",
+        "src/vendor/qrcodegen.ts",
+        "tests/archival/golden-v1.hex",
+        "tests/archival/test_recover_reference.py",
+        "tests/e2e/archival-qr.spec.ts",
+        "tests/e2e/favicon.spec.ts",
+        "tests/e2e/serve.mjs",
+        "tests/helpers/archival-receipt.ts",
+        "tests/helpers/qr-raster.ts",
+        "tests/qualification/qr-pdf.spec.ts",
+        "tests/unit/archival-qr-decode.test.ts",
+        "tests/unit/archival-qr-encode.test.ts",
+        "tests/unit/archival-qr-print-scale.test.ts",
+        "tests/unit/distributed-license.test.ts",
+        "tests/unit/favicon.test.ts",
+        "tests/unit/main-routing.test.ts",
+        "tests/unit/qr-image-bounds.test.ts",
+        "tests/unit/qr-scan-worker.test.ts",
+        "tests/unit/ui-dom.test.ts"
+      ],
+      "differing": [
+        ".github/workflows/qr-qualification.yml",
+        "docs/ARCHIVAL_QR_PROTOCOL.md",
+        "docs/DEPENDENCIES.md",
+        "docs/QR_INTEGRATION_VALIDATION.md",
+        "package-lock.json",
+        "package.json",
+        "scripts/build.mjs",
+        "src/core/archive/frames.ts",
+        "src/core/archive/qr-decode.ts",
+        "src/core/archive/qr-image.ts",
+        "src/core/archive/qr-plan.ts",
+        "src/core/archive/qr-print.ts",
+        "src/core/archive/qr-scan.worker.ts",
+        "src/index.html",
+        "src/main.ts",
+        "src/ui/archival-certificate.ts",
+        "src/ui/archival-recovery.ts",
+        "src/ui/archive-strings.ts",
+        "src/ui/archive-tools.ts",
+        "src/ui/dom.ts",
+        "src/ui/views/stamp.ts",
+        "tests/toolkit/build-output.test.mjs",
+        "tests/unit/archival-qr-frames.test.ts",
+        "tests/unit/archival-qr-plan.test.ts"
+      ],
+      "product_differences": [
+        ".github/workflows/qr-qualification.yml",
+        "package-lock.json",
+        "package.json",
+        "scripts/build.mjs",
+        "src/core/archive/frames.ts",
+        "src/core/archive/qr-decode.ts",
+        "src/core/archive/qr-image.ts",
+        "src/core/archive/qr-plan.ts",
+        "src/core/archive/qr-print.ts",
+        "src/core/archive/qr-scan.worker.ts",
+        "src/index.html",
+        "src/main.ts",
+        "src/ui/archival-certificate.ts",
+        "src/ui/archival-recovery.ts",
+        "src/ui/archive-strings.ts",
+        "src/ui/archive-tools.ts",
+        "src/ui/dom.ts",
+        "src/ui/views/stamp.ts",
+        "tests/toolkit/build-output.test.mjs",
+        "tests/unit/archival-qr-frames.test.ts",
+        "tests/unit/archival-qr-plan.test.ts"
+      ],
+      "disposition": "Superseded",
+      "review_note": "Earlier QR consolidation stack is represented by current modules; 31 changed blobs already identical. Q1.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          ".github/workflows/qr-qualification.yml",
+          "docs/ARCHIVAL_QR_PROTOCOL.md",
+          "docs/DEPENDENCIES.md",
+          "docs/QR_INTEGRATION_VALIDATION.md",
+          "src/core/archive/frames.ts",
+          "src/core/archive/qr-decode.ts",
+          "src/core/archive/qr-image.ts",
+          "src/core/archive/qr-plan.ts",
+          "src/core/archive/qr-print.ts",
+          "src/core/archive/qr-scan.worker.ts",
+          "src/main.ts",
+          "src/ui/archival-certificate.ts",
+          "src/ui/archival-recovery.ts",
+          "src/ui/archive-strings.ts",
+          "src/ui/archive-tools.ts",
+          "src/ui/views/stamp.ts",
+          "tests/toolkit/build-output.test.mjs",
+          "tests/unit/archival-qr-frames.test.ts",
+          "tests/unit/archival-qr-plan.test.ts"
+        ],
+        "product_differences": [
+          ".github/workflows/qr-qualification.yml",
+          "src/core/archive/frames.ts",
+          "src/core/archive/qr-decode.ts",
+          "src/core/archive/qr-image.ts",
+          "src/core/archive/qr-plan.ts",
+          "src/core/archive/qr-print.ts",
+          "src/core/archive/qr-scan.worker.ts",
+          "src/main.ts",
+          "src/ui/archival-certificate.ts",
+          "src/ui/archival-recovery.ts",
+          "src/ui/archive-strings.ts",
+          "src/ui/archive-tools.ts",
+          "src/ui/views/stamp.ts",
+          "tests/toolkit/build-output.test.mjs",
+          "tests/unit/archival-qr-frames.test.ts",
+          "tests/unit/archival-qr-plan.test.ts"
+        ]
+      }
+    },
+    {
+      "branch": "claude/cool-einstein-ekcvh3",
+      "head": "733079e3af5fe8f92bdc5cb077da78f2579aed84",
+      "base": "66f67dc33fc2f4671502e60004e80b19449592cf",
+      "ancestor": false,
+      "changed": [
+        "HANDOFF.md",
+        "docs/CLAUDE_TAKEOVER.md",
+        "docs/NETWORK.md",
+        "docs/R1_BOB_FINNEY_TEMPLATE.md",
+        "docs/gates/SCREEN_READER_SCRIPT.md",
+        "docs/gates/SPANISH_STRINGS_20261030.md",
+        "package.json",
+        "scripts/lib/r1-calendars.mjs",
+        "scripts/r1-bob-finney.mjs",
+        "tests/r1/r1-calendars.test.mjs"
+      ],
+      "identical": [],
+      "differing": [
+        "HANDOFF.md",
+        "docs/CLAUDE_TAKEOVER.md",
+        "docs/NETWORK.md",
+        "docs/R1_BOB_FINNEY_TEMPLATE.md",
+        "docs/gates/SCREEN_READER_SCRIPT.md",
+        "docs/gates/SPANISH_STRINGS_20261030.md",
+        "package.json",
+        "scripts/lib/r1-calendars.mjs",
+        "scripts/r1-bob-finney.mjs",
+        "tests/r1/r1-calendars.test.mjs"
+      ],
+      "product_differences": [
+        "package.json",
+        "scripts/lib/r1-calendars.mjs",
+        "scripts/r1-bob-finney.mjs",
+        "tests/r1/r1-calendars.test.mjs"
+      ],
+      "disposition": "Superseded",
+      "review_note": "Later calendar parser and per-target reference evidence replace older global/byte-search diagnostics. N1.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          "HANDOFF.md",
+          "docs/CLAUDE_TAKEOVER.md",
+          "docs/NETWORK.md",
+          "docs/R1_BOB_FINNEY_TEMPLATE.md",
+          "docs/gates/SCREEN_READER_SCRIPT.md",
+          "docs/gates/SPANISH_STRINGS_20261030.md",
+          "package.json",
+          "scripts/lib/r1-calendars.mjs",
+          "scripts/r1-bob-finney.mjs",
+          "tests/r1/r1-calendars.test.mjs"
+        ],
+        "product_differences": [
+          "package.json",
+          "scripts/lib/r1-calendars.mjs",
+          "scripts/r1-bob-finney.mjs",
+          "tests/r1/r1-calendars.test.mjs"
+        ]
+      }
+    },
+    {
+      "branch": "claude/docs-screenshots",
+      "head": "903e425a86e7bc57b4dad945a96d45ccc37df1d0",
+      "base": "903e425a86e7bc57b4dad945a96d45ccc37df1d0",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "claude/friendly-faraday-papf5c",
+      "head": "c4723d4974fd03c2adbe3f0a99b4bfe30b865a49",
+      "base": "da9b0a3626e702381f2ad1d1b1d4cd3128fde2dd",
+      "ancestor": false,
+      "changed": [
+        ".github/workflows/ci.yml",
+        "HANDOFF.md",
+        "src/core/hash/stream.ts",
+        "tests/e2e/memory.spec.ts",
+        "tests/unit/hash.test.ts"
+      ],
+      "identical": [],
+      "differing": [
+        ".github/workflows/ci.yml",
+        "HANDOFF.md",
+        "src/core/hash/stream.ts",
+        "tests/e2e/memory.spec.ts",
+        "tests/unit/hash.test.ts"
+      ],
+      "product_differences": [
+        ".github/workflows/ci.yml",
+        "src/core/hash/stream.ts",
+        "tests/e2e/memory.spec.ts",
+        "tests/unit/hash.test.ts"
+      ],
+      "disposition": "Superseded",
+      "review_note": "Original silence-based watchdog behavior is retained with later cancellation/read protections. H1.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          ".github/workflows/ci.yml",
+          "HANDOFF.md",
+          "src/core/hash/stream.ts",
+          "tests/e2e/memory.spec.ts"
+        ],
+        "product_differences": [
+          ".github/workflows/ci.yml",
+          "src/core/hash/stream.ts",
+          "tests/e2e/memory.spec.ts"
+        ]
+      }
+    },
+    {
+      "branch": "claude/funny-lamport-2jfc0e",
+      "head": "2592675cb55b58f079a3059907eba1187d7e8865",
+      "base": "2592675cb55b58f079a3059907eba1187d7e8865",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "claude/great-darwin-elcc18",
+      "head": "c4e43c7b9ca0704bd0526a5317e49ff3749125e0",
+      "base": "556fc2d49a4bbc005babd0094c9233ae4ad418ad",
+      "ancestor": false,
+      "changed": [
+        "HANDOFF.md",
+        "README.md",
+        "docs/CLI.md",
+        "docs/RELEASE.md",
+        "docs/TODO.md",
+        "docs/handoff/CLAUDE-CLI-PARITY-20261110.md",
+        "src/cli/run.ts",
+        "src/core/archive/qr-print.ts",
+        "tests/unit/archival-certificate-evidence.test.ts",
+        "tests/unit/cli-parity.test.ts"
+      ],
+      "identical": [
+        "src/cli/run.ts",
+        "tests/unit/cli-parity.test.ts"
+      ],
+      "differing": [
+        "HANDOFF.md",
+        "README.md",
+        "docs/CLI.md",
+        "docs/RELEASE.md",
+        "docs/TODO.md",
+        "docs/handoff/CLAUDE-CLI-PARITY-20261110.md",
+        "src/core/archive/qr-print.ts",
+        "tests/unit/archival-certificate-evidence.test.ts"
+      ],
+      "product_differences": [
+        "src/core/archive/qr-print.ts",
+        "tests/unit/archival-certificate-evidence.test.ts"
+      ],
+      "disposition": "Represented",
+      "review_note": "PR71 CLI implementation and parity test blobs identical; current certificate source validation additionally normalizes URLs and rejects sparse arrays. R2/Q1.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          "HANDOFF.md",
+          "README.md",
+          "docs/CLI.md",
+          "docs/RELEASE.md",
+          "docs/TODO.md",
+          "docs/handoff/CLAUDE-CLI-PARITY-20261110.md",
+          "src/core/archive/qr-print.ts",
+          "tests/unit/archival-certificate-evidence.test.ts"
+        ],
+        "product_differences": [
+          "src/core/archive/qr-print.ts",
+          "tests/unit/archival-certificate-evidence.test.ts"
+        ]
+      }
+    },
+    {
+      "branch": "claude/hash-stall-progress",
+      "head": "0d4f465652d86bdfd41ee73447b4ce93e3be818f",
+      "base": "9f06c46d061f8a0f67d8684b6c9c6cbbd163242d",
+      "ancestor": false,
+      "changed": [
+        "src/core/hash/stream.ts",
+        "tests/unit/hash.test.ts"
+      ],
+      "identical": [],
+      "differing": [
+        "src/core/hash/stream.ts",
+        "tests/unit/hash.test.ts"
+      ],
+      "product_differences": [
+        "src/core/hash/stream.ts",
+        "tests/unit/hash.test.ts"
+      ],
+      "disposition": "Superseded",
+      "review_note": "Progress-aware stall semantics retained in current streaming implementation and later regression coverage. H1.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          "src/core/hash/stream.ts",
+          "tests/unit/hash.test.ts"
+        ],
+        "product_differences": [
+          "src/core/hash/stream.ts",
+          "tests/unit/hash.test.ts"
+        ]
+      }
+    },
+    {
+      "branch": "claude/hopeful-franklin-r1ey6w",
+      "head": "560bb400a57221853e1679e85a84ad0c661ab00c",
+      "base": "560bb400a57221853e1679e85a84ad0c661ab00c",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "claude/integration-branch-setup-kfre6o",
+      "head": "9d07238f3b706b036a90001bf352be6cc9a5baad",
+      "base": "9d07238f3b706b036a90001bf352be6cc9a5baad",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "claude/language-switch-tests",
+      "head": "4968f4026512b8fe8db0787b3c8bfcb8aebd590a",
+      "base": "595fd06891346d88d9339cf7448569b023c59b68",
+      "ancestor": false,
+      "changed": [
+        "docs/proposals/LANGUAGE_SWITCH.md",
+        "tests/e2e/language-switch.spec.ts"
+      ],
+      "identical": [
+        "docs/proposals/LANGUAGE_SWITCH.md",
+        "tests/e2e/language-switch.spec.ts"
+      ],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Equivalent",
+      "review_note": "Both changed test files are identical. E1."
+    },
+    {
+      "branch": "claude/peaceful-curie-u239yn",
+      "head": "4c5dcc44ac0d306276c2e2af9505f02ecc4e6e8f",
+      "base": "4c5dcc44ac0d306276c2e2af9505f02ecc4e6e8f",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "claude/pending-receipt-cors",
+      "head": "0151ca54868df1f95eb145f741e6b50383844065",
+      "base": "595fd06891346d88d9339cf7448569b023c59b68",
+      "ancestor": false,
+      "changed": [
+        "docs/NETWORK.md",
+        "src/core/ots/calendar.ts",
+        "src/ui/strings.ts",
+        "src/ui/views/verify.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/e2e/helpers.ts",
+        "tests/unit/ots-flow.test.ts"
+      ],
+      "identical": [
+        "tests/e2e/helpers.ts"
+      ],
+      "differing": [
+        "docs/NETWORK.md",
+        "src/core/ots/calendar.ts",
+        "src/ui/strings.ts",
+        "src/ui/views/verify.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/unit/ots-flow.test.ts"
+      ],
+      "product_differences": [
+        "src/core/ots/calendar.ts",
+        "src/ui/strings.ts",
+        "src/ui/views/verify.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/unit/ots-flow.test.ts"
+      ],
+      "disposition": "Superseded",
+      "review_note": "Current unreadable-pending wording and canary evidence avoid false pending claims; later reference fallback retained. N1.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          "docs/NETWORK.md",
+          "src/core/ots/calendar.ts",
+          "src/ui/strings.ts",
+          "src/ui/views/verify.ts",
+          "tests/e2e/app.spec.ts",
+          "tests/unit/ots-flow.test.ts"
+        ],
+        "product_differences": [
+          "src/core/ots/calendar.ts",
+          "src/ui/strings.ts",
+          "src/ui/views/verify.ts",
+          "tests/e2e/app.spec.ts",
+          "tests/unit/ots-flow.test.ts"
+        ]
+      }
+    },
+    {
+      "branch": "claude/project-completion-builds-vhvag8",
+      "head": "e740d90d9a71cd0754079d129b5b18b5b45da5f9",
+      "base": "e740d90d9a71cd0754079d129b5b18b5b45da5f9",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "claude/quirky-meitner-0jr3pz",
+      "head": "d74bb6167e90d7f768ef3f99b58fe4ccdca849f3",
+      "base": "556fc2d49a4bbc005babd0094c9233ae4ad418ad",
+      "ancestor": false,
+      "changed": [
+        "HANDOFF.md",
+        "docs/BRANCH_LEDGER_20261104.md",
+        "docs/DEPENDENCIES.md",
+        "docs/FUZZING.md",
+        "docs/TODO.md",
+        "docs/diagnostics/read-stall-ab-20261102.md",
+        "docs/evidence/fuzz-20261104-ext-20261105.json",
+        "docs/prompts/CONSOLIDATE_PARALLEL_20261104.md"
+      ],
+      "identical": [
+        "docs/BRANCH_LEDGER_20261104.md",
+        "docs/diagnostics/read-stall-ab-20261102.md",
+        "docs/evidence/fuzz-20261104-ext-20261105.json",
+        "docs/prompts/CONSOLIDATE_PARALLEL_20261104.md"
+      ],
+      "differing": [
+        "HANDOFF.md",
+        "docs/DEPENDENCIES.md",
+        "docs/FUZZING.md",
+        "docs/TODO.md"
+      ],
+      "product_differences": [],
+      "disposition": "Represented",
+      "review_note": "Four changed blobs identical; only four historical handoff/dependency/fuzzing/TODO notes differ. D1."
+    },
+    {
+      "branch": "claude/responsiveness-flake",
+      "head": "6a9fdcef3c2a4d34fc9b808ef4ba49afe1579ed3",
+      "base": "6a9fdcef3c2a4d34fc9b808ef4ba49afe1579ed3",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "claude/specs-and-plan",
+      "head": "9db67d694005aec772072d7c5c223d601381ceae",
+      "base": "9db67d694005aec772072d7c5c223d601381ceae",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "claude/stoic-mccarthy-m7xpb8",
+      "head": "21bf07bf99dad4a7aee3cd47aac13e2031f40160",
+      "base": "21bf07bf99dad4a7aee3cd47aac13e2031f40160",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "claude/sweet-hypatia-vp4syp",
+      "head": "78c1b0cef81c67b8979a7732ee0d71c54241dc76",
+      "base": "9db67d694005aec772072d7c5c223d601381ceae",
+      "ancestor": false,
+      "changed": [
+        ".gitignore",
+        ".npmrc",
+        "desktop/main.cjs",
+        "desktop/policy.cjs",
+        "eslint.config.js",
+        "package-lock.json",
+        "package.json",
+        "playwright.desktop.config.ts",
+        "scripts/build-windows.mjs",
+        "src/core/bytes.ts",
+        "src/core/config.ts",
+        "src/core/errors.ts",
+        "src/core/hash/hasher.ts",
+        "src/core/net/allowlist.ts",
+        "src/core/ots/index.ts",
+        "src/core/strip/index.ts",
+        "tests/desktop/shell.spec.ts",
+        "tests/fixtures/ots/README.md",
+        "tests/fixtures/ots/bad-stamp.txt",
+        "tests/fixtures/ots/bad-stamp.txt.ots",
+        "tests/fixtures/ots/different-blockchains.txt",
+        "tests/fixtures/ots/different-blockchains.txt.ots",
+        "tests/fixtures/ots/empty",
+        "tests/fixtures/ots/empty.ots",
+        "tests/fixtures/ots/hello-world.txt",
+        "tests/fixtures/ots/hello-world.txt.ots",
+        "tests/fixtures/ots/incomplete.txt",
+        "tests/fixtures/ots/incomplete.txt.ots",
+        "tests/fixtures/ots/invalid/bad-major-version.ots",
+        "tests/fixtures/ots/invalid/exceeds-max-msg-length.ots",
+        "tests/fixtures/ots/invalid/invalid-file-digest-type.ots",
+        "tests/fixtures/ots/known-and-unknown-notary.txt",
+        "tests/fixtures/ots/known-and-unknown-notary.txt.ots",
+        "tests/fixtures/ots/merkle1.txt",
+        "tests/fixtures/ots/merkle1.txt.ots",
+        "tests/fixtures/ots/merkle2.txt",
+        "tests/fixtures/ots/merkle2.txt.ots",
+        "tests/fixtures/ots/two-calendars.txt",
+        "tests/fixtures/ots/two-calendars.txt.ots",
+        "tests/fixtures/ots/unknown-notary.txt",
+        "tests/fixtures/ots/unknown-notary.txt.ots",
+        "tests/unit/bytes.test.ts",
+        "tests/unit/desktop/policy.test.ts",
+        "tsconfig.json",
+        "tsconfig.test.json",
+        "vitest.config.ts"
+      ],
+      "identical": [],
+      "differing": [
+        ".gitignore",
+        ".npmrc",
+        "desktop/main.cjs",
+        "desktop/policy.cjs",
+        "eslint.config.js",
+        "package-lock.json",
+        "package.json",
+        "playwright.desktop.config.ts",
+        "scripts/build-windows.mjs",
+        "src/core/bytes.ts",
+        "src/core/config.ts",
+        "src/core/errors.ts",
+        "src/core/hash/hasher.ts",
+        "src/core/net/allowlist.ts",
+        "src/core/ots/index.ts",
+        "src/core/strip/index.ts",
+        "tests/desktop/shell.spec.ts",
+        "tests/fixtures/ots/README.md",
+        "tests/fixtures/ots/bad-stamp.txt",
+        "tests/fixtures/ots/bad-stamp.txt.ots",
+        "tests/fixtures/ots/different-blockchains.txt",
+        "tests/fixtures/ots/different-blockchains.txt.ots",
+        "tests/fixtures/ots/empty",
+        "tests/fixtures/ots/empty.ots",
+        "tests/fixtures/ots/hello-world.txt",
+        "tests/fixtures/ots/hello-world.txt.ots",
+        "tests/fixtures/ots/incomplete.txt",
+        "tests/fixtures/ots/incomplete.txt.ots",
+        "tests/fixtures/ots/invalid/bad-major-version.ots",
+        "tests/fixtures/ots/invalid/exceeds-max-msg-length.ots",
+        "tests/fixtures/ots/invalid/invalid-file-digest-type.ots",
+        "tests/fixtures/ots/known-and-unknown-notary.txt",
+        "tests/fixtures/ots/known-and-unknown-notary.txt.ots",
+        "tests/fixtures/ots/merkle1.txt",
+        "tests/fixtures/ots/merkle1.txt.ots",
+        "tests/fixtures/ots/merkle2.txt",
+        "tests/fixtures/ots/merkle2.txt.ots",
+        "tests/fixtures/ots/two-calendars.txt",
+        "tests/fixtures/ots/two-calendars.txt.ots",
+        "tests/fixtures/ots/unknown-notary.txt",
+        "tests/fixtures/ots/unknown-notary.txt.ots",
+        "tests/unit/bytes.test.ts",
+        "tests/unit/desktop/policy.test.ts",
+        "tsconfig.json",
+        "tsconfig.test.json",
+        "vitest.config.ts"
+      ],
+      "product_differences": [
+        "package-lock.json",
+        "package.json",
+        "scripts/build-windows.mjs",
+        "src/core/bytes.ts",
+        "src/core/config.ts",
+        "src/core/errors.ts",
+        "src/core/hash/hasher.ts",
+        "src/core/net/allowlist.ts",
+        "src/core/ots/index.ts",
+        "src/core/strip/index.ts",
+        "tests/desktop/shell.spec.ts",
+        "tests/fixtures/ots/README.md",
+        "tests/fixtures/ots/bad-stamp.txt",
+        "tests/fixtures/ots/bad-stamp.txt.ots",
+        "tests/fixtures/ots/different-blockchains.txt",
+        "tests/fixtures/ots/different-blockchains.txt.ots",
+        "tests/fixtures/ots/empty",
+        "tests/fixtures/ots/empty.ots",
+        "tests/fixtures/ots/hello-world.txt",
+        "tests/fixtures/ots/hello-world.txt.ots",
+        "tests/fixtures/ots/incomplete.txt",
+        "tests/fixtures/ots/incomplete.txt.ots",
+        "tests/fixtures/ots/invalid/bad-major-version.ots",
+        "tests/fixtures/ots/invalid/exceeds-max-msg-length.ots",
+        "tests/fixtures/ots/invalid/invalid-file-digest-type.ots",
+        "tests/fixtures/ots/known-and-unknown-notary.txt",
+        "tests/fixtures/ots/known-and-unknown-notary.txt.ots",
+        "tests/fixtures/ots/merkle1.txt",
+        "tests/fixtures/ots/merkle1.txt.ots",
+        "tests/fixtures/ots/merkle2.txt",
+        "tests/fixtures/ots/merkle2.txt.ots",
+        "tests/fixtures/ots/two-calendars.txt",
+        "tests/fixtures/ots/two-calendars.txt.ots",
+        "tests/fixtures/ots/unknown-notary.txt",
+        "tests/fixtures/ots/unknown-notary.txt.ots",
+        "tests/unit/bytes.test.ts",
+        "tests/unit/desktop/policy.test.ts"
+      ],
+      "disposition": "Architecture deferred",
+      "review_note": "Native wrapper/standalone executable conflicts with accepted ADR009/011; no missing applicable product fix found in reviewed foundation. D2.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          ".gitignore",
+          ".npmrc",
+          "desktop/main.cjs",
+          "desktop/policy.cjs",
+          "eslint.config.js",
+          "package-lock.json",
+          "package.json",
+          "playwright.desktop.config.ts",
+          "scripts/build-windows.mjs",
+          "src/core/bytes.ts",
+          "src/core/config.ts",
+          "src/core/errors.ts",
+          "src/core/hash/hasher.ts",
+          "src/core/net/allowlist.ts",
+          "src/core/ots/index.ts",
+          "src/core/strip/index.ts",
+          "tests/desktop/shell.spec.ts",
+          "tests/fixtures/ots/README.md",
+          "tests/fixtures/ots/bad-stamp.txt",
+          "tests/fixtures/ots/bad-stamp.txt.ots",
+          "tests/fixtures/ots/different-blockchains.txt",
+          "tests/fixtures/ots/different-blockchains.txt.ots",
+          "tests/fixtures/ots/empty",
+          "tests/fixtures/ots/empty.ots",
+          "tests/fixtures/ots/hello-world.txt",
+          "tests/fixtures/ots/hello-world.txt.ots",
+          "tests/fixtures/ots/incomplete.txt",
+          "tests/fixtures/ots/incomplete.txt.ots",
+          "tests/fixtures/ots/invalid/bad-major-version.ots",
+          "tests/fixtures/ots/invalid/exceeds-max-msg-length.ots",
+          "tests/fixtures/ots/invalid/invalid-file-digest-type.ots",
+          "tests/fixtures/ots/known-and-unknown-notary.txt",
+          "tests/fixtures/ots/known-and-unknown-notary.txt.ots",
+          "tests/fixtures/ots/merkle1.txt",
+          "tests/fixtures/ots/merkle1.txt.ots",
+          "tests/fixtures/ots/merkle2.txt",
+          "tests/fixtures/ots/merkle2.txt.ots",
+          "tests/fixtures/ots/two-calendars.txt",
+          "tests/fixtures/ots/two-calendars.txt.ots",
+          "tests/fixtures/ots/unknown-notary.txt",
+          "tests/fixtures/ots/unknown-notary.txt.ots",
+          "tests/unit/bytes.test.ts",
+          "tests/unit/desktop/policy.test.ts",
+          "tsconfig.json",
+          "tsconfig.test.json",
+          "vitest.config.ts"
+        ],
+        "product_differences": [
+          "package-lock.json",
+          "package.json",
+          "scripts/build-windows.mjs",
+          "src/core/bytes.ts",
+          "src/core/config.ts",
+          "src/core/errors.ts",
+          "src/core/hash/hasher.ts",
+          "src/core/net/allowlist.ts",
+          "src/core/ots/index.ts",
+          "src/core/strip/index.ts",
+          "tests/desktop/shell.spec.ts",
+          "tests/fixtures/ots/README.md",
+          "tests/fixtures/ots/bad-stamp.txt",
+          "tests/fixtures/ots/bad-stamp.txt.ots",
+          "tests/fixtures/ots/different-blockchains.txt",
+          "tests/fixtures/ots/different-blockchains.txt.ots",
+          "tests/fixtures/ots/empty",
+          "tests/fixtures/ots/empty.ots",
+          "tests/fixtures/ots/hello-world.txt",
+          "tests/fixtures/ots/hello-world.txt.ots",
+          "tests/fixtures/ots/incomplete.txt",
+          "tests/fixtures/ots/incomplete.txt.ots",
+          "tests/fixtures/ots/invalid/bad-major-version.ots",
+          "tests/fixtures/ots/invalid/exceeds-max-msg-length.ots",
+          "tests/fixtures/ots/invalid/invalid-file-digest-type.ots",
+          "tests/fixtures/ots/known-and-unknown-notary.txt",
+          "tests/fixtures/ots/known-and-unknown-notary.txt.ots",
+          "tests/fixtures/ots/merkle1.txt",
+          "tests/fixtures/ots/merkle1.txt.ots",
+          "tests/fixtures/ots/merkle2.txt",
+          "tests/fixtures/ots/merkle2.txt.ots",
+          "tests/fixtures/ots/two-calendars.txt",
+          "tests/fixtures/ots/two-calendars.txt.ots",
+          "tests/fixtures/ots/unknown-notary.txt",
+          "tests/fixtures/ots/unknown-notary.txt.ots",
+          "tests/unit/bytes.test.ts",
+          "tests/unit/desktop/policy.test.ts"
+        ]
+      }
+    },
+    {
+      "branch": "claude/tender-maxwell-pqw6jc",
+      "head": "18cfbdd97ae35c444691b00eadf0f92ed7832090",
+      "base": "6ff1cbd490222356edfc1cb02656db5a802f5f2b",
+      "ancestor": false,
+      "changed": [
+        "docs/handoff/stopped-run-20261111/README.md",
+        "docs/handoff/stopped-run-20261111/notes-a1.md",
+        "docs/handoff/stopped-run-20261111/notes-a2.md",
+        "docs/handoff/stopped-run-20261111/notes-b.md",
+        "docs/handoff/stopped-run-20261111/notes-c.md",
+        "docs/handoff/stopped-run-20261111/notes-d1.md",
+        "docs/handoff/stopped-run-20261111/notes-d2.md",
+        "docs/handoff/stopped-run-20261111/partial-c.patch",
+        "docs/handoff/stopped-run-20261111/partial-d1.patch",
+        "docs/handoff/stopped-run-20261111/partial-d2.patch"
+      ],
+      "identical": [],
+      "differing": [
+        "docs/handoff/stopped-run-20261111/README.md",
+        "docs/handoff/stopped-run-20261111/notes-a1.md",
+        "docs/handoff/stopped-run-20261111/notes-a2.md",
+        "docs/handoff/stopped-run-20261111/notes-b.md",
+        "docs/handoff/stopped-run-20261111/notes-c.md",
+        "docs/handoff/stopped-run-20261111/notes-d1.md",
+        "docs/handoff/stopped-run-20261111/notes-d2.md",
+        "docs/handoff/stopped-run-20261111/partial-c.patch",
+        "docs/handoff/stopped-run-20261111/partial-d1.patch",
+        "docs/handoff/stopped-run-20261111/partial-d2.patch"
+      ],
+      "product_differences": [],
+      "disposition": "Historical",
+      "review_note": "Ten stopped-run notes/partial patches explicitly unreviewed; preserve for provenance, do not apply unfinished patches. D1."
+    },
+    {
+      "branch": "claude/unaltered-continuation-20261029",
+      "head": "a602126c92acbc2f052c15b7992eb3c593309007",
+      "base": "a602126c92acbc2f052c15b7992eb3c593309007",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "claude/zealous-wozniak-ey71lr",
+      "head": "00e390db8faa71a22aac03eb97575dbfad43fe8e",
+      "base": "00e390db8faa71a22aac03eb97575dbfad43fe8e",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "codex/accepted-gates-20261028",
+      "head": "d124dd47971fdff1ef600e27e918d7421f1cbec3",
+      "base": "d124dd47971fdff1ef600e27e918d7421f1cbec3",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "codex/audit-preparation-20261030",
+      "head": "926e75b41eea8735fe1fe09263f9035e7b5c5c25",
+      "base": "da9b0a3626e702381f2ad1d1b1d4cd3128fde2dd",
+      "ancestor": false,
+      "changed": [
+        ".github/workflows/ci.yml",
+        "HANDOFF.md",
+        "docs/BRANCH_LEDGER_20261030.md",
+        "docs/COMPLETION_STATUS.md",
+        "docs/CONSOLIDATION_20261030.md",
+        "docs/DEPENDENCIES.md",
+        "docs/FINAL_HANDOFF_20261030.md",
+        "docs/NETWORK.md",
+        "docs/R1_ACCEPTANCE.md",
+        "docs/REVIEW_CONSOLIDATION_20261030.md",
+        "docs/TODO.md",
+        "docs/evidence/consolidation-20261030-logs.zip",
+        "docs/evidence/consolidation-20261030.json",
+        "docs/gates/SCREEN_READER_SCRIPT.md",
+        "docs/gates/SPANISH_STRINGS_20261030.md",
+        "docs/proposals/LANGUAGE_SWITCH.md",
+        "src/core/hash/hasher.ts",
+        "src/core/hash/stream.ts",
+        "src/core/ots/calendar.ts",
+        "src/ui/strings.ts",
+        "src/ui/views/verify.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/e2e/helpers.ts",
+        "tests/e2e/language-switch.spec.ts",
+        "tests/e2e/memory.spec.ts",
+        "tests/unit/hash.test.ts",
+        "tests/unit/ots-flow.test.ts"
+      ],
+      "identical": [
+        "docs/BRANCH_LEDGER_20261030.md",
+        "docs/CONSOLIDATION_20261030.md",
+        "docs/FINAL_HANDOFF_20261030.md",
+        "docs/REVIEW_CONSOLIDATION_20261030.md",
+        "docs/evidence/consolidation-20261030-logs.zip",
+        "docs/evidence/consolidation-20261030.json",
+        "docs/gates/SPANISH_STRINGS_20261030.md",
+        "docs/proposals/LANGUAGE_SWITCH.md",
+        "tests/e2e/helpers.ts",
+        "tests/e2e/language-switch.spec.ts",
+        "tests/unit/ots-flow.test.ts"
+      ],
+      "differing": [
+        ".github/workflows/ci.yml",
+        "HANDOFF.md",
+        "docs/COMPLETION_STATUS.md",
+        "docs/DEPENDENCIES.md",
+        "docs/NETWORK.md",
+        "docs/R1_ACCEPTANCE.md",
+        "docs/TODO.md",
+        "docs/gates/SCREEN_READER_SCRIPT.md",
+        "src/core/hash/hasher.ts",
+        "src/core/hash/stream.ts",
+        "src/core/ots/calendar.ts",
+        "src/ui/strings.ts",
+        "src/ui/views/verify.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/e2e/memory.spec.ts",
+        "tests/unit/hash.test.ts"
+      ],
+      "product_differences": [
+        ".github/workflows/ci.yml",
+        "src/core/hash/hasher.ts",
+        "src/core/hash/stream.ts",
+        "src/core/ots/calendar.ts",
+        "src/ui/strings.ts",
+        "src/ui/views/verify.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/e2e/memory.spec.ts",
+        "tests/unit/hash.test.ts"
+      ],
+      "disposition": "Superseded",
+      "review_note": "Earlier integration and qualification work is represented by later hash/OTS/verification/gate implementations. H1/Q1/N1.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          ".github/workflows/ci.yml",
+          "HANDOFF.md",
+          "docs/COMPLETION_STATUS.md",
+          "docs/DEPENDENCIES.md",
+          "docs/NETWORK.md",
+          "docs/TODO.md",
+          "docs/gates/SCREEN_READER_SCRIPT.md",
+          "src/core/hash/hasher.ts",
+          "src/core/hash/stream.ts",
+          "src/core/ots/calendar.ts",
+          "src/ui/strings.ts",
+          "src/ui/views/verify.ts",
+          "tests/e2e/app.spec.ts",
+          "tests/e2e/memory.spec.ts",
+          "tests/unit/hash.test.ts"
+        ],
+        "product_differences": [
+          ".github/workflows/ci.yml",
+          "src/core/hash/hasher.ts",
+          "src/core/hash/stream.ts",
+          "src/core/ots/calendar.ts",
+          "src/ui/strings.ts",
+          "src/ui/views/verify.ts",
+          "tests/e2e/app.spec.ts",
+          "tests/e2e/memory.spec.ts",
+          "tests/unit/hash.test.ts"
+        ]
+      }
+    },
+    {
+      "branch": "codex/audit-sweep-20261105",
+      "head": "63861fc18aff9942d1b32bf62ac23e2a0ed6e7ef",
+      "base": "c02dd524832f0092f72110edabf5f0defb7a2bcc",
+      "ancestor": false,
+      "changed": [
+        "src/core/ots/bitcoin.ts",
+        "src/core/ots/codec.ts",
+        "src/core/ots/ops.ts",
+        "src/core/ots/trusted-header.ts",
+        "tests/unit/audit-sweep-duplicates.test.ts",
+        "tests/unit/audit-sweep-header-snapshots.test.ts",
+        "tests/unit/audit-sweep-receipt-snapshots.test.ts",
+        "tests/unit/audit-sweep-serialization.test.ts",
+        "tests/unit/codec.test.ts"
+      ],
+      "identical": [
+        "src/core/ots/bitcoin.ts",
+        "src/core/ots/ops.ts",
+        "src/core/ots/trusted-header.ts",
+        "tests/unit/audit-sweep-header-snapshots.test.ts",
+        "tests/unit/audit-sweep-receipt-snapshots.test.ts",
+        "tests/unit/audit-sweep-serialization.test.ts",
+        "tests/unit/codec.test.ts"
+      ],
+      "differing": [
+        "src/core/ots/codec.ts",
+        "tests/unit/audit-sweep-duplicates.test.ts"
+      ],
+      "product_differences": [
+        "src/core/ots/codec.ts",
+        "tests/unit/audit-sweep-duplicates.test.ts"
+      ],
+      "disposition": "Represented",
+      "review_note": "Seven changed blobs identical; codec merge preview has no source delta, and current reference test covers qualified 0.4.5/0.5.0 semantics. R2.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          "tests/unit/audit-sweep-duplicates.test.ts"
+        ],
+        "product_differences": [
+          "tests/unit/audit-sweep-duplicates.test.ts"
+        ]
+      }
+    },
+    {
+      "branch": "codex/automation-scope-guards-20261104",
+      "head": "269118949894b137b6a8ad855780da296955e7de",
+      "base": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "ancestor": false,
+      "changed": [
+        ".github/scripts/cloud_scope_guard.py",
+        ".github/scripts/test_cloud_scope_guard.py",
+        ".github/workflows/unaltered-codex-cloud.yml",
+        "docs/AUTOMATION_SCOPE_20261104.md"
+      ],
+      "identical": [],
+      "differing": [
+        ".github/scripts/cloud_scope_guard.py",
+        ".github/scripts/test_cloud_scope_guard.py",
+        ".github/workflows/unaltered-codex-cloud.yml",
+        "docs/AUTOMATION_SCOPE_20261104.md"
+      ],
+      "product_differences": [
+        ".github/scripts/cloud_scope_guard.py",
+        ".github/scripts/test_cloud_scope_guard.py",
+        ".github/workflows/unaltered-codex-cloud.yml"
+      ],
+      "disposition": "Security recovery",
+      "review_note": "PR52 unique scope guard recovered/hardened in `681eedd`; security worker owns integration and verification. A2.",
+      "merge_preview": {
+        "clean": true,
+        "changed": [
+          ".github/scripts/cloud_scope_guard.py",
+          ".github/scripts/test_cloud_scope_guard.py",
+          ".github/workflows/unaltered-codex-cloud.yml",
+          "docs/AUTOMATION_SCOPE_20261104.md"
+        ],
+        "product_differences": [
+          ".github/scripts/cloud_scope_guard.py",
+          ".github/scripts/test_cloud_scope_guard.py",
+          ".github/workflows/unaltered-codex-cloud.yml"
+        ]
+      }
+    },
+    {
+      "branch": "codex/bugs-sweep-20261105",
+      "head": "211daca21ad0b899fdba4b441e997d30c0cfbe93",
+      "base": "c02dd524832f0092f72110edabf5f0defb7a2bcc",
+      "ancestor": false,
+      "changed": [
+        "src/ui/dom.ts",
+        "src/ui/strings.ts",
+        "src/ui/views/about.ts",
+        "src/ui/views/stamp.ts",
+        "src/ui/views/verify.ts",
+        "tests/e2e/bugs-sweep-stamp-labels.spec.ts",
+        "tests/e2e/bugs-sweep-upgrade-fallback.spec.ts",
+        "tests/unit/bugs-sweep-stamp-labels.test.ts",
+        "tests/unit/bugs-sweep-unsupported-cleaning.test.ts",
+        "tests/unit/bugs-sweep-upgrade-fallback.test.ts",
+        "tests/unit/bugs-sweep-view-announcements.test.ts"
+      ],
+      "identical": [
+        "src/ui/views/about.ts",
+        "tests/e2e/bugs-sweep-stamp-labels.spec.ts",
+        "tests/e2e/bugs-sweep-upgrade-fallback.spec.ts",
+        "tests/unit/bugs-sweep-stamp-labels.test.ts",
+        "tests/unit/bugs-sweep-unsupported-cleaning.test.ts",
+        "tests/unit/bugs-sweep-upgrade-fallback.test.ts",
+        "tests/unit/bugs-sweep-view-announcements.test.ts"
+      ],
+      "differing": [
+        "src/ui/dom.ts",
+        "src/ui/strings.ts",
+        "src/ui/views/stamp.ts",
+        "src/ui/views/verify.ts"
+      ],
+      "product_differences": [
+        "src/ui/dom.ts",
+        "src/ui/strings.ts",
+        "src/ui/views/stamp.ts",
+        "src/ui/views/verify.ts"
+      ],
+      "disposition": "Superseded",
+      "review_note": "Seven changed blobs identical; remaining UI source evolved with retained behaviors and current tests. U1.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          "src/ui/views/stamp.ts",
+          "src/ui/views/verify.ts"
+        ],
+        "product_differences": [
+          "src/ui/views/stamp.ts",
+          "src/ui/views/verify.ts"
+        ]
+      }
+    },
+    {
+      "branch": "codex/certificate-context-20261109",
+      "head": "c8805ec3f3c4f0ea96ba189d75272cc418474994",
+      "base": "6c969f42b9ce3ae1f9d10c02eea475cfee75d126",
+      "ancestor": false,
+      "changed": [
+        "src/core/archive/qr-print.ts",
+        "src/core/ots/verify.ts",
+        "src/core/reports/verification.ts",
+        "src/ui/archival-certificate.ts",
+        "src/ui/archive-strings.ts",
+        "src/ui/views/verify.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/e2e/certificate-metadata.spec.ts",
+        "tests/unit/verification-report.test.ts"
+      ],
+      "identical": [
+        "src/core/ots/verify.ts",
+        "src/core/reports/verification.ts",
+        "src/ui/archival-certificate.ts",
+        "src/ui/archive-strings.ts",
+        "tests/e2e/certificate-metadata.spec.ts",
+        "tests/unit/verification-report.test.ts"
+      ],
+      "differing": [
+        "src/core/archive/qr-print.ts",
+        "src/ui/views/verify.ts",
+        "tests/e2e/app.spec.ts"
+      ],
+      "product_differences": [
+        "src/core/archive/qr-print.ts",
+        "src/ui/views/verify.ts",
+        "tests/e2e/app.spec.ts"
+      ],
+      "disposition": "Superseded",
+      "review_note": "Six changed blobs identical; current certificate context validation and input/proof lifecycles replace earlier variants. Q1/U1.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          "src/core/archive/qr-print.ts"
+        ],
+        "product_differences": [
+          "src/core/archive/qr-print.ts"
+        ]
+      }
+    },
+    {
+      "branch": "codex/claude-handoff-20261028",
+      "head": "d358f6c0d746193d62f92d5239b346517f728ce1",
+      "base": "9e16d5bafddd207d7fa14621fe01a6d692885213",
+      "ancestor": false,
+      "changed": [
+        "HANDOFF.md",
+        "docs/CLAUDE_TAKEOVER.md"
+      ],
+      "identical": [],
+      "differing": [
+        "HANDOFF.md",
+        "docs/CLAUDE_TAKEOVER.md"
+      ],
+      "product_differences": [],
+      "disposition": "Historical",
+      "review_note": "Two unique earlier takeover/handoff documents retained on their branch; do not replace current handoff with stale state. D1."
+    },
+    {
+      "branch": "codex/cloud-policy-20261106",
+      "head": "75ac0e972f0aa2988abed44054d45b479a84e360",
+      "base": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "ancestor": false,
+      "changed": [
+        ".github/scripts/cloud_run_policy.py",
+        ".github/scripts/cloud_scope_guard.py",
+        ".github/scripts/test_cloud_run_policy.py",
+        ".github/scripts/test_cloud_scope_guard.py",
+        ".github/workflows/unaltered-codex-cloud.yml",
+        "docs/AUTOMATION_SCOPE_20261104.md"
+      ],
+      "identical": [],
+      "differing": [
+        ".github/scripts/cloud_run_policy.py",
+        ".github/scripts/cloud_scope_guard.py",
+        ".github/scripts/test_cloud_run_policy.py",
+        ".github/scripts/test_cloud_scope_guard.py",
+        ".github/workflows/unaltered-codex-cloud.yml",
+        "docs/AUTOMATION_SCOPE_20261104.md"
+      ],
+      "product_differences": [
+        ".github/scripts/cloud_run_policy.py",
+        ".github/scripts/cloud_scope_guard.py",
+        ".github/scripts/test_cloud_run_policy.py",
+        ".github/scripts/test_cloud_scope_guard.py",
+        ".github/workflows/unaltered-codex-cloud.yml"
+      ],
+      "disposition": "Security recovery",
+      "review_note": "Offline admission policy source/tests recovered in `b748441`; remains unwired to paid execution and requires explicit opt-in. A2.",
+      "merge_preview": {
+        "clean": true,
+        "changed": [
+          ".github/scripts/cloud_run_policy.py",
+          ".github/scripts/cloud_scope_guard.py",
+          ".github/scripts/test_cloud_run_policy.py",
+          ".github/scripts/test_cloud_scope_guard.py",
+          ".github/workflows/unaltered-codex-cloud.yml",
+          "docs/AUTOMATION_SCOPE_20261104.md"
+        ],
+        "product_differences": [
+          ".github/scripts/cloud_run_policy.py",
+          ".github/scripts/cloud_scope_guard.py",
+          ".github/scripts/test_cloud_run_policy.py",
+          ".github/scripts/test_cloud_scope_guard.py",
+          ".github/workflows/unaltered-codex-cloud.yml"
+        ]
+      }
+    },
+    {
+      "branch": "codex/native-ci-20261106",
+      "head": "666491320a0ab291dc03c57eda7795665fa58797",
+      "base": "759335a36f77cdbabab62e95cd013fb6eaf5e441",
+      "ancestor": false,
+      "changed": [
+        "docs/CI_QUALIFICATION_20261106.md",
+        "docs/evidence/ci-20261106.json"
+      ],
+      "identical": [
+        "docs/CI_QUALIFICATION_20261106.md",
+        "docs/evidence/ci-20261106.json"
+      ],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Equivalent",
+      "review_note": "Both changed native-CI-related files are identical. E1."
+    },
+    {
+      "branch": "codex/ordinary-fixes-20261027",
+      "head": "6d600249241dc40e252ef22d053b3cb7feb1868c",
+      "base": "6d600249241dc40e252ef22d053b3cb7feb1868c",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "codex/pages-preparation-20261105",
+      "head": "5d587bcdd5ce5349aa6b8b273b31e5d3eac04690",
+      "base": "210e3df8e05220d65fc7fa31cc78a8d3a5b3102a",
+      "ancestor": false,
+      "changed": [
+        "docs/PAGES.md",
+        "docs/templates/pages-deployment.yml",
+        "tests/unit/pages-preparation-template.test.ts"
+      ],
+      "identical": [
+        "docs/PAGES.md",
+        "tests/unit/pages-preparation-template.test.ts"
+      ],
+      "differing": [
+        "docs/templates/pages-deployment.yml"
+      ],
+      "product_differences": [],
+      "disposition": "Superseded",
+      "review_note": "Two changed files identical; current deployment template includes later preflight and metadata checks. C1."
+    },
+    {
+      "branch": "codex/proposal-language-presentation-20261027",
+      "head": "bea5aae656cb9965563889c887c2168b5fc3b656",
+      "base": "bea5aae656cb9965563889c887c2168b5fc3b656",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "codex/qr-certificate-review-20261109",
+      "head": "788bed35a723be8a22e23d7733b32de660e03541",
+      "base": "22a8d7e41a092982ea9fb303eb2d2352994cff03",
+      "ancestor": false,
+      "changed": [
+        "docs/ARCHIVAL_QR_PROTOCOL.md",
+        "docs/DECISIONS.md",
+        "docs/DEPENDENCIES.md",
+        "docs/QR_INTEGRATION_VALIDATION.md",
+        "src/core/archive/qr-print.ts",
+        "src/index.html",
+        "src/main.ts",
+        "src/styles.css",
+        "src/ui/archival-certificate.ts",
+        "src/ui/archival-recovery.ts",
+        "src/ui/archive-strings.ts",
+        "src/ui/archive-tools.ts",
+        "src/ui/strings.ts",
+        "src/ui/views/stamp.ts",
+        "tests/e2e/archival-language.spec.ts",
+        "tests/unit/archival-qr-properties.test.ts",
+        "tests/unit/net.test.ts",
+        "tests/unit/qr-image-properties.test.ts"
+      ],
+      "identical": [
+        "src/main.ts",
+        "src/ui/archival-recovery.ts",
+        "src/ui/archive-tools.ts",
+        "tests/e2e/archival-language.spec.ts",
+        "tests/unit/archival-qr-properties.test.ts",
+        "tests/unit/net.test.ts",
+        "tests/unit/qr-image-properties.test.ts"
+      ],
+      "differing": [
+        "docs/ARCHIVAL_QR_PROTOCOL.md",
+        "docs/DECISIONS.md",
+        "docs/DEPENDENCIES.md",
+        "docs/QR_INTEGRATION_VALIDATION.md",
+        "src/core/archive/qr-print.ts",
+        "src/index.html",
+        "src/styles.css",
+        "src/ui/archival-certificate.ts",
+        "src/ui/archive-strings.ts",
+        "src/ui/strings.ts",
+        "src/ui/views/stamp.ts"
+      ],
+      "product_differences": [
+        "src/core/archive/qr-print.ts",
+        "src/index.html",
+        "src/styles.css",
+        "src/ui/archival-certificate.ts",
+        "src/ui/archive-strings.ts",
+        "src/ui/strings.ts",
+        "src/ui/views/stamp.ts"
+      ],
+      "disposition": "Superseded",
+      "review_note": "Seven changed blobs identical; later certificate escaping, opt-in metadata, language controls, and stale-proof handling retained. Q1/U1.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          "docs/DECISIONS.md",
+          "src/core/archive/qr-print.ts",
+          "src/ui/archival-certificate.ts"
+        ],
+        "product_differences": [
+          "src/core/archive/qr-print.ts",
+          "src/ui/archival-certificate.ts"
+        ]
+      }
+    },
+    {
+      "branch": "codex/read-stall-watchdog-20261027",
+      "head": "0fa99d70df341c285fafe6b1dd1213593d897097",
+      "base": "0fa99d70df341c285fafe6b1dd1213593d897097",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "codex/recover-qualify-20261104",
+      "head": "a2f224e0a928b0e70155a0eac7110f2fee2dad20",
+      "base": "a2f224e0a928b0e70155a0eac7110f2fee2dad20",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "codex/resume-acceptance-20261024",
+      "head": "0b448d887df89fab22f701810197e51285590e2b",
+      "base": "0b448d887df89fab22f701810197e51285590e2b",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "codex/security-sweep-20261105",
+      "head": "74a0cc0e180eafdbaa45fed291b3c42622d810ed",
+      "base": "c02dd524832f0092f72110edabf5f0defb7a2bcc",
+      "ancestor": false,
+      "changed": [
+        "src/core/strip/png.ts",
+        "tests/unit/security-sweep-png-transparency.test.ts"
+      ],
+      "identical": [
+        "src/core/strip/png.ts",
+        "tests/unit/security-sweep-png-transparency.test.ts"
+      ],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Equivalent",
+      "review_note": "Both changed security source/test files are identical. E1."
+    },
+    {
+      "branch": "codex/ui-correctness-checkpoint-20261025",
+      "head": "c0ae8e7aac344add7237b426002510386fc6a433",
+      "base": "c0ae8e7aac344add7237b426002510386fc6a433",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "codex/unaltered-completion-20261119",
+      "head": "abc6ff24c5da14261d5919c68673ee3ad8c6db99",
+      "base": "abc6ff24c5da14261d5919c68673ee3ad8c6db99",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "codex/unaltered-consolidation-audit-20261104",
+      "head": "3811638d929629a0e3cbd83a47ff8a763e2dd15b",
+      "base": "1b6dd91be87d1a8c92725439bb87a0517b4156ba",
+      "ancestor": false,
+      "changed": [
+        "docs/UNALTERED_CONSOLIDATION_AUDIT_20261104.md"
+      ],
+      "identical": [],
+      "differing": [
+        "docs/UNALTERED_CONSOLIDATION_AUDIT_20261104.md"
+      ],
+      "product_differences": [],
+      "disposition": "Historical",
+      "review_note": "One unique earlier audit report retained for provenance; conclusions are time-bound. D1."
+    },
+    {
+      "branch": "codex/unaltered-delivery-20261030",
+      "head": "f9703929426602e6cf5e7bef16088afb327b1833",
+      "base": "da9b0a3626e702381f2ad1d1b1d4cd3128fde2dd",
+      "ancestor": false,
+      "changed": [
+        "src/cli/run.ts",
+        "tests/unit/cli.test.ts"
+      ],
+      "identical": [
+        "tests/unit/cli.test.ts"
+      ],
+      "differing": [
+        "src/cli/run.ts"
+      ],
+      "product_differences": [
+        "src/cli/run.ts"
+      ],
+      "disposition": "Superseded",
+      "review_note": "One changed blob identical; current CLI contains later safe error/control-name/file-read handling. R2.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          "src/cli/run.ts"
+        ],
+        "product_differences": [
+          "src/cli/run.ts"
+        ]
+      }
+    },
+    {
+      "branch": "codex/unaltered-signed-candidate-20261030",
+      "head": "71d40bb116de574e400425249595ea9f1c1d03c8",
+      "base": "71d40bb116de574e400425249595ea9f1c1d03c8",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "codex/validated-completion",
+      "head": "e4d80b67d145e940b0458bad93cc069412b39306",
+      "base": "e4d80b67d145e940b0458bad93cc069412b39306",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "dependabot/github_actions/actions/checkout-7.0.1",
+      "head": "8061e011f6e9d0c330a108994f786c18785fe927",
+      "base": "0f6e85a61a055004fc588a9f57a09d8549efaec3",
+      "ancestor": false,
+      "changed": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/release.yml"
+      ],
+      "identical": [],
+      "differing": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/release.yml"
+      ],
+      "product_differences": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/release.yml"
+      ],
+      "disposition": "Represented",
+      "review_note": "Current action pin matches; read-only merge preview produces no product-file delta. P1.",
+      "merge_preview": {
+        "clean": true,
+        "changed": [],
+        "product_differences": []
+      }
+    },
+    {
+      "branch": "dependabot/github_actions/actions/download-artifact-8.0.2",
+      "head": "4151bf9e6b3e5f4f647d254a0ef3270b31dd60cc",
+      "base": "0f6e85a61a055004fc588a9f57a09d8549efaec3",
+      "ancestor": false,
+      "changed": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/release.yml"
+      ],
+      "identical": [],
+      "differing": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/release.yml"
+      ],
+      "product_differences": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/release.yml"
+      ],
+      "disposition": "Represented",
+      "review_note": "Current action pin matches; read-only merge preview produces no product-file delta. P1.",
+      "merge_preview": {
+        "clean": true,
+        "changed": [],
+        "product_differences": []
+      }
+    },
+    {
+      "branch": "dependabot/github_actions/peter-evans/create-pull-request-8.1.2",
+      "head": "d7998cb2a0fd1fa3f7c1a94fba09d8d52f217005",
+      "base": "0aafc589ef4e6407d25f7bbfcab9c1d077474328",
+      "ancestor": false,
+      "changed": [
+        ".github/workflows/unaltered-codex-cloud.yml"
+      ],
+      "identical": [],
+      "differing": [
+        ".github/workflows/unaltered-codex-cloud.yml"
+      ],
+      "product_differences": [
+        ".github/workflows/unaltered-codex-cloud.yml"
+      ],
+      "disposition": "Deferred",
+      "review_note": "PR91 is a genuinely pending automation dependency bump; retain separate until its exact head is qualified. P1.",
+      "merge_preview": {
+        "clean": true,
+        "changed": [
+          ".github/workflows/unaltered-codex-cloud.yml"
+        ],
+        "product_differences": [
+          ".github/workflows/unaltered-codex-cloud.yml"
+        ]
+      }
+    },
+    {
+      "branch": "dependabot/npm_and_yarn/eslint-10.13.0",
+      "head": "74bb024165c34ea01393e091f59bc2280a092a09",
+      "base": "74bb024165c34ea01393e091f59bc2280a092a09",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "dependabot/npm_and_yarn/eslint-10.14.0",
+      "head": "4533947bcd1d1825bd6bfcca941ca8c25cd3a4fa",
+      "base": "4533947bcd1d1825bd6bfcca941ca8c25cd3a4fa",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "dependabot/npm_and_yarn/playwright/test-1.65.0",
+      "head": "9280ced35de497c0f6f376193496ba66b3d6527c",
+      "base": "0aafc589ef4e6407d25f7bbfcab9c1d077474328",
+      "ancestor": false,
+      "changed": [
+        "package-lock.json",
+        "package.json"
+      ],
+      "identical": [],
+      "differing": [
+        "package-lock.json",
+        "package.json"
+      ],
+      "product_differences": [
+        "package-lock.json",
+        "package.json"
+      ],
+      "disposition": "Deferred",
+      "review_note": "PR92 is a genuinely pending browser-tool dependency bump; exact-head Firefox qualification remains unresolved. P1.",
+      "merge_preview": {
+        "clean": true,
+        "changed": [
+          "package-lock.json",
+          "package.json"
+        ],
+        "product_differences": [
+          "package-lock.json",
+          "package.json"
+        ]
+      }
+    },
+    {
+      "branch": "dependabot/npm_and_yarn/vitest-5.0.5",
+      "head": "ae1bf4177b71bb1ae80ad7332f14de952264f2f5",
+      "base": "ae1bf4177b71bb1ae80ad7332f14de952264f2f5",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "dependabot/npm_and_yarn/vitest-5.1.0",
+      "head": "bffb0fea836116210aadfb68f46aa6fcbed109fc",
+      "base": "bffb0fea836116210aadfb68f46aa6fcbed109fc",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "diag/read-stall-ab-20261027",
+      "head": "6f5b6c9ece959e454dd3341f7c0f8012c4431259",
+      "base": "0fa99d70df341c285fafe6b1dd1213593d897097",
+      "ancestor": false,
+      "changed": [
+        ".github/workflows/diag-read-stall.yml"
+      ],
+      "identical": [],
+      "differing": [
+        ".github/workflows/diag-read-stall.yml"
+      ],
+      "product_differences": [
+        ".github/workflows/diag-read-stall.yml"
+      ],
+      "disposition": "Historical",
+      "review_note": "Unique diagnostic workflow is separate investigation tooling; do not activate through product consolidation. H1.",
+      "merge_preview": {
+        "clean": true,
+        "changed": [
+          ".github/workflows/diag-read-stall.yml"
+        ],
+        "product_differences": [
+          ".github/workflows/diag-read-stall.yml"
+        ]
+      }
+    },
+    {
+      "branch": "diag/read-stall-ab-20261102",
+      "head": "d77763e8ba9a52f20b22752de273aeb5058f0f4b",
+      "base": "7a040323f415d0f4c1c48b84e97739451669b00f",
+      "ancestor": false,
+      "changed": [
+        ".github/workflows/diag-read-stall-ab-20261102.yml",
+        "docs/diagnostics/read-stall-ab-20261102/README.md",
+        "docs/diagnostics/read-stall-ab-20261102/manifest.json",
+        "docs/gates/SCREEN_READER_SCRIPT.md",
+        "src/core/hash/hasher.ts",
+        "src/core/hash/hasher.worker.ts",
+        "src/core/hash/stream.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/e2e/hash-worker-evidence.spec.ts",
+        "tests/e2e/hash-worker-evidence.ts",
+        "tests/e2e/memory.spec.ts",
+        "tests/unit/hash.test.ts"
+      ],
+      "identical": [
+        "tests/e2e/hash-worker-evidence.ts",
+        "tests/e2e/memory.spec.ts"
+      ],
+      "differing": [
+        ".github/workflows/diag-read-stall-ab-20261102.yml",
+        "docs/diagnostics/read-stall-ab-20261102/README.md",
+        "docs/diagnostics/read-stall-ab-20261102/manifest.json",
+        "docs/gates/SCREEN_READER_SCRIPT.md",
+        "src/core/hash/hasher.ts",
+        "src/core/hash/hasher.worker.ts",
+        "src/core/hash/stream.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/e2e/hash-worker-evidence.spec.ts",
+        "tests/unit/hash.test.ts"
+      ],
+      "product_differences": [
+        ".github/workflows/diag-read-stall-ab-20261102.yml",
+        "src/core/hash/hasher.ts",
+        "src/core/hash/hasher.worker.ts",
+        "src/core/hash/stream.ts",
+        "tests/e2e/app.spec.ts",
+        "tests/e2e/hash-worker-evidence.spec.ts",
+        "tests/unit/hash.test.ts"
+      ],
+      "disposition": "Historical",
+      "review_note": "Later diagnostic workflow plus superseded hash patches; preserve investigation history without activation. H1.",
+      "merge_preview": {
+        "clean": false,
+        "changed": [
+          ".github/workflows/diag-read-stall-ab-20261102.yml",
+          "docs/diagnostics/read-stall-ab-20261102/README.md",
+          "docs/diagnostics/read-stall-ab-20261102/manifest.json",
+          "src/core/hash/hasher.ts",
+          "src/core/hash/stream.ts",
+          "tests/e2e/app.spec.ts",
+          "tests/e2e/hash-worker-evidence.spec.ts",
+          "tests/unit/hash.test.ts"
+        ],
+        "product_differences": [
+          ".github/workflows/diag-read-stall-ab-20261102.yml",
+          "src/core/hash/hasher.ts",
+          "src/core/hash/stream.ts",
+          "tests/e2e/app.spec.ts",
+          "tests/e2e/hash-worker-evidence.spec.ts",
+          "tests/unit/hash.test.ts"
+        ]
+      }
+    },
+    {
+      "branch": "docs/readme-and-wiki",
+      "head": "55ca0501821fe280b0a3888c812b82bb66bca3fa",
+      "base": "55ca0501821fe280b0a3888c812b82bb66bca3fa",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "fix/accessibility-announcement-race-20261103",
+      "head": "edbdbda9f9dc51fc2556223ef832aa8cdba0dade",
+      "base": "edbdbda9f9dc51fc2556223ef832aa8cdba0dade",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "fix/hash-stall-timeout-validation-20261103",
+      "head": "c795702b010e4aec3ff0d29a48dc6c313d69a0ec",
+      "base": "c795702b010e4aec3ff0d29a48dc6c313d69a0ec",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "fix/metadata-truncated-ftyp-20261103",
+      "head": "e8fd5cb9d78dfda80c8933d81ca9d859ff8d33fe",
+      "base": "e8fd5cb9d78dfda80c8933d81ca9d859ff8d33fe",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "fix/proof-serialization-guard-20261103",
+      "head": "7c2f958a32b55b5ea77f53995c024512c1bf40fc",
+      "base": "7c2f958a32b55b5ea77f53995c024512c1bf40fc",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "integration/recover-pages-and-cli-20261116",
+      "head": "0fca4a8762ce1ddabe155415b557509bf7905960",
+      "base": "0fca4a8762ce1ddabe155415b557509bf7905960",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "main",
+      "head": "d48b08a57d0ec5974c32b54fc96881439c089575",
+      "base": "d48b08a57d0ec5974c32b54fc96881439c089575",
+      "ancestor": true,
+      "changed": [],
+      "identical": [],
+      "differing": [],
+      "product_differences": [],
+      "disposition": "Included",
+      "review_note": "Head is an ancestor of the comparison candidate; replay is unnecessary. A0."
+    },
+    {
+      "branch": "security/red-team-audit-20261115",
+      "head": "1467fc7cf9f24a0da67e936be4bb84cc95280046",
+      "base": "0aafc589ef4e6407d25f7bbfcab9c1d077474328",
+      "ancestor": false,
+      "changed": [
+        "docs/security/RED_TEAM_AUDIT_20261115.md",
+        "docs/security/RED_TEAM_AUDIT_20261115_PASS2.md",
+        "docs/security/RED_TEAM_AUDIT_20261115_SENSITIVE_PASS.md",
+        "docs/security/RED_TEAM_AUDIT_20261115_SENSITIVE_PASS4.md",
+        "docs/security/RED_TEAM_TOP_DOWN_AUDIT_20261115.md"
+      ],
+      "identical": [],
+      "differing": [
+        "docs/security/RED_TEAM_AUDIT_20261115.md",
+        "docs/security/RED_TEAM_AUDIT_20261115_PASS2.md",
+        "docs/security/RED_TEAM_AUDIT_20261115_SENSITIVE_PASS.md",
+        "docs/security/RED_TEAM_AUDIT_20261115_SENSITIVE_PASS4.md",
+        "docs/security/RED_TEAM_TOP_DOWN_AUDIT_20261115.md"
+      ],
+      "product_differences": [],
+      "disposition": "Historical/reconciled",
+      "review_note": "Five unique reports retained; current repairs and residual measurement work mapped below rather than copying stale all-open status. S1."
+    }
+  ],
+  "validation": {
+    "pinned_heads_ancestry_changed_paths_and_blob_comparisons": "independently_revalidated_against_git",
+    "changed_existing_file_mode_or_type_differences": 0,
+    "documentation_only_category_note": "Includes the historical docs/templates/pages-deployment.yml template, explicitly reviewed as superseded."
+  }
+}

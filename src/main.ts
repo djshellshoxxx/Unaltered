@@ -2,9 +2,8 @@ import { mountArchiveTools, type ArchiveToolsView } from './ui/archive-tools';
 // Wires the UI to core. No business logic here (SPEC 5.1).
 import { clear, el, setLiveRegion } from './ui/dom';
 import { installOfflineFavicon } from './ui/favicon';
-import { networkCapabilityText } from './core/net/capability';
 import { VIEWS, parseHash } from './ui/router';
-import { detectLang, setLang, t } from './ui/strings';
+import { detectLang, networkCapabilityText, setLang, t } from './ui/strings';
 import { mountAbout } from './ui/views/about';
 import { mountSettings } from './ui/views/settings';
 import { mountStamp, type StampView } from './ui/views/stamp';
@@ -31,12 +30,13 @@ function start(): void {
   const refreshNetwork = (): void => {
     if (indicator) indicator.textContent = networkCapabilityText(navigator.onLine);
   };
-  refreshNetwork();
   window.addEventListener('online', refreshNetwork);
   window.addEventListener('offline', refreshNetwork);
   const live = document.getElementById('live');
   if (live) setLiveRegion(live);
 
+  const introduction = document.querySelector<HTMLElement>('.site-intro');
+  const homeLink = document.querySelector<HTMLAnchorElement>('header .brand');
   const sections = {
     stamp: document.getElementById('stamp')!,
     verify: document.getElementById('verify')!,
@@ -58,6 +58,10 @@ function start(): void {
       const n = document.getElementById(id);
       if (n) n.textContent = t(key);
     };
+    document.getElementById('main-nav')?.setAttribute('aria-label', t('landmark.navigation'));
+    document.getElementById('site-intro')?.setAttribute('aria-label', t('landmark.intro'));
+    document.getElementById('site-guide')?.setAttribute('aria-label', t('landmark.guide'));
+    refreshNetwork();
     set('nav-stamp', 'nav.stamp');
     set('nav-verify', 'nav.verify');
     set('nav-about', 'nav.about');
@@ -96,6 +100,8 @@ function start(): void {
 
   function route(focus = true): void {
     const { view, h } = parseHash(location.hash);
+    const home = !location.hash;
+    if (introduction) introduction.hidden = !home;
     // Every hashchange routes here. Back/Forward (or a language switch) to the same #h= is not a new link: applying
     // it again would replace a file the user chose since, clear its result and abort a running check.
     if (h && h !== pendingPrefill) {
@@ -114,8 +120,8 @@ function start(): void {
       else document.getElementById(`nav-${v}`)?.removeAttribute('aria-current');
     }
     if (view === 'settings' && focus) mountSettings(sections.settings, onLang);
-    document.title = `${t(`nav.${view}` as 'nav.stamp')} · Unaltered`;
-    if (focus) sections[view].querySelector<HTMLElement>('h2')?.focus();
+    document.title = home ? t('home.title') : `${t(`nav.${view}`)} · Unaltered`;
+    if (focus) (home ? homeLink : sections[view].querySelector<HTMLElement>('h2'))?.focus();
   }
 
   mountAll();

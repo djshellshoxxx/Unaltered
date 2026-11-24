@@ -120,7 +120,7 @@ def cmd_recover_pdf(args) -> int:
             found = archival_frames(decode_image(page))
             per_page.append(len(found))
             symbols.extend(found)
-    report = {"decoder": decoder_version(),
+    report = {"decoder": decoder_version(), "pdf_sha256": hashlib.sha256(args.pdf.read_bytes()).hexdigest(),
               "dpi": args.dpi, "pages": len(pages), "symbols_per_page": per_page,
               "symbols": sorted((summarize(s) for s in symbols), key=lambda s: s["index"])}
     try:

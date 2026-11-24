@@ -8,19 +8,10 @@ import sys
 import os
 import re
 from datetime import datetime
+from pathlib import Path
+from runpy import run_path
 
-def read_env_file(env_path):
-    """Read the .env file and return as dictionary"""
-    env_vars = {}
-    if os.path.exists(env_path):
-        with open(env_path, 'r') as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith('#'):
-                    if '=' in line:
-                        key, value = line.split('=', 1)
-                        env_vars[key] = value.strip('"').strip("'")
-    return env_vars
+read_env_file = run_path(str(Path(__file__).with_name("env_config.py")))["parse_env"]
 
 def write_env_file(env_path, env_vars):
     """Write the updated .env file preserving comments and structure"""
@@ -28,7 +19,7 @@ def write_env_file(env_path, env_vars):
     updated_keys = set()
     
     if os.path.exists(env_path):
-        with open(env_path, 'r') as f:
+        with open(env_path, 'r', encoding='utf-8') as f:
             for line in f:
                 original_line = line.rstrip()
                 if line.strip() and not line.strip().startswith('#'):
@@ -49,7 +40,7 @@ def write_env_file(env_path, env_vars):
         if key not in updated_keys:
             lines.append(f"{key}={env_vars.get(key, '0')}")
     
-    with open(env_path, 'w') as f:
+    with open(env_path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines) + '\n')
 
 def get_current_version(env_path):
@@ -127,7 +118,7 @@ def update_cmake_version(project_root, version):
     if not os.path.exists(cmake_path):
         return
     
-    with open(cmake_path, 'r') as f:
+    with open(cmake_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
     # Update VERSION in project() command
@@ -137,7 +128,7 @@ def update_cmake_version(project_root, version):
         content
     )
     
-    with open(cmake_path, 'w') as f:
+    with open(cmake_path, 'w', encoding='utf-8') as f:
         f.write(content)
 
 def main():

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { fromHex } from '../../src/core/bytes';
 import { serializeProof, serializeTree } from '../../src/core/ots/codec';
@@ -159,6 +160,17 @@ test('share-link results say no file was checked; file results keep file wording
   await expect(pending).toContainText('The fingerprint from the link matches the receipt');
   await expect(pending).toContainText('No file was checked');
   await expect(pending).not.toContainText('The file matches the receipt');
+  async function downloadReport() {
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.locator('.verify-result a[download="unaltered-verification-report.json"]').click(),
+    ]);
+    return JSON.parse(readFileSync((await download.path())!, 'utf8'));
+  }
+  const linkedReport = await downloadReport();
+  expect(linkedReport).toMatchObject({ status: 'PENDING', fileSha256: HEX, digestSource: 'share-link' });
+  expect(linkedReport.detail).toContain('No file was checked.');
+  expect(linkedReport.detail).not.toContain('The file matches');
 
   await page.goto(`/index.html#h=${'00'.repeat(32)}`);
   await page.setInputFiles('#verify-receipt', receipt('pending.ots'));
@@ -173,6 +185,9 @@ test('share-link results say no file was checked; file results keep file wording
   const fileNoMatch = page.locator('.result-NO_MATCH_FILE');
   await expect(fileNoMatch.getByRole('heading', { name: 'No match: this file is different' })).toBeVisible();
   await expect(fileNoMatch).not.toContainText('No file was checked');
+  expect(await downloadReport()).toMatchObject({
+    status: 'NO_MATCH_FILE', fileSha256: sha256hex(Buffer.from('different')), digestSource: 'file',
+  });
 });
 
 test('held network verification cannot replace a newer result', async ({ page }) => {

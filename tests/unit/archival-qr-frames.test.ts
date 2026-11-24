@@ -60,4 +60,21 @@ describe('archival snapshot ownership', () => {
     original.fill(99);
     expect(await recoverReceiptFrames(await pending)).toEqual(expected);
   });
+
+  it.each([12, 44])('snapshots the recovery header before checking byte %i asynchronously', async offset => {
+    const original = receipt(400);
+    const frames = await encodeReceiptFrames(original, 160);
+    const pending = recoverReceiptFrames(frames);
+    frames[0]![offset] = frames[0]![offset]! ^ 1;
+    for (const frame of frames) frame.fill(99, 80);
+    expect(await pending).toEqual(original);
+  });
+
+  it.each([12, 44])('rejects invalid-at-entry header byte %i even if corrected during hashing', async offset => {
+    const frames = await encodeReceiptFrames(receipt(40), 160);
+    frames[0]![offset] = frames[0]![offset]! ^ 1;
+    const pending = recoverReceiptFrames(frames);
+    frames[0]![offset] = frames[0]![offset]! ^ 1;
+    await expect(pending).rejects.toThrow('receipt checksum');
+  });
 });

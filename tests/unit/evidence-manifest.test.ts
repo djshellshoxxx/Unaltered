@@ -13,7 +13,12 @@ describe('local evidence bundle manifest', () => {
     expect(result.original.sha256).not.toBe(result.receipt.sha256);
     expect(result.verification).toBe('NOT_PERFORMED');
   });
-  it('refuses empty evidence', async () => {
-    await expect(createEvidenceManifest(new Uint8Array(), Uint8Array.of(1))).rejects.toThrow();
+  it('records the SHA-256 and exact size of a zero-byte original', async () => {
+    const { original } = await createEvidenceManifest(new Uint8Array(), Uint8Array.of(1));
+    expect(original).toEqual({ size: 0, sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' });
+  });
+
+  it('refuses an empty receipt', async () => {
+    await expect(createEvidenceManifest(Uint8Array.of(1), new Uint8Array())).rejects.toThrow();
   });
 });
