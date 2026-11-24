@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { writeFile, truncate } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
 import { fromHex } from '../../src/core/bytes';
 import { serializeProof } from '../../src/core/ots/codec';
@@ -160,9 +161,12 @@ test.describe('evidence export lifecycle in the browser', () => {
     await expect(page.getByRole('button', { name: 'Comprobar', exact: true })).toBeEnabled();
   });
 
-  test('the evidence size explanation follows the language without reading rejected files', async ({ page }) => {
+  test('the evidence size explanation follows the language without reading rejected files', async ({ page }, testInfo) => {
     await installProbe(page);
-    await page.setInputFiles('#verify-file', file('large.bin', Buffer.alloc(16 * 1024 * 1024)));
+    const original = testInfo.outputPath('large.bin');
+    await writeFile(original, '');
+    await truncate(original, 16 * 1024 * 1024);
+    await page.setInputFiles('#verify-file', original);
     await page.setInputFiles('#verify-receipt', file('large.bin.ots', PENDING));
     await page.getByRole('button', { name: TABLES.en['evidence.downloadZip'], exact: true }).click();
     const error = page.locator('.verify-result [role=alert]');
